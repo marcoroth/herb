@@ -24,26 +24,33 @@ export function erbTagContent(node: Nodes.Node): string {
 
 export function endsInLineComment(content: string): boolean {
   const line = content.slice(content.lastIndexOf("\n") + 1)
+  const stack: string[] = []
 
-  let quote: string | null = null
+  const INTERPOLATION = ""
 
   for (let index = 0; index < line.length; index++) {
     const character = line[index]
+    const quote = stack[stack.length - 1]
 
     if (quote) {
       if (character === "\\") {
         index++
+      } else if (character === "#" && line[index + 1] === "{" && quote !== "'") {
+        stack.push(INTERPOLATION)
+        index++
       } else if (character === quote) {
-        quote = null
+        stack.pop()
       }
 
       continue
     }
 
     if (character === '"' || character === "'" || character === "`") {
-      quote = character
-    } else if (character === "#") {
-      return true
+      stack.push(character)
+    } else if (character === "}" && stack.length > 0) {
+      stack.pop()
+    } else if (character === "#" && line[index + 1] !== "{") {
+      return stack.length === 0
     }
   }
 
@@ -77,17 +84,20 @@ export class MinifyPrinter extends IdentityPrinter {
   private lastRendered = ""
 
   private emit(content: string, rendered = true): void {
-    if (this.pendingNewline) {
-      this.pendingNewline = false
-      this.write("\n")
-      this.lastRendered = "\n"
-    }
-
+    this.flushNewline()
     this.write(content)
 
     if (rendered && content.length > 0) {
       this.lastRendered = content[content.length - 1]
     }
+  }
+
+  private flushNewline(): void {
+    if (!this.pendingNewline) return
+
+    this.pendingNewline = false
+    this.write("\n")
+    this.lastRendered = "\n"
   }
 
   private flushSpace(): void {
@@ -152,8 +162,7 @@ export class MinifyPrinter extends IdentityPrinter {
     this.pendingSpace = true
   }
 
-  visitHTMLElementNode(node: Nodes.HTMLElementNode): void {
-    const tagName = getTagName(node) ?? ""
+  private printElement(tagName: string, open: Nodes.Node | null, body: Nodes.Node[], close: Nodes.Node | null): void {
     const inline = isInlineElement(tagName)
     const preserve = isWhitespacePreservingElement(tagName)
 
@@ -163,23 +172,31 @@ export class MinifyPrinter extends IdentityPrinter {
       this.pendingSpace = false
     }
 
-    if (node.open_tag) this.visit(node.open_tag)
+    if (open) this.visit(open)
 
     if (!inline) this.hasRenderedContent = false
 
     if (preserve) this.preserveDepth++
 
-    for (const child of node.body) this.visit(child)
+    for (const child of body) this.visit(child)
 
     if (preserve) this.preserveDepth--
 
     if (!inline) this.pendingSpace = false
 
-    if (node.close_tag) this.visit(node.close_tag)
+    if (close) this.visit(close)
 
     if (!inline) this.pendingSpace = false
 
     this.hasRenderedContent = inline
+  }
+
+  visitHTMLElementNode(node: Nodes.HTMLElementNode): void {
+    this.printElement(getTagName(node) ?? "", node.open_tag, node.body, node.close_tag)
+  }
+
+  visitHTMLConditionalElementNode(node: Nodes.HTMLConditionalElementNode): void {
+    this.printElement(node.tag_name?.value ?? "", node.open_conditional, node.body, node.close_conditional)
   }
 
   visitHTMLOpenTagNode(node: Nodes.HTMLOpenTagNode): void {
@@ -251,6 +268,7 @@ export class MinifyPrinter extends IdentityPrinter {
   visitHTMLCommentNode(node: Nodes.HTMLCommentNode): void {
     if (!isConditionalComment(node)) return
 
+    this.flushNewline()
     this.flushSpace()
     super.visitHTMLCommentNode(node)
     this.hasRenderedContent = true
@@ -265,6 +283,7 @@ export class MinifyPrinter extends IdentityPrinter {
   }
 
   visitHTMLDoctypeNode(node: Nodes.HTMLDoctypeNode): void {
+    this.flushNewline()
     this.pendingSpace = false
     this.preserveDepth++
     super.visitHTMLDoctypeNode(node)
@@ -272,6 +291,7 @@ export class MinifyPrinter extends IdentityPrinter {
   }
 
   visitXMLDeclarationNode(node: Nodes.XMLDeclarationNode): void {
+    this.flushNewline()
     this.pendingSpace = false
     this.preserveDepth++
     super.visitXMLDeclarationNode(node)
@@ -311,7 +331,9 @@ export class MinifyPrinter extends IdentityPrinter {
     const trimmed = content.trim()
 
     if (trimmed === content) return content
-    if (trimmed.length > 0 && ERB_TAG_MODIFIERS.has(trimmed[0])) return content
+    if (trimmed.length === 0) return trimmed
+    if (ERB_TAG_MODIFIERS.has(trimmed[0])) return content
+    if (ERB_TAG_MODIFIERS.has(trimmed[trimmed.length - 1])) return content
 
     return trimmed
   }

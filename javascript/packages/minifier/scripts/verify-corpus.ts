@@ -9,10 +9,13 @@ import { Minifier } from "../src/index.js"
 import {
   getTagName,
   isHTMLElementNode,
+  isHTMLConditionalElementNode,
   isHTMLTextNode,
   isLiteralNode,
   isHTMLAttributeNode,
   isHTMLCommentNode,
+  isHTMLDoctypeNode,
+  isXMLDeclarationNode,
   isERBCommentNode,
   isERBNode,
   isERBOutputNode,
@@ -20,7 +23,7 @@ import {
   isWhitespacePreservingElement,
 } from "@herb-tools/core"
 
-import type { Node, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
+import type { Node, HTMLElementNode, HTMLConditionalElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
 const ERB_PLACEHOLDER = "\u0000erb\u0000"
 const BLOCK_SEPARATOR = "\u0000block\u0000"
@@ -77,6 +80,9 @@ function describeAttribute(attribute: HTMLAttributeNode): string {
 }
 
 function verbatimContent(node: Node, into: string[]): void {
+  if (isHTMLCommentNode(node)) return
+  if (isERBCommentNode(node) && !erbSource(node).startsWith("herb:")) return
+
   if (isLiteralNode(node) || isHTMLTextNode(node)) {
     into.push(node.content)
     return
@@ -96,6 +102,15 @@ function collectShape(node: Node, shape: Shape, text: string[]): void {
   if (isHTMLCommentNode(node)) return
   if (isERBCommentNode(node) && !erbSource(node).startsWith("herb:")) return
 
+  if (isHTMLDoctypeNode(node) || isXMLDeclarationNode(node)) {
+    const parts: string[] = []
+
+    verbatimContent(node, parts)
+    text.push(BLOCK_SEPARATOR, VERBATIM_PREFIX + parts.join(""), BLOCK_SEPARATOR)
+
+    return
+  }
+
   if (isHTMLTextNode(node) || isLiteralNode(node)) {
     text.push(node.content)
     return
@@ -112,6 +127,11 @@ function collectShape(node: Node, shape: Shape, text: string[]): void {
     return
   }
 
+  if (isHTMLConditionalElementNode(node)) {
+    collectConditionalElement(node, shape, text)
+    return
+  }
+
   for (const child of node.compactChildNodes()) {
     collectShape(child, shape, text)
   }
@@ -121,6 +141,29 @@ function erbSource(node: Node): string {
   const record = node as unknown as Record<string, { value?: string } | null | undefined>
 
   return (record.content?.value ?? "").trim()
+}
+
+function collectConditionalElement(node: HTMLConditionalElementNode, shape: Shape, text: string[]): void {
+  const tag = (node.tag_name?.value ?? "").toLowerCase()
+  const attributes: string[] = []
+
+  for (const child of node.open_tag?.children ?? []) {
+    if (isHTMLAttributeNode(child)) {
+      attributes.push(describeAttribute(child))
+    }
+  }
+
+  shape.elements.push({ tag, attributes })
+
+  const inline = isInlineElement(tag)
+
+  if (!inline) text.push(BLOCK_SEPARATOR)
+
+  for (const child of node.body) {
+    collectShape(child, shape, text)
+  }
+
+  if (!inline) text.push(BLOCK_SEPARATOR)
 }
 
 function collectElement(node: HTMLElementNode, shape: Shape, text: string[]): void {

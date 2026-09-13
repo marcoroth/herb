@@ -5,22 +5,28 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
       },
       "dependsOn": [
+        "@herb-tools/config:build",
         "@herb-tools/core:build",
-        "@herb-tools/printer:build",
-        "@herb-tools/rewriter:build"
+        "@herb-tools/node-wasm:build",
+        "@herb-tools/printer:build"
       ]
     },
     "test": {
       "executor": "nx:run-script",
       "options": {
         "script": "test"
-      }
+      },
+      "dependsOn": [
+        "build"
+      ]
     },
     "clean": {
       "executor": "nx:run-script",

@@ -27,8 +27,8 @@ These specialized libraries provide additional functionality for working with HT
 
 * [Language Service](/projects/language-service)
 * [Highlighter](/projects/highlighter)
-* [Syntax Tree Printer](/projects/minifier)
-* [Printer](/projects/printer)
+* [Minifier](/projects/minifier)
+* [Syntax Tree Printer](/projects/printer)
 * [Rewriter](/projects/rewriter)
 * [Config](/projects/config)
 * [Client Runtime](/projects/client)
