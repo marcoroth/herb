@@ -415,5 +415,22 @@ module Parser
       assert_parsed_snapshot(template, strict: true)
       assert_parsed_snapshot(template, strict: false)
     end
+
+    test "case and when with a then keyword in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case variable when "a" then %>
+          A
+        <% end %>
+      ERB
+    end
+
+    test "case and when in separate ERB tags" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case variable %>
+        <% when "a" %>
+          A
+        <% end %>
+      ERB
+    end
   end
 end

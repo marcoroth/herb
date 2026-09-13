@@ -236,13 +236,19 @@ module Herb
 
       def visit_erb_control_node(node, &)
         if node.content
-          if erb_escaped?(node.tag_opening.value)
+          if node.tag_opening && erb_escaped?(node.tag_opening.value)
             add_escaped_erb_tag(node)
+          elsif continues_into_next_node?(node)
+            @continued_head = node
           else
-            code_index = @tokens.length
+            head = @continued_head
+            @continued_head = nil
 
-            apply_trim(node, node.content.value.strip)
-            keep_line_count(node, at: code_index)
+            code_index = @tokens.length
+            raw = head ? head.content.value + node.content.value : node.content.value
+
+            apply_trim(head || node, raw.strip)
+            keep_line_count(node, at: code_index, raw: raw)
           end
         end
 
@@ -508,8 +514,8 @@ module Herb
         @padding_before[@tokens.length] += lines
       end
 
-      def keep_line_count(node, extra: 0, at: nil, absorbed: 0)
-        raw = node.content.value
+      def keep_line_count(node, extra: 0, at: nil, absorbed: 0, raw: nil)
+        raw ||= node.content.value
 
         leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
         trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra - absorbed
@@ -751,7 +757,7 @@ module Herb
       end
 
       def left_trim?(node)
-        node.tag_opening.value == "<%-"
+        node.tag_opening&.value == "<%-"
       end
 
       def right_trim?(node)
@@ -857,6 +863,10 @@ module Herb
         else
           @tokens << [:code, code, current_context]
         end
+      end
+
+      def continues_into_next_node?(node)
+        node.tag_closing.nil? && !node.content.nil?
       end
 
       #: (untyped) -> bool
