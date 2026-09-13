@@ -4,7 +4,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { ElementStackVisitor } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNodes } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ERBNode, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBWhenNode, ERBInNode, ERBRescueNode, ERBEnsureNode, ParserOptions, PrismNodes } from "@herb-tools/core"
 
 const SILENT_OPENINGS = ["<%", "<%-"]
 const OUTPUT_OPENINGS = ["<%=", "<%=="]
@@ -66,6 +66,67 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     this.source = source
   }
 
+  visitERBIfNode(node: ERBIfNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBUnlessNode(node: ERBUnlessNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBElseNode(node: ERBElseNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBWhenNode(node: ERBWhenNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBInNode(node: ERBInNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBRescueNode(node: ERBRescueNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBEnsureNode(node: ERBEnsureNode): void {
+    this.checkControlFlowTag(node)
+    this.visitChildNodes(node)
+  }
+
+  private checkControlFlowTag(node: ERBNode): void {
+    if (!node.tag_opening || !node.tag_closing) return
+
+    const contentRange = node.content?.range
+
+    if (!contentRange) return
+
+    const statements = this.shallowestStatementsIn(contentRange.from, contentRange.to).filter(statement => {
+      return statement.location.startOffset + statement.location.length <= contentRange.to
+    })
+
+    if (statements.length === 0) return
+
+    const autofixContext = this.autofixContextFor(node as ERBContentNode, statements, { keepPrefix: true })
+
+    for (const statement of statements) {
+      const { startOffset, length } = statement.location
+
+      this.addOffense(
+        `Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.`,
+        locationFromByteOffset(this.source, startOffset, length),
+        autofixContext,
+      )
+    }
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     if (node.location.start.line !== node.location.end.line) return
 
@@ -90,14 +151,14 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     }
   }
 
-  private autofixContextFor(node: ERBContentNode, statements: PrismNodes.Node[]): MultipleStatementsAutofixContext | undefined {
+  private autofixContextFor(node: ERBContentNode, statements: PrismNodes.Node[], options: { keepPrefix?: boolean } = {}): MultipleStatementsAutofixContext | undefined {
     const tagOpening = node.tag_opening?.value
 
     if (!tagOpening) return undefined
     if (!SILENT_OPENINGS.includes(tagOpening) && !OUTPUT_OPENINGS.includes(tagOpening)) return undefined
     if (statements.some(statement => DEFINITIONS.some(definition => isPrismNodeType(statement, definition)))) return undefined
 
-    const split = this.split(node, statements, tagOpening)
+    const split = this.split(node, statements, tagOpening, options.keepPrefix === true)
 
     if (!split) return undefined
 
@@ -110,15 +171,30 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     }
   }
 
-  private split(node: ERBContentNode, statements: PrismNodes.Node[], tagOpening: string): Split | null {
+  private split(node: ERBContentNode, statements: PrismNodes.Node[], tagOpening: string, keepPrefix: boolean): Split | null {
     const content = node.content!.value
     const contentStart = this.stringIndex(node.content!.range.from)
     const isOutput = OUTPUT_OPENINGS.includes(tagOpening)
     const indentation = this.standaloneIndentationFor(node)
 
     const pieces: string[] = []
+    const boundary = (opening: string) => indentation === null ? ` %>${opening} ` : ` %>\n${indentation}${opening} `
 
     let cursor = 0
+
+    if (keepPrefix) {
+      const start = this.stringIndex(statements[0].location.startOffset) - contentStart
+      const prefix = content.slice(0, start)
+
+      const keyword = prefix.trimEnd().replace(/;+$/, "").trimEnd()
+
+      if (WHITESPACE_ONLY.test(keyword)) return null
+
+      pieces.push(keyword)
+      pieces.push(boundary("<%"))
+
+      cursor = start
+    }
 
     for (const [index, statement] of statements.entries()) {
       const start = this.stringIndex(statement.location.startOffset) - contentStart
@@ -127,12 +203,10 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
       if (index > 0) {
         if (!SEPARATOR.test(content.slice(cursor, start))) return null
 
-        const opening = index === statements.length - 1 && isOutput ? tagOpening : "<%"
-
-        pieces.push(indentation === null ? ` %>${opening} ` : ` %>\n${indentation}${opening} `)
+        pieces.push(boundary(index === statements.length - 1 && isOutput ? tagOpening : "<%"))
       }
 
-      pieces.push(content.slice(index === 0 ? 0 : start, end))
+      pieces.push(content.slice(index === 0 && !keepPrefix ? 0 : start, end))
 
       cursor = end
     }
@@ -150,12 +224,17 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
   }
 
   private standaloneIndentationFor(node: ERBContentNode): string | null {
-    const line = this.source.split("\n")[node.location.start.line - 1]
+    const start = node.tag_opening?.location.start ?? node.location.start
+    const end = node.tag_closing?.location.end ?? node.location.end
 
-    if (line === undefined) return null
+    const lines = this.source.split("\n")
+    const startLine = lines[start.line - 1]
+    const endLine = lines[end.line - 1]
 
-    const before = line.slice(0, node.location.start.column)
-    const after = line.slice(node.location.end.column)
+    if (startLine === undefined || endLine === undefined) return null
+
+    const before = startLine.slice(0, start.column)
+    const after = endLine.slice(end.column)
 
     if (!WHITESPACE_ONLY.test(before) || !WHITESPACE_ONLY.test(after)) return null
 
