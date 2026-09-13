@@ -59,7 +59,6 @@ class LiteralCollector extends PrismVisitor {
   visitBreakNode(): void {}
   visitNextNode(): void {}
 
-  // Skip predicates while continuing traversal into conditional branches and loop bodies.
   visitIfNode(node: PrismNodes.IfNode): void {
     this.visit(node.statements)
     this.visit(node.subsequent)
