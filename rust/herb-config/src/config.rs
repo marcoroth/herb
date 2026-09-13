@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, ParserConfig, RuleConfig};
 use crate::defaults::{config_template, default_config, default_config_value, DEFAULT_VERSION};
-use crate::glob::{glob, glob_absolute, is_path_matching};
+use crate::glob::{glob, glob_absolute, is_path_excluded, is_path_matching};
 use crate::merge::deep_merge;
 use crate::semver::semver_greater_than;
 use crate::severity::{resolve_severity, LinterMode, Severity, SeverityConfig};
@@ -222,12 +222,12 @@ impl Config {
     file_path.to_string()
   }
 
-  fn is_path_excluded(&self, file_path: &str, exclude_patterns: &[String]) -> bool {
+  fn is_path_excluded(&self, file_path: &str, exclude_patterns: &[String], include_patterns: &[String]) -> bool {
     if exclude_patterns.is_empty() {
       return false;
     }
 
-    is_path_matching(&self.normalize_file_path(file_path), exclude_patterns)
+    is_path_excluded(&self.normalize_file_path(file_path), exclude_patterns, include_patterns)
   }
 
   fn is_path_included(&self, file_path: &str, include_patterns: &[String]) -> bool {
@@ -250,8 +250,9 @@ impl Config {
 
     let files_config = self.get_files_config_for_tool(tool);
     let exclude_patterns = files_config.exclude.unwrap_or_default();
+    let include_patterns = files_config.include.unwrap_or_default();
 
-    !self.is_path_excluded(file_path, &exclude_patterns)
+    !self.is_path_excluded(file_path, &exclude_patterns, &include_patterns)
   }
 
   pub fn is_linter_enabled_for_path(&self, file_path: &str) -> bool {
@@ -296,7 +297,7 @@ impl Config {
       return false;
     }
 
-    !self.is_path_excluded(file_path, &rule_exclude_patterns)
+    !self.is_path_excluded(file_path, &rule_exclude_patterns, &[])
   }
 
   pub fn has_rule_exclude(&self, rule_name: &str) -> bool {

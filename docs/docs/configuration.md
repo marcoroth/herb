@@ -504,8 +504,29 @@ Result for linter:
 - Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
 - Excludes: All defaults + `public/**/*` + `legacy/**/*`
 
+### Include Precedence <Badge type="tip" text="^0.11.0" />
+
+When a file matches both an `include` and an `exclude` pattern, the more specific pattern wins. Herb compares the leading path segments of each pattern that contain no glob characters, and the `include` pattern takes precedence when it points at the same directory as the `exclude` pattern or at one below it.
+
+| `exclude` pattern | `include` pattern | Winner |
+| --- | --- | --- |
+| `vendor/**/*` | `vendor/keep/**/*.html.erb` | `include`, it names a directory below `vendor/` |
+| `vendor/**/*` | `**/*.html.erb` | `exclude`, the include names no directory |
+| `app/views/legacy/**/*` | `app/views/**/*.html.erb` | `exclude`, it is the more specific of the two |
+| `**/*.generated.html.erb` | `app/views/**/*.html.erb` | `exclude`, it selects files by name and not by location |
+
+The comparison is the same at every level, so this works with `files.include`, `linter.include`, and `formatter.include`. A file has to out-specify every `exclude` pattern it matches to be kept.
+
 ::: tip Including Previously Excluded Files
-If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+To lint files inside a default-excluded directory such as `vendor/**/*` or `coverage/**/*`, add a pattern naming the subdirectory you want back:
+
+```yaml [.herb.yml]
+files:
+  include:
+    - 'vendor/keep/**/*.html.erb'
+```
+
+Everything under `vendor/keep/` is now linted, and the rest of `vendor/` stays excluded. Widening the pattern to `**/*.html.erb` would not work, because a pattern that names no directory never overrides an `exclude`.
 :::
 
 ## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />
