@@ -1,0 +1,6 @@
+---
+source: "Engine::RailsCompatibilityTest#test_0004_compiled output is valid ruby"
+input: "<%= link_to \"/path\", class: \"btn\" do %>Click me<% end %>"
+---
+ @output_buffer.safe_expr_append= link_to "/path", class: "btn" do; @output_buffer.safe_append='Click me'.freeze; end;
+@output_buffer

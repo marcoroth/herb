@@ -1,0 +1,13 @@
+---
+source: "Engine::CLITest#test_0028_compile no file provided"
+input: "test_0028_compile no file provided"
+---
+No file provided.
+
+Usage:
+  bundle exec herb compile [file] [options]
+
+You can also pipe content via stdin:
+  echo "<div>Hello</div>" | bundle exec herb compile
+  cat file.html.erb | bundle exec herb compile
+  bundle exec herb compile -

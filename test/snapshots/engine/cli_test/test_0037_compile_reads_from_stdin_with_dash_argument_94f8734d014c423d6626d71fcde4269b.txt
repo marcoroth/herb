@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0037_compile reads from stdin with dash argument"
+input: "test_0037_compile reads from stdin with dash argument"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((name)); _buf << '</div>'.freeze;
+_buf.to_s

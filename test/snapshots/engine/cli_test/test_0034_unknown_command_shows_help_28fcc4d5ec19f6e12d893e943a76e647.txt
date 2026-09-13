@@ -1,0 +1,77 @@
+---
+source: "Engine::CLITest#test_0034_unknown command shows help"
+input: "test_0034_unknown command shows help"
+---
+Unknown command: 'unknown_command'
+
+Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
+
+Usage:
+  bundle exec herb [command] [options]
+
+Commands:
+  bundle exec herb lex [file]                 Lex a file.
+  bundle exec herb parse [file]               Parse a file.
+  bundle exec herb compile [file]             Compile ERB template to Ruby code.
+  bundle exec herb render [file]              Compile and render ERB template to final output.
+  bundle exec herb analyze [path]             Analyze a project by passing a directory to the root of the project.
+  bundle exec herb report [file]              Generate a Markdown bug report for a file.
+  bundle exec herb config [path]              Show configuration and file patterns for a project.
+  bundle exec herb ruby [file]                Extract Ruby from a file.
+  bundle exec herb html [file]                Extract HTML from a file.
+  bundle exec herb diff [old] [new]           Diff two files and show the minimal set of AST differences.
+  bundle exec herb playground [file]          Open the content of the source file in the playground.
+  bundle exec herb dev                        Start the dev server and watch for file changes.
+  bundle exec herb version                    Prints the versions of the Herb gem and the libherb library.
+
+  bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
+  bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
+  bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
+  bundle exec herb actionview context [file]  Show what a partial is rendered inside of.
+
+  bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
+  bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
+  bundle exec herb highlight [file]           Syntax highlight templates (delegates to @herb-tools/highlighter)
+  bundle exec herb print [file]               Print AST (delegates to @herb-tools/printer)
+  bundle exec herb lsp                        Start the language server (delegates to @herb-tools/language-server)
+
+stdin:
+  Commands that accept [file] also accept input via stdin:
+    echo "<div>Hello</div>" | bundle exec herb lex
+    cat file.html.erb | bundle exec herb parse
+
+  Use `-` to explicitly read from stdin:
+    bundle exec herb compile -
+
+Options:
+  -j, --json                       Return result in the JSON format
+  -s, --silent                     Log no result to stdout
+      --verbose                    Show detailed per-file progress (default in CI)
+      --isolate                    Fork each file into its own process for crash isolation (slower)
+      --timeout SECONDS            Per-file timeout for parse + compile (for analyze command) (default: 1)
+      --log-file                   Enable log file generation
+      --no-timing                  Disable timing output
+      --local                      Use localhost for playground command instead of herb-tools.dev
+      --escape                     Enable HTML escaping by default (for compile command)
+      --no-escape                  Disable HTML escaping by default (for compile command)
+      --freeze                     Add frozen string literal pragma (for compile command)
+      --debug                      Enable debug mode with ERB expression wrapping (for compile command)
+      --strict                     Enable strict mode - report errors for omitted closing tags (for parse/compile/render commands) (default: true)
+      --no-strict                  Disable strict mode (for parse/compile/render commands)
+      --analyze                    Enable analyze mode (for parse command) (default: true)
+      --no-analyze                 Disable analyze mode (for parse command)
+      --track-whitespace           Enable whitespace tracking (for parse command) (default: false)
+      --track-locations            Enable source location tracking (for parse command) (default: true)
+      --no-track-locations         Disable source location tracking (for parse command)
+      --action-view-helpers        Enable Action View helper detection (for parse command) (default: false)
+      --no-trim                    Disable whitespace trimming around standalone ERB tags (for compile/render commands)
+      --optimize                   Enable compile-time optimizations for helpers and static output (for compile/render commands) (default: false)
+      --scoped-styles              Scope each `<style scoped>` block to its file with Lightning CSS (for compile/render commands) (default: false)
+      --inline-css [STYLESHEET]    Write every stylesheet the template renders into `style` attributes, reading one from a file first if given (for compile/render commands) (default: false)
+      --slots [MODE]               Emit slot markers for reactive rendering, server (default) or client (for compile/render commands)
+      --tool TOOL                  Show config for specific tool: linter, formatter (for config command)
+      --arena-stats                Print arena memory statistics (for lex/parse/analyze commands)
+      --leak-check                 Check for memory leaks in lex/parse/extract operations (for analyze command)
+  -v, --version                    Show the version
+  -h, --help                       Show this message
+
