@@ -73,7 +73,7 @@ Pass `trim: false` to keep every byte of whitespace around code and comment tags
 
 One thing that `Erubi::Engine` accepts is handled differently by `Herb::Engine` on its default settings, and it is deliberate.
 
-A `case` with its first `when` or `in` in the same ERB tag compiles like any other `case`. The parser splits the tag so the `case` and the condition each own the Ruby they introduce, which leaves the `case` without a `%>` and the condition without a `<%`. A `case` and its first `in` pattern on the same line still raises `ERB_CASE_WITH_CONDITIONS_ERROR`, because Ruby reads that as a one-line pattern match. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the style separately.
+A `case` with its first `when` or `in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). Without strict mode it compiles like any other `case`, because the parser splits the tag so the `case` and the condition each own the Ruby they introduce, which leaves the `case` without a `%>` and the condition without a `<%`. A `case` and its first `in` pattern on the same line raises `ERB_CASE_INLINE_PATTERN_MATCH_ERROR` in both modes, because Ruby reads that as a one-line pattern match and no split makes it compile. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the style separately.
 
 One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 

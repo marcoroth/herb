@@ -31,6 +31,7 @@ module Herb
       "MissingERBEndTagError",
       "ERBMultipleBlocksInTagError",
       "ERBCaseWithConditionsError",
+      "ERBCaseInlinePatternMatchError",
       "ConditionalElementMultipleTagsError",
       "ConditionalElementConditionMismatchError",
       "InvalidCommentClosingTagError",

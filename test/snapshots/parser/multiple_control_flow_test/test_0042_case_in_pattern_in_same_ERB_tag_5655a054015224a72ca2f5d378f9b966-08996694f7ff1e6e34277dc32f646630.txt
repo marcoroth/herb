@@ -12,8 +12,8 @@ options: {strict: true}
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(5:9))
     │   ├── errors: (1 error)
-    │   │   └── @ ERBCaseWithConditionsError (location: (1:0)-(1:21))
-    │   │       └── message: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
+    │   │   └── @ ERBCaseInlinePatternMatchError (location: (1:0)-(1:21))
+    │   │       └── message: "A `case` statement and its first `in` pattern on the same line read as Ruby's one-line pattern match, not as a `case`/`in`. Put the `in` pattern on its own line, or in its own ERB tag (e.g., `<% case x %>` followed by `<% in y %>`)."
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case value " (location: (1:2)-(1:14))

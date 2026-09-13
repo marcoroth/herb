@@ -122,6 +122,17 @@ static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
   return false;
 }
 
+bool has_inline_pattern_match(analyzed_ruby_T* analyzed, hb_string_T content) {
+  if (!has_case_match_node(analyzed) || !has_in_node(analyzed)) { return false; }
+
+  uint32_t offset = 0;
+
+  if (!inline_condition_keyword_offset(analyzed, &offset)) { return false; }
+  if (offset > content.length) { return false; }
+
+  return memchr(content.data, '\n', offset) == NULL;
+}
+
 bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
   if (!analyzed || !analyzed->root || !offset) { return false; }
 
