@@ -1,5 +1,6 @@
 import { Visitor } from "@herb-tools/core"
 import { asMutable } from "@herb-tools/rewriter"
+import { erbTagContent, endsInLineComment } from "./comment-separator.js"
 
 import type {
   LiteralNode,
@@ -18,12 +19,13 @@ import type {
 
 import {
   isHTMLTextNode,
-  isERBContentNode,
   isLiteralNode,
   isWhitespaceNode,
-  isERBIfNode,
   isHTMLAttributeNode,
   isHTMLElementNode,
+  isHTMLOpenTagNode,
+  isHTMLDoctypeNode,
+  isXMLDeclarationNode,
   isERBNode,
   getTagName,
   isInlineElement,
@@ -33,12 +35,20 @@ import {
 const CHILD_ARRAY_PROPERTIES = ["children", "body", "statements", "conditions"]
 const ERB_TAG_MODIFIERS = new Set(["#", "=", "-", "%"])
 
+function needsSpaceBeforeSelfClosing(openTag: HTMLOpenTagNode, previous: Node): boolean {
+  if (!(openTag.tag_closing?.value ?? "").includes("/")) return false
+  if (!isHTMLAttributeNode(previous)) return false
+
+  return previous.value !== null && !previous.value.quoted
+}
+
 /**
  * Visitor that minifies HTML+ERB documents by removing non-significant whitespace
  */
 export class MinifierVisitor extends Visitor {
   private preserveWhitespaceDepth = 0
   private currentSiblings: Node[] | null = null
+  private currentContainer: Node | null = null
   private currentEdgesAreInline = false
   private currentAttributeName: string | null = null
   private currentOpenTag: HTMLOpenTagNode | null = null
@@ -52,6 +62,7 @@ export class MinifierVisitor extends Visitor {
 
     if (trimmed === token.value) return
     if (ERB_TAG_MODIFIERS.has(trimmed[0])) return
+    if (token.value.includes("\n")) return
 
     asMutable(token).value = trimmed
   }
@@ -87,10 +98,12 @@ export class MinifierVisitor extends Visitor {
     const record = node as unknown as Record<string, unknown>
     const previousSiblings = this.currentSiblings
     const previousEdges = this.currentEdgesAreInline
+    const previousContainer = this.currentContainer
 
     for (const child of node.compactChildNodes()) {
       this.currentSiblings = previousSiblings
       this.currentEdgesAreInline = previousEdges
+      this.currentContainer = previousContainer
 
       for (const property of CHILD_ARRAY_PROPERTIES) {
         const array = record[property]
@@ -98,6 +111,7 @@ export class MinifierVisitor extends Visitor {
         if (Array.isArray(array) && array.includes(child)) {
           this.currentSiblings = array
           this.currentEdgesAreInline = this.edgesAreInlineFor(node, property)
+          this.currentContainer = node
           break
         }
       }
@@ -107,9 +121,10 @@ export class MinifierVisitor extends Visitor {
 
     this.currentSiblings = previousSiblings
     this.currentEdgesAreInline = previousEdges
+    this.currentContainer = previousContainer
   }
 
-  private hasAdjacentInlineContent(node: Node): { before: boolean; after: boolean } {
+  private hasAdjacentInlineContent(node: Node): { before: boolean; after: boolean; previous?: Node } {
     const siblings = this.currentSiblings
 
     if (!siblings) return { before: false, after: false }
@@ -124,16 +139,20 @@ export class MinifierVisitor extends Visitor {
     return {
       before: previous ? this.isInlineNeighbour(previous) && !this.endsWithSpace(previous) : this.currentEdgesAreInline,
       after: next ? this.isInlineNeighbour(next) : this.currentEdgesAreInline,
+      previous,
     }
   }
 
   private minifyWhitespace(content: string, node: Node): string {
+    const { before, after, previous } = this.hasAdjacentInlineContent(node)
+    const needsNewline = previous !== undefined && isERBNode(previous) && endsInLineComment(erbTagContent(previous))
+
     let minified = content.replace(/\s+/g, " ")
 
-    const { before, after } = this.hasAdjacentInlineContent(node)
-
-    if (!before) minified = minified.replace(/^ /, "")
+    if (!before && !needsNewline) minified = minified.replace(/^ /, "")
     if (!after) minified = minified.replace(/ $/, "")
+
+    if (needsNewline) minified = "\n" + minified.replace(/^ /, "")
 
     return minified
   }
@@ -161,8 +180,12 @@ export class MinifierVisitor extends Visitor {
     super.visitHTMLTextNode(node)
   }
 
+  private inDeclaration(): boolean {
+    return isXMLDeclarationNode(this.currentContainer) || isHTMLDoctypeNode(this.currentContainer)
+  }
+
   visitLiteralNode(node: LiteralNode): void {
-    if (!this.shouldPreserveWhitespace() && node.content) {
+    if (!this.shouldPreserveWhitespace() && !this.inDeclaration() && node.content) {
       if (this.currentAttributeName === "class" && this.currentAttributeValue) {
         let minified = node.content.replace(/\s+/g, " ")
 
@@ -172,8 +195,8 @@ export class MinifierVisitor extends Visitor {
           const index = children.indexOf(node)
 
           if (index !== -1) {
-            const hasERBBefore = index > 0 && isERBContentNode(children[index - 1])
-            const hasERBAfter = index < children.length - 1 && isERBContentNode(children[index + 1])
+            const hasERBBefore = index > 0 && isERBNode(children[index - 1])
+            const hasERBAfter = index < children.length - 1 && isERBNode(children[index + 1])
 
             if (!hasERBBefore) {
               minified = minified.replace(/^\s+/, "")
@@ -197,150 +220,48 @@ export class MinifierVisitor extends Visitor {
     super.visitLiteralNode(node)
   }
 
+  private firstRealSibling(from: number, step: number): Node | undefined {
+    const siblings = this.currentSiblings
+
+    if (!siblings) return undefined
+
+    for (let index = from; index >= 0 && index < siblings.length; index += step) {
+      if (!isWhitespaceNode(siblings[index])) return siblings[index]
+    }
+
+    return undefined
+  }
+
   visitWhitespaceNode(node: WhitespaceNode): void {
-    if (node.value?.value) {
-      const token = node.value
-      const originalValue = token.value
+    const token = node.value
+    const siblings = this.currentSiblings
 
-      const context = this.currentERBIf || this.currentOpenTag
-      let children: Node[] | undefined
+    if (!token || !siblings) {
+      super.visitWhitespaceNode(node)
+      return
+    }
 
-      if (this.currentERBIf) {
-        children = this.currentERBIf.statements
-      } else if (this.currentOpenTag) {
-        children = this.currentOpenTag.children
-      }
+    const index = siblings.indexOf(node)
 
+    if (index === -1) {
+      super.visitWhitespaceNode(node)
+      return
+    }
 
-      if (context && children) {
-        if (this.currentOpenTag && children[children.length - 1] === node) {
-          const tagClosing = this.currentOpenTag.tag_closing?.value || ""
-          const isSelfClosing = tagClosing.includes("/")
+    const inOpenTag = isHTMLOpenTagNode(this.currentContainer)
+    const previous = this.firstRealSibling(index - 1, -1)
+    const next = this.firstRealSibling(index + 1, 1)
 
-          if (isSelfClosing && originalValue === " ") {
-            asMutable(token).value = " "
-          } else {
-            asMutable(token).value = ""
-          }
-
-          super.visitWhitespaceNode(node)
-          return
-        }
-
-        const index = children.indexOf(node)
-
-        if (index >= 0) {
-          const prevNode = index > 0 ? children[index - 1] : null
-          const nextNode = index < children.length - 1 ? children[index + 1] : null
-
-          if (this.currentERBIf) {
-            let firstNonWhitespaceIndex = 0
-
-            while (firstNonWhitespaceIndex < children.length && isWhitespaceNode(children[firstNonWhitespaceIndex])) {
-              firstNonWhitespaceIndex++
-            }
-
-            let lastNonWhitespaceIndex = children.length - 1
-
-            while (lastNonWhitespaceIndex >= 0 && isWhitespaceNode(children[lastNonWhitespaceIndex])) {
-              lastNonWhitespaceIndex--
-            }
-
-            if (index < firstNonWhitespaceIndex) {
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-
-            if (index > lastNonWhitespaceIndex) {
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-          }
-
-          if (this.currentOpenTag) {
-            if (isERBIfNode(prevNode)) {
-              let nextNonWhitespace: Node | null = nextNode
-              let searchIndex = index + 1
-
-              while (isWhitespaceNode(nextNonWhitespace) && searchIndex < children.length - 1) {
-                searchIndex++
-                nextNonWhitespace = children[searchIndex]
-              }
-
-              if (isHTMLAttributeNode(nextNonWhitespace)) {
-                asMutable(token).value = " "
-                super.visitWhitespaceNode(node)
-
-                return
-              } else {
-                asMutable(token).value = ""
-                super.visitWhitespaceNode(node)
-
-                return
-              }
-            }
-
-            if (isERBIfNode(nextNode)) {
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-
-            if (isWhitespaceNode(prevNode)) {
-              let searchIndex = index - 1
-
-              while (searchIndex >= 0 && isWhitespaceNode(children[searchIndex])) {
-                searchIndex--
-              }
-
-              if (searchIndex >= 0 && isERBIfNode(children[searchIndex])) {
-                asMutable(token).value = ""
-                super.visitWhitespaceNode(node)
-
-                return
-              }
-
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-
-            if (isERBNode(prevNode) && isHTMLAttributeNode(nextNode)) {
-              asMutable(token).value = " "
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-
-            if (isERBNode(prevNode)) {
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-
-            if (isERBNode(nextNode)) {
-              asMutable(token).value = ""
-              super.visitWhitespaceNode(node)
-
-              return
-            }
-          }
-        }
-
-        asMutable(token).value = " "
-        super.visitWhitespaceNode(node)
-
-        return
-      }
-
+    if (isWhitespaceNode(siblings[index - 1])) {
+      asMutable(token).value = ""
+    } else if (previous && next) {
       asMutable(token).value = " "
+    } else if (!previous) {
+      asMutable(token).value = inOpenTag ? " " : ""
+    } else if (inOpenTag && needsSpaceBeforeSelfClosing(this.currentContainer as HTMLOpenTagNode, previous)) {
+      asMutable(token).value = " "
+    } else {
+      asMutable(token).value = ""
     }
 
     super.visitWhitespaceNode(node)
