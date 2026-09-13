@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0061_keeps the indentation of a tag on the first line that has trailing content"
+input: "{source: \"  <% x = 1 %> b\\n<%= x %>\", locals: {}, options: {}}"
+---
+   b
+1

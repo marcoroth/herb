@@ -71,6 +71,8 @@ module Herb
       def visit_document_node(node)
         visit_all(node.children)
 
+        restore_pending_leading_whitespace! if @trim_next_whitespace
+
         settle_pending_trim_newline!(false)
       end
 
@@ -810,7 +812,7 @@ module Herb
       end
 
       def preceding_text_ends_with_newline?
-        return false unless @tokens.length >= 2
+        return true unless @tokens.length >= 2
 
         preceding = @tokens[-2]
 
