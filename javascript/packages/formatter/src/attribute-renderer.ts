@@ -3,7 +3,7 @@ import { HTMLAttributeNode, HTMLAttributeValueNode, HTMLTextNode, LiteralNode, E
 
 import { getCombinedAttributeName, getCombinedStringFromNodes, isNode, TOKEN_LIST_ATTRIBUTES } from "@herb-tools/core"
 
-import { ASCII_WHITESPACE, FORMATTABLE_ATTRIBUTES, isERBTagNode } from "./format-helpers.js"
+import { ASCII_WHITESPACE, ERB_TAG, FORMATTABLE_ATTRIBUTES, isERBTagNode, LEADING_ASCII_WHITESPACE, LINE_BREAK } from "./format-helpers.js"
 
 import type { Node, ERBNode } from "@herb-tools/core"
 
@@ -93,10 +93,10 @@ export class AttributeRenderer {
 
   wouldClassAttributeBeMultiline(content: string, indentLength: number): boolean {
     const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-    const hasActualNewlines = /\r?\n/.test(content)
+    const hasActualNewlines = LINE_BREAK.test(content)
 
     if (hasActualNewlines && normalizedContent.length > 80) {
-      const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line)
+      const lines = content.split(LINE_BREAK).map(line => line.trim()).filter(line => line)
 
       if (lines.length > 1) {
         return true
@@ -107,7 +107,7 @@ export class AttributeRenderer {
     const currentIndent = indentLength
 
     if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%[^%]*%>/.test(normalizedContent)) {
+      if (ERB_TAG.test(normalizedContent)) {
         return false
       }
 
@@ -138,7 +138,7 @@ export class AttributeRenderer {
       if (isNode(attribute.value, HTMLAttributeValueNode)) {
         const content = getCombinedStringFromNodes(attribute.value.children)
 
-        if (/\r?\n/.test(content)) {
+        if (LINE_BREAK.test(content)) {
           const name = attribute.name ? getCombinedAttributeName(attribute.name) : ""
 
           if (name === "class") {
@@ -147,10 +147,10 @@ export class AttributeRenderer {
             return normalizedContent.length > 80
           }
 
-          const lines = content.split(/\r?\n/)
+          const lines = content.split(LINE_BREAK)
 
           if (lines.length > 1) {
-            return lines.slice(1).some(line => /^[ \t\n\r]+/.test(line))
+            return lines.slice(1).some(line => LEADING_ASCII_WHITESPACE.test(line))
           }
         }
       }
@@ -161,10 +161,10 @@ export class AttributeRenderer {
 
   formatClassAttribute(content: string, name: string, equals: string, open_quote: string, close_quote: string): string {
     const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-    const hasActualNewlines = /\r?\n/.test(content)
+    const hasActualNewlines = LINE_BREAK.test(content)
 
     if (hasActualNewlines && normalizedContent.length > 80) {
-      const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line)
+      const lines = content.split(LINE_BREAK).map(line => line.trim()).filter(line => line)
 
       if (lines.length > 1) {
         return open_quote + this.formatMultilineAttributeValue(lines) + close_quote
@@ -175,7 +175,7 @@ export class AttributeRenderer {
     const attributeLine = `${name}${equals}${open_quote}${normalizedContent}${close_quote}`
 
     if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%[^%]*%>/.test(normalizedContent)) {
+      if (ERB_TAG.test(normalizedContent)) {
         return open_quote + normalizedContent + close_quote
       }
 

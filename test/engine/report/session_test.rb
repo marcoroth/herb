@@ -4,9 +4,12 @@ require "fileutils"
 require "tmpdir"
 
 require_relative "../../test_helper"
+require_relative "../../snapshot_utils"
 
 module Engine
   class ReportSessionTest < Minitest::Spec
+    include SnapshotUtils
+
     before do
       Herb::Engine::Runtime::Session.reset!
     end
@@ -346,7 +349,7 @@ module Engine
           "#{queries.size} SQL query"
         }
 
-        assert_includes session.report.to_json, %("value":"1 SQL query")
+        assert_snapshot_matches(session.report.to_json, "session_test-0")
       end
 
       test "reports every tag still rendering, innermost first" do
@@ -530,7 +533,7 @@ module Engine
           end
         end
 
-        refute_includes session.report.render_tree.last.keys, :via
+        assert_equal [:id, :template, :parent, :location], session.report.render_tree.last.keys
       end
 
       test "keeps the kind out of the frames it hands back" do

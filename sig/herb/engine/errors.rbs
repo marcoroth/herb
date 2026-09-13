@@ -18,16 +18,7 @@ module Herb
       def formatted_errors: (?highlight: untyped) -> untyped
     end
 
-    class GeneratorTemplateError < CompilationError
-    end
-
-    class InvalidRubyError < CompilationError
-      attr_reader compiled_source: untyped
-
-      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
-    end
-
-    class SecurityError < StandardError
+    module LocatedError
       attr_reader line: untyped
 
       attr_reader column: untyped
@@ -41,6 +32,20 @@ module Herb
       private
 
       def build_error_message: (untyped message) -> untyped
+    end
+
+    class GeneratorTemplateError < CompilationError
+      include LocatedError
+    end
+
+    class InvalidRubyError < CompilationError
+      attr_reader compiled_source: untyped
+
+      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
+    end
+
+    class SecurityError < StandardError
+      include LocatedError
     end
 
     class ParseError < CompilationError

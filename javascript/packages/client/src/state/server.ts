@@ -83,7 +83,7 @@ export class ServerState {
       this.values.set(name, next)
     }
 
-    this.restores.push(...this.optimistic(changed))
+    this.restores.push(...this.slots.building("client", () => this.optimistic(changed)))
 
     if (this.options.debounce <= 0) {
       return this.flush()
@@ -133,7 +133,7 @@ export class ServerState {
         return this.settle({ ...IDLE, written: restores.length, stale: true }, waiting)
       }
 
-      this.restore(restores)
+      this.slots.building("client", () => this.restore(restores))
 
       for (const [name, was] of previous) {
         if (was === undefined) {

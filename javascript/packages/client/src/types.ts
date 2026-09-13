@@ -58,6 +58,11 @@ export interface SlotsDelegate {
   valueWritten?(slot: Slot): void
   attributeWritten?(slot: Slot): void
   branchSwitched?(slot: Slot): void
+  holdBranch?(slot: Slot, branch: number | null): Promise<void> | void
+  holdItem?(slot: Slot, item: Item): Promise<void> | void
+  itemsMoving?(slot: Slot, items: Item[]): void
+  itemsMoved?(slot: Slot, items: Item[]): void
+  settled?(): void
   branchMaterial?(slot: Slot): void
   itemAdded?(slot: Slot, key: string, item: Item | null): void
   itemRemoved?(slot: Slot, key: string, item: Item | null): void

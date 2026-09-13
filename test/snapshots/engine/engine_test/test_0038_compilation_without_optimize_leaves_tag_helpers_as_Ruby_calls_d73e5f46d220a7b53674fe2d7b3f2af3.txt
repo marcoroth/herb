@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineTest#test_0038_compilation without optimize leaves tag helpers as Ruby calls"
+input: "engine_test-1"
+---
+'<div class="container">Content</div>'.freeze

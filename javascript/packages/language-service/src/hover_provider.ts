@@ -316,7 +316,7 @@ export class HoverProvider {
   }
 
   private getDirectiveHover(textDocument: TextDocument, position: Position): Hover | null {
-    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true })
+    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true }, textDocument.uri)
     const collector = new DirectiveKeywordCollector()
 
     collector.visit(parsed.value)
@@ -342,7 +342,7 @@ export class HoverProvider {
 
     if (!local) return null
 
-    const parsed = this.parserService.parseContent(textDocument.getText(), { prism_program: true, strict_locals: true })
+    const parsed = this.parserService.parseContent(textDocument.getText(), { prism_program: true, strict_locals: true }, textDocument.uri)
     const entries = collectStateDirectives(parsed.value as DocumentNode).filter(entry =>
       entry.signature.declarations.some(declaration => declaration.name === local.name),
     )
@@ -386,7 +386,7 @@ export class HoverProvider {
   }
 
   private getScopedStyleHover(textDocument: TextDocument, position: Position): Hover | null {
-    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true })
+    const parsed = this.parserService.parseContent(textDocument.getText(), { track_whitespace: true }, textDocument.uri)
     const collector = new ScopedStyleCollector()
 
     collector.visit(parsed.value)
@@ -417,7 +417,7 @@ export class HoverProvider {
     const parseResult = this.parserService.parseContent(textDocument.getText(), {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, textDocument.uri)
 
     const collector = new ActionViewElementCollector()
     collector.visit(parseResult.value)
@@ -545,7 +545,7 @@ export class HoverProvider {
     const parseResult = this.parserService.parseContent(textDocument.getText(), {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, textDocument.uri)
 
     const rewriter = new ActionViewTagHelperToHTMLRewriter()
     const collector = new ActionViewElementCollector()

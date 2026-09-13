@@ -1,5 +1,3 @@
-inherit_from: .rubocop_todo.yml
-
 require:
   - ./rubocop/cop/herb/includes_assertion.rb
 
@@ -81,6 +79,7 @@ Metrics/CyclomaticComplexity:
     - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb
@@ -99,6 +98,7 @@ Metrics/MethodLength:
     - lib/herb/diagnostic.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb
@@ -125,6 +125,7 @@ Metrics/AbcSize:
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/errors.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - lib/herb/token.rb
@@ -193,6 +194,7 @@ Metrics/ParameterLists:
     - lib/herb/errors.rb
     - lib/herb/parse_result.rb
     - lib/herb/parser_options.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/visitor/diagnostics.rb
     - lib/herb/engine/visitors/optimize_visitor.rb
@@ -213,6 +215,7 @@ Metrics/PerceivedComplexity:
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
     - lib/herb/project.rb
     - templates/template.rb

@@ -1,0 +1,5 @@
+---
+source: "Engine::ReportErrorPageTest::the page it serves#test_0004_keeps the provenance footer inside the container its rules are scoped to"
+input: "error_page_test-4"
+---
+<main class="herb-error"><h1>This template could not be compiled</h1><section><p class="herb-where">app/views/posts/_post.html.erb:2:3</p><p>Opening tag `&lt;form&gt;` does not have a matching closing tag.</p><p class="herb-hint">Close the `&lt;form&gt;` before the `&lt;/div&gt;` on line 4.</p><pre><span class="">&nbsp;    1  &lt;div&gt;</span><span class="herb-marked">&gt;    2    &lt;form&gt;</span><span class="">&nbsp;    3      &lt;h1&gt;Title&lt;/h1&gt;</span><span class="">&nbsp;    4  &lt;/div&gt;</span></pre></section><footer class="herb-error-provenance"><p>Compiled by Herb::Engine 0.10.3.</p></footer></main>

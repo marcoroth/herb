@@ -236,10 +236,14 @@ module Herb
 
       def visit_erb_control_node(node, &)
         if node.content
-          code_index = @tokens.length
+          if erb_escaped?(node.tag_opening.value)
+            add_escaped_erb_tag(node)
+          else
+            code_index = @tokens.length
 
-          apply_trim(node, node.content.value.strip)
-          keep_line_count(node, at: code_index)
+            apply_trim(node, node.content.value.strip)
+            keep_line_count(node, at: code_index)
+          end
         end
 
         yield if block_given?
@@ -268,7 +272,7 @@ module Herb
       end
 
       def visit_erb_case_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_when_node(node)
@@ -304,7 +308,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_in_node(node)
@@ -318,7 +322,7 @@ module Herb
       def visit_erb_block_node(node)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_block(node) if erb_escaped?(opening)
 
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
@@ -375,6 +379,12 @@ module Herb
         end
       end
 
+      def case_parts(node)
+        parts = [:conditions, :else_clause, :end_node]
+
+        erb_escaped?(node.tag_opening.value) ? [:children, *parts] : parts
+      end
+
       def visit_erb_control_with_parts(node, *parts)
         visit_erb_control_node(node) do
           parts.each do |part|
@@ -393,13 +403,22 @@ module Herb
 
       private
 
-      def check_for_escaped_erb_tag!(opening)
-        return unless opening.start_with?("<%%")
+      def add_escaped_erb_tag(node)
+        add_text("#{node.tag_opening.value.sub("<%%", "<%")}#{node.content.value}#{node.tag_closing&.value}")
+      end
 
-        raise Herb::Engine::GeneratorTemplateError,
-              "This file appears to be a generator template (a template used to generate ERB files) " \
-              "rather than a standard ERB template. It contains escaped ERB tags like <%%= %> which " \
-              "produce literal ERB output in the generated file."
+      def add_escaped_erb_block(node)
+        add_escaped_erb_tag(node)
+        visit_all(node.body)
+
+        end_node = node.end_node
+        return unless end_node
+
+        if erb_escaped?(end_node.tag_opening.value)
+          add_escaped_erb_tag(end_node)
+        else
+          visit(end_node)
+        end
       end
 
       def current_context
@@ -439,7 +458,7 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_tag(node) if erb_escaped?(opening)
 
         if !skip_comment_check && erb_omitted?(opening)
           unless @trim

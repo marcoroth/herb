@@ -19,6 +19,8 @@ export interface CollectionsDelegate {
   announceItemAdded(slot: Slot, key: string, item: Item | null): void
   announceItemRemoved(slot: Slot, key: string, item: Item | null): void
   announceItemRekeyed(slot: Slot, key: string, previousKey: string, item: Item | null): void
+  announceItemsMoving(slot: Slot, items: Item[]): void
+  announceItemsMoved(slot: Slot, items: Item[]): void
 }
 
 export class Collections {
@@ -103,12 +105,24 @@ export class Collections {
     }
 
     for (const key of plan.added) {
-      this.buildItem(slot, key, template)
+      this.buildItem(slot, key, template, this.anchorFor(slot, wanted, key))
     }
 
     this.order(slot, wanted)
 
     return []
+  }
+
+  private anchorFor(slot: Slot, wanted: string[], key: string): Node | null {
+    for (const following of wanted.slice(wanted.indexOf(key) + 1)) {
+      const item = slot.items.get(following)
+
+      if (item) {
+        return item.start
+      }
+    }
+
+    return this.itemsEnd(slot)
   }
 
   private rowTemplate(slot: Slot): DocumentFragment | null {
@@ -279,25 +293,29 @@ export class Collections {
       return
     }
 
+    const present = this.itemsInDocumentOrder(slot)
+    const items = keys.map((key) => slot.items.get(key)).filter((item): item is Item => item !== undefined)
+
+    if (items.length === present.length && items.every((item, position) => item === present[position])) {
+      return
+    }
+
     this.journal.record(slot, () => {
-      const before = this.itemsInDocumentOrder(slot).map((item) => item.key)
+      const before = present.map((item) => item.key)
 
       return (live) => {
         this.order(live, before)
       }
     })
 
-    for (const key of keys) {
-      const item = slot.items.get(key)
+    this.delegate.announceItemsMoving(slot, items)
 
-      if (!item) {
-        continue
-      }
-
+    for (const item of items) {
       end.parentNode?.insertBefore(outerRange(item).extractContents(), end)
     }
 
     this.pruneItems(slot)
+    this.delegate.announceItemsMoved(slot, items)
   }
 
   addItem(slot: Slot, key: string, options: AddItemOptions = {}): Item | null {
@@ -413,7 +431,7 @@ export class Collections {
     }
   }
 
-  private itemsInDocumentOrder(slot: Slot): Item[] {
+  itemsInDocumentOrder(slot: Slot): Item[] {
     return [...slot.items.values()]
       .filter((item) => item.start.isConnected)
       .sort((left, right) => {

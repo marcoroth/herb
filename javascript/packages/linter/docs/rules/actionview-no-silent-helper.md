@@ -48,6 +48,14 @@ A silent tag is fine when the helper's return value is used instead of being dis
 <% end %>
 ```
 
+A helper that is the return value of a block is consumed by whatever method takes the block, so a silent tag is fine there too. ViewComponent slot setters are the common case:
+
+```erb
+<%= render CardComponent.new do |card| %>
+  <% card.with_header { tag.h3("Title") } %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb

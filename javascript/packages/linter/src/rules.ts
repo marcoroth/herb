@@ -52,6 +52,7 @@ import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-cla
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
 import { ERBNoMethodDefinitionsRule } from "./rules/erb-no-method-definitions.js"
 import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
+import { ERBNoMultipleStatementsRule } from "./rules/erb-no-multiple-statements.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
@@ -145,6 +146,7 @@ import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-el
 import { HTMLNoLiteralNBSPRule } from "./rules/html-no-literal-nbsp.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
+import { HTMLNoObsoleteTagsRule } from "./rules/html-no-obsolete-tags.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
@@ -226,6 +228,7 @@ export const rules: RuleClass[] = [
   ERBNoJavascriptTagHelperRule,
   ERBNoMethodDefinitionsRule,
   ERBNoModuleDefinitionsRule,
+  ERBNoMultipleStatementsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
@@ -319,6 +322,7 @@ export const rules: RuleClass[] = [
   HTMLNoLiteralNBSPRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
+  HTMLNoObsoleteTagsRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,

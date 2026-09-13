@@ -158,7 +158,7 @@ export class DocumentSymbolProvider {
 
   getDocumentSymbols(document: TextDocument, options: NodeLabelOptions & FrameworkOptions = {}): DocumentSymbol[] {
     const parserOptions = options.framework === "actionview" ? PARSER_OPTIONS : PLAIN_PARSER_OPTIONS
-    const result = this.parserService.parseContent(document.getText(), parserOptions)
+    const result = this.parserService.parseContent(document.getText(), parserOptions, document.uri)
     const collector = new DocumentSymbolCollector({ ...LABEL_OPTIONS, ...options })
 
     collector.visit(result.value as DocumentNode)

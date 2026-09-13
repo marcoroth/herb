@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0129_a mismatched comparand in a boolean attribute still raises"
+input: "states_test-54"
+---
+app/views/test.html.erb:2:9: `draft == 3` compares the String state `draft` against an Integer literal, so it can never match.

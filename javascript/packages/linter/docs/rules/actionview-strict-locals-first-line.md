@@ -6,16 +6,16 @@
 
 Requires that the strict locals declaration:
 
-1. Appears on the **first line** of a Rails partial template
+1. Appears on the **first line** of the template
 2. Is followed by a **blank line** before any content
 
-A partial is any template whose filename begins with an underscore (e.g. `_card.html.erb`).
+Action View applies strict locals to every template, so this rule checks any template that carries a declaration, including views and layouts.
 
 ## Rationale
 
-While Rails accepts strict locals declarations anywhere in a partial, placing them at the very top, followed by a blank line, makes the partial's expected locals immediately visible and visually separated from the template body. This mirrors conventions like `# frozen_string_literal: true` in Ruby files.
+While Rails accepts strict locals declarations anywhere in a template, placing them at the very top, followed by a blank line, makes the expected locals immediately visible and visually separated from the template body. This mirrors conventions like `# frozen_string_literal: true` in Ruby files.
 
-Enforcing this placement ensures that locals are the first thing you see when opening the file, that the partial's public API is clearly separated from its content, and consistent across all partials in the codebase.
+Enforcing this placement ensures that locals are the first thing you see when opening the file, that the template's public API is clearly separated from its content, and consistent across the codebase.
 
 ## Examples
 
@@ -58,6 +58,15 @@ Strict locals on line 1 but no blank line before content:
 <div class="user-card">
   <%= user.name %>
 </div>
+```
+
+The same placement is required in a layout:
+
+```erb [app/views/layouts/application.html.erb]
+<%# locals: (**) %>
+<html>
+  <body><%= yield %></body>
+</html>
 ```
 
 ## Configuration

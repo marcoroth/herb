@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0022_mixed quote types"
+input: "secure_compiler_test-13"
+---
+<div class='test' data-value="data"></div>

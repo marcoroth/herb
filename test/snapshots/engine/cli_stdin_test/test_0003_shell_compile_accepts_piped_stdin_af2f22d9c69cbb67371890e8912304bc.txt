@@ -1,0 +1,7 @@
+---
+source: "Engine::CLIStdinTest#test_0003_shell: compile accepts piped stdin"
+input: "cli_stdin_test-2"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((name)); _buf << '</div>
+'.freeze;
+_buf.to_s

@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0010_erb output in attribute names blocked"
+input: "secure_compiler_test-4"
+---
+Use static attribute names with dynamic values instead.

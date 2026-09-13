@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0019_a case on a predicate spelling rewrites its subject"
+input: "states_test-11"
+---
+<!--herb-region:app/views/test.html.erb:845fec3d:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->b<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:845fec3d"><!--herb-branch:0:0-->a<!--herb-branch:0:1-->b</template>

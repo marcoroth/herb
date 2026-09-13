@@ -58,6 +58,13 @@ export class PrintContext {
   }
 
   /**
+   * Check if the output written so far ends with a whitespace character
+   */
+  endsWithWhitespace(): boolean {
+    return /\s$/.test(this.output)
+  }
+
+  /**
    * Check if we're at the start of a line
    */
   isAtStartOfLine(): boolean {

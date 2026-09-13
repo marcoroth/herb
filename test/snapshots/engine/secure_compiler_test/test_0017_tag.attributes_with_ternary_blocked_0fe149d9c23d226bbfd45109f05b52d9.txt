@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0017_tag.attributes with ternary blocked"
+input: "secure_compiler_test-9"
+---
+1:5 - Avoid using conditional `tag.attributes` in attribute position. - Suggestion: Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead.

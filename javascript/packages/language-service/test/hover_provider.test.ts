@@ -816,11 +816,11 @@ describe("HoverProvider", () => {
     class CachingParserService extends ParserService {
       private cache = new Map<string, ParseResult>()
 
-      parseContent(content: string, options?: ParseOptions): ParseResult {
-        const key = `${JSON.stringify(options ?? {})}:${content}`
+      parseContent(content: string, options?: ParseOptions, uri?: string): ParseResult {
+        const key = `${uri}:${JSON.stringify(options ?? {})}:${content}`
 
         if (!this.cache.has(key)) {
-          this.cache.set(key, super.parseContent(content, options))
+          this.cache.set(key, super.parseContent(content, options, uri))
         }
 
         return this.cache.get(key)!

@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0041_compile stdin with json output"
+input: "test_0041_compile stdin with json output"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((title)); _buf << '</div>'.freeze;
+_buf.to_s

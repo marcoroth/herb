@@ -484,7 +484,7 @@ export const HTML_BLOCK_ELEMENTS = new Set([
 ])
 
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
-export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, isKnownHTMLElement, isVoidElement, isCustomElement } from "@herb-tools/core"
+export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, HTML_DEPRECATED_ELEMENTS, isKnownHTMLElement, isVoidElement, isDeprecatedElement, isCustomElement } from "@herb-tools/core"
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 

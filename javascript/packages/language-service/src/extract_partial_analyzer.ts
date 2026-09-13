@@ -58,7 +58,7 @@ export class ExtractPartialAnalyzer {
     if (!bounds) return null
 
     const selection = text.slice(bounds.startOffset, bounds.endOffset)
-    const selectionResult = this.parserService.parseContent(selection)
+    const selectionResult = this.parserService.parseContent(selection, undefined, textDocument.uri)
 
     if (selectionResult.failed) return null
 
@@ -66,7 +66,7 @@ export class ExtractPartialAnalyzer {
       prism_program: true,
       strict_locals: true,
       track_whitespace: true,
-    })
+    }, textDocument.uri)
 
     if (document.failed) return null
 

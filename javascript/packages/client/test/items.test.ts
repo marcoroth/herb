@@ -195,6 +195,37 @@ describe("removeItem", () => {
   })
 })
 
+describe("a payload that only adds rows", () => {
+  test("builds them in place and leaves the existing rows, and their focus, alone", () => {
+    const input = document.createElement("input")
+
+    document.querySelector("#a")!.append(input)
+    input.focus()
+
+    const report = index.apply({
+      template: FILE,
+      version: "aaaaaaaa",
+      occurrence: 0,
+      slots: { 0: { items: { a: {}, b: {}, c: { 1: "c", 2: "third" } }, order: ["a", "b", "c"] } },
+    })
+
+    expect(report.deferred).toEqual([])
+    expect(keys()).toEqual(["a", "b", "c"])
+    expect(document.activeElement).toBe(input)
+  })
+
+  test("builds a row between two existing ones where the order puts it", () => {
+    index.apply({
+      template: FILE,
+      version: "aaaaaaaa",
+      occurrence: 0,
+      slots: { 0: { items: { a: {}, between: { 1: "between", 2: "middle" }, b: {} }, order: ["a", "between", "b"] } },
+    })
+
+    expect(keys()).toEqual(["a", "between", "b"])
+  })
+})
+
 describe("a collection nested inside a collection's row", () => {
   const NESTED_FILE = "app/views/posts/nested.html.erb"
 

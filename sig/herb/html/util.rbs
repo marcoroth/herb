@@ -3,14 +3,12 @@
 module Herb
   module HTML
     module Util
-      # TODO: extract to shared utility for all languages in .yml
       VOID_ELEMENTS: Array[String]
 
       RCDATA_ELEMENTS: Array[String]
 
       RAW_TEXT_ELEMENTS: Array[String]
 
-      # https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
       BOOLEAN_ATTRIBUTES: Array[String]
 
       # : (String) -> bool

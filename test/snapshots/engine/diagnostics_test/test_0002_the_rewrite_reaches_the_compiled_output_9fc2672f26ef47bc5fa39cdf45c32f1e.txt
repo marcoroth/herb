@@ -1,0 +1,6 @@
+---
+source: "Engine::DiagnosticsTest#test_0002_the rewrite reaches the compiled output"
+input: "diagnostics_test-0"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "The `<marquee>` element is obsolete.", severity: :warning, code: "ObsoleteElement", origin: "Herb Compiler", suggestion: "Use CSS animations instead.", line: 1, column: 0, end_line: 1, end_column: 24 }].freeze); _buf << '<div>Hello</div>'.freeze;
+_buf.to_s

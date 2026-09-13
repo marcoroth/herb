@@ -105,11 +105,15 @@ module Herb
 
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
+      def case_parts: (untyped node) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
 
-      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
+      def add_escaped_erb_tag: (untyped node) -> untyped
+
+      def add_escaped_erb_block: (untyped node) -> untyped
 
       def current_context: () -> untyped
 

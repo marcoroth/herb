@@ -28,6 +28,9 @@ module Herb
       def erb_omitted?: (String) -> bool
 
       # : (String) -> bool
+      def erb_escaped?: (String) -> bool
+
+      # : (String) -> bool
       def erb_output?: (String) -> bool
 
       # : (Herb::AST::Node?) -> Herb::AST::HTMLOmittedCloseTagNode?
