@@ -30,16 +30,31 @@ import {
   isWhitespacePreservingElement,
 } from "@herb-tools/core"
 
+const CHILD_ARRAY_PROPERTIES = ["children", "body", "statements", "conditions"]
+const ERB_TAG_MODIFIERS = new Set(["#", "=", "-", "%"])
+
 /**
  * Visitor that minifies HTML+ERB documents by removing non-significant whitespace
  */
 export class MinifierVisitor extends Visitor {
   private preserveWhitespaceDepth = 0
-  private currentParent: HTMLElementNode | null = null
+  private currentSiblings: Node[] | null = null
+  private currentEdgesAreInline = false
   private currentAttributeName: string | null = null
   private currentOpenTag: HTMLOpenTagNode | null = null
   private currentAttributeValue: HTMLAttributeValueNode | null = null
   private currentERBIf: ERBIfNode | null = null
+
+  private trimTagContent(token: { value: string } | null | undefined): void {
+    if (!token) return
+
+    const trimmed = token.value.trim()
+
+    if (trimmed === token.value) return
+    if (ERB_TAG_MODIFIERS.has(trimmed[0])) return
+
+    asMutable(token).value = trimmed
+  }
 
   private shouldPreserveWhitespace(): boolean {
     return this.preserveWhitespaceDepth > 0
@@ -47,7 +62,7 @@ export class MinifierVisitor extends Visitor {
 
   private isInlineNeighbour(node: Node | undefined): boolean {
     if (!node) return false
-    if (isHTMLTextNode(node) || isLiteralNode(node)) return true
+    if (isHTMLTextNode(node) || isLiteralNode(node)) return node.content !== ""
     if (isERBNode(node)) return true
     if (isHTMLElementNode(node)) return isInlineElement(getTagName(node) ?? "")
 
@@ -61,19 +76,54 @@ export class MinifierVisitor extends Visitor {
     return false
   }
 
-  private hasAdjacentInlineContent(node: Node): { before: boolean; after: boolean } {
-    if (!this.currentParent?.body) return { before: false, after: false }
+  private edgesAreInlineFor(node: Node, property: string): boolean {
+    if (isERBNode(node)) return true
+    if (isHTMLElementNode(node) && property === "body") return isInlineElement(getTagName(node) ?? "")
 
-    const body = this.currentParent.body
-    const index = body.indexOf(node)
+    return false
+  }
+
+  visitChildNodes(node: Node): void {
+    const record = node as unknown as Record<string, unknown>
+    const previousSiblings = this.currentSiblings
+    const previousEdges = this.currentEdgesAreInline
+
+    for (const child of node.compactChildNodes()) {
+      this.currentSiblings = previousSiblings
+      this.currentEdgesAreInline = previousEdges
+
+      for (const property of CHILD_ARRAY_PROPERTIES) {
+        const array = record[property]
+
+        if (Array.isArray(array) && array.includes(child)) {
+          this.currentSiblings = array
+          this.currentEdgesAreInline = this.edgesAreInlineFor(node, property)
+          break
+        }
+      }
+
+      child.accept(this)
+    }
+
+    this.currentSiblings = previousSiblings
+    this.currentEdgesAreInline = previousEdges
+  }
+
+  private hasAdjacentInlineContent(node: Node): { before: boolean; after: boolean } {
+    const siblings = this.currentSiblings
+
+    if (!siblings) return { before: false, after: false }
+
+    const index = siblings.indexOf(node)
 
     if (index === -1) return { before: false, after: false }
 
-    const previous = body[index - 1]
+    const previous = siblings[index - 1]
+    const next = siblings[index + 1]
 
     return {
-      before: this.isInlineNeighbour(previous) && !this.endsWithSpace(previous),
-      after: this.isInlineNeighbour(body[index + 1]),
+      before: previous ? this.isInlineNeighbour(previous) && !this.endsWithSpace(previous) : this.currentEdgesAreInline,
+      after: next ? this.isInlineNeighbour(next) : this.currentEdgesAreInline,
     }
   }
 
@@ -95,12 +145,7 @@ export class MinifierVisitor extends Visitor {
       this.preserveWhitespaceDepth++
     }
 
-    const previousParent = this.currentParent
-    this.currentParent = node
-
     super.visitHTMLElementNode(node)
-
-    this.currentParent = previousParent
 
     if (shouldPreserve) {
       this.preserveWhitespaceDepth--
@@ -341,13 +386,7 @@ export class MinifierVisitor extends Visitor {
   }
 
   visitERBIfNode(node: ERBIfNode): void {
-    if (node.content) {
-      const trimmed = node.content.value.trim()
-
-      if (trimmed !== node.content.value) {
-        asMutable(node.content).value = trimmed
-      }
-    }
+    this.trimTagContent(node.content)
 
     const previousERBIf = this.currentERBIf
     this.currentERBIf = node
@@ -358,13 +397,7 @@ export class MinifierVisitor extends Visitor {
   }
 
   visitERBElseNode(node: ERBElseNode): void {
-    if (node.content) {
-      const trimmed = node.content.value.trim()
-
-      if (trimmed !== node.content.value) {
-        asMutable(node.content).value = trimmed
-      }
-    }
+    this.trimTagContent(node.content)
 
     super.visitERBElseNode(node)
   }
@@ -377,11 +410,7 @@ export class MinifierVisitor extends Visitor {
       const hasExcessiveSurroundingWhitespace = this.hasExcessiveWhitespaceAround(node)
 
       if ((inAttributeValue && (inERBIf || inMultiLineAttribute)) || hasExcessiveSurroundingWhitespace) {
-        const trimmed = node.content.value.trim()
-
-        if (trimmed !== node.content.value) {
-          asMutable(node.content).value = trimmed
-        }
+        this.trimTagContent(node.content)
       }
     }
 
@@ -409,9 +438,10 @@ export class MinifierVisitor extends Visitor {
   }
 
   private hasExcessiveWhitespaceAround(node: Node): boolean {
-    if (!this.currentParent?.body) return false
+    const body = this.currentSiblings
 
-    const body = this.currentParent.body
+    if (!body) return false
+
     const index = body.indexOf(node)
 
     if (index === -1) return false
@@ -433,13 +463,7 @@ export class MinifierVisitor extends Visitor {
   }
 
   visitERBEndNode(node: ERBEndNode): void {
-    if (node.content) {
-      const trimmed = node.content.value.trim()
-
-      if (trimmed !== node.content.value) {
-        asMutable(node.content).value = trimmed
-      }
-    }
+    this.trimTagContent(node.content)
 
     super.visitERBEndNode(node)
   }

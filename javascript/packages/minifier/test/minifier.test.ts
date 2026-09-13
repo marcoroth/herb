@@ -261,7 +261,7 @@ describe("Minifier", () => {
       `
       const result = minifier.minifyString(template)
 
-      expect(result).toBe(`<div><%if admin?%><span>Admin</span><%else%><span>User</span><%end%></div>`)
+      expect(result).toBe(`<div><%if admin?%> <span>Admin</span> <%else%> <span>User</span> <%end%></div>`)
     })
 
     test("handles ERB output", () => {
