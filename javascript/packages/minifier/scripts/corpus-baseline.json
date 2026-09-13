@@ -1,7 +1,5 @@
 {
-  "text": 40,
-  "idempotence": 9,
-  "reparse": 5,
-  "structure": 4,
-  "size": 1
+  "text": 30,
+  "idempotence": 2,
+  "reparse": 1
 }

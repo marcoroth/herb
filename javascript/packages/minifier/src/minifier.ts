@@ -1,14 +1,15 @@
-import { IdentityPrinter } from "@herb-tools/printer"
-import { MinifyRewriter } from "./minifier-rewriter.js"
+import { MinifyPrinter } from "./minify-printer.js"
 
 import type { HerbBackend, Node } from "@herb-tools/core"
 
 /**
  * Minifier for HTML+ERB templates
  *
- * Removes non-significant whitespace while preserving:
- * - Whitespace in <pre> and <code> tags
- * - Document structure
+ * Removes the whitespace that does not survive rendering and the comments that
+ * carry no markup, while preserving:
+ * - the content of whitespace preserving elements
+ * - downlevel-revealed conditional comments
+ * - Herb directives
  *
  * @example
  * ```typescript
@@ -31,12 +32,10 @@ import type { HerbBackend, Node } from "@herb-tools/core"
  * ```
  */
 export class Minifier {
-  private rewriter: MinifyRewriter
   private herb?: HerbBackend
 
   constructor(herb?: HerbBackend) {
     this.herb = herb
-    this.rewriter = new MinifyRewriter()
   }
 
   /**
@@ -65,28 +64,20 @@ export class Minifier {
       return template
     }
 
-    const node = this.rewriter.rewrite(parseResult.value)
-
-    return IdentityPrinter.print(node)
+    return MinifyPrinter.print(parseResult.value)
   }
 
   /**
    * Minify an HTML+ERB AST node
    *
    * @param node - The AST node to minify
-   * @returns The minified AST node
+   * @returns The minified template string
    */
-  minify<T extends Node>(node: T): T {
-    return this.rewriter.rewrite(node)
+  minify(node: Node): string {
+    return MinifyPrinter.print(node)
   }
 }
 
-export function minify<T extends Node>(node: T): { node: T, output: string } {
-  const minifier = new Minifier()
-  const minified = minifier.minify(node)
-
-  return {
-    node: minified,
-    output: IdentityPrinter.print(minified)
-  }
+export function minify(node: Node): string {
+  return MinifyPrinter.print(node)
 }
