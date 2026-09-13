@@ -219,7 +219,7 @@ static AST_ERB_END_NODE_T* build_end_node(AST_ERB_CONTENT_NODE_T* end_erb, hb_al
     token_copy(end_erb->tag_opening, allocator),
     token_copy(end_erb->content, allocator),
     token_copy(end_erb->tag_closing, allocator),
-    end_erb->tag_opening->location.start,
+    erb_content_start_position(end_erb),
     erb_content_end_position(end_erb),
     end_errors,
     allocator
@@ -434,7 +434,7 @@ static size_t process_case_structure(
       next_erb->base.errors = NULL;
 
       location_T* then_keyword = compute_then_keyword(next_erb, next_type, allocator);
-      position_T cond_start = next_erb->tag_opening->location.start;
+      position_T cond_start = erb_content_start_position(next_erb);
       position_T cond_end = erb_content_end_position(next_erb);
 
       AST_NODE_T* condition_node;
@@ -494,7 +494,7 @@ static size_t process_case_structure(
       token_copy(next_erb->content, allocator),
       token_copy(next_erb->tag_closing, allocator),
       else_children,
-      next_erb->tag_opening->location.start,
+      erb_content_start_position(next_erb),
       erb_content_end_position(next_erb),
       else_errors,
       allocator
@@ -507,7 +507,7 @@ static size_t process_case_structure(
   AST_ERB_END_NODE_T* end_node =
     consume_end_node(array, &index, end_types, sizeof(end_types) / sizeof(end_types[0]), allocator);
 
-  position_T start_position = erb_node->tag_opening->location.start;
+  position_T start_position = erb_content_start_position(erb_node);
   position_T end_position = erb_content_end_position(erb_node);
 
   if (end_node) {
@@ -613,7 +613,7 @@ static size_t process_begin_structure(
       token_copy(next_erb->content, allocator),
       token_copy(next_erb->tag_closing, allocator),
       else_children,
-      next_erb->tag_opening->location.start,
+      erb_content_start_position(next_erb),
       erb_content_end_position(next_erb),
       else_errors,
       allocator
@@ -637,7 +637,7 @@ static size_t process_begin_structure(
       token_copy(next_erb->content, allocator),
       token_copy(next_erb->tag_closing, allocator),
       ensure_children,
-      next_erb->tag_opening->location.start,
+      erb_content_start_position(next_erb),
       erb_content_end_position(next_erb),
       ensure_errors,
       allocator
@@ -650,7 +650,7 @@ static size_t process_begin_structure(
   AST_ERB_END_NODE_T* end_node =
     consume_end_node(array, &index, end_types, sizeof(end_types) / sizeof(end_types[0]), allocator);
 
-  position_T start_position = erb_node->tag_opening->location.start;
+  position_T start_position = erb_content_start_position(erb_node);
   position_T end_position = erb_content_end_position(erb_node);
 
   if (end_node) {
@@ -730,7 +730,7 @@ static size_t process_block_structure(
       token_copy(next_erb->content, allocator),
       token_copy(next_erb->tag_closing, allocator),
       else_children,
-      next_erb->tag_opening->location.start,
+      erb_content_start_position(next_erb),
       erb_content_end_position(next_erb),
       else_errors,
       allocator
@@ -754,7 +754,7 @@ static size_t process_block_structure(
       token_copy(next_erb->content, allocator),
       token_copy(next_erb->tag_closing, allocator),
       ensure_children,
-      next_erb->tag_opening->location.start,
+      erb_content_start_position(next_erb),
       erb_content_end_position(next_erb),
       ensure_errors,
       allocator
@@ -767,7 +767,7 @@ static size_t process_block_structure(
   AST_ERB_END_NODE_T* end_node =
     consume_end_node(array, &index, end_types, sizeof(end_types) / sizeof(end_types[0]), allocator);
 
-  position_T start_position = erb_node->tag_opening->location.start;
+  position_T start_position = erb_content_start_position(erb_node);
   position_T end_position = erb_content_end_position(erb_node);
 
   if (end_node) {
@@ -1018,8 +1018,122 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
   }
 }
 
+static AST_ERB_CONTENT_NODE_T* erb_content_part_node(
+  token_T* tag_opening,
+  token_T* content,
+  token_T* tag_closing,
+  hb_allocator_T* allocator
+) {
+  analyzed_ruby_T* analyzed = herb_analyze_ruby(content->value);
+
+  position_T start_position = tag_opening ? tag_opening->location.start : content->location.start;
+  position_T end_position = tag_closing ? tag_closing->location.end : content->location.end;
+
+  return ast_erb_content_node_init(
+    tag_opening,
+    content,
+    tag_closing,
+    analyzed,
+    true,
+    analyzed->valid,
+    HERB_PRISM_NODE_EMPTY,
+    start_position,
+    end_position,
+    hb_array_init(0, allocator),
+    allocator
+  );
+}
+
+static void append_control_role_parts(AST_ERB_CONTENT_NODE_T* erb_node, hb_array_T* output, hb_allocator_T* allocator) {
+  token_T* tag_opening = token_copy(erb_node->tag_opening, allocator);
+  token_T* content = erb_node->content;
+  bool split_content = false;
+
+  while (true) {
+    analyzed_ruby_T* analyzed = split_content ? herb_analyze_ruby(content->value) : erb_node->analyzed_ruby;
+    uint32_t offset = 0;
+    bool split = control_role_split_offset(analyzed, &offset);
+
+    if (split_content) { free_analyzed_ruby(analyzed); }
+    if (!split) { break; }
+
+    token_T* head = NULL;
+    token_T* tail = NULL;
+
+    if (!token_split(content, offset, allocator, &head, &tail)) { break; }
+
+    hb_array_append(output, (AST_NODE_T*) erb_content_part_node(tag_opening, head, NULL, allocator));
+
+    if (split_content) { token_free(content, allocator); }
+
+    tag_opening = NULL;
+    content = tail;
+    split_content = true;
+  }
+
+  token_T* last_content = split_content ? content : token_copy(content, allocator);
+
+  hb_array_append(
+    output,
+    (AST_NODE_T*)
+      erb_content_part_node(tag_opening, last_content, token_copy(erb_node->tag_closing, allocator), allocator)
+  );
+}
+
+static bool needs_control_role_split(const AST_NODE_T* item) {
+  if (!item || item->type != AST_ERB_CONTENT_NODE) { return false; }
+
+  const AST_ERB_CONTENT_NODE_T* erb_node = (const AST_ERB_CONTENT_NODE_T*) item;
+
+  if (!erb_node->analyzed_ruby || !erb_node->content) { return false; }
+  if (!erb_node->tag_opening || !erb_node->tag_closing) { return false; }
+  if (erb_opening_is_custom(erb_node->tag_opening->value)) { return false; }
+  if (token_is_escaped_erb_tag_opening(erb_node->tag_opening)) { return false; }
+
+  uint32_t offset = 0;
+
+  return control_role_split_offset(erb_node->analyzed_ruby, &offset);
+}
+
+static hb_array_T* split_control_role_tags(hb_array_T* array, analyze_ruby_context_T* context) {
+  size_t size = hb_array_size(array);
+  bool found = false;
+
+  for (size_t index = 0; index < size; index++) {
+    if (needs_control_role_split(hb_array_get(array, index))) {
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) { return NULL; }
+
+  hb_allocator_T* allocator = context->allocator;
+  hb_array_T* split = hb_array_init(size + 1, allocator);
+
+  for (size_t index = 0; index < size; index++) {
+    AST_NODE_T* item = hb_array_get(array, index);
+
+    if (!needs_control_role_split(item)) {
+      hb_array_append(split, item);
+      continue;
+    }
+
+    AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) item;
+
+    append_control_role_parts(erb_node, split, allocator);
+    ast_node_free(item, allocator);
+  }
+
+  return split;
+}
+
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
   hb_allocator_T* allocator = context->allocator;
+  hb_array_T* split = split_control_role_tags(array, context);
+
+  if (split) { array = split; }
+
   hb_array_T* new_array = hb_array_init(hb_array_size(array), allocator);
   size_t index = 0;
 
@@ -1059,6 +1173,8 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
     hb_array_append(new_array, item);
     index++;
   }
+
+  if (split) { hb_array_free(&split); }
 
   return new_array;
 }

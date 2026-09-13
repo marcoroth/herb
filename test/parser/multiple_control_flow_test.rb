@@ -432,5 +432,62 @@ module Parser
         <% end %>
       ERB
     end
+    test "else and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <%
+        else
+          y
+        end
+        %>
+      ERB
+    end
+
+    test "elsif and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <% elsif b
+          y
+        end %>
+      ERB
+    end
+
+    test "when and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case t %>
+        <% when 1
+          a
+        end %>
+      ERB
+    end
+
+    test "rescue and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% rescue
+          y
+        end %>
+      ERB
+    end
+
+    test "ensure and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% ensure
+          y
+        end %>
+      ERB
+    end
+    test "escaped ERB tag with a continuation and an end" do
+      assert_parsed_snapshot(<<~ERB)
+        <%% if a %>x<%% else
+          y
+        end %>
+      ERB
+    end
   end
 end

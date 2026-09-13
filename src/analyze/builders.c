@@ -12,6 +12,16 @@
 #include <stddef.h>
 #include <string.h>
 
+position_T erb_content_start_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (erb_node->tag_opening != NULL) {
+    return erb_node->tag_opening->location.start;
+  } else if (erb_node->content != NULL) {
+    return erb_node->content->location.start;
+  } else {
+    return erb_node->base.location.start;
+  }
+}
+
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   if (erb_node->tag_closing != NULL) {
     return erb_node->tag_closing->location.end;
@@ -142,7 +152,7 @@ AST_NODE_T* create_control_node(
                                         .content = erb_node->content,
                                         .tag_closing = erb_node->tag_closing,
                                         .then_keyword = compute_then_keyword(erb_node, control_type, allocator),
-                                        .start_position = erb_node->tag_opening->location.start,
+                                        .start_position = erb_content_start_position(erb_node),
                                         .end_position = erb_content_end_position(erb_node),
                                         .errors = erb_node->base.errors,
                                         .control_type = control_type,

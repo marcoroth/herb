@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0044_keeps the line count when a continuation closes its block in the same tag"
+input: "{source: \"<% begin %>\\n  body\\n<% rescue; end %>\\n<%= after %>\\n\", options: {}}"
+---
+_buf = ::String.new; begin 
+ _buf << '  body
+'.freeze; rescue; end 
+ _buf << (after).to_s; _buf << '
+'.freeze;
+_buf.to_s

@@ -7,6 +7,7 @@
 #include "../location/position.h"
 #include "analyze.h"
 
+position_T erb_content_start_position(const AST_ERB_CONTENT_NODE_T* erb_node);
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node);
 
 location_T* compute_then_keyword_for_content(

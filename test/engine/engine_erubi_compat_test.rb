@@ -373,5 +373,16 @@ module Engine
       assert_compiled_snapshot(template, parser_options: { strict: false })
       assert_evaluated_snapshot(template, {}, { parser_options: { strict: false } }, enforce_erubi_equality: true)
     end
+
+    test "keeps the line count when a continuation closes its block in the same tag" do
+      template = <<~ERB
+        <% begin %>
+          body
+        <% rescue; end %>
+        <%= after %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
