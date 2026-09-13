@@ -18,6 +18,16 @@ function isExternal(id) {
 
 export default [
   {
+    input: "src/herb-minify.ts",
+    output: {
+      file: "dist/herb-minify.js",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    platform: "node",
+  },
+  {
     input: "src/index.ts",
     output: {
       file: "dist/index.esm.js",

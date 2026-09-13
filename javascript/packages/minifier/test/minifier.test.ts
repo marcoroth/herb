@@ -532,6 +532,34 @@ describe("Minifier", () => {
     })
   })
 
+  describe("Ruby that looks like a comment", () => {
+    test("does not treat interpolation inside a string as a Ruby comment", () => {
+      const template = `<strong><%= "#{count} #{label}" %>, <%= other %>:</strong>`
+
+      expect(minifier.minifyString(template)).toBe(`<strong><%="#{count} #{label}"%>, <%=other%>:</strong>`)
+    })
+
+    test("does not treat interpolation inside a percent literal as a Ruby comment", () => {
+      const template = `<p><%= %{<span>#{ points }</span>}.html_safe %>\n<br /></p>`
+
+      expect(minifier.minifyString(template)).toBe(`<p><%= %{<span>#{ points }</span>}.html_safe %> <br /></p>`)
+    })
+
+    test("does not fuse a trailing dash into an ERB trim marker", () => {
+      const template = `<p><% title %-Search results- %></p>`
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+      expect(result).toBe(`<p><% title %-Search results- %></p>`)
+    })
+
+    test("keeps a doctype whole after a tag that ends in a Ruby comment", () => {
+      const template = `<% # OVERRIDE: a note %>\n<!DOCTYPE html>\n<html><body>x</body></html>`
+
+      expect(minifier.minifyString(template)).toBe(`<% # OVERRIDE: a note %>\n<!DOCTYPE html><html><body>x</body></html>`)
+    })
+  })
+
   describe("declarations", () => {
     test("keeps the whitespace inside an XML declaration", () => {
       const template = `<?xml version="1.0" encoding="UTF-8"?>\n<root>x</root>`
