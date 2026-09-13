@@ -13,6 +13,8 @@ import { Config } from "@herb-tools/config"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 
+const GRAPHQL_TEMPLATE = `<%graphql query Products { id } %>\n`
+
 describe("LinterService", () => {
   beforeAll(async () => {
     await Herb.load()
@@ -238,6 +240,55 @@ describe("LinterService", () => {
       expect(offense?.message).toBe("Indent with tabs instead of spaces.")
     })
 
+    test("parses with the openers the config names", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      const projectConfig = Config.fromObject({
+        parser: { erb_openers: ["graphql"] },
+        linter: { enabled: true, rules: {} }
+      }, { projectPath: process.cwd() })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
+      linterService.setConfig(projectConfig)
+
+      const result = await linterService.lintDocument(createTestDocument(GRAPHQL_TEMPLATE))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).not.toContain("erb-require-whitespace-inside-tags")
+    })
+
+    test("reads a tag as Ruby when the config names no openers", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      const projectConfig = Config.fromObject({
+        linter: { enabled: true, rules: {} }
+      }, { projectPath: process.cwd() })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
+      linterService.setConfig(projectConfig)
+
+      const result = await linterService.lintDocument(createTestDocument(GRAPHQL_TEMPLATE))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain("erb-require-whitespace-inside-tags")
+    })
+
+    test("leaves parse errors to the parser service", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      const projectConfig = Config.fromObject({
+        linter: { enabled: true, rules: {} }
+      }, { projectPath: process.cwd() })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
+      linterService.setConfig(projectConfig)
+
+      const result = await linterService.lintDocument(createTestDocument("<div><span></div>\n"))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).not.toContain("parser-no-errors")
+    })
+
     test("respects files.exclude patterns from config", async () => {
       vi.spyOn(Config, "exists").mockReturnValue(true)
 
@@ -338,21 +389,14 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const projectConfig = {
-        path: "/test/.herb.yml",
-        config: {
-          version: "0.10.3",
-          linter: {
-            enabled: true,
-            rules: {
-              "html-tag-name-lowercase": { enabled: false }
-            }
+      const projectConfig = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: {
+            "html-tag-name-lowercase": { enabled: false }
           }
-        },
-        toJSON: () => "{}",
-        getConfiguredSeverity: () => "error",
-        applySeverityOverrides: (offenses: any) => offenses
-      } as any
+        }
+      }, { projectPath: process.cwd() })
 
       const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), index)
       linterService.setConfig(projectConfig)
