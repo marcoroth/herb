@@ -42,5 +42,19 @@ module Parser
     test "a configured opener does not shadow a built-in opening" do
       assert_parsed_snapshot(%(<%== value %>), erb_openers: ["="])
     end
+
+    test "a configured tag is left out of the prism program" do
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"], prism_program: true)
+        <%graphql query Products { id } %>
+        <%= name %>
+      HTML
+    end
+
+    test "a tag is in the prism program when its opener is not configured" do
+      assert_parsed_snapshot(<<~HTML, prism_program: true)
+        <%graphql query Products { id } %>
+        <%= name %>
+      HTML
+    end
   end
 end
