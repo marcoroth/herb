@@ -171,4 +171,104 @@ describe("erb-no-multiple-statements", () => {
       <% c = 3; d = 4 %>
     `)
   })
+  test("passes for a control-flow tag that only opens its branch", () => {
+    expectNoOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else %>
+        <span>User</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a case with its conditions in their own tags", () => {
+    expectNoOffenses(dedent`
+      <% case status %>
+      <% when "ok" %>
+        <span>OK</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a begin with rescue and ensure in their own tags", () => {
+    expectNoOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% rescue %>
+        <span>Failed</span>
+      <% ensure %>
+        <span>Done</span>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with else", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else
+        raise ArgumentError %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a single-line tag with else", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 9])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else; raise ArgumentError %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with when", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 2])
+
+    assertOffenses(dedent`
+      <% case status %>
+      <% when "ok"
+        logged = true %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with rescue", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% rescue => error
+        report(error) %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with ensure", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% ensure
+        cleanup %>
+      <% end %>
+    `)
+  })
+
+  test("reports every statement sharing a tag with a control-flow keyword", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 9])
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 16])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else; a = 1; b = 2 %>
+      <% end %>
+    `)
+  })
 })

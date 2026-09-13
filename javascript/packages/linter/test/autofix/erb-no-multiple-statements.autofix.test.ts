@@ -215,4 +215,98 @@ describe("erb-no-multiple-statements autofix", () => {
       expect(fixabilityOf('<div><% a = 1; b = 2; %></div>')).toEqual({ autocorrectable: true, unsafeAutocorrectable: false })
     })
   })
+  describe("control-flow tags", () => {
+    test("moves a statement out of a standalone else tag", () => {
+      const input = dedent`
+        <% if admin? %>
+          <span>Admin</span>
+        <% else
+          raise ArgumentError %>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% if admin? %>
+          <span>Admin</span>
+        <% else %>
+        <% raise ArgumentError %>
+        <% end %>
+      `
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+    })
+
+    test("moves a statement out of an else tag sharing its line with markup", () => {
+      const input = '<div><% if admin? %>A<% else; raise %><% end %></div>'
+      const expected = '<div><% if admin? %>A<% else %><% raise %><% end %></div>'
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(expected)
+    })
+
+    test("keeps the rescue binding when moving a statement out", () => {
+      const input = dedent`
+        <% begin %>
+          <span>Body</span>
+        <% rescue => error
+          report(error) %>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% begin %>
+          <span>Body</span>
+        <% rescue => error %>
+        <% report(error) %>
+        <% end %>
+      `
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(expected)
+    })
+
+    test("moves every statement out of a control-flow tag", () => {
+      const input = '<div><% if admin? %>A<% else; a = 1; b = 2 %><% end %></div>'
+      const expected = '<div><% if admin? %>A<% else %><% a = 1 %><% b = 2 %><% end %></div>'
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(expected)
+    })
+
+    test("is not offered when a heredoc separates the statements", () => {
+      const input = dedent`
+        <% if admin? %>
+          <span>Admin</span>
+        <% else
+          message = <<~TEXT
+            nope
+          TEXT
+          raise message %>
+        <% end %>
+      `
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.unfixed.length).toBeGreaterThan(0)
+    })
+
+    test("is not offered when a multiline string separates the statements", () => {
+      const input = '<% if admin? %>A<% else\n  message = "one\ntwo"\n  raise message %><% end %>'
+
+      const result = linter().autofix(input)
+
+      expect(result.source).toBe(input)
+    })
+
+    test("is offered as unsafe inside a whitespace preserving element", () => {
+      expect(fixabilityOf('<pre>\n<% if admin? %>A<% else\n  raise %>\n<% end %>\n</pre>')).toEqual({ autocorrectable: false, unsafeAutocorrectable: true })
+    })
+  })
 })
