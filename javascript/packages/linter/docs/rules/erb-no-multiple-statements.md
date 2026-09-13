@@ -48,6 +48,33 @@ Only the statements the tag itself introduces are counted. A tag holding a singl
 <% a = 1; b = 2; c = 3 %>
 ```
 
+## Autofix
+
+This rule provides an autofix that gives each statement its own ERB tag. A tag that stands alone on its line is split across lines, keeping its indentation:
+
+```erb
+<% user = User.find(1); post = user.posts.first %>
+```
+
+```erb
+<% user = User.find(1) %>
+<% post = user.posts.first %>
+```
+
+A tag that shares its line with markup is split in place, since a newline there would land in the rendered output:
+
+```erb
+<div><% a = 1; b = 2 %><%= a + b %></div>
+```
+
+```erb
+<div><% a = 1 %><% b = 2 %><%= a + b %></div>
+```
+
+An output tag produces the value of its last statement, so the fix keeps `<%=` on that statement and makes the ones before it silent. `<%- a = 1; b = 2 -%>` trims on both ends, so the leading trim stays on the first statement and the trailing trim on the last.
+
+Splitting a standalone line changes the whitespace the template emits under an engine that does not drop a line holding a single silent tag, which is why the fix is offered as unsafe inside `pre`, `textarea`, `script`, `style` and `xmp`, where that whitespace is visible. A tag that defines a method, a class or a module is not fixed at all, since it belongs outside the template rather than in a tidier tag, and neither is a tag whose statements are followed by a comment, which the fix has no place to put.
+
 ## References
 
 - [Ruby Style Guide - Semicolons](https://rubystyle.guide/#no-semicolon)
