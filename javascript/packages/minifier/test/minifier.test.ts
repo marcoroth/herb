@@ -229,11 +229,18 @@ describe("Minifier", () => {
       expect(result).toBe(`<div class="container" id="main">Content</div>`)
     })
 
-    test("handles self-closing tags", () => {
+    test("drops the space before a self-closing tag when the last value is quoted", () => {
       const template = `<div><img src="test.jpg" /></div>`
       const result = minifier.minifyString(template)
 
-      expect(result).toBe(`<div><img src="test.jpg" /></div>`)
+      expect(result).toBe(`<div><img src="test.jpg"/></div>`)
+    })
+
+    test("keeps the space before a self-closing tag when the last value is unquoted", () => {
+      const template = `<div><img src=test.jpg /></div>`
+      const result = minifier.minifyString(template)
+
+      expect(result).toBe(`<div><img src=test.jpg /></div>`)
     })
   })
 
@@ -300,6 +307,12 @@ describe("Minifier", () => {
 
       expect(result).toBe(`<div class="one two" id=" abc "></div>`)
     })
+    test("keeps the spaces around an ERB conditional in a class list", () => {
+      const template = `<div class="a <% if wide? %>wide<% end %> b">x</div>`
+
+      expect(minifier.minifyString(template)).toBe(`<div class="a <%if wide?%>wide<%end%> b">x</div>`)
+    })
+
     test("class with erb", () => {
       const template = `<div     class="  one    <%= two %>    "     id=" abc "   ></div>`
 
@@ -438,6 +451,100 @@ describe("Minifier", () => {
 
     test("removes comments inside inline elements", () => {
       expect(minifier.minifyString(`<span>a<!-- c -->b</span>`)).toBe(`<span>ab</span>`)
+    })
+  })
+
+  describe("Ruby that newlines hold together", () => {
+    test("keeps a newline after a tag whose content ends in a Ruby comment", () => {
+      const template = dedent`
+        <% # one
+          # two %>
+        <%= foo(
+          bar: 1
+        ) %>
+      `
+
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+      expect(result).toBe(dedent`
+        <% # one
+          # two %>
+        <%= foo(
+          bar: 1
+        ) %>
+      `)
+    })
+
+    test("keeps a newline after a branch tag whose content ends in a Ruby comment", () => {
+      const template = dedent`
+        <% if admin? %>
+          <p>Admin</p>
+        <% else # everyone else %>
+          <p>User</p>
+        <% end %>
+      `
+
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+      expect(result).toBe(`<%if admin?%><p>Admin</p><%else # everyone else%>\n<p>User</p><%end%>`)
+    })
+
+    test("keeps a newline after a block tag whose content ends in a Ruby comment", () => {
+      const template = dedent`
+        <% talks.each do |talk| # newest first %>
+          <p><%= talk %></p>
+        <% end %>
+      `
+
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+    })
+
+    test("does not trim multi-line ERB content, which would break a heredoc", () => {
+      const template = dedent`
+        <p>
+          <%= wrap(<<~TEXT)
+            hello
+          TEXT
+          %>
+        </p>
+      `
+
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+      expect(result).toContain("TEXT\n  ")
+    })
+
+    test("does not treat a hash inside a string as a Ruby comment", () => {
+      const template = dedent`
+        <% anchor = "#" + slug %>
+        <%= link_to(
+          "x", anchor
+        ) %>
+      `
+
+      const result = minifier.minifyString(template)
+
+      expect(Herb.parse(result).failed).toBe(false)
+      expect(result).toBe(`<%anchor = "#" + slug%> <%= link_to(\n  "x", anchor\n) %>`)
+    })
+  })
+
+  describe("declarations", () => {
+    test("keeps the whitespace inside an XML declaration", () => {
+      const template = `<?xml version="1.0" encoding="UTF-8"?>\n<root>x</root>`
+
+      expect(minifier.minifyString(template)).toBe(`<?xml version="1.0" encoding="UTF-8"?><root>x</root>`)
+    })
+
+    test("keeps the whitespace inside a doctype", () => {
+      const template = `<!DOCTYPE html>\n<html><body>x</body></html>`
+
+      expect(minifier.minifyString(template)).toBe(`<!DOCTYPE html><html><body>x</body></html>`)
     })
   })
 
