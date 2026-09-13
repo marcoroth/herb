@@ -1,0 +1,5 @@
+---
+source: "Engine::CLITest#test_0017_render without slots emits no markers"
+input: "test_0017_render without slots emits no markers"
+---
+<div>2</div>

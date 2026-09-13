@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0011_compile with slots emits markers"
+input: "test_0011_compile with slots emits markers"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["TEMPLATE"] += 1) - 1 ; _buf << '<!--herb-region:TEMPLATE:0417e5d5:'.freeze; _buf << __herb.h((_herb_occurrence)); _buf << '--><div data-herb-slot="0:child">'.freeze; _buf << __herb.h((name)); _buf << '</div><!--/herb-region:TEMPLATE-->'.freeze;
+_buf.to_s
