@@ -140,7 +140,7 @@ module Engine
 
         visitor, src = compile(template)
 
-        assert_equal "!!(open_initially)", src[/= (!!\(open_initially\))/, 1]
+        assert_equal "!!(open_initially)", src[/\{ (!!\(open_initially\)) \}/, 1]
         assert_equal :boolean, visitor.state_declarations[:region].first[:kind]
       end
 
@@ -1563,6 +1563,32 @@ module Engine
         assert_empty visitor.diagnostics
 
         assert_equal [1], server_reads
+      end
+
+      test "a bound value from a render frame picks the branch" do
+        template = "<%# herb:state (open: false) %><div><% if open %>yes<% else %>no<% end %></div>"
+
+        framed = Herb::Engine::Slots::Bindings.with("app/views/test.html.erb", bound: { "open" => true }) { render(template) }
+
+        assert_snapshot_matches(framed, "states_test-55")
+        assert_snapshot_matches(render(template), "states_test-56")
+      end
+
+      test "a seeded value ships in the seeds marker even when the default is a literal" do
+        template = "<%# herb:state (open: false, count: 0) %><div><% if open %>yes<% else %>no<% end %></div>"
+
+        framed = Herb::Engine::Slots::Bindings.with("app/views/test.html.erb", seeded: { "open" => true }) { render(template) }
+
+        assert_snapshot_matches(framed, "states_test-57")
+        assert_snapshot_matches(render(template), "states_test-58")
+      end
+
+      test "a bound value ships in the seeds marker beside the statically seeded ones" do
+        template = "<%# locals: (initial_note: \"\") %><%# herb:state (open: false, note: initial_note) %><div><% if open %>yes<% end %><%= note %></div>"
+
+        framed = Herb::Engine::Slots::Bindings.with("app/views/test.html.erb", bound: { "open" => true }) { render(template, { "initial_note" => "hi" }) }
+
+        assert_snapshot_matches(framed, "states_test-59")
       end
     end
   end

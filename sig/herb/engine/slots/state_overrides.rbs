@@ -11,6 +11,11 @@ module Herb
       # render context with a hash keyed by template identifier. Everything here degrades to
       # the compiled defaults, since a missing, malformed or wrongly typed override must never
       # break a render the defaults could serve.
+      #
+      # A render call that binds or seeds the template's states pushes a `Bindings` frame, and
+      # the frame layers with the client's values. A seed sits under them, since a client that
+      # has written the state since it was seeded knows better. A binding sits over them, since
+      # the client cannot tell two render sites of one partial apart.
       module StateOverrides
         HOOK: String
 

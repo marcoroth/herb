@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0137_a bound value ships in the seeds marker beside the statically seeded ones"
+input: "states_test-59"
+---
+<!--herb-region:app/views/test.html.erb:4be05e4e:0--><!--herb-seeds:{"note":"hi","open":true}--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->yes<!--/herb-slot:0--><!--herb-slot:1-->hi<!--/herb-slot:1--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:4be05e4e"><!--herb-branch:0:0-->yes</template>
