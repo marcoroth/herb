@@ -56,5 +56,26 @@ module Parser
         <%= name %>
       HTML
     end
+
+    test "a configured tag gets no prism node" do
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"], prism_nodes: true)
+        <%graphql query Products { id } %>
+        <%= name %>
+      HTML
+    end
+
+    test "a tag gets a prism node when its opener is not configured" do
+      assert_parsed_snapshot(<<~HTML, prism_nodes: true)
+        <%graphql query Products { id } %>
+        <%= name %>
+      HTML
+    end
+
+    test "a configured tag gets no nested prism nodes" do
+      assert_parsed_snapshot(<<~HTML, erb_openers: ["graphql"], prism_nodes: true, prism_nodes_deep: true)
+        <%graphql query Products { id } %>
+        <%= name %>
+      HTML
+    end
   end
 end
