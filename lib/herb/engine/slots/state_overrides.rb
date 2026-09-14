@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "bindings"
+
 module Herb
   class Engine
     module Slots
@@ -13,16 +15,28 @@ module Herb
       # the compiled defaults, since a missing, malformed or wrongly typed override must never
       # break a render the defaults could serve.
       #
+      # A render call that binds or seeds the template's states pushes a `Bindings` frame, and
+      # the frame layers with the client's values. A seed sits under them, since a client that
+      # has written the state since it was seeded knows better. A binding sits over them, since
+      # the client cannot tell two render sites of one partial apart.
+      #
       module StateOverrides
         HOOK = "__herb_state_overrides" #: String
 
         #: (untyped, String) -> Hash[String, untyped]?
         def self.resolve(raw, identifier)
-          return nil unless raw.is_a?(Hash)
+          frame = Bindings.current(identifier)
+          sent = raw.is_a?(Hash) ? raw[identifier] : nil
 
-          overrides = raw[identifier]
+          return nil if frame.nil? && !sent.is_a?(Hash)
 
-          overrides.is_a?(Hash) ? overrides : nil
+          layered = {} #: Hash[String, untyped]
+
+          layered.merge!(frame.fetch(:seeded)) if frame
+          layered.merge!(sent) if sent.is_a?(Hash)
+          layered.merge!(frame.fetch(:bound)) if frame
+
+          layered
         end
 
         #: (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped

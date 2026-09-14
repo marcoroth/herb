@@ -73,7 +73,7 @@ module Herb
           declaration = @internal_states.fetch(name)
           assignment = state_assignment(declaration)
 
-          @visitor.state_overrides? ? "#{overrides_prelude}; #{assignment}" : assignment
+          "#{overrides_prelude}; #{assignment}"
         end
 
         #: () -> Array[String]
@@ -616,7 +616,7 @@ module Herb
             scope = directive[:scope]
             bucket = scope ? (@item_states[scope] || {}) : @region_states
             assignments = bucket.values.map { |declaration| state_assignment(declaration) }.join("; ")
-            assignments = "#{overrides_prelude}; #{assignments}" if @visitor.state_overrides?
+            assignments = "#{overrides_prelude}; #{assignments}"
             seeds = directive[:inline] || @visitor.degraded? ? nil : seeds_marker(bucket.values)
 
             parent[position] = @visitor.record_assignment(@visitor.erb_code_node(seeds ? "; #{assignments}; #{seeds}" : "; #{assignments}"))
@@ -678,12 +678,17 @@ module Herb
           return nil unless @visitor.marking?
 
           seeded = declarations.select { |declaration| StateDirectives.seeded?(declaration) }
+          supplied = declarations.select { |declaration| overridable?(declaration) }
 
-          return nil if seeded.empty?
+          return nil if seeded.empty? && supplied.empty?
 
-          pairs = seeded.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
+          static = seeded.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
+          overridable = supplied.map { |declaration| "#{declaration.name.inspect} => #{declaration.name}" }.join(", ")
+          seeds = "#{Markers.seeds_expression(static)}.merge(#{Markers.seeds_expression(overridable)}.slice(*(#{OVERRIDES_LOCAL} || {}).keys))"
+          marker = "#{@visitor.bufvar} << ::Herb::Engine.raw(#{@visitor.markers.seeds_open_prefix.inspect} + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + #{@visitor.markers.seeds_open_suffix.inspect})"
+          marker = "#{marker} unless #{SEEDS_LOCAL}.empty?" if seeded.empty?
 
-          "#{SEEDS_LOCAL} = #{Markers.seeds_expression(pairs)}; #{@visitor.bufvar} << ::Herb::Engine.raw(#{@visitor.markers.seeds_open_prefix.inspect} + ::JSON.generate(#{SEEDS_LOCAL}).gsub(\"--\", \"-\\\\u002d\") + #{@visitor.markers.seeds_open_suffix.inspect})"
+          "#{SEEDS_LOCAL} = #{seeds}; #{marker}"
         end
 
         #: (StateDirectives::Declaration) -> String
@@ -705,10 +710,24 @@ module Herb
 
         #: (StateDirectives::Declaration) -> bool
         def overridable?(declaration)
-          return false unless @visitor.state_overrides?
           return false if declaration.derived
 
           @state_counts.none? { |count| count[:name] == declaration.name }
+        end
+
+        #: (String) -> StateDirectives::Declaration?
+        def region_declaration(name)
+          @region_states[name]
+        end
+
+        #: () -> Array[String]
+        def region_state_names
+          @region_states.keys
+        end
+
+        #: (String) -> bool
+        def counted_state?(name)
+          @state_counts.any? { |count| count[:name] == name }
         end
 
         #: () -> String
