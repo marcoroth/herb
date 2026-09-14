@@ -310,15 +310,52 @@ export function isERBBlockCommentDelimiter(node: Node): boolean {
 }
 
 /**
+ * Matches a heredoc opener and captures the identifier that terminates it.
+ */
+export const HEREDOC_OPENER = /<<([-~]?)(["'`]?)([A-Za-z_]\w*)\2/g
+
+/**
+ * Check if ERB content ends on a heredoc terminator line.
+ *
+ * A heredoc opened inside an ERB tag has to close inside the same tag, so its terminator
+ * is always the last line of the content. Matching the opener alone would also catch the
+ * `<<` operator written without a space, so the identifier it captures has to be the last
+ * line for this to report a heredoc.
+ */
+export function endsWithHeredocTerminator(content: string): boolean {
+  const trimmed = content.trim()
+
+  if (!trimmed.includes("\n")) return false
+
+  const lastLine = trimmed.slice(trimmed.lastIndexOf("\n") + 1).trim()
+
+  if (!lastLine) return false
+
+  for (const opener of trimmed.matchAll(HEREDOC_OPENER)) {
+    if (opener[3] === lastLine) return true
+  }
+
+  return false
+}
+
+/**
+ * Check if an ERB tag ends with a heredoc.
+ */
+export function isERBHeredoc(node: Node): boolean {
+  return isERBTagNode(node) && endsWithHeredocTerminator(node.content?.value ?? "")
+}
+
+/**
  * Check if an ERB tag has to sit on a line of its own.
  *
  * Ruby only recognizes `=begin` / `=end` as block-comment delimiters at the start of a
- * line, and a comment that already spans lines cannot be joined onto one. Both are lost
- * as soon as the tag is inlined, appended to a preceding line, or fused into a text-flow
- * run, so both are kept block-level.
+ * line, a comment that already spans lines cannot be joined onto one, and a heredoc
+ * terminator has to be alone on its line. All three are lost as soon as the tag is
+ * inlined, appended to a preceding line, or fused into a text-flow run, so all three are
+ * kept block-level.
  */
 export function isOwnLineERBTag(node: Node): boolean {
-  return isMultilineERBComment(node) || isERBBlockCommentDelimiter(node)
+  return isMultilineERBComment(node) || isERBBlockCommentDelimiter(node) || isERBHeredoc(node)
 }
 
 /**
