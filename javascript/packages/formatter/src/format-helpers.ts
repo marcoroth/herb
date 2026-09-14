@@ -312,7 +312,7 @@ export function isERBBlockCommentDelimiter(node: Node): boolean {
 /**
  * Matches a heredoc opener and captures the identifier that terminates it.
  */
-export const HEREDOC_OPENER = /<<([-~]?)(["'`]?)([A-Za-z_]\w*)\2/g
+const HEREDOC_OPENER = /<<[-~]?(?<quote>["'`]?)(?<identifier>[A-Za-z_]\w*)\k<quote>/g
 
 /**
  * Check if ERB content ends on a heredoc terminator line.
@@ -332,7 +332,7 @@ export function endsWithHeredocTerminator(content: string): boolean {
   if (!lastLine) return false
 
   for (const opener of trimmed.matchAll(HEREDOC_OPENER)) {
-    if (opener[3] === lastLine) return true
+    if (opener.groups?.identifier === lastLine) return true
   }
 
   return false
