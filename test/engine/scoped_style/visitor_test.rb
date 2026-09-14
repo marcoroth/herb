@@ -394,5 +394,14 @@ module Engine
       refute_nil diagnostic
       assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
     end
+
+    test "carries the scope into the fallback a client stands in while content is stale" do
+      source = %(<%# herb:slots client %><%# herb:state (album: "") %><style scoped>.g { color: red; }</style><Fragment on="album"><b>Loaded</b><Fallback><i class="g">Loading</i></Fallback></Fragment>)
+
+      assert_compiled_snapshot(
+        source,
+        options(visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], project_path: PROJECT_PATH)
+      )
+    end
   end
 end
