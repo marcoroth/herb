@@ -5,6 +5,7 @@
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_narray.h"
+#include "../include/parser/parser.h"
 #include "../include/prism/herb_prism_node.h"
 #include "../include/prism/prism_context.h"
 #include "../include/visitor.h"
@@ -268,12 +269,14 @@ static bool collect_content_ranges_visitor(const AST_NODE_T* node, void* data) {
 void herb_annotate_prism_nodes(
   AST_DOCUMENT_NODE_T* document,
   const char* source,
-  bool prism_nodes,
-  bool prism_nodes_deep,
-  bool prism_program,
+  const parser_options_T* options,
   hb_allocator_T* allocator
 ) {
-  if (!document || !source) { return; }
+  if (!document || !source || !options) { return; }
+
+  const bool prism_nodes = options->prism_nodes;
+  const bool prism_nodes_deep = options->prism_nodes_deep;
+  const bool prism_program = options->prism_program;
 
   size_t source_len = strlen(source);
 
@@ -294,6 +297,8 @@ void herb_annotate_prism_nodes(
     .semicolons = true,
     .comments = false,
     .preserve_positions = true,
+    .erb_openers = options->erb_openers,
+    .erb_opener_count = options->erb_opener_count,
   };
 
   herb_extract_ruby_to_buffer_with_options(source, &context->ruby_buf, &extract_options, allocator);

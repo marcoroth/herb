@@ -94,14 +94,7 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   }
 
   if (parser_options.prism_nodes || parser_options.prism_program) {
-    herb_annotate_prism_nodes(
-      document,
-      source,
-      parser_options.prism_nodes,
-      parser_options.prism_nodes_deep,
-      parser_options.prism_program,
-      allocator
-    );
+    herb_annotate_prism_nodes(document, source, &parser_options, allocator);
   }
 
   if (parser_options_past_deadline(&parser_options)) {
