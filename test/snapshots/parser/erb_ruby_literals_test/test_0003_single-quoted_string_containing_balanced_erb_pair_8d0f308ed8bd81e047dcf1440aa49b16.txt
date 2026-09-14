@@ -1,0 +1,12 @@
+---
+source: "Parser::ERBRubyLiteralsTest#test_0003_single-quoted string containing balanced erb pair"
+input: "<% x = '<% ignore %>' %>"
+---
+@ DocumentNode (location: (1:0)-(1:24))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:24))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " x = '<% ignore %>' " (location: (1:2)-(1:22))
+        ├── tag_closing: "%>" (location: (1:22)-(1:24))
+        ├── parsed: true
+        └── valid: true

@@ -5,37 +5,38 @@ input: |2-
 options: {render_nodes: true}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
-├── errors: (2 errors)
-│   ├── @ StrayERBClosingTagError (location: (1:33)-(1:35))
-│   │   └── message: "Stray `%>` found at (1:33). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
-│   │
-│   └── @ RubyParseError (location: (1:35)-(1:35))
-│       ├── message: "string_literal_eof: unterminated string meets end of file"
-│       ├── error_message: "unterminated string meets end of file"
-│       ├── diagnostic_id: "string_literal_eof"
-│       └── level: "syntax"
-│
-└── children: (3 items)
-    ├── @ ERBContentNode (location: (1:0)-(1:20))
-    │   ├── errors: (1 error)
-    │   │   └── @ NestedERBTagError (location: (1:20)-(1:23))
-    │   │       ├── message: "ERB tag `<%=` at (1:0) was terminated by nested `<%` tag at (1:20). Nesting `<%` tags is not supported."
-    │   │       ├── opening_tag: "<%=" (location: (1:0)-(1:3))
-    │   │       ├── nested_tag_line: 1
-    │   │       └── nested_tag_column: 20
-    │   │
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:35))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render inline: "" (location: (1:3)-(1:20))
-    │   ├── tag_closing: ∅
-    │   ├── parsed: true
-    │   └── valid: false
+    │   ├── content: " render inline: "<%= name %>" " (location: (1:3)-(1:33))
+    │   ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:35))
+    │   │       ├── partial: ∅
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: "<%= name %>" (location: (1:19)-(1:32))
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: ∅
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: []
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
     │
-    ├── @ ERBContentNode (location: (1:20)-(1:31))
-    │   ├── tag_opening: "<%=" (location: (1:20)-(1:23))
-    │   ├── content: " name " (location: (1:23)-(1:29))
-    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
-    │   ├── parsed: true
-    │   └── valid: true
-    │
-    └── @ HTMLTextNode (location: (1:31)-(2:0))
-        └── content: "\" %>\n"
+    └── @ HTMLTextNode (location: (1:35)-(2:0))
+        └── content: "\n"

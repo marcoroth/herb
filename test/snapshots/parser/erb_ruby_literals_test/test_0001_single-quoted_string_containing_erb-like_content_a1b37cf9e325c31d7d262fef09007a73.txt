@@ -1,0 +1,12 @@
+---
+source: "Parser::ERBRubyLiteralsTest#test_0001_single-quoted string containing erb-like content"
+input: "<% x = '<%' %>"
+---
+@ DocumentNode (location: (1:0)-(1:14))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:14))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " x = '<%' " (location: (1:2)-(1:12))
+        ├── tag_closing: "%>" (location: (1:12)-(1:14))
+        ├── parsed: true
+        └── valid: true

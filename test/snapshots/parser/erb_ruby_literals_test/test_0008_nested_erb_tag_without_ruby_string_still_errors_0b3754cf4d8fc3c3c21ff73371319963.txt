@@ -1,0 +1,26 @@
+---
+source: "Parser::ERBRubyLiteralsTest#test_0008_nested erb tag without ruby string still errors"
+input: "<%<% %>"
+---
+@ DocumentNode (location: (1:0)-(1:7))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:2))
+    │   ├── errors: (1 error)
+    │   │   └── @ NestedERBTagError (location: (1:2)-(1:4))
+    │   │       ├── message: "ERB tag `<%` at (1:0) was terminated by nested `<%` tag at (1:2). Nesting `<%` tags is not supported."
+    │   │       ├── opening_tag: "<%" (location: (1:0)-(1:2))
+    │   │       ├── nested_tag_line: 1
+    │   │       └── nested_tag_column: 2
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "" (location: (1:2)-(1:2))
+    │   ├── tag_closing: ∅
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ ERBContentNode (location: (1:2)-(1:7))
+        ├── tag_opening: "<%" (location: (1:2)-(1:4))
+        ├── content: " " (location: (1:4)-(1:5))
+        ├── tag_closing: "%>" (location: (1:5)-(1:7))
+        ├── parsed: true
+        └── valid: true

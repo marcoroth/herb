@@ -1,0 +1,15 @@
+---
+source: "Parser::ERBRubyLiteralsTest#test_0007_line comment containing erb-like content"
+input: |2-
+<% # <%
+ %>
+---
+@ DocumentNode (location: (1:0)-(2:3))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(2:3))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " # <%
+         " (location: (1:2)-(2:1))
+        ├── tag_closing: "%>" (location: (2:1)-(2:3))
+        ├── parsed: true
+        └── valid: true

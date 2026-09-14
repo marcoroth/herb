@@ -278,6 +278,131 @@ static bool lexer_recover_erb_tag_end(
   return false;
 }
 
+static void lexer_erb_content_advance_byte(lexer_T* lexer) {
+  if (is_newline(lexer->current_character)) {
+    lexer->current_line++;
+    lexer->current_column = 0;
+  } else {
+    lexer->current_column++;
+  }
+
+  lexer->current_position++;
+  lexer->current_character =
+    (lexer->current_position < lexer->source.length) ? lexer->source.data[lexer->current_position] : '\0';
+}
+
+static bool lexer_try_skip_ruby_string(lexer_T* lexer);
+
+static bool lexer_try_skip_single_quoted(lexer_T* lexer) {
+  lexer_state_snapshot_T snapshot = lexer_save_state(lexer);
+
+  lexer_erb_content_advance_byte(lexer);
+
+  while (!lexer_eof(lexer) && lexer->current_character != '\'') {
+    if (lexer->current_character == '\\') {
+      char next = lexer_peek(lexer, 1);
+
+      if (next == '\\' || next == '\'') {
+        lexer_erb_content_advance_byte(lexer);
+        lexer_erb_content_advance_byte(lexer);
+        continue;
+      }
+    }
+
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  if (lexer_eof(lexer) || lexer->current_character != '\'') {
+    lexer_restore_state(lexer, snapshot);
+    return false;
+  }
+
+  lexer_erb_content_advance_byte(lexer);
+  return true;
+}
+
+static bool lexer_try_skip_interpolated_string(lexer_T* lexer, char terminator) {
+  lexer_state_snapshot_T snapshot = lexer_save_state(lexer);
+
+  lexer_erb_content_advance_byte(lexer);
+
+  while (!lexer_eof(lexer) && lexer->current_character != terminator) {
+    if (lexer->current_character == '\\') {
+      lexer_erb_content_advance_byte(lexer);
+      if (lexer_eof(lexer)) { break; }
+      lexer_erb_content_advance_byte(lexer);
+      continue;
+    }
+
+    if (lexer->current_character == '#' && lexer_peek(lexer, 1) == '{') {
+      lexer_erb_content_advance_byte(lexer);
+      lexer_erb_content_advance_byte(lexer);
+
+      int depth = 1;
+
+      while (!lexer_eof(lexer) && depth > 0) {
+        char c = lexer->current_character;
+
+        if (c == '{') {
+          depth++;
+          lexer_erb_content_advance_byte(lexer);
+        } else if (c == '}') {
+          depth--;
+          lexer_erb_content_advance_byte(lexer);
+        } else if (c == '\'' || c == '"' || c == '`') {
+          if (!lexer_try_skip_ruby_string(lexer)) {
+            lexer_restore_state(lexer, snapshot);
+            return false;
+          }
+        } else {
+          lexer_erb_content_advance_byte(lexer);
+        }
+      }
+
+      if (depth != 0) {
+        lexer_restore_state(lexer, snapshot);
+        return false;
+      }
+
+      continue;
+    }
+
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  if (lexer_eof(lexer) || lexer->current_character != terminator) {
+    lexer_restore_state(lexer, snapshot);
+    return false;
+  }
+
+  lexer_erb_content_advance_byte(lexer);
+  return true;
+}
+
+static bool lexer_try_skip_ruby_string(lexer_T* lexer) {
+  char c = lexer->current_character;
+
+  if (c == '\'') { return lexer_try_skip_single_quoted(lexer); }
+  if (c == '"' || c == '`') { return lexer_try_skip_interpolated_string(lexer, c); }
+
+  return false;
+}
+
+static bool lexer_skip_ruby_literal_or_comment(lexer_T* lexer) {
+  char c = lexer->current_character;
+
+  if (c == '\'' || c == '"' || c == '`') { return lexer_try_skip_ruby_string(lexer); }
+
+  if (c == '#') {
+    while (!lexer_eof(lexer) && !is_newline(lexer->current_character) && !lexer_peek_erb_end(lexer, 0)) {
+      lexer_erb_content_advance_byte(lexer);
+    }
+    return true;
+  }
+
+  return false;
+}
+
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   uint32_t start_position = lexer->current_position;
 
@@ -285,6 +410,11 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   size_t candidate_count = 0;
 
   while (!lexer_peek_erb_end(lexer, 0)) {
+    if (lexer_skip_ruby_literal_or_comment(lexer)) {
+      if (lexer_peek_erb_end(lexer, 0)) { break; }
+      continue;
+    }
+
     if (lexer_eof(lexer) || lexer_peek_erb_start(lexer, 0)) {
       if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count) && !lexer_eof(lexer)) {
         lexer->state = STATE_DATA;
