@@ -8,21 +8,6 @@ import type { AnalysisResult, FileStatus } from './types'
 
 const execFileAsync = promisify(execFile)
 
-/**
- * How long a parse worker may run before it is killed and the file reported as
- * timed out.
- *
- * This only has to catch a worker that hangs. The parse itself is already
- * bounded: the parser enforces `ParserOptions.timeout` (1 s by default) and a
- * parse that overruns it comes back with a `TIMEOUT_ERROR`, which the worker
- * reports as `timedOut`.
- *
- * It must not be tight, because every worker is a fresh Node process that has
- * to boot and load the WASM bundle before it reads the file. That costs about
- * half a second on an idle Apple Silicon Mac, more when `cpus()` workers start
- * at once. With a 1 s limit most of a large project was reported as "Timed Out"
- * on startup cost alone (#2552).
- */
 const WORKER_TIMEOUT_MS = 30_000
 
 export class AnalysisService {
