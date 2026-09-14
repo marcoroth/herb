@@ -76,6 +76,7 @@ module Herb
         file_path: properties[:filename],
         project_path: properties[:project_path],
         options: context_options(properties),
+        resolver: properties[:resolver],
         **(properties[:context] || {})
       )
 
@@ -469,7 +470,7 @@ module Herb
     end
 
     def context_options(properties)
-      properties.except(:visitors, :src, :context)
+      properties.except(:visitors, :src, :context, :resolver)
     end
 
     #: () -> Hash[Symbol, untyped]

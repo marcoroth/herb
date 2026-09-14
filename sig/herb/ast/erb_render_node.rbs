@@ -22,6 +22,12 @@ module Herb
       def similar_partials: (?view_root: untyped, ?source_directory: untyped, ?limit: untyped) -> untyped
 
       def find_non_partial_matches: (?untyped name, ?untyped view_root, ?untyped source_directory) -> untyped
+
+      private
+
+      def resolver_for: (untyped view_root) -> untyped
+
+      def coerce_directory: (untyped directory) -> untyped
     end
   end
 end
