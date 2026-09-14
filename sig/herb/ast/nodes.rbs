@@ -1884,6 +1884,8 @@ module Herb
     # |  handlers: Herb::Token?,
     # |  content_type: Herb::Token?,
     # |  locals: Array[Herb::AST::RubyRenderLocalNode]?,
+    # |  state: Array[Herb::AST::HerbStateDeclarationNode]?,
+    # |  state_location: Herb::Location?,
     # | }
     class RubyRenderKeywordsNode < Node
       include Colors
@@ -1924,14 +1926,18 @@ module Herb
 
       attr_reader locals: Array[Herb::AST::RubyRenderLocalNode]?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::RubyRenderLocalNode]?) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::RubyRenderLocalNode]?) -> void
+      attr_reader state: Array[Herb::AST::HerbStateDeclarationNode]?
+
+      attr_reader state_location: Herb::Location?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::RubyRenderLocalNode]?, Array[Herb::AST::HerbStateDeclarationNode]?, Herb::Location?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::RubyRenderLocalNode]?, Array[Herb::AST::HerbStateDeclarationNode]?, Herb::Location?) -> void
 
       # : () -> String
       def self.type: () -> String
 
-      # : (?partial: Herb::Token?, ?template_path: Herb::Token?, ?layout: Herb::Token?, ?file: Herb::Token?, ?inline_template: Herb::Token?, ?body: Herb::Token?, ?plain: Herb::Token?, ?html: Herb::Token?, ?renderable: Herb::Token?, ?collection: Herb::Token?, ?object: Herb::Token?, ?as_name: Herb::Token?, ?spacer_template: Herb::Token?, ?formats: Herb::Token?, ?variants: Herb::Token?, ?handlers: Herb::Token?, ?content_type: Herb::Token?, ?locals: Array[Herb::AST::RubyRenderLocalNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> RubyRenderKeywordsNode
-      def self.build: (?partial: Herb::Token?, ?template_path: Herb::Token?, ?layout: Herb::Token?, ?file: Herb::Token?, ?inline_template: Herb::Token?, ?body: Herb::Token?, ?plain: Herb::Token?, ?html: Herb::Token?, ?renderable: Herb::Token?, ?collection: Herb::Token?, ?object: Herb::Token?, ?as_name: Herb::Token?, ?spacer_template: Herb::Token?, ?formats: Herb::Token?, ?variants: Herb::Token?, ?handlers: Herb::Token?, ?content_type: Herb::Token?, ?locals: Array[Herb::AST::RubyRenderLocalNode]?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> RubyRenderKeywordsNode
+      # : (?partial: Herb::Token?, ?template_path: Herb::Token?, ?layout: Herb::Token?, ?file: Herb::Token?, ?inline_template: Herb::Token?, ?body: Herb::Token?, ?plain: Herb::Token?, ?html: Herb::Token?, ?renderable: Herb::Token?, ?collection: Herb::Token?, ?object: Herb::Token?, ?as_name: Herb::Token?, ?spacer_template: Herb::Token?, ?formats: Herb::Token?, ?variants: Herb::Token?, ?handlers: Herb::Token?, ?content_type: Herb::Token?, ?locals: Array[Herb::AST::RubyRenderLocalNode]?, ?state: Array[Herb::AST::HerbStateDeclarationNode]?, ?state_location: Herb::Location?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> RubyRenderKeywordsNode
+      def self.build: (?partial: Herb::Token?, ?template_path: Herb::Token?, ?layout: Herb::Token?, ?file: Herb::Token?, ?inline_template: Herb::Token?, ?body: Herb::Token?, ?plain: Herb::Token?, ?html: Herb::Token?, ?renderable: Herb::Token?, ?collection: Herb::Token?, ?object: Herb::Token?, ?as_name: Herb::Token?, ?spacer_template: Herb::Token?, ?formats: Herb::Token?, ?variants: Herb::Token?, ?handlers: Herb::Token?, ?content_type: Herb::Token?, ?locals: Array[Herb::AST::RubyRenderLocalNode]?, ?state: Array[Herb::AST::HerbStateDeclarationNode]?, ?state_location: Herb::Location?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> RubyRenderKeywordsNode
 
       # : () -> serialized_ruby_render_keywords_node
       def to_hash: () -> serialized_ruby_render_keywords_node

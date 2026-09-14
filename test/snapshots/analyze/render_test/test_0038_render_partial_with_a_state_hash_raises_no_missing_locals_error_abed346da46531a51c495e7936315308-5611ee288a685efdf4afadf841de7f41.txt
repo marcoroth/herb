@@ -1,18 +1,18 @@
 ---
-source: "Analyze::RenderTest#test_0003_render with partial and locals"
+source: "Analyze::RenderTest#test_0038_render partial with a state hash raises no missing locals error"
 input: |2-
-<%= render partial: "card", locals: { title: @title, body: "Hello" } %>
-options: {render_nodes: true}
+<%= render partial: "shared/album_card", state: { open: modal_open } %>
+options: {render_nodes: true, herb_directives: true}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBRenderNode (location: (1:0)-(1:71))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render partial: "card", locals: { title: @title, body: "Hello" } " (location: (1:3)-(1:69))
+    │   ├── content: " render partial: "shared/album_card", state: { open: modal_open } " (location: (1:3)-(1:69))
     │   ├── tag_closing: "%>" (location: (1:69)-(1:71))
     │   ├── keywords:
     │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:71))
-    │   │       ├── partial: "card" (location: (1:20)-(1:26))
+    │   │       ├── partial: "shared/album_card" (location: (1:20)-(1:39))
     │   │       ├── template_path: ∅
     │   │       ├── layout: ∅
     │   │       ├── file: ∅
@@ -29,23 +29,17 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       ├── locals: (2 items)
-    │   │       │   ├── @ RubyRenderLocalNode (location: (1:38)-(1:51))
-    │   │       │   │   ├── name: "title" (location: (1:38)-(1:44))
-    │   │       │   │   └── value:
-    │   │       │   │       └── @ RubyLiteralNode (location: (1:45)-(1:51))
-    │   │       │   │           └── content: "@title"
-    │   │       │   │
-    │   │       │   │
-    │   │       │   └── @ RubyRenderLocalNode (location: (1:53)-(1:66))
-    │   │       │       ├── name: "body" (location: (1:53)-(1:58))
-    │   │       │       └── value:
-    │   │       │           └── @ RubyLiteralNode (location: (1:59)-(1:66))
-    │   │       │               └── content: "\"Hello\""
+    │   │       ├── locals: []
+    │   │       ├── state: (1 item)
+    │   │       │   └── @ HerbStateDeclarationNode (location: (1:50)-(1:66))
+    │   │       │       ├── name: "open" (location: (1:50)-(1:55))
+    │   │       │       ├── default_value:
+    │   │       │       │   └── @ RubyLiteralNode (location: (1:56)-(1:66))
+    │   │       │       │       └── content: "modal_open"
+    │   │       │       │
+    │   │       │       └── kind: "bare"
     │   │       │
-    │   │       │
-    │   │       ├── state: []
-    │   │       └── state_location: ∅
+    │   │       └── state_location: (location: (1:41)-(1:68))
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

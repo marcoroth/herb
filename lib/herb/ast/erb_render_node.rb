@@ -31,6 +31,14 @@ module Herb
         keywords&.locals&.map { |local| local.name&.value }&.compact || []
       end
 
+      def state_names
+        keywords&.state&.map { |state| state.name&.value }&.compact || []
+      end
+
+      def bound_state?
+        !keywords&.state_location.nil?
+      end
+
       def resolve(view_root: nil, source_directory: nil)
         name = partial_path || template_name
 

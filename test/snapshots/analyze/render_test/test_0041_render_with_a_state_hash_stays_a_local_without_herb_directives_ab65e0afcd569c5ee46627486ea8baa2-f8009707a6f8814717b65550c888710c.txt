@@ -1,18 +1,18 @@
 ---
-source: "Analyze::RenderTest#test_0004_render with implicit locals"
+source: "Analyze::RenderTest#test_0041_render with a state hash stays a local without herb directives"
 input: |2-
-<%= render "card", title: @title, subtitle: "Hello" %>
+<%= render "shared/album_card", album: a, state: { open: modal_open } %>
 options: {render_nodes: true}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
-    ├── @ ERBRenderNode (location: (1:0)-(1:54))
+    ├── @ ERBRenderNode (location: (1:0)-(1:72))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render "card", title: @title, subtitle: "Hello" " (location: (1:3)-(1:52))
-    │   ├── tag_closing: "%>" (location: (1:52)-(1:54))
+    │   ├── content: " render "shared/album_card", album: a, state: { open: modal_open } " (location: (1:3)-(1:70))
+    │   ├── tag_closing: "%>" (location: (1:70)-(1:72))
     │   ├── keywords:
-    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:54))
-    │   │       ├── partial: "card" (location: (1:11)-(1:17))
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:72))
+    │   │       ├── partial: "shared/album_card" (location: (1:11)-(1:30))
     │   │       ├── template_path: ∅
     │   │       ├── layout: ∅
     │   │       ├── file: ∅
@@ -30,18 +30,18 @@ options: {render_nodes: true}
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
     │   │       ├── locals: (2 items)
-    │   │       │   ├── @ RubyRenderLocalNode (location: (1:19)-(1:32))
-    │   │       │   │   ├── name: "title" (location: (1:19)-(1:25))
+    │   │       │   ├── @ RubyRenderLocalNode (location: (1:32)-(1:40))
+    │   │       │   │   ├── name: "album" (location: (1:32)-(1:38))
     │   │       │   │   └── value:
-    │   │       │   │       └── @ RubyLiteralNode (location: (1:26)-(1:32))
-    │   │       │   │           └── content: "@title"
+    │   │       │   │       └── @ RubyLiteralNode (location: (1:39)-(1:40))
+    │   │       │   │           └── content: "a"
     │   │       │   │
     │   │       │   │
-    │   │       │   └── @ RubyRenderLocalNode (location: (1:34)-(1:51))
-    │   │       │       ├── name: "subtitle" (location: (1:34)-(1:43))
+    │   │       │   └── @ RubyRenderLocalNode (location: (1:42)-(1:69))
+    │   │       │       ├── name: "state" (location: (1:42)-(1:48))
     │   │       │       └── value:
-    │   │       │           └── @ RubyLiteralNode (location: (1:44)-(1:51))
-    │   │       │               └── content: "\"Hello\""
+    │   │       │           └── @ RubyLiteralNode (location: (1:49)-(1:69))
+    │   │       │               └── content: "{ open: modal_open }"
     │   │       │
     │   │       │
     │   │       ├── state: []
@@ -54,5 +54,5 @@ options: {render_nodes: true}
     │   ├── ensure_clause: ∅
     │   └── end_node: ∅
     │
-    └── @ HTMLTextNode (location: (1:54)-(2:0))
+    └── @ HTMLTextNode (location: (1:72)-(2:0))
         └── content: "\n"
