@@ -1,174 +1,176 @@
+import dedent from "dedent"
+
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-
 import { Linter } from "../../src/linter.js"
+
 import { ERBClosingTagIndentRule } from "../../src/rules/erb-closing-tag-indent.js"
-import dedent from "dedent"
 
 describe("erb-closing-tag-indent autofix", () => {
   beforeAll(async () => {
     await Herb.load()
   })
 
-  test("removes newline before closing tag when opening is not followed by newline", () => {
-    const input = '<%= title\n%>'
-    const expected = '<%= title %>'
+  const linter = () => new Linter(Herb, [ERBClosingTagIndentRule])
 
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
+  const expectFixed = (input: string, expected: string, fixedCount = 1) => {
+    const result = linter().autofix(input)
 
     expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
+    expect(result.fixed).toHaveLength(fixedCount)
+    expect(linter().lint(result.source).offenses).toHaveLength(0)
+  }
 
-  test("removes newline and indentation before closing tag", () => {
-    const input = '<%= title\n  %>'
-    const expected = '<%= title %>'
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
-
-  test("moves a block ERB comment closing tag onto the content line", () => {
-    const input = dedent`
-      <%# Non-link tag that stands for skipped pages...
-        - available local variables
-          current_page:  a page object for the currently displayed page
-          total_pages:   total number of pages
-          per_page:      number of items to fetch per page
-          remote:        data-remote
-      -%>
-    `
-    const expected = dedent`
-      <%# Non-link tag that stands for skipped pages...
-        - available local variables
-          current_page:  a page object for the currently displayed page
-          total_pages:   total number of pages
-          per_page:      number of items to fetch per page
-          remote:        data-remote -%>
-    `
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-    expect(linter.lint(result.source).offenses).toHaveLength(0)
-  })
-
-  test("adds newline before closing tag when opening is followed by newline", () => {
-    const input = '<%=\n  title %>'
-    const expected = '<%=\n  title\n%>'
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
-
-  test("preserves horizontal whitespace before the opening newline", () => {
-    const input = "<%= \n  title %>"
-    const expected = "<%= \n  title\n%>"
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
-
-  test("adds indentation to closing tag to match opening tag", () => {
-    const input = '<%=\n  title\n  %>'
-    const expected = '<%=\n  title\n%>'
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
-
-  test("preserves already correct single-line tags", () => {
-    const input = dedent`
-      <% if admin? %>
-        Hello
-      <% end %>
-    `
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
+  const expectUnchanged = (input: string) => {
+    const result = linter().autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
+  }
+
+  describe("collapsing a single line of code", () => {
+    test("collapses a leading and a trailing newline", () => {
+      expectFixed("<%=\n  title\n%>", "<%= title %>")
+    })
+
+    test("collapses a leading newline", () => {
+      expectFixed("<%=\n  title %>", "<%= title %>")
+    })
+
+    test("collapses a trailing newline", () => {
+      expectFixed("<%= title\n%>", "<%= title %>")
+    })
+
+    test("collapses horizontal whitespace before the opening newline", () => {
+      expectFixed("<%= \t\n  title\n%>", "<%= title %>")
+    })
+
+    test("collapses a control-flow tag without touching its body", () => {
+      expectFixed(
+        "<%\n  if admin?\n%>\n  <h1>Content</h1>\n<% end %>",
+        "<% if admin? %>\n  <h1>Content</h1>\n<% end %>"
+      )
+    })
   })
 
-  test("preserves already correct multi-line tags", () => {
-    const input = dedent`
-      <%=
-        title
-      %>
-    `
+  describe("moving the closing tag onto its own line", () => {
+    test("adds a newline before the closing tag", () => {
+      expectFixed(
+        "<%=\n  some_helper(\n    arg1,\n    arg2\n  ) %>",
+        "<%=\n  some_helper(\n    arg1,\n    arg2\n  )\n%>"
+      )
+    })
 
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
+    test("indents the closing tag to match the opening tag", () => {
+      expectFixed(
+        "<div>\n  <%=\n    some_helper(\n      arg1\n    )\n%>\n</div>",
+        "<div>\n  <%=\n    some_helper(\n      arg1\n    )\n  %>\n</div>"
+      )
+    })
 
-    expect(result.source).toBe(input)
-    expect(result.fixed).toHaveLength(0)
+    test("does not reindent surrounding content while fixing a nested ERB tag", () => {
+      expectFixed(
+        dedent`
+          <div>
+              <span>kept</span>
+              <%=
+                some_helper(
+                  arg1
+                )
+                %>
+          </div>
+        `,
+        dedent`
+          <div>
+              <span>kept</span>
+              <%=
+                some_helper(
+                  arg1
+                )
+              %>
+          </div>
+        `
+      )
+    })
   })
 
-  test("preserves the newline after a heredoc terminator", () => {
-    const input = dedent`
-      <%= render(<<~TEXT)
-        hello
-      TEXT
-      %>
-    `
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(input)
-    expect(result.fixed).toHaveLength(0)
+  describe("moving the closing tag up to the code", () => {
+    test("removes a newline before the closing tag", () => {
+      expectFixed(
+        "<%= some_helper(\n  arg1,\n  arg2\n)\n%>",
+        "<%= some_helper(\n  arg1,\n  arg2\n) %>"
+      )
+    })
   })
 
-  test("fixes closing tag indentation without changing a heredoc terminator", () => {
-    const input = "  <%= render(<<~TEXT)\n    hello\n  TEXT\n    %>"
-    const expected = "  <%= render(<<~TEXT)\n    hello\n  TEXT\n  %>"
-
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-    expect(Herb.parse(result.source).successful).toBe(true)
-  })
-
-  test("does not reindent surrounding content while fixing a nested ERB tag", () => {
-    const input = dedent`
-      <li>
-      <%
-        value = true
+  describe("heredocs", () => {
+    test("leaves the closing tag on its own line after a heredoc terminator", () => {
+      expectUnchanged(dedent`
+        <%= render(<<~TEXT)
+          hello
+        TEXT
         %>
-      </li>
-    `
-    const expected = dedent`
-      <li>
-      <%
-        value = true
-      %>
-      </li>
-    `
+      `)
+    })
 
-    const linter = new Linter(Herb, [ERBClosingTagIndentRule])
-    const result = linter.autofix(input)
+    test("fixes the indentation without moving the closing tag onto the terminator line", () => {
+      expectFixed(
+        "<%= render(<<~TEXT)\n  hello\nTEXT\n  %>",
+        "<%= render(<<~TEXT)\n  hello\nTEXT\n%>"
+      )
+    })
+  })
 
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-    expect(linter.lint(result.source).offenses).toHaveLength(0)
+  describe("tags the rule leaves alone", () => {
+    test("preserves already correct single-line tags", () => {
+      expectUnchanged(dedent`
+        <% if admin? %>
+          <h1>Content</h1>
+        <% end %>
+      `)
+    })
+
+    test("preserves already correct multi-line tags", () => {
+      expectUnchanged(dedent`
+        <%=
+          some_helper(
+            arg1,
+            arg2
+          )
+        %>
+      `)
+    })
+
+    test("preserves whitespace trimming tags", () => {
+      expectUnchanged("<%=\n  title\n  -%>")
+    })
+
+    test("preserves ERB comments", () => {
+      expectUnchanged("<%#\n  a note\n  %>")
+    })
+
+    test("preserves a tag holding only a Ruby comment", () => {
+      expectUnchanged('<%=\n# render_partial("_pagination")\n%>')
+    })
+
+    test("preserves a tag whose last line of code carries a comment", () => {
+      expectUnchanged("<%= title # the page title\n%>")
+    })
+
+    test("preserves a `=begin` block comment delimiter", () => {
+      expectUnchanged("<%\n=begin\n%>\n<p>Commented out</p>\n<%\n=end\n%>")
+    })
+
+    test("preserves ERB inside an attribute value", () => {
+      expectUnchanged(dedent`
+        <li class="<%=
+          class_names(
+            "page-item",
+            disabled: current_page.first?
+          )
+        %>">First</li>
+      `)
+    })
   })
 })
