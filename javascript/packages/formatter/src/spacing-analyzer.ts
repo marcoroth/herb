@@ -3,7 +3,7 @@ import { isNode, getTagName, isERBNode, isERBOutputNode, isERBCommentNode,
   isInlineRubyCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
 import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, countBlankLines, isERBTagNode } from "./format-helpers.js"
 
-import { INLINE_ELEMENTS, SPACEABLE_CONTAINERS } from "./format-helpers.js"
+import { isInlineElement, SPACEABLE_CONTAINERS } from "./format-helpers.js"
 
 /**
  * SpacingAnalyzer determines when blank lines should be inserted between
@@ -110,7 +110,7 @@ export class SpacingAnalyzer {
     if (isNode(currentNode, HTMLElementNode)) {
       const currentTagName = getTagName(currentNode)
 
-      if (currentTagName && INLINE_ELEMENTS.has(currentTagName)) {
+      if (currentTagName && isInlineElement(currentTagName)) {
         return false
       }
     }

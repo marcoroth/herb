@@ -1,4 +1,4 @@
-import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, HTML_WHITESPACE_PRESERVING_ELEMENTS, HTML_INLINE_ELEMENTS, isInlineElement } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, HTML_WHITESPACE_PRESERVING_ELEMENTS, isInlineElement } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -78,8 +78,6 @@ export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
   'img': ['srcset', 'sizes']
 }
-
-export const INLINE_ELEMENTS = HTML_INLINE_ELEMENTS
 
 export const CONTENT_PRESERVING_ELEMENTS = HTML_WHITESPACE_PRESERVING_ELEMENTS
 
@@ -580,7 +578,7 @@ export function isBlockLevelNode(node: Node): boolean {
 
   const tagName = getTagName(node)
 
-  if (INLINE_ELEMENTS.has(tagName)) {
+  if (isInlineElement(tagName)) {
     return false
   }
 
