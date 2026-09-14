@@ -1,0 +1,10 @@
+#ifndef HERB_JAVA_PARSER_OPTIONS_HELPERS_H
+#define HERB_JAVA_PARSER_OPTIONS_HELPERS_H
+
+#include "../src/include/parser/parser_options.h"
+
+#include <jni.h>
+
+void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options);
+
+#endif

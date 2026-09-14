@@ -94,18 +94,23 @@ pkg/*
 
 # Templated Files
 ext/herb/error_helpers.c
+ext/herb/parser_options_helpers.c
+ext/herb/parser_options_helpers.h
 ext/herb/error_helpers.h
 ext/herb/nodes.c
 ext/herb/nodes.h
 src/include/parser/foreign_content_elements.h
 src/include/util/html_elements.h
 java/error_helpers.c
+java/parser_options_helpers.c
+java/parser_options_helpers.h
 java/error_helpers.h
 java/nodes.c
 java/nodes.h
 java/org/herb/ast/Errors.java
 java/org/herb/ast/HelperRegistry.java
 java/org/herb/ast/HelperType.java
+java/org/herb/ParserOptions.java
 java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
 java/org/herb/ast/Visitor.java
@@ -116,6 +121,7 @@ javascript/packages/client/src/state-transforms.ts
 javascript/packages/core/src/action-view-helpers.ts
 javascript/packages/core/src/built-in-components.ts
 javascript/packages/core/src/config.ts
+javascript/packages/core/src/parser-options.ts
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/foreign-content-elements.ts
 javascript/packages/core/src/html-elements.ts
@@ -128,6 +134,8 @@ javascript/packages/node/extension/error_helpers.cpp
 javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
+javascript/packages/node/extension/parser_options_helpers.cpp
+javascript/packages/node/extension/parser_options_helpers.h
 lib/herb/action_view/helper_registry.rb
 lib/herb/engine/slots/component_definitions.rb
 lib/herb/engine/slots/state_kinds.rb
@@ -137,12 +145,14 @@ lib/herb/engine/slots/state_transforms.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 lib/herb/html/elements.rb
+lib/herb/parser_options.rb
 lib/herb/visitor.rb
 rust/herb-printer/src/printer_visitor.rs
 rust/src/action_view_helpers.rs
 rust/src/ast/nodes.rs
 rust/src/config.rs
 rust/src/errors.rs
+rust/src/parser_options.rs
 rust/src/nodes.rs
 rust/src/prism/generated_deserialize.rs
 rust/src/prism/generated_prettyprint.rs
@@ -161,15 +171,19 @@ src/diff/herb_diff_helpers.c
 src/diff/herb_diff_nodes.c
 src/diff/herb_hash_tree.c
 src/errors.c
+src/parser_options_defaults.c
 src/include/analyze/action_view/helper_registry.h
 src/include/analyze/herb_directive_kinds.h
 src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h
+src/include/parser/parser_options.h
 src/include/lib/hb_foreach.h
 src/parser/match_tags.c
 src/visitor.c
 wasm/error_helpers.cpp
+wasm/parser_options_helpers.cpp
+wasm/parser_options_helpers.h
 wasm/error_helpers.h
 wasm/nodes.cpp
 wasm/nodes.h

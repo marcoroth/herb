@@ -1,0 +1,12 @@
+#ifndef HERB_NODE_PARSER_OPTIONS_HELPERS_H
+#define HERB_NODE_PARSER_OPTIONS_HELPERS_H
+
+#include <node_api.h>
+
+extern "C" {
+#include "../extension/libherb/include/parser/parser_options.h"
+}
+
+void herb_extract_parser_options(napi_env env, napi_value options, parser_options_T* parser_options);
+
+#endif

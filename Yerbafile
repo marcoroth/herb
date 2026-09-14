@@ -25,6 +25,7 @@ rules:
           order:
             - errors
             - warnings
+            - parser_options
             - nodes
 
       - sort_keys:
@@ -72,6 +73,37 @@ rules:
             - types
 
       - sort_keys:
+          path: "parser_options"
+          order:
+            - fields
+            - internal_fields
+
+      - sort_keys:
+          path: "parser_options.fields[]"
+          order:
+            - name
+            - type
+            - c_name
+            - count_name
+            - const_name
+            - default
+            - default_ms
+            - nullable
+            - null_sentinel
+            - ruby_unit
+            - lex
+            - only
+            - skip
+            - description
+
+      - sort_keys:
+          path: "parser_options.internal_fields[]"
+          order:
+            - name
+            - type
+            - default
+
+      - sort_keys:
           path: "nodes"
           order:
             - fields
@@ -116,6 +148,14 @@ rules:
 
       - blank_lines:
           path: "errors.types[].fields"
+          count: 1
+
+      - blank_lines:
+          path: "parser_options.fields"
+          count: 1
+
+      - blank_lines:
+          path: "parser_options.internal_fields"
           count: 1
 
       - blank_lines:

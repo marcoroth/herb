@@ -1,0 +1,39 @@
+module Herb
+  class ParserOptions
+  <%- parser_options.fields_for(:ruby).each do |field| -%>
+    attr_reader :<%= field.snake_case %> #: <%= field.ruby_type %>
+  <%- end -%>
+
+  <%- parser_options.fields_for(:ruby).select(&:ruby_constant?).each do |field| -%>
+    DEFAULT_<%= field.upper_snake %> = <%= field.ruby_default %> #: <%= field.ruby_default_type %>
+  <%- end -%>
+
+    #: (<%= parser_options.fields_for(:ruby).map { |f| "?#{f.snake_case}: #{f.ruby_type}" }.join(", ") %>) -> void
+    def initialize(<%= parser_options.fields_for(:ruby).map { |f| "#{f.snake_case}: #{f.ruby_constant? ? "DEFAULT_#{f.upper_snake}" : f.ruby_default}" }.join(", ") %>)
+    <%- parser_options.fields_for(:ruby).each do |field| -%>
+      @<%= field.snake_case %> = <%= field.snake_case %>
+    <%- end -%>
+    end
+
+    #: () -> Hash[Symbol, (bool | Numeric | Array[String] | nil)]
+    def to_h
+      {
+      <%- parser_options.fields_for(:ruby).each do |field| -%>
+        <%= field.snake_case %>: @<%= field.snake_case %>,
+      <%- end -%>
+      }
+    end
+
+    #: () -> String
+    def inspect
+      "#<#{self.class.name}\n  " \
+      <%- parser_options.fields_for(:ruby).each_with_index do |field, index| -%>
+      <%- if index == parser_options.fields_for(:ruby).length - 1 -%>
+        "<%= field.snake_case %>=#{<%= field.ruby_inspect_value %>}>"
+      <%- else -%>
+        "<%= field.snake_case %>=#{<%= field.ruby_inspect_value %>}\n  " \
+      <%- end -%>
+      <%- end -%>
+    end
+  end
+end

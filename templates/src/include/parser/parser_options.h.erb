@@ -1,0 +1,21 @@
+#ifndef HERB_PARSER_OPTIONS_H
+#define HERB_PARSER_OPTIONS_H
+
+#include "../lib/hb_string.h"
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+typedef struct PARSER_OPTIONS_STRUCT {
+<%- parser_options.all_c_fields.each do |field| -%>
+  <%= field.c_type %> <%= field.c_name %>;
+<%- if field.string_array? -%>
+  size_t <%= field.count_name %>;
+<%- end -%>
+<%- end -%>
+} parser_options_T;
+
+extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
+#endif
