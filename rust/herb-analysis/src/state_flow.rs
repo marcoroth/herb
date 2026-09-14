@@ -304,6 +304,7 @@ fn is_word_byte(byte: u8) -> bool {
 fn collect_affected(node: &AnyNode, source: &str, aliases: &mut Vec<String>, path: &mut Vec<usize>, affected: &mut Vec<AffectedNode>) {
   let kind = match node {
     AnyNode::ERBContentNode(_) => Some("text_content"),
+    AnyNode::ERBCommentNode(_) => None,
     AnyNode::ERBIfNode(_) => Some("conditional"),
     AnyNode::ERBUnlessNode(_) => Some("conditional"),
     AnyNode::ERBCaseNode(_) => Some("conditional"),

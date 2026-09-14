@@ -376,6 +376,20 @@ describe("diagnosticKey", () => {
   test("separates codeless entries by message", () => {
     expect(diagnosticKey(diagnostic({ message: "one" }))).not.toBe(diagnosticKey(diagnostic({ message: "two" })))
   })
+
+  test("separates locationless findings of one rule by message", () => {
+    const first = diagnostic({ code: "browser-scoped-style-no-unused-selector", message: "Selector `.detail` matches nothing" })
+    const second = diagnostic({ code: "browser-scoped-style-no-unused-selector", message: "Selector `.tracks` matches nothing" })
+
+    expect(diagnosticKey(first)).not.toBe(diagnosticKey(second))
+  })
+
+  test("collapses repeated locationless reports of the same message", () => {
+    const first = diagnostic({ code: "herb-unknown-state", message: "`$refresh` is not a state" })
+    const second = diagnostic({ code: "herb-unknown-state", message: "`$refresh` is not a state" })
+
+    expect(diagnosticKey(first)).toBe(diagnosticKey(second))
+  })
 })
 
 describe("readRuntimeReport", () => {

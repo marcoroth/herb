@@ -531,6 +531,7 @@ describe("derived states", () => {
     `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
     `<input data-herb-slot="2:boolean_attribute:disabled">` +
     `<b><!--herb-slot:3:conditional--><!--herb-branch:3:1-->Calm<!--/herb-slot:3--></b>` +
+    `<i><!--herb-slot:4-->0<!--/herb-slot:4--></i>` +
     `<template data-herb-region="${DERIVED_FILE}:ffffffff">` +
     `<!--herb-branch:0:0-->Busy<!--herb-branch:0:1-->Idle` +
     `<!--herb-branch:3:0-->Deep<!--herb-branch:3:1-->Calm` +
@@ -549,8 +550,10 @@ describe("derived states", () => {
           { name: "busy", kind: "boolean", default: "pending || failed", derived: { any: [["pending", null], ["failed", null]] }, scope: "region" },
           { name: "total", kind: "integer", default: "attempts", derived: ["attempts", null], scope: "region" },
           { name: "deep", kind: "boolean", default: "busy && attempts > 2", derived: { all: [["busy", null], ["attempts", "2", ">"]] }, scope: "region" },
+          { name: "draft", kind: "string", default: '""', value: "", scope: "region" },
+          { name: "chars", kind: "integer", default: "draft.length", derived: ["draft", null, null, "length"], scope: "region" },
         ],
-        reads: { total: [1] },
+        reads: { total: [1], chars: [4] },
         conditionals: {
           0: { arms: [["busy", null, 0]], else: 1 },
           3: { arms: [["deep", null, 0]], else: 1 },
@@ -603,6 +606,15 @@ describe("derived states", () => {
     derivedState.setState({ attempts: 5 })
 
     expect(document.querySelector("p")?.textContent).toContain("5")
+  })
+
+  test("a derived transform reads as the transformed value", () => {
+    expect(derivedState.getState("chars")).toBe(0)
+
+    derivedState.setState({ draft: "hello" })
+
+    expect(derivedState.getState("chars")).toBe(5)
+    expect(document.querySelector("i")?.textContent).toBe("5")
   })
 
   test("a derivation cascades through another derivation", () => {

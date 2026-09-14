@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { ERBContentNode, Location } from "@herb-tools/core"
+import { ERBCommentNode, Location } from "@herb-tools/core"
 
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
@@ -15,9 +15,7 @@ export abstract class HerbDisableCommentBaseVisitor extends BaseRuleVisitor {
     super(ruleName, context)
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
-    if (node.tag_opening?.value !== "<%#") return
-
+  visitERBCommentNode(node: ERBCommentNode): void {
     const content = node.content?.value
     if (!content) return
 
@@ -28,13 +26,13 @@ export abstract class HerbDisableCommentBaseVisitor extends BaseRuleVisitor {
    * Override this method to implement rule-specific logic.
    * This is called for every ERB comment node.
    */
-  protected abstract checkHerbDisableComment(node: ERBContentNode, content: string): void
+  protected abstract checkHerbDisableComment(node: ERBCommentNode, content: string): void
 
   /**
    * Helper to create a precise location for a specific rule name within the comment.
    * Returns null if content location is not available.
    */
-  protected createRuleNameLocation(node: ERBContentNode, ruleDetail: HerbDisableRuleName): Location | null {
+  protected createRuleNameLocation(node: ERBCommentNode, ruleDetail: HerbDisableRuleName): Location | null {
     const contentLocation = node.content?.location
     if (!contentLocation) return null
 
@@ -52,7 +50,7 @@ export abstract class HerbDisableCommentBaseVisitor extends BaseRuleVisitor {
   /**
    * Helper to add an offense with a fallback to node location if precise location unavailable.
    */
-  protected addOffenseWithFallback(message: string, preciseLocation: Location | null, node: ERBContentNode): void {
+  protected addOffenseWithFallback(message: string, preciseLocation: Location | null, node: ERBCommentNode): void {
     this.addOffense(message, preciseLocation || node.location)
   }
 }
@@ -62,7 +60,7 @@ export abstract class HerbDisableCommentBaseVisitor extends BaseRuleVisitor {
  * Only calls the abstract method if the content successfully parses as a herb:disable comment.
  */
 export abstract class HerbDisableCommentParsedVisitor extends HerbDisableCommentBaseVisitor {
-  protected checkHerbDisableComment(node: ERBContentNode, content: string): void {
+  protected checkHerbDisableComment(node: ERBCommentNode, content: string): void {
     const herbDisable = parseHerbDisableContent(content)
     if (!herbDisable) return
 
@@ -72,5 +70,5 @@ export abstract class HerbDisableCommentParsedVisitor extends HerbDisableComment
   /**
    * Override this method to implement rule-specific logic for parsed herb:disable comments.
    */
-  protected abstract checkParsedHerbDisable(node: ERBContentNode, content: string, herbDisable: HerbDisableComment): void
+  protected abstract checkParsedHerbDisable(node: ERBCommentNode, content: string, herbDisable: HerbDisableComment): void
 }

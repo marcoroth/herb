@@ -12,6 +12,16 @@
 #include <stddef.h>
 #include <string.h>
 
+position_T erb_content_start_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (erb_node->tag_opening != NULL) {
+    return erb_node->tag_opening->location.start;
+  } else if (erb_node->content != NULL) {
+    return erb_node->content->location.start;
+  } else {
+    return erb_node->base.location.start;
+  }
+}
+
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   if (erb_node->tag_closing != NULL) {
     return erb_node->tag_closing->location.end;
@@ -22,8 +32,9 @@ position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   }
 }
 
-location_T* compute_then_keyword(
-  AST_ERB_CONTENT_NODE_T* erb_node,
+location_T* compute_then_keyword_for_content(
+  token_T* content,
+  analyzed_ruby_T* analyzed_ruby,
   control_type_t control_type,
   hb_allocator_T* allocator
 ) {
@@ -32,7 +43,6 @@ location_T* compute_then_keyword(
     return NULL;
   }
 
-  token_T* content = erb_node->content;
   char* source = (content && !hb_string_is_empty(content->value))
                  ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
                  : NULL;
@@ -47,7 +57,7 @@ location_T* compute_then_keyword(
       then_keyword = get_then_keyword_location_elsif_wrapped(source, allocator);
     }
   } else {
-    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source, allocator);
+    then_keyword = get_then_keyword_location(analyzed_ruby, source, allocator);
   }
 
   if (then_keyword != NULL && content != NULL) {
@@ -62,6 +72,14 @@ location_T* compute_then_keyword(
   hb_allocator_dealloc(allocator, source);
 
   return then_keyword;
+}
+
+location_T* compute_then_keyword(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+) {
+  return compute_then_keyword_for_content(erb_node->content, erb_node->analyzed_ruby, control_type, allocator);
 }
 
 typedef struct {
@@ -134,7 +152,7 @@ AST_NODE_T* create_control_node(
                                         .content = erb_node->content,
                                         .tag_closing = erb_node->tag_closing,
                                         .then_keyword = compute_then_keyword(erb_node, control_type, allocator),
-                                        .start_position = erb_node->tag_opening->location.start,
+                                        .start_position = erb_content_start_position(erb_node),
                                         .end_position = erb_content_end_position(erb_node),
                                         .errors = erb_node->base.errors,
                                         .control_type = control_type,

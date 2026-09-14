@@ -1,0 +1,62 @@
+---
+source: "Parser::AttributesTest#test_0147_mustache braces around an attribute with a value"
+input: "<div {{attr=\"x\"}}></div>"
+---
+@ DocumentNode (location: (1:0)-(1:24))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:24))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:18))
+        │       ├── errors: (1 error)
+        │       │   └── @ MissingWhitespaceBetweenAttributesError (location: (1:15)-(1:16))
+        │       │       ├── message: "Missing whitespace between attributes at (1:15). `}` is parsed as the start of a new attribute."
+        │       │       └── found: "}" (location: (1:15)-(1:16))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:17)-(1:18))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:15))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:11))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:11))
+        │       │   │   │               └── content: "{{attr"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:11)-(1:12))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:15))
+        │       │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:13)-(1:14))
+        │       │   │           │       └── content: "x"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:14)-(1:15))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:15)-(1:17))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:15)-(1:17))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:15)-(1:17))
+        │       │       │               └── content: "}}"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:18)-(1:24))
+        │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+        │       ├── tag_name: "div" (location: (1:20)-(1:23))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:23)-(1:24))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

@@ -8,6 +8,8 @@
 #include "token_struct.h"
 
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 token_T* token_init(hb_string_T value, token_type_T type, lexer_T* lexer);
 hb_string_T token_to_string(hb_allocator_T* allocator, const token_T* token);
@@ -23,6 +25,7 @@ hb_string_T token_value(const token_T* token);
 int token_type(const token_T* token);
 
 token_T* token_copy(token_T* token, hb_allocator_T* allocator);
+bool token_split(const token_T* token, uint32_t offset, hb_allocator_T* allocator, token_T** head, token_T** tail);
 
 void token_free(token_T* token, hb_allocator_T* allocator);
 

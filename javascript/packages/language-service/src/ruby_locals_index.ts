@@ -11,7 +11,7 @@ import { collectHerbAttributes, collectStateDirectives } from "./herb_attribute_
 import type { HerbAttributeLinks, AttributeStateUsage } from "./herb_attribute_links"
 
 import type { ParserService } from "./parser_service"
-import type { DocumentNode, Node, RubyReference, ERBContentNode } from "@herb-tools/core"
+import type { DocumentNode, Node, RubyReference, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 import type { StateSignature } from "@herb-tools/client/directives"
 
 const PARSER_OPTIONS = { prism_program: true, strict_locals: true, action_view_helpers: true } as const
@@ -37,7 +37,7 @@ export class RubyLocalsIndex {
 
     const empty = { stateUsages: [], slotNames: [] }
 
-    const result = parserService.parseContent(text, PARSER_OPTIONS)
+    const result = parserService.parseContent(text, PARSER_OPTIONS, textDocument.uri)
     if (result.failed) return new RubyLocalsIndex([], empty)
 
     const document = result.value as DocumentNode
@@ -111,7 +111,7 @@ function stateLocals(document: DocumentNode, references: RubyReferenceCollector,
   )
 }
 
-function contentRange(node: ERBContentNode, offset: number, length: number): Range {
+function contentRange(node: ERBCommentNode | ERBContentNode, offset: number, length: number): Range {
   const content = node.content
 
   if (!content) return nodeToRange(node)

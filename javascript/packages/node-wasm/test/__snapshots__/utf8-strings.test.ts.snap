@@ -12,10 +12,9 @@ exports[`UTF-8 string handling > handles edge cases > incomplete comment has emp
 └── children: (1 item)
     └── @ HTMLCommentNode (location: (1:0)-(1:4))
         ├── errors: (1 item)
-        │   └── @ UnexpectedTokenError (location: (1:4)-(1:4))
-        │       ├── message: "Found end of file when expecting \`-->\` at (1:4)."
-        │       ├── expected_type: "TOKEN_HTML_COMMENT_END"
-        │       └── found: "" (location: (1:4)-(1:4))
+        │   └── @ UnclosedCommentError (location: (1:0)-(1:4))
+        │       ├── message: "Comment opened at (1:0) is missing its closing \`-->\`."
+        │       └── comment_start: "<!--" (location: (1:0)-(1:4))
         │       
         │   
         ├── comment_start: "<!--" (location: (1:0)-(1:4))
@@ -29,10 +28,9 @@ exports[`UTF-8 string handling > handles edge cases > incomplete comment preserv
 └── children: (1 item)
     └── @ HTMLCommentNode (location: (1:0)-(1:13))
         ├── errors: (1 item)
-        │   └── @ UnexpectedTokenError (location: (1:13)-(1:13))
-        │       ├── message: "Found end of file when expecting \`-->\` at (1:13)."
-        │       ├── expected_type: "TOKEN_HTML_COMMENT_END"
-        │       └── found: "" (location: (1:13)-(1:13))
+        │   └── @ UnclosedCommentError (location: (1:0)-(1:13))
+        │       ├── message: "Comment opened at (1:0) is missing its closing \`-->\`."
+        │       └── comment_start: "<!--" (location: (1:0)-(1:4))
         │       
         │   
         ├── comment_start: "<!--" (location: (1:0)-(1:4))

@@ -23,9 +23,10 @@
     "@herb-tools/config": "0.10.3",
     "@herb-tools/core": "0.10.3",
     "@herb-tools/formatter": "0.10.3",
-    "@herb-tools/language-service": "0.10.3",
     "@herb-tools/highlighter": "0.10.3",
+    "@herb-tools/language-service": "0.10.3",
     "@herb-tools/linter": "0.10.3",
+    "@herb-tools/minifier": "0.10.3",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "@hotwired/stimulus": "^3.2.2",
@@ -36,6 +37,6 @@
     "vite": "^8.2.0"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2"
+    "@types/node": "^26.5.0"
   }
 }

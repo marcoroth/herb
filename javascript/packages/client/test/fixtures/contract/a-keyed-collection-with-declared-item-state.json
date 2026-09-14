@@ -81,6 +81,7 @@
     "version": "ba888992",
     "names": {},
     "parts": {},
+    "bindings": {},
     "states": {
       "version": "ba888992",
       "declarations": [
@@ -133,7 +134,11 @@
         }
       },
       "computed": {},
-      "server": {}
+      "server": {
+        "branches": {},
+        "reads": {}
+      },
+      "fragments": {}
     }
   },
   "dependencies": {

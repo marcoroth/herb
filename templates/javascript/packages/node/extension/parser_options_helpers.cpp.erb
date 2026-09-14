@@ -1,0 +1,41 @@
+#include "parser_options_helpers.h"
+
+void herb_extract_parser_options(napi_env env, napi_value options, parser_options_T* parser_options) {
+  napi_valuetype valuetype;
+  napi_typeof(env, options, &valuetype);
+
+  if (valuetype != napi_object) { return; }
+<%- parser_options.extractable_fields_for(:javascript).each do |field| -%>
+
+  {
+    bool has_property = false;
+    napi_has_named_property(env, options, "<%= field.snake_case %>", &has_property);
+
+    if (has_property) {
+      napi_value property;
+      napi_get_named_property(env, options, "<%= field.snake_case %>", &property);
+
+<%- if field.boolean? -%>
+      bool value = false;
+      napi_get_value_bool(env, property, &value);
+      parser_options-><%= field.c_name %> = value;
+<%- elsif field.nullable? -%>
+      napi_valuetype property_type;
+      napi_typeof(env, property, &property_type);
+
+      if (property_type == napi_number) {
+        uint32_t value = 0;
+        napi_get_value_uint32(env, property, &value);
+        parser_options-><%= field.c_name %> = value;
+      } else {
+        parser_options-><%= field.c_name %> = <%= field.null_sentinel %>;
+      }
+<%- else -%>
+      uint32_t value = 0;
+      napi_get_value_uint32(env, property, &value);
+      parser_options-><%= field.c_name %> = value;
+<%- end -%>
+    }
+  }
+<%- end -%>
+}

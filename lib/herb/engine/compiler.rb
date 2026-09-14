@@ -19,6 +19,8 @@ module Herb
         @source_lines = options[:source]&.lines
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @trim = options[:trim] != false
+        @literal_prefix = options[:literal_prefix] || "<%"
+        @literal_postfix = options[:literal_postfix] || "%>"
         @tokens = [] #: Array[untyped]
         @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
@@ -70,6 +72,8 @@ module Herb
 
       def visit_document_node(node)
         visit_all(node.children)
+
+        restore_pending_leading_whitespace! if @trim_next_whitespace
 
         settle_pending_trim_newline!(false)
       end
@@ -230,12 +234,26 @@ module Herb
         process_erb_tag(node)
       end
 
+      def visit_erb_comment_node(node)
+        process_erb_tag(node)
+      end
+
       def visit_erb_control_node(node, &)
         if node.content
-          code_index = @tokens.length
+          if node.tag_opening && erb_escaped?(node.tag_opening.value)
+            add_escaped_erb_tag(node)
+          elsif continues_into_next_node?(node)
+            @continued_head = node
+          else
+            head = @continued_head
+            @continued_head = nil
 
-          apply_trim(node, node.content.value.strip)
-          keep_line_count(node, at: code_index)
+            code_index = @tokens.length
+            raw = head ? head.content.value + node.content.value : node.content.value
+
+            apply_trim(head || node, raw.strip)
+            keep_line_count(node, at: code_index, raw: raw)
+          end
         end
 
         yield if block_given?
@@ -264,7 +282,7 @@ module Herb
       end
 
       def visit_erb_case_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_when_node(node)
@@ -300,7 +318,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_in_node(node)
@@ -314,7 +332,7 @@ module Herb
       def visit_erb_block_node(node)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_block(node) if erb_escaped?(opening)
 
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
@@ -371,6 +389,12 @@ module Herb
         end
       end
 
+      def case_parts(node)
+        parts = [:conditions, :else_clause, :end_node]
+
+        erb_escaped?(node.tag_opening.value) ? [:children, *parts] : parts
+      end
+
       def visit_erb_control_with_parts(node, *parts)
         visit_erb_control_node(node) do
           parts.each do |part|
@@ -389,13 +413,25 @@ module Herb
 
       private
 
-      def check_for_escaped_erb_tag!(opening)
-        return unless opening.start_with?("<%%")
+      def add_escaped_erb_tag(node)
+        opening = node.tag_opening.value.sub("<%%") { @literal_prefix }
+        closing = (node.tag_closing&.value || "").sub(/%>\z/) { @literal_postfix }
 
-        raise Herb::Engine::GeneratorTemplateError,
-              "This file appears to be a generator template (a template used to generate ERB files) " \
-              "rather than a standard ERB template. It contains escaped ERB tags like <%%= %> which " \
-              "produce literal ERB output in the generated file."
+        add_text("#{opening}#{node.content.value}#{closing}")
+      end
+
+      def add_escaped_erb_block(node)
+        add_escaped_erb_tag(node)
+        visit_all(node.body)
+
+        end_node = node.end_node
+        return unless end_node
+
+        if erb_escaped?(end_node.tag_opening.value)
+          add_escaped_erb_tag(end_node)
+        else
+          visit(end_node)
+        end
       end
 
       def current_context
@@ -435,7 +471,7 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_tag(node) if erb_escaped?(opening)
 
         if !skip_comment_check && erb_omitted?(opening)
           unless @trim
@@ -485,8 +521,8 @@ module Herb
         @padding_before[@tokens.length] += lines
       end
 
-      def keep_line_count(node, extra: 0, at: nil, absorbed: 0)
-        raw = node.content.value
+      def keep_line_count(node, extra: 0, at: nil, absorbed: 0, raw: nil)
+        raw ||= node.content.value
 
         leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
         trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra - absorbed
@@ -728,7 +764,7 @@ module Herb
       end
 
       def left_trim?(node)
-        node.tag_opening.value == "<%-"
+        node.tag_opening&.value == "<%-"
       end
 
       def right_trim?(node)
@@ -781,7 +817,7 @@ module Herb
       end
 
       def preceding_text_ends_with_newline?
-        return false unless @tokens.length >= 2
+        return true unless @tokens.length >= 2
 
         preceding = @tokens[-2]
 
@@ -834,6 +870,10 @@ module Herb
         else
           @tokens << [:code, code, current_context]
         end
+      end
+
+      def continues_into_next_node?(node)
+        node.tag_closing.nil? && !node.content.nil?
       end
 
       #: (untyped) -> bool

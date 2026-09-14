@@ -37,7 +37,7 @@ module Herb
     #: (Herb::AST::<%= node.name %>) -> void
     def visit_<%= node.human %>(node)
       visit_node(node)
-      <%- if node.name.start_with?("ERB") -%>
+      <%- if node.erb_tag? -%>
       visit_erb_node(node)
       <%- end -%>
       visit_child_nodes(node)

@@ -246,6 +246,62 @@ A button that only writes a state does not need a controller. Four attributes co
 
 `$value` stands for the event target's value and is the only interpolation. A value is read as whatever the state was declared to hold, so `pending=true` sets a boolean where `draft=true` sets a four-letter string.
 
+## Behaviors
+
+Actions cover writes. Anything richer, such as a drawer that follows a finger, is JavaScript that has to find its elements, learn when they arrive and leave, and notice when their attribute changes. The runtime already watches the document for its own attributes, so a behavior registers with that observer instead of opening another:
+
+```typescript
+const { behaviors } = Runtime.start()
+
+behaviors.define("data-drawer", {
+  connect(element, context) {},
+  enter(element, context) {},
+  valueChanged(element, value, context) {},
+  updated(element, slot, context) {},
+  moved(element, { from, to }, context) {},
+  settled(element, context) {},
+  leave(element, context) {},
+  disconnect(element, context) {},
+  transition(element, context) {},
+})
+```
+
+Every callback is optional, and every one receives the element it is about and the same context, described below. The attribute does not need a value, so `<aside data-drawer>` connects too. The name is yours to choose, and it should stay out of `data-herb-`, which is the runtime's own namespace and the one the linter and language service validate. A behavior that throws is reported and the others still run.
+
+The callbacks carry the facts only the runtime has. Everything else a behavior reads off the element it was handed.
+
+- `connect` runs for every element carrying the attribute, the ones on the page when the behavior is defined and the ones that arrive later, however deep in the markup they arrived in.
+- `enter` runs after `connect`, only for markup the runtime built, a branch that materialized or a row that was added. A drawer rendered open by the server does not slide in, one that just opened does. Markup in the initial HTML or brought by a Turbo visit connects without entering.
+- `valueChanged` runs when the attribute's value changes on an element that is already connected.
+- `updated` runs when a slot inside the element is written, with the slot, so a counter can roll a digit or a pill can flash without subscribing to the whole document.
+- `moved` runs after a collection reorder for each element whose position changed, with the rect it came from and the one it is at now, which is everything a FLIP animation needs. The rect before a move is not something an observer outside the runtime can get.
+- `settled` runs once at the end of a batch, a payload or a state write, for each element that was updated or moved in it, so a behavior measuring layout runs once and not per write.
+- `leave` runs when the runtime is about to destroy the element, and may hold it. See below.
+- `disconnect` runs when the element leaves the document, which includes Turbo replacing the body, when the attribute is removed, when the behavior is undefined through the function `define` returns, and when the runtime stops.
+- `transition` returns a view transition name for the element, or nothing. It is asked on connect and whenever the value changes, and its answer is written to `data-herb-transition`, so the element takes part in the runtime's view transitions exactly as if the template had named it.
+
+## What a behavior is handed
+
+The context is one object with three members, the same three `useState` hands a Stimulus controller:
+
+```typescript
+behaviors.define("data-drawer", {
+  connect(element, { state, slots, outbox }) {
+    state.get("open")
+    state.set({ open: false })
+    state.on("open", (value, previous) => {})
+
+    slots.locate(element)
+
+    outbox.submit({ url, body, into })
+  },
+})
+```
+
+`state` is the element's own scoped state, what `stateFor(element)` returns. `get`, `set`, `toggle`, `increment`, `decrement`, `reset` and `on` resolve to whatever row encloses the element, so a behavior inside a keyed collection writes that row's state without saying which row. `slots` and `outbox` are the runtime's own, for a behavior that needs to find a slot, hold one, or send a mutation.
+
+The context is built the first time any callback runs for an element and cached for the life of that element, so it is the same object in `connect`, `leave` and `disconnect`, and anything a behavior sets on it in one callback is there in the next.
+
 ## Sending
 
 A mutation is a send that must not lose what the user did. `outbox` keeps a FIFO queue that never cancels an earlier send, inserts an optimistic row before the request leaves, and reconciles when the server answers:
@@ -360,6 +416,24 @@ Some conditionals never reach any of this. A conditional whose branches lay out 
 ```
 
 is one child slot inside an `<h1>`, whichever way the condition goes. There is no branch to rebuild and nothing to park, and the update is a value.
+
+## Leaving
+
+A conditional that turns false destroys its branch, a payload that drops a key destroys its row, and destroying is instant. An element that wants to leave on its own terms, sliding out from wherever a drag left it, has to be asked first. A behavior is asked through `leave`:
+
+```typescript
+behaviors.define("data-drawer", {
+  leave(element) {
+    return slideOut(element)
+  },
+})
+```
+
+`leave` runs for a connected element when the branch or the row around it is about to go, while the element is still on the page. Returning nothing lets the destruction happen at once. Returning a promise defers it, and `disconnect` follows once the markup is gone. Rows are held wherever they are, so a list keeps its shape while a row animates out, and the rows around it are placed as the payload asked.
+
+When the promise settles, resolved or rejected, the runtime looks again. A branch whose state flipped back while the drawer was still sliding stays, and a row a later payload wanted again stays, and in both cases no `disconnect` comes. A behavior that moved its element on the way out can watch for that through `state.on`. Writes into a departing branch are skipped while it is held, the same as for a branch that is already leaving.
+
+Branches are held for the switches the client makes for declared state. Rows are held whether the payload came from the server or `outbox.discard` dropped them. A branch switched by a payload is applied as it arrives and is not held. Underneath, `leave` is the `holdBranch(slot, branch)` and `holdItem(slot, item)` delegates on `slots.subscribe`, which anything without an element of its own can use directly, and `slots.dismissItem(slot, key)` is `removeItem` with the hold in front of it.
 
 ## Who renders a branch
 

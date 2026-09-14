@@ -5,7 +5,7 @@ import { isDerived, stateSignatureOf } from "../utils/state-directives-utils.js"
 import { isRubyParameterNode, Location } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBContentNode, ERBBlockNode, ERBStrictLocalsNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBCommentNode, ERBContentNode, ERBBlockNode, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { StateDeclaration } from "@herb-tools/client/directives"
 
 class StrictLocalsCollector extends BaseRuleVisitor {
@@ -45,7 +45,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     }
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBCommentNode): void {
     const parsed = stateSignatureOf(node)
 
     if (!parsed) return
@@ -73,7 +73,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkDeclaration(node: ERBContentNode, declaration: StateDeclaration): void {
+  private checkDeclaration(node: ERBCommentNode, declaration: StateDeclaration): void {
     const nameLocation = this.contentLocation(node, declaration.nameOffset, declaration.name.length)
     const defaultLocation = this.contentLocation(node, declaration.defaultOffset, Math.max(declaration.defaultSource.length, 1))
 
@@ -183,7 +183,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
     scope.add(declaration.name)
   }
 
-  private contentLocation(node: ERBContentNode, offset: number, length: number): Location {
+  private contentLocation(node: ERBCommentNode, offset: number, length: number): Location {
     const content = node.content
 
     if (!content) return node.location
@@ -199,6 +199,7 @@ class StateValidDeclarationVisitor extends BaseRuleVisitor {
 export class HerbStateValidDeclarationRule extends ParserRule {
   static ruleName = "herb-state-valid-declaration"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

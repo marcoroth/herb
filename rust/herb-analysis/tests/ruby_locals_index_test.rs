@@ -159,6 +159,15 @@ fn ignores_a_plain_comment_that_is_not_a_state_directive() {
 }
 
 #[test]
+fn keeps_a_comma_inside_a_hash_default_out_of_the_index() {
+  let source = "<%# herb:state (config: { a: 1, b: 2 }) %>\n<p><%= config %></p>\n";
+  let index = index_for(source);
+
+  assert!(index.find("config").is_some());
+  assert!(index.find("b").is_none());
+}
+
+#[test]
 fn keeps_a_quoted_comma_inside_one_state_default() {
   let source = "<%# herb:state (draft: \"a,b\", open: false) %>\n<p><%= draft %></p>\n";
   let index = index_for(source);

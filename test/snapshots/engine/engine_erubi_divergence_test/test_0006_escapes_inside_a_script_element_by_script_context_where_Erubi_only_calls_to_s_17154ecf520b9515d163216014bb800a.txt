@@ -1,0 +1,11 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0006_escapes inside a script element by script context where Erubi only calls to_s"
+input: "engine_erubi_divergence_test-11"
+---
+_buf = ::String.new; _buf << '<script>
+<![CDATA[
+  var data = '.freeze; _buf << ( data ).to_s; _buf << ';
+]]>
+</script>
+'.freeze;
+_buf.to_s

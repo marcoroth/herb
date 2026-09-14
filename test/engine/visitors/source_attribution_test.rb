@@ -212,6 +212,21 @@ module Engine
       test "escapes a value that would close it" do
         assert_evaluated_snapshot("<div>x</div>", {}, attribution_options, filename: %(a"b.html.erb))
       end
+
+      test "an element whose open tag is written across a conditional is stamped in each branch" do
+        template = <<~ERB
+          <% if condition %>
+            <div class="a">
+          <% else %>
+            <div class="b">
+          <% end %>
+            Content
+          </div>
+        ERB
+
+        assert_evaluated_snapshot(template, { condition: true }, attribution_options, filename: FILENAME)
+        assert_evaluated_snapshot(template, { condition: false }, attribution_options, filename: FILENAME)
+      end
     end
 
     describe "inspect" do

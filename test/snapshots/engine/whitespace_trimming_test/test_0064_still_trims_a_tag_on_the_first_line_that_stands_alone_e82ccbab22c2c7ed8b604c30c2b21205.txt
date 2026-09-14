@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0064_still trims a tag on the first line that stands alone"
+input: "{source: \"  <% x = 1 %>\\n<%= x %>\", options: {}}"
+---
+_buf = ::String.new;   x = 1 
+ _buf << (x).to_s;
+_buf.to_s

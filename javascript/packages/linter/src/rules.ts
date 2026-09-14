@@ -27,12 +27,14 @@ import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferFormWithRule } from "./rules/actionview-prefer-form-with.js"
 import { ActionViewPreferLinkToHelperRule } from "./rules/actionview-prefer-link-to-helper.js"
 import { ActionViewPreferPluralizeHelperRule } from "./rules/actionview-prefer-pluralize-helper.js"
 import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-prefer-qualified-partial-path.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
+import { ERBClosingTagIndentRule } from "./rules/erb-closing-tag-indent.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
 import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
@@ -52,6 +54,7 @@ import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-cla
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
 import { ERBNoMethodDefinitionsRule } from "./rules/erb-no-method-definitions.js"
 import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
+import { ERBNoMultipleStatementsRule } from "./rules/erb-no-multiple-statements.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
@@ -82,6 +85,7 @@ import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
+import { HerbComponentRequiresSlotsRule } from "./rules/herb-component-requires-slots.js"
 import { HerbConfigFrameworkOptionRule } from "./rules/herb-config-framework-option.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
@@ -91,11 +95,14 @@ import { HerbDisableCommentOutOfDateRule } from "./rules/herb-disable-comment-ou
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsSingleDirectiveRule } from "./rules/herb-slots-single-directive.js"
+import { HerbSlotsValidComponentsRule } from "./rules/herb-slots-valid-components.js"
 import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
 import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
 import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
+import { HerbStateNoShadowedStatesRule } from "./rules/herb-state-no-shadowed-states.js"
 import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
-import { HerbStateRequiresClientModeRule } from "./rules/herb-state-requires-client-mode.js"
+import { HerbStateRequiresSlotsRule } from "./rules/herb-state-requires-slots.js"
 import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
 import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
 import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
@@ -116,6 +123,7 @@ import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-hea
 import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
+import { HTMLAttributeNameValidCharactersRule } from "./rules/html-attribute-name-valid-characters.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
@@ -141,6 +149,7 @@ import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-el
 import { HTMLNoLiteralNBSPRule } from "./rules/html-no-literal-nbsp.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
+import { HTMLNoObsoleteTagsRule } from "./rules/html-no-obsolete-tags.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
@@ -197,12 +206,14 @@ export const rules: RuleClass[] = [
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewPreferFormWithRule,
   ActionViewPreferLinkToHelperRule,
   ActionViewPreferPluralizeHelperRule,
   ActionViewPreferQualifiedPartialPathRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
+  ERBClosingTagIndentRule,
   ERBCommentSyntax,
   ERBNoByteOrderMarkRule,
   ERBNoCaseNodeChildrenRule,
@@ -222,6 +233,7 @@ export const rules: RuleClass[] = [
   ERBNoJavascriptTagHelperRule,
   ERBNoMethodDefinitionsRule,
   ERBNoModuleDefinitionsRule,
+  ERBNoMultipleStatementsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
@@ -252,6 +264,7 @@ export const rules: RuleClass[] = [
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 
+  HerbComponentRequiresSlotsRule,
   HerbConfigFrameworkOptionRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentMissingRulesRule,
@@ -261,11 +274,14 @@ export const rules: RuleClass[] = [
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
   HerbIntoRequiresCollectionRule,
+  HerbSlotsSingleDirectiveRule,
+  HerbSlotsValidComponentsRule,
   HerbSlotsValidModeRule,
   HerbStateNoSilentReadsRule,
   HerbStateNoServerWritesRule,
+  HerbStateNoShadowedStatesRule,
   HerbStateNoUnusedStatesRule,
-  HerbStateRequiresClientModeRule,
+  HerbStateRequiresSlotsRule,
   HerbStateValidActionsRule,
   HerbStateValidBindingsRule,
   HerbScopedStyleNoUnusedSelectorRule,
@@ -286,6 +302,7 @@ export const rules: RuleClass[] = [
   HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeEqualsSpacingRule,
+  HTMLAttributeNameValidCharactersRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
@@ -311,6 +328,7 @@ export const rules: RuleClass[] = [
   HTMLNoLiteralNBSPRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
+  HTMLNoObsoleteTagsRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,

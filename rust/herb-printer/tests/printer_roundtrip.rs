@@ -25,6 +25,9 @@ fn identity_roundtrip() {
     "<% begin %>a<% rescue %>b<% ensure %>c<% end %>\n",
     "<svg><linearGradient/></svg>\n",
     "<%== raw %> <%- trim -%>\n",
+    "<%# a comment %>\n",
+    "<div><%# a comment %><%= x %></div>\n",
+    "<%#\n  a comment\n%>\n",
   ];
 
   let mut failures = 0;

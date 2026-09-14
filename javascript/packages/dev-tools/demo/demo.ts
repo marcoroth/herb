@@ -69,6 +69,50 @@ on("report-spaced", () => {
   })
 })
 
+on("report-metrics", () => {
+  const templates = ["app/views/posts/index.html.erb", "app/views/posts/_post.html.erb", "app/components/post_actions_component.html.erb"]
+
+  const renders = templates.flatMap((template, index) => [3, 7, 11, 18].map((line, position) => ({
+    template,
+    message: `This tag rendered once, taking ${(0.4 + index + position).toFixed(1)} ms and allocating ${(1200 * (position + 1)).toLocaleString("en-US")} objects.`,
+    code: "render-time",
+    kind: "metric" as const,
+    origin: "Herb Engine",
+    value: `${(0.4 + index + position).toFixed(1)} ms`,
+    location: { start: { line, column: 3 } },
+    data: { render: [{ duration: 0.4 + index + position, gc: 0.1, allocations: 1200 * (position + 1) }] },
+  })))
+
+  const queries = [4, 9].map(line => ({
+    template: "app/views/posts/index.html.erb",
+    message: "This ERB tag ran 5 SQL queries while the page rendered.",
+    code: "sql-queries",
+    kind: "metric" as const,
+    origin: "Herb Engine",
+    value: "5 SQL queries",
+    location: { start: { line, column: 5 } },
+    data: {
+      queries: [
+        `SELECT "posts".* FROM "posts" WHERE "posts"."published" = 1 ORDER BY "posts"."created_at" DESC LIMIT 10`,
+        `SELECT "users".* FROM "users" WHERE "users"."id" = 1 LIMIT 1`,
+        `SELECT COUNT(*) FROM "comments" WHERE "comments"."post_id" = 1`,
+      ],
+    },
+  }))
+
+  const rendered = ["Latest posts", "Neueste Beiträge"].map((value, index) => ({
+    template: "app/views/posts/index.html.erb",
+    message: value,
+    code: "rendered-output",
+    kind: "value" as const,
+    origin: "Herb Engine",
+    value,
+    location: { start: { line: 2 + index, column: 5 } },
+  }))
+
+  lastHandle = devTools.report([...renders, ...queries, ...rendered])
+})
+
 on("report-blocking", () => {
   lastHandle = devTools.report({
     template: "app/views/posts/_post.html.erb",

@@ -1,0 +1,18 @@
+export type ForeignContentKind = "raw_text" | "rcdata"
+
+export interface ForeignContentElement {
+  name: string
+  kind: ForeignContentKind
+  endTag: boolean
+  htmlOnly: boolean
+}
+
+export const FOREIGN_CONTENT_ELEMENTS: readonly ForeignContentElement[] = [
+<%- foreign_content_elements.each do |element| -%>
+  { name: <%= element.name.inspect %>, kind: <%= element.kind.inspect %>, endTag: <%= element.end_tag? %>, htmlOnly: <%= element.html_only? %> },
+<%- end -%>
+]
+
+export const RAW_TEXT_ELEMENTS: ReadonlySet<string> = new Set([<%= foreign_content_elements.select(&:raw_text?).map { |element| element.name.inspect }.join(", ") %>])
+
+export const RCDATA_ELEMENTS: ReadonlySet<string> = new Set([<%= foreign_content_elements.select(&:rcdata?).map { |element| element.name.inspect }.join(", ") %>])

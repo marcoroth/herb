@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0009_separates a preamble that Erubi runs into the first append"
+input: "engine_erubi_divergence_test-15"
+---
+@buf = [] _buf << '<div>'.freeze; _buf << ( title ).to_s; _buf << '</div>'.freeze;
+@buf.join

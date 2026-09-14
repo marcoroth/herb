@@ -49,6 +49,8 @@ If a framework renders `.erb` files through the standard-library `ERB` by defaul
 | `ensure` | Wrap in begin/ensure block |
 | `src` | Initial source string |
 | `trim` | Fold the whitespace around standalone `<% %>` and `<%# %>` tags into the code (default `true`) |
+| `literal_prefix` | Opening delimiter an escaped tag compiles to (default `<%`) |
+| `literal_postfix` | Closing delimiter an escaped tag compiles to (default `%>`) |
 
 ### Whitespace trimming
 
@@ -71,11 +73,9 @@ Pass `trim: false` to keep every byte of whitespace around code and comment tags
 
 ### Known differences from Erubi
 
-Two things that `Erubi::Engine` accepts are handled differently by `Herb::Engine` on its default settings. Each one is deliberate.
+One thing that `Erubi::Engine` accepts is handled differently by `Herb::Engine` on its default settings, and it is deliberate.
 
-A `case` with its first `when`/`in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). The AST that pattern produces cannot be formatted or compiled reliably. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the same thing.
-
-Escaped tags such as `<%% %>` and `<%%= %>` raise `Herb::Engine::GeneratorTemplateError`. A template that emits literal ERB is a generator template, not a template to render.
+A `case` with its first `when` or `in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). Without strict mode it compiles like any other `case`, because the parser splits the tag so the `case` and the condition each own the Ruby they introduce, which leaves the `case` without a `%>` and the condition without a `<%`. A `case` and its first `in` pattern on the same line raises `ERB_CASE_INLINE_PATTERN_MATCH_ERROR` in both modes, because Ruby reads that as a one-line pattern match and no split makes it compile. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the style separately.
 
 One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 
@@ -109,6 +109,16 @@ Herb::Engine.new(source, parser_options: { strict: false })
 Since Herb trims, the conventional form with `case` and `when` in separate tags already works, and it is the form the formatter and the linter are built around.
 
 The linter is configured separately from the engine. Set [`framework`](/configuration#framework-configuration) in `.herb.yml` so rules that assume Action View stay quiet in a project that is not running it.
+
+### Templates that are not HTML
+
+The parser's [`html`](/parser-options) option turns HTML parsing off, so `<` followed by a letter is plain text and only the ERB tags are structured. That is the mode for mail text, YAML, JavaScript, shell scripts, and anything else that is not markup, where the HTML parser would reject `a <b` or `<<EOF`:
+
+```ruby
+Herb::Engine.new(source, parser_options: { html: false })
+```
+
+The ERB structure is still parsed, so control flow, blocks, and trimming behave the same as in an HTML template. Context-aware escaping falls back to `escapefunc` for every `<%= %>`, since there is no attribute, script, or style context to tell apart. Nothing else about compilation changes.
 
 ### Blocks
 
@@ -168,6 +178,24 @@ Strict parsing is a parser option rather than an engine option, so it is set thr
 Herb::Engine.new(source, parser_options: { strict: false })
 ```
 
+### Escaped tags
+
+`<%% %>` and `<%%= %>` are escaped ERB, and the engine compiles them to the literal text `<% %>` and `<%= %>`, the same as Erubi. Block tags are included, so `<%% form_with do %>` and its matching `<%% end %>` both reach the output as text.
+
+Comments and control flow are included too, so `<%%# note %>` and `<%% if admin? %>` reach the output as text like any other escaped tag.
+
+`literal_prefix` and `literal_postfix` choose the delimiters that escaped tags compile to. They default to `<%` and `%>`, which is what makes an escaped tag round-trip to ordinary ERB, and a template that generates something else can say so:
+
+```ruby
+Herb::Engine.new(%(<%%= item %>\n), literal_prefix: "{%", literal_postfix: "%}").src
+# => _buf = ::String.new; _buf << '{%= item %}\n'.freeze;
+# => _buf.to_s
+```
+
+Only the delimiters themselves are substituted. Everything the tag carries between them, including the `=` of an output tag and the `-` of a trimming one, is emitted verbatim, so `<%%- x -%>` becomes `{%- x -%}`.
+
+A template that writes literal ERB is usually a generator template, one whose own output is an ERB file, and compiling it is rarely what a project sweep wants. That judgement lives in [`GeneratorTemplateValidator`](#validators) instead of in the engine, so `herb analyze` skips such a file while a caller that means to compile it simply leaves the validator out.
+
 ## Validators
 
 Validators check a parsed template and report what they find. They are ordinary visitors, so nothing runs unless you pass it.
@@ -178,6 +206,7 @@ Validators check a parsed template and report what they find. They are ordinary 
 | `NestingValidator`       | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`)                  |
 | `AccessibilityValidator` | Validates accessibility-related attributes                                    |
 | `RenderValidator`        | Validates `render` calls                                                      |
+| `GeneratorTemplateValidator` | Reports a template that writes literal ERB through `<%% %>`               |
 
 `Validators.all` builds the set a project has switched on in [`.herb.yml`](/configuration#engine-configuration), which is the usual way to ask for them:
 
@@ -246,6 +275,7 @@ Herb ships the following transform visitors:
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                             |
 | `ComponentTags::Visitor`      | Rewrites capitalized tags into `render` calls (experimental)                 |
 | `ContentForVisitor`           | Appends HTML to the end of every matching element                            |
+| `CSSInliner::Visitor`         | Writes the CSS a template rendered into `style` attributes (experimental)    |
 | `DebugVisitor`                | Annotates output with the template and position it came from                 |
 | `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                                    |
 | `InlineRender::Visitor`       | Replaces a `render` of a static partial with the partial (experimental)      |
@@ -253,6 +283,7 @@ Herb ships the following transform visitors:
 | `OptimizeVisitor`             | Compile-time optimizations for helpers and literal output (experimental)     |
 | `RemoveCommentsVisitor`       | Removes comments, so the output never contains one                           |
 | `ScopedStyle::Visitor`        | Scopes a `<style scoped>` block to the file it was written in (experimental) |
+| `Slots::Visitor`              | Marks every dynamic part so a client can update it in place (experimental)   |
 | `SourceAttributionVisitor`    | Stamps every element with the template and position it was written at        |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
@@ -1014,7 +1045,7 @@ transform.call(".title { color: red }", scope: "[data-herb-scope-1a2b3c4d]")
 
 A return value answering `warnings` has each of them reported as a diagnostic, which is how a `LightningCSS::Result` surfaces what Lightning CSS kept without acting on. CSS a transform could not act on is CSS that does nothing once the page renders, so it is worth saying so at compile time. A transform answering with a plain string reports nothing.
 
-### Writing CSS into style attributes
+### `CSSInliner::Visitor` <Badge type="warning" text="experimental" />
 
 A `style` attribute is the only way to say something an email client reads, and `CSSInliner::Visitor` is how a stylesheet gets there.
 

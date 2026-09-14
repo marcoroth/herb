@@ -858,6 +858,64 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn a_more_specific_files_include_overrides_a_default_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/skip/skipped.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_naming_a_default_excluded_directory_opts_the_whole_tree_back_in() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/gems/primer/button.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_broad_files_include_does_not_override_excludes() {
+    let config = config_from_yaml("files:\n  include:\n    - '**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/gem.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_a_more_specific_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - 'app/views/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_an_exclude_that_is_not_directory_scoped() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - '**/*.generated.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/index.generated.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_must_override_every_matching_exclude_to_win() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\nlinter:\n  exclude:\n    - 'vendor/keep/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/keep/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_more_specific_tool_include_overrides_a_files_exclude() {
+    let config = config_from_yaml("files:\n  exclude:\n    - 'vendor/**/*'\nlinter:\n  include:\n    - 'vendor/special/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Formatter));
+  }
+
+  #[test]
   fn is_enabled_for_path_works_for_formatter_tool() {
     let config = config_from_yaml("formatter:\n  enabled: true\n  exclude:\n    - 'test/**/*'\n");
 
@@ -1028,6 +1086,32 @@ mod config_instance_methods {
     let config = config_from_yaml_in("linter:\n  exclude:\n    - 'app/views/posts/**/*'\n", dir.path());
 
     assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![first]);
+  }
+
+  #[test]
+  fn find_files_for_tool_walks_into_a_directory_a_specific_include_opts_back_in() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "vendor/keep/kept.html.erb");
+    create_test_file(dir.path(), "vendor/skip/skipped.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
+  }
+
+  #[test]
+  fn find_files_for_tool_keeps_pruning_defaults_for_a_broad_include() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "app/views/index.html.erb");
+    create_test_file(dir.path(), "vendor/bundle/gem.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - '**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
   }
 
   #[test]

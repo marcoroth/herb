@@ -10,10 +10,27 @@ module Herb
       # One request is the right scope because a page is what the dev tools show: findings from every
       # template that took part in it, in one payload, whoever found them.
       #
+      # Given a journal, the same session is also written to disk, where it outlives the page and an
+      # editor can read it. Whoever mounts this middleware is often not the application, so the
+      # journal can be set on the class instead of passed:
+      #
+      #     Herb::Engine::Runtime::Middleware.journal = "tmp/herb"
+      #
       # Nothing here is allowed to be the reason a page fails. A response it cannot safely touch is
-      # returned untouched, and any error while injecting is swallowed in favour of the original
-      # response.
+      # returned untouched, and any error while injecting, measuring or writing is swallowed in
+      # favour of the original response.
       class Middleware
+        # Where a session goes when whoever mounted this middleware did not say. Left unset, nothing
+        # is written.
+        #
+        # Written out instead of as an `attr_accessor` in a `class << self` block, because rbs-inline
+        # emits that as an instance accessor and the signature would be wrong.
+        # : () -> untyped
+        def self.journal: () -> untyped
+
+        # : (untyped) -> void
+        def self.journal=: (untyped) -> void
+
         HTML_CONTENT_TYPE: Regexp
 
         BODY_END_TAG: Regexp
@@ -30,13 +47,25 @@ module Herb
         #     request.env[Herb::Engine::Runtime::Middleware::ENV_KEY].entries
         ENV_KEY: String
 
-        # : (untyped, ?inject: bool) -> void
-        def initialize: (untyped, ?inject: bool) -> void
+        # : (untyped, ?inject: bool, ?journal: untyped) -> void
+        def initialize: (untyped, ?inject: bool, ?journal: untyped) -> void
 
         # : (untyped) -> untyped
         def call: (untyped) -> untyped
 
         private
+
+        # : (Herb::Engine::Runtime::Session) -> void
+        def measure: (Herb::Engine::Runtime::Session) -> void
+
+        # : (Herb::Engine::Runtime::Session, untyped, untyped) -> void
+        def persist: (Herb::Engine::Runtime::Session, untyped, untyped) -> void
+
+        # : (untyped, untyped) -> Hash[Symbol, untyped]
+        def request_of: (untyped, untyped) -> Hash[Symbol, untyped]
+
+        # : (untyped) -> untyped
+        def coerce: (untyped) -> untyped
 
         # : (untyped, Herb::Engine::Runtime::Report) -> untyped
         def inject: (untyped, Herb::Engine::Runtime::Report) -> untyped

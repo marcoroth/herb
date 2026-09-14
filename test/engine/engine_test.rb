@@ -336,8 +336,10 @@ module Engine
       with_optimize = Herb::Engine.new(template, visitors: [Herb::Engine::OptimizeVisitor.new]).src
 
       refute_equal without_optimize, with_optimize
-      assert_includes without_optimize, "tag.div"
-      refute_includes with_optimize, "tag.div"
+
+      assert_snapshot_matches(without_optimize, "engine_test-0")
+
+      assert_snapshot_matches(with_optimize, "engine_test-1")
     end
 
     test "compilation with parser_options strict false" do
@@ -352,6 +354,18 @@ module Engine
 
     test "heredoc ending an output tag keeps the following line" do
       template = "<p><%= <<~TEXT\n  hello\nTEXT\n%></p>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a shovel operator spanning two lines in an output tag keeps the following line" do
+      template = "<p><%= a <<\nb %></p>\n<%= z %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a shovel operator in a control tag keeps the line the next tag is on" do
+      template = "<% list << item %><%= z %>\n"
 
       assert_compiled_snapshot(template)
     end

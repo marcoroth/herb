@@ -11,11 +11,14 @@ require_relative "../../visitor/experimental"
 require_relative "annotation"
 require_relative "identifier"
 require_relative "manifest/channel"
+require_relative "components"
 require_relative "types"
 require_relative "state_compiler"
 require_relative "markers"
 require_relative "statics"
 require_relative "state_directives"
+require_relative "render_bindings"
+require_relative "callee"
 
 module Herb
   class Engine
@@ -64,6 +67,7 @@ module Herb
         OCCURRENCES = "@_herb_region_occurrences" #: String
         OCCURRENCE = "_herb_occurrence" #: String
         NAME_ATTRIBUTE = "data-herb-name" #: String
+        KEY_ATTRIBUTE = "herb-key" #: String
 
         CAPTURING = /\b(?:content_for|provide|capture)\b/ #: Regexp
         LISTENER_ATTRIBUTES = ["data-herb-set", "data-herb-toggle", "data-herb-increment", "data-herb-decrement", "data-herb-reset"].freeze #: Array[String]
@@ -144,7 +148,7 @@ module Herb
           @static_markup = nil #: String?
           @bufvar = "_buf"
           @mode = mode
-          @statics = mode == :client ? {} : nil #: Hash[String, String]?
+          @statics = {} #: Hash[String, String]?
           @identify = identifier
 
           @slots = [] #: Array[Slot]
@@ -170,10 +174,14 @@ module Herb
           @named_elements = [] #: Array[Hash[Symbol, untyped]]
           attribute_open_tags = {} #: Hash[untyped, untyped]
           @attribute_open_tags = attribute_open_tags.compare_by_identity
+          render_bindings = {} #: Hash[untyped, Hash[Symbol, untyped]]
+          @render_bindings = render_bindings.compare_by_identity
           @interpolated_attributes = [] #: Array[untyped]
           @states = StateCompiler.new(self)
           @collection_nodes = [] #: Array[untyped]
           @collection_body_depths = [] #: Array[Integer]
+          keyed_elements = {} #: Hash[untyped, String]
+          @keyed_elements = keyed_elements.compare_by_identity
           @container_depth = 0
 
           @in_attribute = false
@@ -190,6 +198,17 @@ module Herb
           listener_written = {} #: Hash[untyped, Array[String]]
           @listener_written = listener_written.compare_by_identity
           @current_open_tag = nil
+
+          fragment_nodes = {} #: Hash[untyped, Hash[String, untyped]]
+          fragment_fallbacks = {} #: Hash[untyped, Array[untyped]]
+          deferred_nodes = {} #: Hash[untyped, Hash[Symbol, untyped]]
+          assignment_nodes = {} #: Hash[untyped, bool]
+
+          @fragment_nodes = fragment_nodes.compare_by_identity
+          @fragment_fallbacks = fragment_fallbacks.compare_by_identity
+          @exposed_fallbacks = [] #: Array[untyped]
+          @deferred_nodes = deferred_nodes.compare_by_identity
+          @assignment_nodes = assignment_nodes.compare_by_identity
         end
 
         #: () -> bool
@@ -200,6 +219,16 @@ module Herb
         #: () -> bool
         def client?
           @mode == :client
+        end
+
+        #: () -> void
+        def state_overrides!
+          @state_overrides = true
+        end
+
+        #: () -> bool
+        def state_overrides?
+          !!@state_overrides
         end
 
         #: (Integer, Array[String]) -> bool
@@ -216,6 +245,103 @@ module Herb
           return [] unless node
 
           branch_bodies(node).flat_map { |body| slot_indices_within(body) }.uniq
+        end
+
+        #: (untyped) -> bool
+        def fragment?(node)
+          @fragment_nodes.key?(node)
+        end
+
+        #: () -> Array[Integer]
+        def fragment_indexes
+          @fragment_nodes.keys.filter_map { |node| @indices[node] }
+        end
+
+        #: (Integer) -> Hash[String, untyped]
+        def fragment_timing_for(index)
+          node = @slot_nodes[index]
+
+          return {} unless node
+
+          @fragment_nodes[node] || {}
+        end
+
+        #: (Array[untyped]) -> Array[untyped]
+        def transform_component_children(children)
+          children.flat_map { |child| transformed(child) }
+        end
+
+        #: (untyped, Array[untyped], Hash[String, untyped]) -> void
+        def record_fragment(node, fallback_children, timing)
+          @fragment_nodes[node] = timing
+          @fragment_fallbacks[node] = fallback_children
+        end
+
+        #: (Array[untyped]) -> void
+        def register_fallback_reads(children)
+          children.each do |child|
+            if child.is_a?(Herb::AST::ERBContentNode) && erb_outputs?(child) && fallback_state_read?(child)
+              record_slot(child, :child)
+
+              next
+            end
+
+            BRANCH_BODY_PROPERTIES.each do |property|
+              next unless child.respond_to?(property)
+
+              array = child.send(property)
+
+              register_fallback_reads(array) if array.is_a?(Array)
+            end
+          end
+        end
+
+        #: (untyped) -> bool
+        def fallback_state_read?(node)
+          name = expression_for(node).to_s.strip
+
+          return false unless name.match?(/\A[a-z_][a-zA-Z0-9_]*\z/)
+
+          state_declarations[:region].any? { |entry| entry[:name] == name && !entry[:derived] }
+        end
+
+        #: (untyped, mode: String, state: String, timing: Hash[String, Integer]) -> void
+        def record_deferred(node, mode:, state:, timing:)
+          @deferred_nodes[node] = { mode: mode, state: state, timing: timing }
+        end
+
+        #: (untyped) -> untyped
+        def record_assignment(node)
+          @assignment_nodes[node] = true
+
+          node
+        end
+
+        #: (untyped) -> bool
+        def assignment_node?(node)
+          @assignment_nodes.key?(node)
+        end
+
+        #: () -> Hash[Integer, Hash[Symbol, untyped]]
+        def deferred_entries
+          entries = {} #: Hash[Integer, Hash[Symbol, untyped]]
+
+          @deferred_nodes.each do |node, info|
+            index = @indices[node]
+
+            entries[index] = info if index
+          end
+
+          entries
+        end
+
+        #: (Integer) -> Array[Array[Integer]]
+        def slots_by_branch(index)
+          node = @slot_nodes[index]
+
+          return [] unless node
+
+          branch_bodies(node).map { |body| slot_indices_within(body) }
         end
 
         #: (String, Herb::Location?, Symbol, ?suggestion: String?) -> nil
@@ -292,6 +418,20 @@ module Herb
           @collection_nodes.last
         end
 
+        #: (untyped) -> Array[String]
+        def block_locals(scope)
+          nodes = @collection_nodes.include?(scope) ? @collection_nodes.take(@collection_nodes.index(scope) + 1) : [scope]
+
+          nodes.compact.flat_map { |node| parameter_names(node) }
+        end
+
+        #: (untyped) -> Array[String]
+        def parameter_names(node)
+          return [] unless node.respond_to?(:block_arguments)
+
+          (node.block_arguments || []).filter_map { |parameter| parameter.name&.value&.to_s if parameter.respond_to?(:name) }
+        end
+
         #: () -> bool
         def in_item_body?
           @container_depth == @collection_body_depths.last
@@ -351,7 +491,9 @@ module Herb
 
           counts = @states.count_signatures
 
-          slots + declarations + counts
+          bindings = manifest_bindings.map { |index, entry| [index, entry["identifier"], entry["states"]].inspect }
+
+          slots + declarations + counts + bindings
         end
 
         #: () -> String
@@ -378,8 +520,34 @@ module Herb
             "version" => version,
             "names" => manifest_names,
             "parts" => manifest_parts,
+            "bindings" => manifest_bindings,
             "states" => @states.manifest,
           }
+        end
+
+        #: () -> Hash[String, Hash[String, untyped]]
+        def manifest_bindings
+          bindings = {} #: Hash[String, Hash[String, untyped]]
+
+          @render_bindings.each do |node, binding|
+            index = @indices[node]
+
+            next unless index
+            next if binding.fetch(:bound).empty?
+
+            bindings[index.to_s] = {
+              "identifier" => binding.fetch(:identifier),
+              "partial" => binding.fetch(:partial),
+              "states" => binding.fetch(:bound),
+            }
+          end
+
+          bindings
+        end
+
+        #: (String) -> bool
+        def counted_state?(name)
+          @states.counted_state?(name)
         end
 
         #: () -> Hash[String, Integer]
@@ -478,13 +646,23 @@ module Herb
         def visit_document_node(node)
           @document = node
 
+          if declares_slots?(node)
+            transform_components(node)
+            detect_keyed_elements(node)
+          end
+
           visit_children_with_paths(node.children)
+
+          @fragment_fallbacks.each_value { |body| register_fallback_reads(body) }
 
           collapse_invariant_conditionals
           apply_names
           number_slots
 
           @states.apply_states
+
+          wrap_bound_renders
+          expose_fallbacks(node)
         end
 
         #: () -> Hash[String, String]?
@@ -494,6 +672,9 @@ module Herb
 
         #: (untyped) -> void
         def finish(node)
+          withdraw_fallbacks(node)
+          follow_replacements
+
           return unless @mark
 
           return wrap_region(node) if @degraded
@@ -508,13 +689,28 @@ module Herb
           deliver_manifest(node)
         end
 
+        #: () -> void
+        def follow_replacements
+          replacements = context.replacements
+
+          return unless replacements.any?
+
+          replacements.each do |replacement, original|
+            annotations = @standing[original]
+            @standing[replacement] = annotations if annotations
+
+            index = @indices[original]
+            @indices[replacement] = index if index
+          end
+        end
+
         #: (untyped) -> void
         def deliver_manifest(document_node)
           return if @deliver == :none
 
           built = manifest
 
-          return if built["names"].empty? && built["parts"].empty? && built["states"].nil?
+          return if built["names"].empty? && built["parts"].empty? && built["states"].nil? && built["bindings"].empty?
 
           json = JSON.generate(built, script_safe: true)
           key = "#{identifier}:#{version}"
@@ -540,6 +736,8 @@ module Herb
         end
 
         def visit_html_element_node(node)
+          record_slot(node, :keyed) if @keyed_elements.key?(node)
+
           tag_name = node.tag_name&.value&.downcase.to_s
           raw_text = Herb::HTML::Util.raw_text_element?(tag_name)
           rcdata = Herb::HTML::Util.rcdata_element?(tag_name)
@@ -638,9 +836,214 @@ module Herb
         end
 
         def visit_erb_render_node(node)
+          bind_render_states(node) if node.bound_state?
+
           record_slot(node, erb_outputs?(node) ? :child : nil)
 
           super
+        end
+
+        #: (untyped) -> void
+        def bind_render_states(node)
+          location = node.location
+
+          unless node.static_partial?
+            slot_error("`state:` needs a partial the compiler can see, and this render picks its template at runtime.", location, :binding, suggestion: "Render the partial by its literal name, like `render \"shared/card\", state: { ... }`.")
+
+            return
+          end
+
+          if node.end_node
+            slot_error("`state:` cannot bind a partial rendered with a block, since the binding wraps the whole call.", location, :binding, suggestion: "Render the partial without a block, or move the block's content into the partial.")
+
+            return
+          end
+
+          if inline? || @in_html_comment || !erb_outputs?(node)
+            slot_error("`state:` binds a partial rendered as page content, not one inside an attribute, a comment or a silent tag.", location, :binding, suggestion: "Render the partial with `<%= render ... %>` in the page body.")
+
+            return
+          end
+
+          token = node.content
+          analysis = RenderBindings.analyze(node)
+
+          unless token && analysis
+            slot_error("`state:` on this render could not be read.", location, :binding, suggestion: "Write it as `state: { name: value }` after the partial's locals.")
+
+            return
+          end
+
+          analysis.problems.each { |message, suggestion, where| slot_error(message, where || location, :binding, suggestion: suggestion) }
+
+          return unless analysis.problems.empty?
+
+          partial = node.partial_path.to_s
+          twice = node.local_names & analysis.entries.map(&:name)
+
+          analysis.entries.each do |entry|
+            next unless twice.include?(entry.name)
+
+            slot_error("`#{entry.name}` goes to `#{partial}` both as a local and as a state, and the state assignment would overwrite the local.", entry.location || location, :binding, suggestion: "Pass `#{entry.name}` one way. A local is a snapshot the partial reads, a state is a value the client can write.")
+          end
+
+          return unless twice.empty?
+
+          unless partial.include?("/")
+            slot_error("`state:` needs the partial's directory in its name, since `#{partial}` resolves through the controller's view paths at render and the compiler cannot follow that.", location, :binding, suggestion: "Name it from the view root, like `render \"#{File.basename(File.dirname(context.relative_file_path))}/#{partial}\", state: { ... }`.")
+
+            return
+          end
+
+          relative, absolute = child_template_for(node)
+
+          unless relative && absolute
+            similar = similar_partials_for(node).map { |name| "`#{name}`" }
+            advice = similar.empty? ? "Check the partial's path." : "Did you mean #{similar.join(", ")}?"
+
+            slot_error("`#{partial}` could not be found from `#{context.relative_file_path}`, and `state:` needs a partial the compiler can open.", location, :binding, suggestion: advice)
+
+            return
+          end
+
+          callee = Callee.for(absolute)
+
+          slot_warning("`#{partial}` could not be compiled from `#{context.relative_file_path}`, so its states go unchecked.", location, :binding, suggestion: "A partial that renders its own caller is checked from the other side only.") unless callee
+
+          failed = callee&.errors&.first
+
+          if failed
+            slot_error("`#{partial}` did not compile, so `state:` cannot check its states. Its compile said #{failed.message}", location, :binding, suggestion: "Fix the partial first.")
+
+            return
+          end
+
+          bound = {} #: Hash[String, String]
+          seeded = {} #: Hash[String, String]
+
+          analysis.entries.each { |entry| classify_binding(entry, partial, callee, bound, seeded, entry.location || location) }
+
+          return if @degraded
+
+          token.value.replace(analysis.stripped)
+
+          @render_bindings[node] = { identifier: Identifier.new(@identify).call(relative), partial: partial, bound: bound, seeded: seeded }
+        rescue FrozenError
+          slot_error("`state:` on this render could not be rewritten, since the template's source was frozen before the compile could edit it.", node.location, :binding, suggestion: "Report this with the template that raised it.")
+        end
+
+        #: (RenderBindings::Entry, String, Callee?, Hash[String, String], Hash[String, String], Herb::Location?) -> void
+        def classify_binding(entry, partial, callee, bound, seeded, location)
+          child = callee&.declaration(entry.name)
+
+          if callee && child.nil?
+            known = callee.names.map { |name| "`#{name}`" }.join(", ")
+            advice = known.empty? ? "Declare `#{entry.name}` in the partial with `<%# herb:state (#{entry.name}: ...) %>`." : "The partial declares #{known}."
+
+            slot_error("`#{partial}` declares no state `#{entry.name}`, so `state:` has nothing to bind it to.", location, :binding, suggestion: advice)
+
+            return
+          end
+
+          if child && (child.derived || child.counted)
+            slot_error("`#{entry.name}` is a #{child.derived ? "derived" : "counted"} state of `#{partial}`, and the partial computes it itself.", location, :binding, suggestion: "Bind or seed the states it computes from instead.")
+
+            return
+          end
+
+          candidate = entry.candidate
+          declaration = candidate ? @states.region_declaration(candidate) : nil
+
+          if declaration && candidate
+            if declaration.derived || @states.counted_state?(candidate)
+              slot_error("`#{candidate}` is a #{declaration.derived ? "derived" : "counted"} state, and a binding needs a state the partial can write back to.", location, :binding, suggestion: "Bind a plain state, or bind the states `#{candidate}` computes from.")
+
+              return
+            end
+
+            if child && !compatible_kinds?(child.kind, declaration.kind)
+              slot_error("`#{entry.name}` on `#{partial}` is #{with_article(child.kind)} state and `#{candidate}` is #{with_article(declaration.kind)} one.", location, :binding, suggestion: "Bind a state of the same kind, or change the partial's default.")
+
+              return
+            end
+
+            bound[entry.name] = candidate
+
+            return
+          end
+
+          warn_binding_near_miss(candidate, location) if candidate
+
+          reason = RenderBindings::REFUSED[entry.kind]
+
+          if reason
+            slot_error("`#{entry.source}` seeds `#{entry.name}` on `#{partial}` with #{StateKinds::ARTICLES.fetch(entry.kind.to_s)}. #{reason}", location, :binding, suggestion: "Pass it as a local instead.")
+
+            return
+          end
+
+          if child && !compatible_kinds?(child.kind, entry.kind)
+            slot_error("`#{entry.name}` on `#{partial}` is #{with_article(child.kind)} state, and `#{entry.source}` seeds it with #{with_article(entry.kind)} value.", location, :binding, suggestion: "Seed it with #{with_article(child.kind)} value.")
+
+            return
+          end
+
+          seeded[entry.name] = entry.source
+        end
+
+        #: (Symbol, Symbol) -> bool
+        def compatible_kinds?(declared, given)
+          return true if declared == given
+          return true if declared == :seeded || given == :seeded
+
+          declared == :nil || given == :nil
+        end
+
+        #: (Symbol) -> String
+        def with_article(kind)
+          spelled = kind.to_s
+
+          spelled.start_with?("a", "e", "i", "o", "u") ? "an #{spelled}" : "a #{spelled}"
+        end
+
+        #: (String, Herb::Location?) -> void
+        def warn_binding_near_miss(candidate, location)
+          suggestions = DidYouMean::SpellChecker.new(dictionary: @states.region_state_names).correct(candidate)
+
+          return if suggestions.empty?
+
+          slot_warning("`#{candidate}` is not a state of this template, so it seeds the partial once and never follows a change. Did you mean `#{suggestions.first}`?", location, :binding, suggestion: "Bind `#{suggestions.first}` to keep the two in step.")
+        end
+
+        #: (untyped) -> [String?, Pathname?]
+        def child_template_for(node)
+          resolved = context.resolver.resolve(node.partial_path.to_s, from: context.file_path)
+
+          resolved ? [resolved.identifier, resolved.path] : [nil, nil]
+        end
+
+        #: (untyped) -> Array[String]
+        def similar_partials_for(node)
+          context.resolver.similar(node.partial_path.to_s, from: context.file_path)
+        end
+
+        #: () -> void
+        def wrap_bound_renders
+          return if @degraded
+
+          @render_bindings.each do |node, binding|
+            token = node.content
+
+            next unless token
+
+            bound = binding.fetch(:bound).map { |child, parent| "#{child.inspect} => #{parent}" }.join(", ")
+            seeded = binding.fetch(:seeded).map { |child, expression| "#{child.inspect} => (#{expression})" }.join(", ")
+            call = token.value.strip
+
+            token.value.replace(" ::Herb::Engine::Slots::Bindings.with(#{binding.fetch(:identifier).inspect}, bound: { #{bound} }, seeded: { #{seeded} }) { #{call} } ")
+          rescue FrozenError
+            next
+          end
         end
 
         def visit_erb_yield_node(node)
@@ -650,8 +1053,10 @@ module Herb
         end
 
         def visit_erb_if_node(node)
-          return if @states.register_count_fold(node)
-          return if convert_helper_boolean_attribute(node)
+          unless fragment?(node)
+            return if @states.register_count_fold(node)
+            return if convert_helper_boolean_attribute(node)
+          end
 
           record_slot(node, :conditional) unless continuation?(node)
 
@@ -834,10 +1239,66 @@ module Herb
           @container_depth -= 1
         end
 
+        #: (untyped) -> bool
+        def declares_slots?(node)
+          node.children.any? { |child|
+            child.is_a?(Herb::AST::HerbDirectiveNode) && child.directive == "slots"
+          }
+        end
+
+        #: (untyped) -> void
+        def transform_components(node)
+          return unless node.is_a?(Herb::AST::Node)
+
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            value = node.send(property)
+
+            case value
+            when Array
+              if property == :conditions
+                value.each { |arm| transform_components(arm) }
+              else
+                value.replace(value.flat_map { |child| transformed(child) })
+              end
+            when Herb::AST::Node
+              transform_components(value)
+            end
+          end
+
+          BRANCH_CONTINUATION_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            continuation = node.send(property)
+
+            transform_components(continuation) if continuation
+          end
+        end
+
+        #: (untyped) -> Array[untyped]
+        def transformed(child)
+          unless Components.element?(child)
+            transform_components(child)
+
+            return [child]
+          end
+
+          name = child.tag_name&.value.to_s
+          component = Components.for(name)
+
+          return component.transform(child, self) if component
+
+          slot_error("`<#{name}>` is not a component Herb knows.", child.location, :component, suggestion: "The built-in components are #{Components::BUILT_IN.map { |built_in| "`<#{built_in}>`" }.join(" and ")}.")
+
+          [child]
+        end
+
         #: () -> void
         def collapse_invariant_conditionals
           @standing.each_value do |annotation|
             next unless annotation.type == :conditional
+            next if fragment?(annotation.node)
             next unless exhaustive?(annotation.node)
 
             bodies = branch_bodies(annotation.node)
@@ -916,7 +1377,7 @@ module Herb
           return if type == :raw_text && @rcdata_interpolated_depth.positive?
           return refuse_mixed_rcdata(node) if type == :raw_text && @rcdata_mixed_depth.positive?
 
-          key_source, key_expression = type == :collection ? key_for(node) : [nil, nil]
+          key_source, key_expression = keys_for(node, type)
 
           annotation = Annotation.new(
             node: node,
@@ -1001,15 +1462,12 @@ module Herb
 
             next [] unless value
 
-            value.split.flat_map { |clause|
+            value.split.filter_map { |clause|
               rest = clause.split("->", 2).last.to_s
+              target = name == "data-herb-set" ? rest.split("=", 2).first : rest
+              cleaned = target.to_s.strip
 
-              rest.split(",").filter_map { |piece|
-                target = name == "data-herb-set" ? piece.split("=", 2).first : piece
-                cleaned = target.to_s.strip
-
-                cleaned unless cleaned.empty?
-              }
+              cleaned unless cleaned.empty?
             }
           }
         end
@@ -1190,6 +1648,68 @@ module Herb
           }
         end
 
+        #: (untyped) -> void
+        def detect_keyed_elements(node)
+          iteration = node.is_a?(Herb::AST::ERBIterationBlockNode) || node.is_a?(Herb::AST::ERBForNode) || node.is_a?(Herb::AST::ERBWhileNode) || node.is_a?(Herb::AST::ERBUntilNode)
+
+          BRANCH_BODY_PROPERTIES.each do |property|
+            next unless node.respond_to?(property)
+
+            array = node.send(property)
+
+            next unless array.is_a?(Array)
+
+            sole_element = iteration && array.grep(Herb::AST::HTMLElementNode).one?
+
+            array.each do |child|
+              detect_keyed_elements(child)
+
+              next unless child.is_a?(Herb::AST::HTMLElementNode)
+              next if sole_element
+
+              expression = keyed_element_expression(child)
+
+              next unless expression
+
+              remove_herb_key_attribute(child)
+
+              @keyed_elements[child] = expression
+            end
+          end
+        end
+
+        #: (untyped) -> String?
+        def keyed_element_expression(element)
+          attribute = attributes_for(element).find { |candidate| attribute_name_for(candidate)&.downcase == KEY_ATTRIBUTE }
+
+          return nil unless attribute
+
+          key_expression_for(attribute)
+        end
+
+        #: (untyped) -> void
+        def remove_herb_key_attribute(element)
+          open_tag = element.open_tag
+
+          return unless OPEN_TAG_TYPES.any? { |type| open_tag.is_a?(type) }
+
+          children = open_tag.children
+          at = children.index { |child| attribute_name_for(child)&.downcase == KEY_ATTRIBUTE }
+
+          return unless at
+
+          children.delete_at(at)
+          children.delete_at(at - 1) if at.positive? && children[at - 1].is_a?(Herb::AST::WhitespaceNode)
+        end
+
+        #: (untyped, Symbol) -> [Symbol?, String?]
+        def keys_for(node, type)
+          return key_for(node) if type == :collection
+          return [:herb_key, @keyed_elements.fetch(node)] if type == :keyed
+
+          [nil, nil]
+        end
+
         #: (untyped) -> [Symbol, String?]
         def key_for(node)
           body = collection_body(node)
@@ -1202,14 +1722,14 @@ module Herb
 
           attributes = attributes_for(elements.first)
 
-          ["herb-key", "id"].each do |name|
+          [KEY_ATTRIBUTE, "id"].each do |name|
             attribute = attributes.find { |candidate| attribute_name_for(candidate)&.downcase == name }
             next unless attribute
 
             expression = key_expression_for(attribute)
             next unless expression
 
-            return [name == "herb-key" ? :herb_key : :id, expression]
+            return [name == KEY_ATTRIBUTE ? :herb_key : :id, expression]
           end
 
           [:index, nil]
@@ -1227,9 +1747,9 @@ module Herb
         def key_directive_in(body)
           body.each do |child|
             next unless child.is_a?(Herb::AST::HerbDirectiveNode)
-            next unless child.key&.value == "key"
+            next unless child.directive == "key"
 
-            expression = child.arguments&.value.to_s.strip
+            expression = child.argument
 
             return expression unless expression.empty?
           end
@@ -1359,10 +1879,24 @@ module Herb
               mark_branches(child, slot_index)
 
               if slot_index && slot_index != anchored
-                array.insert(index, comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)))
-                array.insert(index + 2, comment_node(@markers.slot_close(slot_index)))
+                if @slots[slot_index].type == :keyed
+                  park_keyed(slot_index, child)
 
-                index += 3
+                  array.insert(
+                    index,
+                    text_node(@markers.keyed_open_prefix(slot_index)),
+                    erb_code_node("#{@bufvar} << ::Herb::Engine.raw((#{@slots[slot_index].key_expression}).to_s)"),
+                    text_node(@markers.keyed_open_suffix)
+                  )
+                  array.insert(index + 4, comment_node(@markers.slot_close(slot_index)))
+
+                  index += 5
+                else
+                  array.insert(index, comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)))
+                  array.insert(index + 2, comment_node(@markers.slot_close(slot_index)))
+
+                  index += 3
+                end
               else
                 index += 1
               end
@@ -1382,6 +1916,7 @@ module Herb
           annotation = @standing[body[0]]&.survivor
           return nil unless annotation
           return nil unless annotation.type == :child
+          return nil if @render_bindings.key?(body[0])
 
           annotation.index
         end
@@ -1411,27 +1946,94 @@ module Herb
 
         #: (Herb::AST::DocumentNode) -> void
         def append_statics(document_node)
-          statics = @statics
-          return if statics.nil? || statics.empty?
+          return unless client?
 
-          branches = statics.sort_by { |key, _| key.split(":").map(&:to_i) }
-          seen = branches.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
+          statics = @statics
+          entries = (statics || {}).sort_by { |key, _| key.split(":").map(&:to_i) } #: Array[[String, (String | Array[untyped])]]
+
+          withheld = deferred_entries.keys.to_set { |index| "#{index}:0" }
+          entries.reject! { |key, _| withheld.include?(key) }
+
+          entries.concat(fallback_statics_entries)
+
+          return if entries.empty?
+
+          seen = entries.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
 
           nodes = [
             erb_code_node("unless #{seen}"),
             text_node(@markers.statics_open(identifier, version))
           ] #: Array[Herb::AST::Node]
 
-          branches.each do |key, markup|
+          entries.each do |key, parked|
             reference = "#{COVERED}[#{covered_key(key).inspect}]"
 
-            nodes.push(erb_code_node("unless #{reference}"), text_node(markup), erb_code_node("#{reference} = true"), erb_code_node("end"))
+            nodes.push(erb_code_node("unless #{reference}"))
+
+            if parked.is_a?(String)
+              nodes.push(text_node(parked))
+            else
+              nodes.concat(parked)
+            end
+
+            nodes.push(erb_code_node("#{reference} = true"), erb_code_node("end"))
           end
 
           nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
 
           document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
           document_node.children.concat(nodes)
+        end
+
+        #: (Herb::AST::DocumentNode) -> void
+        def expose_fallbacks(document_node)
+          return if @fragment_fallbacks.empty?
+
+          @exposed_fallbacks = @fragment_fallbacks.each_value.flat_map { |body| body } #: Array[untyped]
+
+          document_node.children.concat(@exposed_fallbacks)
+
+          nil
+        end
+
+        #: (Herb::AST::DocumentNode) -> void
+        def withdraw_fallbacks(document_node)
+          exposed = @exposed_fallbacks
+
+          return if exposed.empty?
+
+          document_node.children.reject! { |child| exposed.any? { |node| node.equal?(child) } }
+          @exposed_fallbacks = [] #: Array[untyped]
+
+          nil
+        end
+
+        #: () -> Array[[String, Array[untyped]]]
+        def fallback_statics_entries
+          @fragment_fallbacks.filter_map { |node, body|
+            index = @indices[node]
+
+            next unless index
+
+            [@markers.statics_key(index, 1), [text_node(@markers.branch(index, 1)), *marked_fallback(body)]]
+          }
+        end
+
+        #: (Array[untyped]) -> Array[untyped]
+        def marked_fallback(children)
+          children.flat_map do |child|
+            insert_markers(child)
+
+            slot_index = @standing[child]&.survivor&.index
+
+            next [child] unless slot_index
+
+            [
+              comment_node(@markers.slot_open(slot_index, @slots[slot_index].type)),
+              child,
+              comment_node(@markers.slot_close(slot_index))
+            ]
+          end
         end
 
         #: (String) -> String
@@ -1482,7 +2084,7 @@ module Herb
               text_node(@markers.item_open_suffix)
             )
 
-            body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked
+            body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked && client?
 
             body.push(text_node(@markers.item_close(slot_index)))
           end
@@ -1500,12 +2102,25 @@ module Herb
               return nil unless erb_outputs?(child)
 
               segments << +""
+            when Herb::AST::ERBIfNode, Herb::AST::ERBUnlessNode, Herb::AST::ERBCaseNode
+              segments << +""
             else
               return nil
             end
           end
 
           segments.size > 1 ? segments : nil
+        end
+
+        #: (Integer, untyped) -> void
+        def park_keyed(slot_index, element)
+          statics = @statics
+          return unless statics
+
+          markup = Statics.new(@standing).markup([element.open_tag, *element.body, element.close_tag].compact)
+          return unless markup
+
+          statics[@markers.item_statics_key(slot_index)] = "#{@markers.branch(slot_index, Markers::ITEM_STATICS)}#{markup}"
         end
 
         #: (untyped, untyped) -> Array[untyped]?
@@ -1530,7 +2145,9 @@ module Herb
           return unless node.is_a?(Herb::AST::HTMLElementNode)
 
           open_tag = node.open_tag
-          return unless open_tag.is_a?(Herb::AST::HTMLOpenTagNode) || open_tag.is_a?(Herb::AST::ERBOpenTagNode)
+          targets = open_tags_for(open_tag)
+
+          return if targets.empty?
 
           anchors = (@element_anchored[open_tag] || []).map { |annotation|
             slot = @slots.fetch(annotation.survivor.index)
@@ -1542,7 +2159,9 @@ module Herb
 
           return if anchors.empty?
 
-          open_tag.children << attribute_node("data-herb-slot", @markers.element_anchors(anchors))
+          value = @markers.element_anchors(anchors)
+
+          targets.each { |target| target.children << attribute_node("data-herb-slot", value) }
         end
 
         #: (Slot) -> String?

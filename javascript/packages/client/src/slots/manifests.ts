@@ -2,12 +2,19 @@ import { HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import type { StateManifest } from "../state/types"
 
+export interface BindingEntry {
+  identifier: string
+  partial?: string
+  states: Record<string, string>
+}
+
 export interface TemplateManifest {
   file: string
   identifier: string
   version: string
   names: Record<string, number>
   parts: Record<string, string[]>
+  bindings?: Record<string, BindingEntry>
   states: StateManifest | null
 }
 
@@ -95,6 +102,10 @@ export class Manifests {
 
   partsForFile(file: string, index: number): string[] | null {
     return this.byFile.get(file)?.parts[String(index)] ?? null
+  }
+
+  bindingsOf(file: string, version: string, index: number): BindingEntry | null {
+    return this.get(file, version)?.bindings?.[String(index)] ?? null
   }
 
   statesOf(file: string, version: string): StateManifest | null {

@@ -78,6 +78,7 @@ class ActionViewNoMistypedLocalsVisitor extends BaseRuleVisitor {
 export class ActionViewNoMistypedLocalsRule extends ParserRule {
   static ruleName = "actionview-no-mistyped-locals"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

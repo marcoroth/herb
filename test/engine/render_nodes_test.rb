@@ -85,7 +85,17 @@ module Engine
       diagnostics = flat_project_diagnostics("posts/nope")
 
       assert_equal 1, diagnostics.size
-      assert_includes diagnostics.first.message, "could not be resolved"
+
+      assert_equal %(Partial 'posts/nope' could not be resolved.
+     Looked in:
+       - posts/_nope.html.erb
+       - posts/_nope.html.herb
+       - posts/_nope.erb
+       - posts/_nope.herb
+       - posts/_nope.turbo_stream.erb
+       - posts/_nope.turbo_stream.herb
+     Did you mean: 'posts/card'?
+), diagnostics.first.message
     end
 
     test "no diagnostics for existing partial" do
@@ -105,7 +115,16 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :error, diagnostics.first.severity
-      assert_includes diagnostics.first.message, "Partial 'nonexistent/missing' could not be resolved"
+
+      assert_equal %(Partial 'nonexistent/missing' could not be resolved.
+     Looked in:
+       - app/views/nonexistent/_missing.html.erb
+       - app/views/nonexistent/_missing.html.herb
+       - app/views/nonexistent/_missing.erb
+       - app/views/nonexistent/_missing.herb
+       - app/views/nonexistent/_missing.turbo_stream.erb
+       - app/views/nonexistent/_missing.turbo_stream.herb
+), diagnostics.first.message
       assert_equal "RenderUnresolved", diagnostics.first.code
     end
 
@@ -114,7 +133,8 @@ module Engine
 
       assert_equal 1, diagnostics.length
       assert_equal :warning, diagnostics.first.severity
-      assert_includes diagnostics.first.message, "Dynamic render call cannot be statically resolved"
+
+      assert_equal %(Dynamic render call cannot be statically resolved), diagnostics.first.message
       assert_equal "RenderDynamic", diagnostics.first.code
     end
 
@@ -128,7 +148,16 @@ module Engine
       diagnostics = render_diagnostics('<%= render partial: "missing/partial" %>')
 
       assert_equal 1, diagnostics.length
-      assert_includes diagnostics.first.message, "Partial 'missing/partial' could not be resolved"
+
+      assert_equal %(Partial 'missing/partial' could not be resolved.
+     Looked in:
+       - app/views/missing/_partial.html.erb
+       - app/views/missing/_partial.html.herb
+       - app/views/missing/_partial.erb
+       - app/views/missing/_partial.herb
+       - app/views/missing/_partial.turbo_stream.erb
+       - app/views/missing/_partial.turbo_stream.herb
+), diagnostics.first.message
     end
 
     test "render validator is not run during normal compilation" do
@@ -190,6 +219,64 @@ module Engine
       diagnostics = render_diagnostics('<%= render layout: "shared/header" do %>Content<% end %>')
 
       assert_kind_of Array, diagnostics
+    end
+
+    class ListingResolver
+      Resolved = Herb::Analysis::PartialResolver::Resolved
+
+      attr_reader :asked
+
+      def initialize(known)
+        @known = known
+        @asked = []
+      end
+
+      def resolve(name, from: nil, format: nil)
+        @asked << [:resolve, name, from.to_s, format]
+
+        @known.include?(name) ? Resolved.new(path: Pathname.new("/elsewhere/_#{File.basename(name)}.html.erb"), identifier: "elsewhere/_#{File.basename(name)}.html.erb") : nil
+      end
+
+      def candidates(name, from: nil)
+        @asked << [:candidates, name, from.to_s]
+
+        [Pathname.new("/elsewhere/#{name}")]
+      end
+
+      def similar(name, from: nil, limit: 3)
+        @asked << [:similar, name, from.to_s]
+
+        @known.first(limit)
+      end
+
+      def identifier_for(path)
+        path.to_s.delete_prefix("/")
+      end
+    end
+
+    def diagnostics_with(resolver, template)
+      result = Herb.parse(template, render_nodes: true)
+      validator = Herb::Engine::Validators::RenderValidator.new
+
+      validator.inherit_context(Herb::Visitor::Context.new(file_path: "app/views/posts/show.html.erb", project_path: @project_path, resolver: resolver))
+      result.value.accept(validator)
+
+      validator.diagnostics
+    end
+
+    test "a resolver from the context answers whether a partial exists" do
+      resolver = ListingResolver.new(["engine/widget"])
+
+      assert_empty diagnostics_with(resolver, '<%= render "engine/widget" %>')
+      assert_equal [[:resolve, "engine/widget", "app/views/posts/show.html.erb", nil]], resolver.asked
+    end
+
+    test "a resolver from the context supplies the places looked and the suggestions" do
+      diagnostics = diagnostics_with(ListingResolver.new(["engine/widget"]), '<%= render "engine/gadget" %>')
+
+      assert_equal 1, diagnostics.length
+      assert_equal "RenderUnresolved", diagnostics.first.code
+      assert_equal "Partial 'engine/gadget' could not be resolved.\n     Looked in:\n       - elsewhere/engine/gadget\n     Did you mean: 'engine/widget'?\n", diagnostics.first.message
     end
   end
 end

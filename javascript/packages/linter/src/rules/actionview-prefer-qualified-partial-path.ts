@@ -120,6 +120,7 @@ class ActionViewPreferQualifiedPartialPathVisitor extends BaseRuleVisitor<Prefer
 export class ActionViewPreferQualifiedPartialPathRule extends ParserRule<PreferQualifiedPartialPathAutofixContext> {
   static ruleName = "actionview-prefer-qualified-partial-path"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static unsafeAutocorrectable = true
   static autofixRequiresContext = true
 

@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBCommentsTest#test_0026_evaluation: a nested output tag inside a comment is not evaluated"
+input: "{source: \"<%# a <%= 1 + 1 %>\", locals: {}, options: {}}"
+---

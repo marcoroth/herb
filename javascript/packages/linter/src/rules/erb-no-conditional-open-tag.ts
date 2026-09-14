@@ -20,6 +20,7 @@ class ERBNoConditionalOpenTagRuleVisitor extends BaseRuleVisitor {
 export class ERBNoConditionalOpenTagRule extends ParserRule {
   static ruleName = "erb-no-conditional-open-tag"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

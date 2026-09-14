@@ -1,0 +1,28 @@
+# Generated from lib/herb/analysis/ruby_reference.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    # Answers whether a snippet of Ruby references a name, instead of merely containing its
+    # characters. `render "form"` does not reference a local named `form`, and `item.title` does
+    # not reference a local named `title`.
+    #
+    #     Herb::Analysis::RubyReference.references?("render 'form'", "form") #=> false
+    #     Herb::Analysis::RubyReference.references?("render form", "form")   #=> true
+    #
+    # A name that cannot be parsed falls back to matching the source, since a dependency that is
+    # missed goes stale while one that is imagined only costs a rebuild.
+    class RubyReference
+      # : (String?, String?) -> bool
+      def self.references?: (String?, String?) -> bool
+
+      # : (String) -> Regexp
+      def self.boundary: (String) -> Regexp
+
+      # : (String) -> Array[untyped]?
+      def self.nodes_in: (String) -> Array[untyped]?
+
+      # : (untyped, String) -> bool
+      def self.names?: (untyped, String) -> bool
+    end
+  end
+end

@@ -23,7 +23,7 @@ describe("ERBNoInlineCaseConditionsRule", () => {
     })
 
     test("invalid inline case/when", () => {
-      expectWarning('A `case` statement with `when` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
+      expectWarning('A `case` statement and its first `when` condition share an ERB tag. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
 
       assertOffenses(dedent`
         <% case variable when "a" %>
@@ -35,7 +35,7 @@ describe("ERBNoInlineCaseConditionsRule", () => {
     })
 
     test("invalid case/when on newline in same tag", () => {
-      expectWarning('A `case` statement with `when` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
+      expectWarning('A `case` statement and its first `when` condition share an ERB tag. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
 
       assertOffenses(`<% case variable\n   when "a" %>\n  A\n<% when "b" %>\n  B\n<% end %>`)
     })
@@ -55,20 +55,8 @@ describe("ERBNoInlineCaseConditionsRule", () => {
       `)
     })
 
-    test("invalid inline case/in", () => {
-      expectWarning('A `case` statement with `in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% in y %>`).')
-
-      assertOffenses(dedent`
-        <% case value in 1 %>
-          One
-        <% in 2 %>
-          Two
-        <% end %>
-      `)
-    })
-
     test("invalid case/in on newline in same tag", () => {
-      expectWarning('A `case` statement with `in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% in y %>`).')
+      expectWarning('A `case` statement and its first `in` condition share an ERB tag. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% in y %>`).')
 
       assertOffenses(`<% case value\n   in 1 %>\n  One\n<% in 2 %>\n  Two\n<% end %>`)
     })
@@ -76,7 +64,7 @@ describe("ERBNoInlineCaseConditionsRule", () => {
 
   describe("escaped ERB tags", () => {
     test("reports inline case conditions in escaped tag", () => {
-      expectWarning('A `case` statement with `when` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
+      expectWarning('A `case` statement and its first `when` condition share an ERB tag. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
 
       assertOffenses(`<%% case value when 1 %>\n  One\n<%% end %>`)
     })

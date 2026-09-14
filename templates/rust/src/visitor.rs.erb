@@ -30,7 +30,7 @@ pub trait Visitor {
 
   <%- nodes.each do |node| -%>
   fn visit_<%= node.human %>(&mut self, node: &<%= node.name %>) {
-    <%- if node.name.start_with?("ERB") -%>
+    <%- if node.erb_tag? -%>
     self.visit_erb_node(node);
     <%- end -%>
     self.walk_<%= node.human %>(node);

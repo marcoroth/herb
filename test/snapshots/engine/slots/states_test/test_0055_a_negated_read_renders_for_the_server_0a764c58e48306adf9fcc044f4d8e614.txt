@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0055_a negated read renders for the server"
+input: "states_test-18"
+---
+<!--herb-region:app/views/test.html.erb:a619b7bc:0--><button disabled data-herb-slot="0:boolean_attribute:disabled">Send</button><!--/herb-region:app/views/test.html.erb-->

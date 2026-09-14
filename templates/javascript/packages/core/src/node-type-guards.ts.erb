@@ -1,4 +1,4 @@
-import type { Node, NodeType, ERBNode } from "./nodes.js"
+import type { Node, NodeType, ERBNode, HTMLNode } from "./nodes.js"
 
 import { Token } from "./token.js"
 import { ParseResult } from "./parse-result.js"
@@ -34,16 +34,20 @@ export function is<%= node.name %>(node: Node | null | undefined): node is <%= 
 /**
  * Checks if a node is any HTML node type
  */
-export function isHTMLNode(node: Node): boolean {
-<%- html_nodes = nodes.select { |n| n.name.start_with?("HTML") } -%>
+export function isHTMLNode(node: Node | null | undefined): node is HTMLNode {
+  if (!node) return false
+
+<%- html_nodes = nodes.select(&:html?) -%>
   return <%= html_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
 
 /**
  * Checks if a node is any ERB node type
  */
-export function isERBNode(node: Node): node is ERBNode {
-<%- erb_nodes = nodes.select { |n| n.name.start_with?("ERB") } -%>
+export function isERBNode(node: Node | null | undefined): node is ERBNode {
+  if (!node) return false
+
+<%- erb_nodes = nodes.select(&:erb_tag?) -%>
   return <%= erb_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
 

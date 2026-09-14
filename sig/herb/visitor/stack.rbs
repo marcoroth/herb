@@ -24,6 +24,12 @@ module Herb
       # : (untyped) -> Stack
       def self.build: (untyped) -> Stack
 
+      # : (untyped) -> Stack
+      def self.arrange: (untyped) -> Stack
+
+      # : () -> Stack
+      def arrange: () -> Stack
+
       # : () -> Array[String]
       def descriptions: () -> Array[String]
 
@@ -43,6 +49,18 @@ module Herb
 
       # : (untyped, Symbol) -> bool
       def answers?: (untyped, Symbol) -> bool
+
+      # : (untyped, untyped) -> bool
+      def precedes?: (untyped, untyped) -> bool
+
+      # : (Array[untyped]) -> String
+      def unsatisfiable_message: (Array[untyped]) -> String
+
+      # : (untyped, Array[untyped]) -> bool
+      def blocked?: (untyped, Array[untyped]) -> bool
+
+      # : (untyped, Array[untyped]) -> bool
+      def blocking?: (untyped, Array[untyped]) -> bool
 
       public
 

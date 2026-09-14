@@ -14,5 +14,8 @@ export function createMarkdownConfig() {
     image: {
       lazyLoading: true
     },
+    include: {
+      rebaseRelativeUrls: false
+    },
   }
 }

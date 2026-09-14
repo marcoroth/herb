@@ -6,6 +6,8 @@ module Herb
       class Report
         VERSION: Integer
 
+        MAX_TAG_LENGTH: Integer
+
         MAX_DIAGNOSTICS: Integer
 
         ATTRIBUTE: String
@@ -13,6 +15,8 @@ module Herb
         attr_reader meta: Hash[Symbol, untyped]
 
         attr_reader sources: Hash[String, String]
+
+        attr_reader digests: Hash[String, String]
 
         attr_reader nodes: Hash[String, Hash[String, Hash[Symbol, untyped]]]
 
@@ -39,8 +43,11 @@ module Herb
         # : (String, String?) -> void
         def source: (String, String?) -> void
 
-        # : (String, String?, String?, ?called_from: Array[untyped]?) -> void
-        def render: (String, String?, String?, ?called_from: Array[untyped]?) -> void
+        # : (String?) -> String?
+        def digest_for: (String?) -> String?
+
+        # : (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
+        def render: (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
 
         # : (String, Symbol, untyped, origin: String) -> void
         def annotate: (String, Symbol, untyped, origin: String) -> void
@@ -69,6 +76,18 @@ module Herb
         def to_html: () -> String
 
         private
+
+        # : (Herb::Diagnostic) -> Hash[Symbol, untyped]
+        def serialized: (Herb::Diagnostic) -> Hash[Symbol, untyped]
+
+        # : (Herb::Diagnostic) -> String?
+        def tag_source: (Herb::Diagnostic) -> String?
+
+        # : (String, Integer) -> String?
+        def template_line: (String, Integer) -> String?
+
+        # : (String) -> String?
+        def read_template: (String) -> String?
 
         # : () -> String
         def escaped_json: () -> String

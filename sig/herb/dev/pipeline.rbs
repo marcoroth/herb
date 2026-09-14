@@ -40,6 +40,15 @@ module Herb
       # : () { (untyped, Classifier::Classification?) -> void } -> void
       def on_classified: () { (untyped, Classifier::Classification?) -> void } -> void
 
+      # : (Hash[String, String]) -> Array[String]
+      def remember_broken: (Hash[String, String]) -> Array[String]
+
+      # : () -> Array[String]
+      def broken_files: () -> Array[String]
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def broken_entries: () -> Array[Hash[Symbol, untyped]]
+
       # : () -> bool
       def compiles?: () -> bool
 
@@ -56,6 +65,9 @@ module Herb
 
       # : (Watcher::Event) -> void
       def handle_changed: (Watcher::Event) -> void
+
+      # : (Watcher::Event, Classifier::Classification) -> void
+      def handle_parse_error: (Watcher::Event, Classifier::Classification) -> void
 
       # : (Watcher::Event, Classifier::Classification) -> void
       def handle_content_change: (Watcher::Event, Classifier::Classification) -> void
@@ -86,6 +98,12 @@ module Herb
 
       # : (String, untyped) -> void
       def remember: (String, untyped) -> void
+
+      # : (String, Array[Hash[Symbol, untyped]]) -> void
+      def record_diagnostics: (String, Array[Hash[Symbol, untyped]]) -> void
+
+      # : (untyped) -> Array[Hash[Symbol, untyped]]
+      def diagnostics_of: (untyped) -> Array[Hash[Symbol, untyped]]
 
       # : (Watcher::Event, Classifier::Classification) -> void
       def handle_without_compiler: (Watcher::Event, Classifier::Classification) -> void

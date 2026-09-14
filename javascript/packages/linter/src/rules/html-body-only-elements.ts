@@ -30,6 +30,7 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-body-only-elements"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

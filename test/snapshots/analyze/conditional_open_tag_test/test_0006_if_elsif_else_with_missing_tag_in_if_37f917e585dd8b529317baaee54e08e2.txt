@@ -22,12 +22,10 @@ input: |2-
     │   │   ├── @ HTMLTextNode (location: (1:26)-(2:2))
     │   │   │   └── content: "\n  "
     │   │   │
-    │   │   ├── @ ERBContentNode (location: (2:2)-(2:15))
+    │   │   ├── @ ERBCommentNode (location: (2:2)-(2:15))
     │   │   │   ├── tag_opening: "<%#" (location: (2:2)-(2:5))
     │   │   │   ├── content: " no-tag " (location: (2:5)-(2:13))
-    │   │   │   ├── tag_closing: "%>" (location: (2:13)-(2:15))
-    │   │   │   ├── parsed: false
-    │   │   │   └── valid: true
+    │   │   │   └── tag_closing: "%>" (location: (2:13)-(2:15))
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:15)-(3:0))
     │   │       └── content: "\n"

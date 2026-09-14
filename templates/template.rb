@@ -443,6 +443,8 @@ module Herb
     class NodeType
       include ConfigType
 
+      ERB_TAG_FIELDS = ["tag_opening", "content", "tag_closing"].freeze
+
       attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
 
       def initialize(config)
@@ -460,6 +462,16 @@ module Herb
 
           type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
+      end
+
+      def erb_tag?
+        names = fields.map(&:name)
+
+        ERB_TAG_FIELDS.all? { |field| names.include?(field) }
+      end
+
+      def html?
+        name.start_with?("HTML")
       end
 
       def c_type
@@ -717,6 +729,73 @@ module Herb
 
       def prism_constants
         prism_nodes.map { |node| "PM_#{Template.underscore(node).upcase}" }
+      end
+    end
+
+    class HTMLElement
+      attr_reader :name, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @description = config.fetch("description")
+        @void = config.fetch("void", false)
+        @deprecated = config.fetch("deprecated", false)
+        @whitespace_preserving = config.fetch("whitespace_preserving", false)
+        @inline = config.fetch("inline", false)
+      end
+
+      def void? = @void
+      def deprecated? = @deprecated
+      def whitespace_preserving? = @whitespace_preserving
+      def inline? = @inline
+    end
+
+    class ForeignContentElement
+      attr_reader :name, :kind
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @kind = config.fetch("kind")
+        @end_tag = config.fetch("end_tag", true)
+        @html_only = config.fetch("html_only", false)
+
+        raise "Unknown foreign content kind #{@kind.inspect} for #{@name}" unless ["raw_text", "rcdata"].include?(@kind)
+      end
+
+      def raw_text? = @kind == "raw_text"
+      def rcdata? = @kind == "rcdata"
+      def end_tag? = @end_tag
+      def html_only? = @html_only
+    end
+
+    class SlotsComponentAttribute
+      attr_reader :name, :type, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @description = config.fetch("description")
+      end
+    end
+
+    class SlotsComponent
+      attr_reader :name, :parents, :description, :attributes
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @parents = config.fetch("parents", nil)
+        @description = config.fetch("description")
+        @attributes = config.fetch("attributes", []).map { |attribute| SlotsComponentAttribute.new(attribute) }
+        @deferred = config.fetch("deferred", false)
+        @void = config.fetch("void", false)
+      end
+
+      def deferred?
+        @deferred
+      end
+
+      def void?
+        @void
       end
     end
 
@@ -1055,9 +1134,9 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags, state_predicates: state_predicates, state_kinds: state_kinds, state_transforms: state_transforms, state_operators: state_operators, slots_components: slots_components, foreign_content_elements: foreign_content_elements, html_elements: html_elements, boolean_attributes: boolean_attributes, whitespace_preserving_elements: whitespace_preserving_elements, parser_options: parser_options, inline_elements: inline_elements }
       )
-      content = heading_for(name, template_file) + rendered_template
+      content = heading_for(name, template_file_display) + rendered_template
 
       check_gitignore(name)
 
@@ -1096,11 +1175,220 @@ module Herb
       []
     end
 
+    class ParserOptionField
+      attr_reader :name, :type, :default, :description, :c_name, :nullable, :null_sentinel, :ruby_unit, :default_ms, :count_name
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @default = config["default"]
+        @default_ms = config["default_ms"]
+        @description = config.fetch("description", "")
+        @c_name = config.fetch("c_name", @name)
+        @count_name = config["count_name"]
+        @const_name = config["const_name"]
+        @nullable = config.fetch("nullable", false)
+        @null_sentinel = config["null_sentinel"]
+        @ruby_unit = config["ruby_unit"]
+        @only = config["only"]
+        @skip = config.fetch("skip", [])
+        @lex = config.fetch("lex", false)
+      end
+
+      def for?(language)
+        return @only.include?(language.to_s) if @only
+
+        !@skip.include?(language.to_s)
+      end
+
+      def c_extractable?
+        for?(:c) && !string_array?
+      end
+
+      def lex?
+        @lex
+      end
+
+      def boolean?
+        @type == "boolean"
+      end
+
+      def string_array?
+        @type == "string_array"
+      end
+
+      def uint64?
+        @type == "uint64"
+      end
+
+      def pointer?
+        @type == "pointer_uint32"
+      end
+
+      def nullable?
+        @nullable
+      end
+
+      def snake_case
+        @name
+      end
+
+      def camel_case
+        @name.split("_").map.with_index { |word, index| index.zero? ? word : word.capitalize }.join
+      end
+
+      def pascal_case
+        @name.split("_").map(&:capitalize).join
+      end
+
+      def upper_snake
+        (@const_name || @name).upcase
+      end
+
+      def java_getter
+        prefix = boolean? ? "is" : "get"
+
+        "#{prefix}#{pascal_case}"
+      end
+
+      def java_jni_signature
+        return "()Z" if boolean?
+        return "()Ljava/lang/Integer;" if nullable?
+
+        "()I"
+      end
+
+      def ruby_constant?
+        !string_array?
+      end
+
+      def ruby_default
+        return "[]" if string_array?
+        return "nil" if nullable? && @default.nil?
+
+        if @ruby_unit == "seconds" && @default_ms
+          seconds = @default_ms.to_f / 1000
+
+          return seconds == seconds.to_i ? seconds.to_i : seconds
+        end
+
+        @default
+      end
+
+      def ruby_default_type
+        return ruby_type unless nullable?
+
+        ruby_type.delete_suffix("?")
+      end
+
+      def c_default
+        return @null_sentinel if nullable? && @default.nil?
+        return @default_ms if @default_ms
+
+        @default
+      end
+
+      def js_default
+        return "[]" if string_array?
+        return "null" if nullable? && @default.nil?
+
+        @default_ms || @default
+      end
+
+      def java_default
+        return "null" if nullable? && @default.nil?
+
+        @default_ms || @default
+      end
+
+      def rust_default
+        return "None" if string_array?
+        return "None" if nullable? && @default.nil?
+
+        value = @default_ms || @default
+
+        nullable? ? "Some(#{value})" : value
+      end
+
+      def c_type
+        return "bool" if boolean?
+        return "uint64_t" if uint64?
+        return "uint32_t*" if pointer?
+        return "const hb_string_T*" if string_array?
+
+        "uint32_t"
+      end
+
+      def ruby_type
+        return "bool" if boolean?
+        return "Array[String]" if string_array?
+        return "Numeric" if @ruby_unit == "seconds"
+
+        nullable? ? "Integer?" : "Integer"
+      end
+
+      def typescript_type
+        return "boolean" if boolean?
+        return "string[]" if string_array?
+
+        nullable? ? "number | null" : "number"
+      end
+
+      def java_type
+        return "boolean" if boolean?
+
+        nullable? ? "Integer" : "int"
+      end
+
+      def rust_type
+        return "bool" if boolean?
+        return "Option<Vec<String>>" if string_array?
+
+        nullable? ? "Option<u32>" : "u32"
+      end
+    end
+
+    class ParserOptionsConfig
+      attr_reader :fields, :internal_fields
+
+      def initialize(config)
+        @fields = (config.fetch("fields", []) || []).map { |f| ParserOptionField.new(f) }
+        @internal_fields = (config.fetch("internal_fields", []) || []).map { |f| ParserOptionField.new(f) }
+      end
+
+      def fields_for(language)
+        @fields.select { |field| field.for?(language) }
+      end
+
+      def extractable_fields_for(language)
+        fields_for(language).select(&:c_extractable?)
+      end
+
+      def lex_fields_for(language)
+        fields_for(language).select(&:lex?)
+      end
+
+      def parse_fields_for(language)
+        fields_for(language).reject(&:lex?)
+      end
+
+      def all_c_fields
+        fields_for(:c) + @internal_fields
+      end
+    end
+
+    def self.parser_options
+      config_data = config["parser_options"]
+
+      return nil unless config_data
+
+      ParserOptionsConfig.new(config_data)
+    end
+
     def self.nodes
       (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
     end
 
-    # Collect all unique union kinds from node fields
     def self.union_kinds
       union_kinds_set = Set.new
 
@@ -1147,6 +1435,37 @@ module Herb
       config = YAML.load_file("config/state/operators.yml")
 
       (config["comparisons"] || []).map { |operator| StateOperator.new(operator) }
+    end
+
+    def self.html_elements
+      YAML.load_file("config/html_elements.yml")["elements"].map { |element| HTMLElement.new(element) }
+    end
+
+    def self.boolean_attributes
+      YAML.load_file("config/html_elements.yml")["boolean_attributes"]
+    end
+
+    def self.whitespace_preserving_elements
+      raw_text = foreign_content_elements.select(&:raw_text?).map(&:name)
+      flagged = html_elements.select(&:whitespace_preserving?).map(&:name)
+
+      (raw_text + flagged).sort
+    end
+
+    def self.inline_elements
+      html_elements.select(&:inline?).map(&:name).sort
+    end
+
+    def self.foreign_content_elements
+      config = YAML.load_file("config/html_elements.yml")
+
+      (config["foreign_content_elements"] || []).map { |element| ForeignContentElement.new(element) }
+    end
+
+    def self.slots_components
+      config = YAML.load_file("config/slots/components.yml", aliases: true)
+
+      (config["components"] || []).map { |component| SlotsComponent.new(component) }
     end
 
     def self.config

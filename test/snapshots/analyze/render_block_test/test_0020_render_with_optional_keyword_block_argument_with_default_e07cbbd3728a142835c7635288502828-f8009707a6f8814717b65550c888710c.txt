@@ -31,7 +31,9 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: []
+    │   │       ├── locals: []
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:51)-(2:2))

@@ -28,6 +28,8 @@ module Herb
       # other than `:inline` takes its block out of the markup, and reading a template before that
       # happens is reading a block that will not be there to inline.
       class Visitor < Herb::Visitor
+        extend Herb::Visitor::Experimental
+
         include Herb::Visitor::ContextAware
 
         include Herb::Visitor::Diagnostics

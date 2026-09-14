@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0015_conditional tag.attributes in attribute position blocked"
+input: "secure_compiler_test-7"
+---
+Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead.

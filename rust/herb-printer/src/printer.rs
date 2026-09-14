@@ -543,6 +543,10 @@ pub trait Printer: Visitor + Default {
     self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
   }
 
+  fn emit_erb_comment(&mut self, node: &ERBCommentNode) {
+    self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
+  }
+
   fn emit_erb_end(&mut self, node: &ERBEndNode) {
     self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
   }

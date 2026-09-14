@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   workflow_dispatch:
 
 permissions:
@@ -138,14 +139,21 @@ jobs:
         id: compare
         env:
           NO_COLOR: "1"
+          ACCEPT_REGRESSIONS: ${{ contains(github.event.pull_request.labels.*.name, 'corpus-accept-regressions') }}
         run: |-
           set -o pipefail
+
+          flags=(--markdown comment.md)
+
+          if [ "$ACCEPT_REGRESSIONS" != "true" ]; then
+            flags+=(--fail-on-regression)
+          fi
 
           corpus/bin/diff-runs \
             corpus/runs/baseline.json \
             corpus/runs/branch.json \
-            --markdown comment.md \
-            --fail-on-regression | tee comparison.txt
+            --expected .github/corpus-expectations.yml \
+            "${flags[@]}" | tee comparison.txt
 
       - name: Comment on the pull request
         if: (!cancelled()) && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
@@ -259,6 +267,65 @@ jobs:
           path: corpus-allocations.txt
           if-no-files-found: ignore
           retention-days: 30
+
+  minifier:
+    name: Minifier Equivalence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: grep -v emscripten Aptfile | xargs sudo apt-get install -y --no-install-recommends
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.2
+          actions-cache-folder: emsdk-cache-corpus-minifier
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: yarn install
+        run: yarn install --frozen-lockfile
+
+      - name: Build the minifier
+        run: yarn nx run-many -t build -p @herb-tools/minifier,@herb-tools/node-wasm
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Verify the minifier preserves the corpus
+        env:
+          NO_COLOR: "1"
+        run: |-
+          npx tsx javascript/packages/minifier/scripts/verify-corpus.ts "corpus/erb/**/*.erb"
 
   printer:
     name: Printer Roundtrip

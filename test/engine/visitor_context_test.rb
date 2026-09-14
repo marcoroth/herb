@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 
 module Engine
   class VisitorContextTest < Minitest::Spec
+    include SnapshotUtils
+
     def context(**)
       Herb::Visitor::Context.new(**)
     end
@@ -90,7 +93,7 @@ module Engine
 
       assert_equal "dark", subject[:theme]
       assert_equal 2, subject[:level]
-      assert_equal({ theme: "dark", level: 2 }, subject.data.except(:origin))
+      assert_equal({ theme: "dark", level: 2 }, subject.data.except(:origin, :replacements))
     end
 
     test "well known keys are readable through the bag" do
@@ -149,11 +152,38 @@ module Engine
       subject = context(file_path: "app/x.erb", project_path: "/proj")
 
       assert_equal %(#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
-      refute_includes subject.inspect, "/proj"
+
+      assert_snapshot_matches(subject.inspect, "visitor_context_test-0")
     end
 
     test "to_hash exposes every part" do
-      assert_equal [:file_path, :project_path, :relative_file_path, :options, :data], context.to_hash.keys
+      assert_equal [:file_path, :project_path, :relative_file_path, :options, :resolver, :data], context.to_hash.keys
+    end
+
+    test "the resolver defaults to the filesystem lookup rooted at the project" do
+      subject = context(project_path: "/proj")
+
+      assert_instance_of Herb::Analysis::PartialResolver, subject.resolver
+      assert_equal Pathname.new("/proj"), subject.resolver.project_path
+      assert_same subject.resolver, subject[:resolver]
+      assert subject.key?(:resolver)
+    end
+
+    test "a given resolver is kept and survives a merge" do
+      resolver = Object.new
+      subject = context(project_path: "/proj", resolver: resolver)
+
+      assert_same resolver, subject.resolver
+      assert_same resolver, subject.merge(file_path: "b.erb").resolver
+      assert_same resolver, subject.to_hash[:resolver]
+    end
+
+    test "the engine hands its resolver to the context and keeps it out of the options" do
+      resolver = Object.new
+      engine = Herb::Engine.new("<p>hi</p>", filename: "a.erb", project_path: "/proj", resolver: resolver)
+
+      assert_same resolver, engine.context.resolver
+      refute engine.context.options.key?(:resolver)
     end
   end
 end

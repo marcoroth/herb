@@ -199,6 +199,7 @@
           <button id="report-spaced">report() with a trailing space in origin</button>
           <button id="report-blocking" title="Covers the page with no way out. Reload to leave it.">report() a blocking overlay</button>
           <button id="report-dismissible">report() a dismissible overlay</button>
+          <button id="report-metrics" title="What a page reports when every tag is measured. Enough of one kind to be worth putting away.">report() a page full of metrics</button>
           <button id="report-located" title="Every entry carries an element. Two are on the page and one is inside a hidden article.">report() pointing at DOM elements</button>
           <button id="dismiss-last">dismiss() the last handle</button>
           <button id="clear-origin">clear("Acme Scanner")</button>
@@ -213,6 +214,7 @@
 
       <article
         class="post"
+        data-herb-source="app/views/posts/_post.html.erb:1:1"
         data-herb-debug-outline-type="partial"
         data-herb-debug-file-name="_post.html.erb"
         data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
@@ -266,6 +268,7 @@
 
       <article
         class="post"
+        data-herb-source="app/views/posts/_post.html.erb:1:1"
         data-herb-debug-outline-type="partial"
         data-herb-debug-file-name="_post.html.erb"
         data-herb-debug-file-relative-path="app/views/posts/_post.html.erb"
@@ -317,7 +320,7 @@
         <p>Rendered by app/views/posts/_post.html.erb, occurrence two.</p>
       </article>
 
-      <article class="post">
+      <article class="post" data-herb-source="app/views/posts/index.html.erb:12:3">
         <h2>Reading a render stack</h2>
         <div class="cover three" id="cover-three"></div>
         <p>Rendered inline by app/views/posts/index.html.erb.</p>
@@ -451,6 +454,7 @@
           {
             "template": "app/views/posts/_post.html.erb",
             "node": "3",
+            "code": "sql-queries",
             "message": "This partial issued 3 SQL queries while rendering.",
             "kind": "metric",
             "origin": "Herb Engine Runtime",
@@ -469,6 +473,7 @@
           {
             "template": "app/components/post_actions_component.html.erb",
             "node": "4",
+            "code": "render-count",
             "message": "This component rendered twice on this page.",
             "kind": "metric",
             "origin": "Herb Engine Runtime",

@@ -93,6 +93,7 @@ class ActionViewNoUnnecessaryHTMLSafeVisitor extends BaseRuleVisitor<Unnecessary
 export class ActionViewNoUnnecessaryHTMLSafeRule extends ParserRule<UnnecessaryHTMLSafeAutofixContext> {
   static ruleName = "actionview-no-unnecessary-html-safe"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

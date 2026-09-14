@@ -50,6 +50,58 @@ describe("HerbStateValidActionsRule", () => {
     `)
   })
 
+  test("allows key filters in the Stimulus syntax", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="keydown.esc@window->open=false keydown.ctrl+shift+f@document->open=true meta+click->open=true click@outside->open=false">x</button>
+    `)
+  })
+
+  test("points the old dot chord at the plus form", () => {
+    expectError("`keydown.meta.k@window` in `data-herb-set` joins its filter with `.`. Join modifiers and key with `+`, like `keydown.meta+k`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="keydown.meta.k@window->open=true">x</button>
+    `)
+  })
+
+  test("flags a target the runtime will never listen on", () => {
+    expectError("`keydown.esc@body` in `data-herb-set` names `@body` as its target. Use `@window`, `@document` or `@outside`, or drop the target to listen on the element.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="keydown.esc@body->open=false">x</button>
+    `)
+  })
+
+  test("flags a filter naming two keys", () => {
+    expectError("`keydown.a+b` in `data-herb-toggle` filters on 2 keys. Name one key per clause, with modifiers joined by `+`, like `keydown.ctrl+k`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-toggle="keydown.a+b->open">x</button>
+    `)
+  })
+
+  test("flags a prefix that is not a modifier", () => {
+    expectError("`primary+click` in `data-herb-set` prefixes the event with `primary+`, which is not a modifier. Use `ctrl`, `alt`, `shift`, `meta` or `cmd`.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="primary+click->open=true">x</button>
+    `)
+  })
+
+  test("flags an empty key filter", () => {
+    expectError("`keydown.` in `data-herb-set` has an empty key filter. Name the key after the dot, like `keydown.esc`, or drop the dot.")
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false) %>
+      <button data-herb-set="keydown.->open=true">x</button>
+    `)
+  })
+
   test("flags a clause with no event before the arrow", () => {
     expectError("`data-herb-toggle` has a clause with no event before the arrow. Name one, like `click->`, or drop the arrow to use the element's default event.")
 

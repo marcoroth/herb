@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineTest#test_0042_a shovel operator spanning two lines in an output tag keeps the following line"
+input: "{source: \"<p><%= a <<\\nb %></p>\\n<%= z %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (a <<
+b).to_s; _buf << '</p>
+'.freeze; _buf << (z).to_s; _buf << '
+'.freeze;
+_buf.to_s

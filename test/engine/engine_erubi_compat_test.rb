@@ -325,5 +325,85 @@ module Engine
       assert_compiled_snapshot(template, trim: false)
       assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
     end
+
+    test "emits escaped ERB tags as literal text" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block as literal text" do
+      template = "<%% foo do %>\nx\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text inside parsed HTML" do
+      template = "<div class=\"card\"><%%= name %></div>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB conditional as literal text" do
+      template = "<%% if admin? %>\n  <p>hi</p>\n<%% else %>\n  <p>bye</p>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB iteration as literal text" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB case as literal text" do
+      template = "<%% case status %>\n<%% when :active %>\n  on\n<%% else %>\n  off\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+    test "emits an escaped ERB case sharing a tag with its condition as literal text" do
+      template = "<%% case status when :active %>\n  on\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, parser_options: { strict: false })
+      assert_evaluated_snapshot(template, {}, { parser_options: { strict: false } }, enforce_erubi_equality: true)
+    end
+
+    test "keeps the line count when a continuation closes its block in the same tag" do
+      template = <<~ERB
+        <% begin %>
+          body
+        <% rescue; end %>
+        <%= after %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "emits escaped ERB tags with custom literal delimiters" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block with custom literal delimiters" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB comment as literal text" do
+      template = "<%%# a comment %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

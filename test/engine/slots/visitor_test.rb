@@ -109,9 +109,7 @@ module Engine
 
           refute_empty reported, template
 
-          reported.each do |node_path|
-            assert_includes recorded, node_path, template
-          end
+          assert_empty reported - recorded
         end
       end
 
@@ -388,8 +386,7 @@ module Engine
       test "the engine emits no markers unless the visitor is in the stack" do
         engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>")
 
-        refute_includes engine.src, "herb-slot"
-        refute_includes engine.src, "herb-region"
+        assert_snapshot_matches(engine.src, "visitor_test-no-markers")
       end
 
       test "a slot written on an element names the attribute it stands for" do
@@ -408,7 +405,8 @@ module Engine
         Herb::Engine.new("<p><%= @a %></p>", visitors: [visitor], filename: "app/views/test.html.erb")
 
         assert_match(/\A[0-9a-f]{12}\z/, visitor.identifier)
-        refute_includes visitor.identifier, "views"
+
+        assert_equal "19aa24b9908e", visitor.identifier
       end
 
       test "lets a caller name a template however it likes" do
@@ -493,6 +491,22 @@ module Engine
 
       test "records what a block whose value is not output contains" do
         assert_slots_snapshot("<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>")
+      end
+
+      test "compiles a standalone element carrying a dynamic herb-key to a keyed slot" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>">x</div>))
+      end
+
+      test "builds an interpolated key for a keyed slot holding several expressions" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="<%= @track %>:<%= @number %>">x</div>))
+      end
+
+      test "leaves a static herb-key alone" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<div herb-key="fixed">x</div>))
+      end
+
+      test "leaves a herb-key inside a collection body to the collection" do
+        assert_slots_snapshot(%(<%# herb:slots %>\n<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
       end
     end
   end

@@ -29,8 +29,11 @@ module Herb
 
       attr_reader data: Hash[Symbol, untyped]
 
-      # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
-      def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
+      # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], ?resolver: untyped, **untyped) -> void
+      def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], ?resolver: untyped, **untyped) -> void
+
+      # : (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+      def self.with_records: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
 
       # : () -> Pathname
       def project_path: () -> Pathname
@@ -38,8 +41,14 @@ module Herb
       # : () -> String
       def relative_file_path: () -> String
 
+      # : () -> untyped
+      def resolver: () -> untyped
+
       # : () -> Herb::Visitor::Context::Origin
       def origin: () -> Herb::Visitor::Context::Origin
+
+      # : () -> Herb::Visitor::Context::Replacements
+      def replacements: () -> Herb::Visitor::Context::Replacements
 
       # : (Symbol) -> untyped
       def []: (Symbol) -> untyped

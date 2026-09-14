@@ -309,6 +309,40 @@ describe("ActionViewNoSilentHelperRule", () => {
     `)
   })
 
+  test("silent tag with slot setter taking a helper in a brace block is allowed", () => {
+    expectNoOffenses(dedent`
+      <%= render CardComponent.new do |card| %>
+        <% card.with_header { tag.h3("Title") } %>
+      <% end %>
+    `)
+  })
+
+  test("silent tag with slot setter taking a helper in a do/end block is allowed", () => {
+    expectNoOffenses(dedent`
+      <%= render CardComponent.new do |card| %>
+        <% card.with_header do %>
+          <%= tag.h3("Title") %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("silent tag with slot setter taking a helper as an argument is allowed", () => {
+    expectNoOffenses(dedent`
+      <%= render CardComponent.new do |card| %>
+        <% card.with_footer(link_to("Home", root_path)) %>
+      <% end %>
+    `)
+  })
+
+  test("silent tag with slot setter on a helper block local is allowed", () => {
+    expectNoOffenses(dedent`
+      <%= card_component do |card| %>
+        <% card.with_header { tag.h3("Title") } %>
+      <% end %>
+    `)
+  })
+
   test("silent tag with helper inside a conditional else branch is not allowed", () => {
     expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
 

@@ -23,11 +23,9 @@
 #define SYNTHETIC_PREFIX "def _"
 #define SYNTHETIC_SUFFIX "; end"
 
-static bool is_strict_locals_node(const AST_ERB_CONTENT_NODE_T* node) {
+static bool is_strict_locals_node(const AST_ERB_COMMENT_NODE_T* node) {
   if (!node->tag_opening || !node->content) { return false; }
   if (hb_string_is_empty(node->tag_opening->value)) { return false; }
-
-  if (!hb_string_contains_character(node->tag_opening->value, '#')) { return false; }
 
   const char* content = node->content->value.data;
   if (!content) { return false; }
@@ -144,7 +142,7 @@ static hb_array_T* extract_strict_locals(
 }
 
 static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
-  AST_ERB_CONTENT_NODE_T* erb_node,
+  AST_ERB_COMMENT_NODE_T* erb_node,
   const char* source,
   hb_allocator_T* allocator,
   const parser_options_T* parser_options
@@ -193,8 +191,8 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
       token_copy(erb_node->tag_opening, allocator),
       token_copy(erb_node->content, allocator),
       token_copy(erb_node->tag_closing, allocator),
-      erb_node->analyzed_ruby,
-      erb_node->prism_node,
+      NULL,
+      HERB_PRISM_NODE_EMPTY,
       locals,
       erb_node->base.location.start,
       erb_node->base.location.end,
@@ -281,8 +279,8 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
     token_copy(erb_node->tag_opening, allocator),
     token_copy(erb_node->content, allocator),
     token_copy(erb_node->tag_closing, allocator),
-    erb_node->analyzed_ruby,
-    erb_node->prism_node,
+    NULL,
+    HERB_PRISM_NODE_EMPTY,
     locals,
     erb_node->base.location.start,
     erb_node->base.location.end,
@@ -296,9 +294,9 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
 
   for (size_t index = 0; index < hb_array_size(array); index++) {
     AST_NODE_T* child = hb_array_get(array, index);
-    if (!child || child->type != AST_ERB_CONTENT_NODE) { continue; }
+    if (!child || child->type != AST_ERB_COMMENT_NODE) { continue; }
 
-    AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
+    AST_ERB_COMMENT_NODE_T* erb_node = (AST_ERB_COMMENT_NODE_T*) child;
 
     if (!is_strict_locals_node(erb_node)) { continue; }
 
@@ -319,8 +317,6 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
 
     context->found_strict_locals = true;
     hb_array_set(array, index, strict_locals_node);
-
-    if (strict_locals_node->analyzed_ruby == erb_node->analyzed_ruby) { erb_node->analyzed_ruby = NULL; }
 
     ast_node_free(child, context->allocator);
   }

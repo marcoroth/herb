@@ -1,0 +1,4 @@
+---
+source: "Engine::ControlFlowClosingTest#test_0004_when and end in same ERB tag"
+input: "{source: \"<% case status %>\\n<% when \\\"ok\\\"\\nend %>\\n\", locals: {status: \"other\"}, options: {escape: false}}"
+---

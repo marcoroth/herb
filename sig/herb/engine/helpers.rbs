@@ -15,6 +15,9 @@ module Herb
       # : (String) -> bool
       def self.heredoc?: (String) -> bool
 
+      # : (String) -> Array[untyped]?
+      def self.heredoc_tokens: (String) -> Array[untyped]?
+
       # : (String) -> String
       def self.strip_trailing_comment: (String) -> String
 

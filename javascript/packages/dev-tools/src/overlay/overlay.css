@@ -556,6 +556,16 @@
   font-weight: 500;
 }
 
+.herb-overlay-label-measured {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .herb-outline-preview {
   padding: 2px 8px;
   border: 2px dotted transparent;

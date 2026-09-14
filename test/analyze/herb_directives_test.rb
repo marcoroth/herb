@@ -38,7 +38,7 @@ module Analyze
       HTML
     end
 
-    test "state directive without the option enabled stays an ERBContentNode" do
+    test "state directive without the option enabled stays an ERBCommentNode" do
       assert_parsed_snapshot(<<~HTML)
         <%# herb:state (open: false) %>
       HTML

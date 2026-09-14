@@ -125,6 +125,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
   /** Indicates whether this rule supports autofix. Defaults to false. */
@@ -206,6 +208,8 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
 
@@ -264,6 +268,7 @@ export interface LexerRuleConstructor {
   new (): LexerRule
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
@@ -331,6 +336,11 @@ export interface LintContext {
   partialCallers: RenderGraph | undefined
   projectPath: string | undefined
   herb: HerbBackend | undefined
+  parkedRoots: (() => ArrayLike<ParkedRoot>) | undefined
+}
+
+export interface ParkedRoot {
+  querySelectorAll(selectors: string): ArrayLike<unknown>
 }
 
 /**
@@ -350,7 +360,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   partials: undefined,
   partialCallers: undefined,
   projectPath: undefined,
-  herb: undefined
+  herb: undefined,
+  parkedRoots: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -358,6 +369,8 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   static ruleName: string
   /** The version in which this rule was introduced. Used for version-gated rule filtering. */
   static introducedIn: RuleVersion
+  /** The version in which this rule started being enabled by default. Falls back to `introducedIn`. */
+  static defaultEnabledIn?: RuleVersion
 
   static version(version: RuleVersion): RuleVersion { return version }
 
@@ -416,6 +429,7 @@ export interface SourceRuleConstructor {
   new (): SourceRule
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
@@ -431,6 +445,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean

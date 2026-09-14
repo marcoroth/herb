@@ -1,0 +1,34 @@
+# Generated from lib/herb/engine/slots/bindings.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The state values a render call hands the partial it renders.
+      #
+      # A caller's compile rewrites `render "card", state: { open: modal_open }` into a call
+      # wrapped by `with`, so the values travel on a stack the partial's own state assignments
+      # read through `StateOverrides.resolve`. Two tables ride on every frame. A bound value
+      # aliases the partial's state to the caller's and wins over anything a client sent, since
+      # the client cannot tell two render sites of one partial apart. A seeded value only sets
+      # the partial's starting point, so a client that has since written the state wins over it.
+      #
+      # The stack lives in fiber storage, which a child fiber or thread inherits, so a render
+      # that streams or captures still sees the frames its caller pushed.
+      module Bindings
+        KEY: Symbol
+
+        class UncoercibleSeedError < StandardError
+        end
+
+        # : (String, ?bound: Hash[String, untyped], ?seeded: Hash[String, untyped]) { () -> untyped } -> untyped
+        def self.with: (String, ?bound: Hash[String, untyped], ?seeded: Hash[String, untyped]) { () -> untyped } -> untyped
+
+        # : (String) -> Hash[Symbol, Hash[String, untyped]]?
+        def self.current: (String) -> Hash[Symbol, Hash[String, untyped]]?
+
+        # : (String, String, untyped) -> void
+        def self.check_seed: (String, String, untyped) -> void
+      end
+    end
+  end
+end

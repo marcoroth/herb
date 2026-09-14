@@ -313,7 +313,7 @@ module Engine
         entry = write("index.html.erb", "<ul><% @posts.each do |post| %><li><%= post %></li><% end %></ul>")
 
         tag = subject.dependencies_tag(entry, params: { "p" => "@posts" })
-        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        json = tag.delete_prefix("<template data-herb-dependencies>").delete_suffix("</template>")
 
         assert_equal({ "p" => "@posts" }, JSON.parse(json)["params"])
       end
@@ -326,7 +326,7 @@ module Engine
         assert_match(/\A<template data-herb-dependencies>/, tag)
         assert_match(%r{</template>\z}, tag)
 
-        json = tag.sub(/\A<template data-herb-dependencies>/, "").sub(%r{</template>\z}, "")
+        json = tag.delete_prefix("<template data-herb-dependencies>").delete_suffix("</template>")
 
         assert_equal subject.payload(entry), JSON.parse(json)
       end

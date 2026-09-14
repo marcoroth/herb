@@ -63,6 +63,8 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
+      def visit_erb_comment_node: (untyped node) -> untyped
+
       def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
 
       def visit_erb_if_node: (untyped node) -> untyped
@@ -103,11 +105,15 @@ module Herb
 
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
+      def case_parts: (untyped node) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
 
-      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
+      def add_escaped_erb_tag: (untyped node) -> untyped
+
+      def add_escaped_erb_block: (untyped node) -> untyped
 
       def current_context: () -> untyped
 
@@ -123,7 +129,7 @@ module Herb
       # : (untyped, ?extra: Integer) -> void
       def keep_span_line_count: (untyped, ?extra: Integer) -> void
 
-      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped) -> untyped
+      def keep_line_count: (untyped node, ?extra: untyped, ?at: untyped, ?absorbed: untyped, ?raw: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
 
@@ -187,6 +193,8 @@ module Herb
       def extract_and_remove_leading_space!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped
+
+      def continues_into_next_node?: (untyped node) -> untyped
 
       # : (untyped) -> bool
       def without_source?: (untyped) -> bool

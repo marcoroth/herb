@@ -6,6 +6,7 @@
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 #include "../../src/include/herb.h"
 #include "../../src/include/lexer/token.h"
@@ -137,38 +138,7 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root, options);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
-
-  VALUE kwargs = rb_hash_new();
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict")), options->strict ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_locations")), options->track_locations ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("action_view_helpers")), options->action_view_helpers ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("transform_conditionals")), options->transform_conditionals ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("render_nodes")), options->render_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict_locals")), options->strict_locals ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("herb_directives")), options->herb_directives ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("iteration_nodes")), options->iteration_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes")), options->prism_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes_deep")), options->prism_nodes_deep ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_program")), options->prism_program ? Qtrue : Qfalse);
-
-  VALUE erb_openers = rb_ary_new_capa((long) options->erb_opener_count);
-
-  for (size_t index = 0; index < options->erb_opener_count; index++) {
-    hb_string_T opener = options->erb_openers[index];
-
-    rb_ary_push(erb_openers, rb_utf8_str_new(opener.data, (long) opener.length));
-  }
-
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("erb_openers")), erb_openers);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("timeout")), DBL2NUM((double) options->timeout_ms / 1000.0));
-
-  rb_hash_aset(
-    kwargs,
-    ID2SYM(rb_intern("max_errors")),
-    options->max_errors == 0 ? Qnil : UINT2NUM(options->max_errors)
-  );
+  VALUE kwargs = herb_build_parser_options_hash(options);
 
   VALUE parser_options_args[1] = { kwargs };
   VALUE parser_options = rb_class_new_instance_kw(1, parser_options_args, cParserOptions, RB_PASS_KEYWORDS);

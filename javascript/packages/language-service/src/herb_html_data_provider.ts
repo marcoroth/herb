@@ -1,4 +1,5 @@
 import { HERB_ATTRIBUTES } from "@herb-tools/client/directives"
+import { COMPONENT_DEFINITIONS, BUILT_IN_COMPONENTS } from "@herb-tools/core"
 
 import type { IHTMLDataProvider } from "vscode-html-languageservice"
 
@@ -16,7 +17,19 @@ const DESCRIPTIONS: Record<string, string> = {
 export const herbHTMLDataProvider: IHTMLDataProvider = {
   getId: () => "herb",
   isApplicable: () => true,
-  provideTags: () => [],
+  provideTags: () =>
+    BUILT_IN_COMPONENTS.map((component) => {
+      const definition = COMPONENT_DEFINITIONS[component]
+
+      return {
+        name: definition.name,
+        description: { kind: "markdown" as const, value: definition.description },
+        attributes: definition.attributes.map((attribute) => ({
+          name: attribute.name,
+          description: { kind: "markdown" as const, value: attribute.description },
+        })),
+      }
+    }),
   provideAttributes: () =>
     Object.entries(DESCRIPTIONS).map(([name, description]) => ({
       name,

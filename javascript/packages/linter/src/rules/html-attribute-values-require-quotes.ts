@@ -54,6 +54,7 @@ export class HTMLAttributeValuesRequireQuotesRule extends ParserRule<AttributeVa
   static autocorrectable = true
   static ruleName = "html-attribute-values-require-quotes"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

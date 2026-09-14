@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest"
 
-import { Position } from "../src/position.js"
+import { Position, offsetFromPosition, positionFromOffset, sliceBetweenPositions } from "../src/position.js"
 
 describe("Position", () => {
   describe("compare", () => {
@@ -38,5 +38,65 @@ describe("Position", () => {
       expect(earlier.equals(Position.from(1, 4))).toBe(true)
       expect(earlier.equals(later)).toBe(false)
     })
+  })
+})
+
+describe("offsetFromPosition", () => {
+  const source = `<div class="x">\n  <span>text</span>\n</div>`
+
+  test("resolves a position on the first line", () => {
+    expect(offsetFromPosition(source, Position.from(1, 5))).toBe(5)
+  })
+
+  test("resolves a position on a later line", () => {
+    expect(offsetFromPosition(source, Position.from(2, 2))).toBe(18)
+  })
+
+  test("resolves the end of a line", () => {
+    expect(offsetFromPosition(source, Position.from(1, 15))).toBe(15)
+  })
+
+  test("round-trips with positionFromOffset", () => {
+    for (let offset = 0; offset <= source.length; offset++) {
+      expect(offsetFromPosition(source, positionFromOffset(source, offset))).toBe(offset)
+    }
+  })
+
+  test("answers with null for a line past the end of the source", () => {
+    expect(offsetFromPosition(source, Position.from(9, 0))).toBeNull()
+  })
+
+  test("answers with null for a column past the end of a line", () => {
+    expect(offsetFromPosition(source, Position.from(2, 99))).toBeNull()
+  })
+
+  test("answers with null for a position before the start of the source", () => {
+    expect(offsetFromPosition(source, Position.zero)).toBeNull()
+    expect(offsetFromPosition(source, Position.from(1, -1))).toBeNull()
+  })
+})
+
+describe("sliceBetweenPositions", () => {
+  const source = `<span   class="x"\n  id="y">text</span>`
+
+  test("extracts the text between two positions on one line", () => {
+    expect(sliceBetweenPositions(source, Position.from(1, 5), Position.from(1, 8))).toBe("   ")
+  })
+
+  test("extracts the text across a line boundary", () => {
+    expect(sliceBetweenPositions(source, Position.from(1, 17), Position.from(2, 2))).toBe("\n  ")
+  })
+
+  test("answers with an empty string for two identical positions", () => {
+    expect(sliceBetweenPositions(source, Position.from(1, 5), Position.from(1, 5))).toBe("")
+  })
+
+  test("answers with null when the positions run backwards", () => {
+    expect(sliceBetweenPositions(source, Position.from(2, 2), Position.from(1, 5))).toBeNull()
+  })
+
+  test("answers with null when either position falls outside the source", () => {
+    expect(sliceBetweenPositions(source, Position.from(1, 5), Position.from(9, 0))).toBeNull()
+    expect(sliceBetweenPositions(source, Position.from(9, 0), Position.from(1, 5))).toBeNull()
   })
 })

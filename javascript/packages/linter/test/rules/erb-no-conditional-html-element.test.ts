@@ -80,13 +80,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<h1>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= @with_icon ? content_tag(:h1, content) : content %>
+        Avoid opening and closing \`<h1>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -107,13 +101,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<dialog>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= wrap_in_dialog? ? content_tag(:dialog, content) : content %>
+        Avoid opening and closing \`<dialog>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -132,13 +120,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= @with_icon ? content_tag(:div, content) : content %>
+        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -157,13 +139,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= wrap_in_div ? content_tag(:div, content) : content %>
+        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -182,13 +158,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= @show_wrapper ? content_tag(:div, content) : content %>
+        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -207,13 +177,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<section>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= hide_wrapper? ? content_tag(:section, content) : content %>
+        Avoid opening and closing \`<section>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -238,22 +202,49 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= @outer ? content_tag(:div, content) : content %>
+        Avoid opening and closing \`<div>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       expectError(dedent`
-        Avoid opening and closing \`<span>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
+        Avoid opening and closing \`<span>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
+      `)
+      assertOffenses(html)
+    })
+  })
+
+  describe("framework", () => {
+    const html = dedent`
+      <% if a %>
+        <optgroup>
+      <% end %>
+
+      <% if a %>
+        </optgroup>
+      <% end %>
+    `
+
+    it("offers the `capture` block on Action View", () => {
+      expectError(dedent`
+        Avoid opening and closing \`<optgroup>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
 
         <% content = capture do %>
           ... your content here ...
         <% end %>
 
-        <%= @inner ? content_tag(:span, content) : content %>
+        <%= a ? content_tag(:optgroup, content) : content %>
+      `)
+      assertOffenses(html, { framework: "actionview" })
+    })
+
+    it("offers the shapes that work anywhere on every other framework", () => {
+      expectError(dedent`
+        Avoid opening and closing \`<optgroup>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
+      `)
+      assertOffenses(html, { framework: "sinatra" })
+    })
+
+    it("assumes plain Ruby when no framework is set", () => {
+      expectError(dedent`
+        Avoid opening and closing \`<optgroup>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })
@@ -274,13 +265,7 @@ describe("erb-no-conditional-html-element", () => {
       `
 
       expectError(dedent`
-        Avoid opening and closing \`<main>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Consider using a \`capture\` block instead:
-
-        <% content = capture do %>
-          ... your content here ...
-        <% end %>
-
-        <%= @use_wrapper ? content_tag(:main, content) : content %>
+        Avoid opening and closing \`<main>\` tags in separate conditional blocks with the same condition. This pattern is difficult to read and maintain. Keep the opening and closing tag in the same branch, or build the content once and wrap it conditionally.
       `)
       assertOffenses(html)
     })

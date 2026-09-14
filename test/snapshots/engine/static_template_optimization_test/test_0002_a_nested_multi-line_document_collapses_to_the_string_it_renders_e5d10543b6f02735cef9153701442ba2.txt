@@ -1,0 +1,14 @@
+---
+source: "Engine::StaticTemplateOptimizationTest#test_0002_a nested multi-line document collapses to the string it renders"
+input: "static_template_optimization_test-0"
+---
+'<header class="site-header">
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">
+        <img src="/images/logo.svg" alt="Company Name">
+      </a>
+    </div>
+  </nav>
+</header>
+'.freeze

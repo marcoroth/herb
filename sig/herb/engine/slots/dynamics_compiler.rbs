@@ -210,6 +210,22 @@ module Herb
           def iteration: (untyped, Symbol) -> void
         end
 
+        class Prune < Herb::Visitor
+          # : (Visitor, Integer) -> void
+          def initialize: (Visitor, Integer) -> void
+
+          # : (untyped) -> void
+          def visit_document_node: (untyped) -> void
+
+          private
+
+          # : (untyped, untyped) -> void
+          def keep: (untyped, untyped) -> void
+
+          # : (untyped, untyped) -> bool
+          def contains?: (untyped, untyped) -> bool
+        end
+
         attr_reader slot_visitor: Visitor
 
         # : (String, ?Hash[Symbol, untyped]) -> void
@@ -259,6 +275,21 @@ module Herb
         # : (Integer, Integer) -> void
         def scope_branch: (Integer, Integer) -> void
 
+        # : (Integer, Integer) -> String?
+        def payload_statics: (Integer, Integer) -> String?
+
+        # : () -> bool
+        def server_mode?: () -> bool
+
+        # : (Integer, Integer) -> bool
+        def withheld?: (Integer, Integer) -> bool
+
+        # : (Integer) -> String?
+        def item_statics: (Integer) -> String?
+
+        # : () -> Hash[String, String]
+        def branch_statics: () -> Hash[String, String]
+
         # : (Integer) -> void
         def scope_close_conditional: (Integer) -> void
 
@@ -280,6 +311,12 @@ module Herb
         # : (Integer) -> void
         def scope_close_collection: (Integer) -> void
 
+        # : (Integer, String) -> void
+        def scope_open_keyed: (Integer, String) -> void
+
+        # : (Integer) -> void
+        def scope_close_keyed: (Integer) -> void
+
         # : (Integer) -> void
         def leave_scope: (Integer) -> void
 
@@ -294,6 +331,12 @@ module Herb
 
         # : (String) -> void
         def add_block_dynamic: (String) -> void
+
+        # : () -> void
+        def scope_part_open: () -> void
+
+        # : (Integer) -> void
+        def scope_part_close: (Integer) -> void
 
         # : () -> void
         def open_block: () -> void

@@ -79,6 +79,9 @@ export class UserSettings {
         enabled: resolved.inlayHints?.enabled ?? this.defaults.inlayHints!.enabled!,
         minimumLines: resolved.inlayHints?.minimumLines ?? this.defaults.inlayHints!.minimumLines!,
         maximumClasses: resolved.inlayHints?.maximumClasses ?? this.defaults.inlayHints!.maximumClasses!
+      },
+      runtimeReports: {
+        inlayHints: resolved.runtimeReports?.inlayHints ?? this.defaults.runtimeReports!.inlayHints!
       }
     }
   }

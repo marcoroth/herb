@@ -533,17 +533,40 @@ export type NodeType =
   | "<%= node.type %>"
   <%- end -%>
 
-export type ERBNodeType = Extract<NodeType, `AST_ERB_${string}`>;
+export type HTMLNodeType =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | "<%= node.type %>"
+  <%- end -%>
+
+export type HTMLNode =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | <%= node.name %>
+  <%- end -%>
+
+export const HTMLNodeClasses = [
+  <%- nodes.each do |node| -%>
+  <%- next unless node.html? -%>
+  <%= node.name %>,
+  <%- end -%>
+]
+
+export type ERBNodeType =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.erb_tag? -%>
+  | "<%= node.type %>"
+  <%- end -%>
 
 export type ERBNode =
   <%- nodes.each_with_index.map do |node, index| -%>
-    <%- next unless node.name.start_with?("ERB") -%>
+    <%- next unless node.erb_tag? -%>
   | <%= node.name %>
   <%- end -%>
 
 export const ERBNodeClasses = [
   <%- nodes.each_with_index.map do |node, index| -%>
-  <%- next unless node.name.start_with?("ERB") -%>
+  <%- next unless node.erb_tag? -%>
   <%= node.name %>,
   <%- end -%>
 ]

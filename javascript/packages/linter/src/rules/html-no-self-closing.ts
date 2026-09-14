@@ -42,6 +42,7 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
   static autocorrectable = true
   static ruleName = "html-no-self-closing"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

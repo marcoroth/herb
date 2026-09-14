@@ -20,6 +20,8 @@ module Herb
       # never has to guard its own calls.
       #
       class Session
+        Measurement = Data.define(:key, :origin, :code, :message, :description, :kind, :per, :block)
+
         STATE_KEY = :herb_engine_report_session #: Symbol
         RACTOR_KEY = :herb_engine_report_session_ractor #: Symbol
         THREAD_KEY = :herb_engine_report_session_thread #: Symbol
@@ -108,18 +110,29 @@ module Herb
           nil
         end
 
-        #: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
-        def self.at(template, line, column, via = nil)
-          enter(template, line, column, via)
+        #: [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+        def self.at(template, line, column, via = nil, end_line: nil, end_column: nil)
+          enter(template, line, column, via, end_line: end_line, end_column: end_column)
 
           yield
         ensure
           leave
         end
 
-        #: (String?, Integer, Integer, ?Symbol?) -> void
-        def self.enter(template, line, column, via = nil)
-          current.enter(template, line, column, via)
+        #: (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
+        def self.enter(template, line, column, via = nil, end_line: nil, end_column: nil)
+          current.enter(template, line, column, via, end_line: end_line, end_column: end_column)
+        end
+
+        #: [T] (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) { () -> T } -> T
+        def self.output(template, line, column, via = nil, end_line: nil, end_column: nil)
+          at(template, line, column, via, end_line: end_line, end_column: end_column) do
+            value = yield
+
+            observe(:output, value)
+
+            value
+          end
         end
 
         #: () -> void
@@ -127,18 +140,18 @@ module Herb
           current.leave
         end
 
-        #: [T] (String?) { () -> T } -> T
-        def self.render(template)
-          enter_render(template)
+        #: [T] (String?, ?String?) { () -> T } -> T
+        def self.render(template, digest = nil)
+          enter_render(template, digest)
 
           yield
         ensure
           leave_render
         end
 
-        #: (String?) -> String
-        def self.enter_render(template)
-          current.enter_render(template)
+        #: (String?, ?String?) -> String
+        def self.enter_render(template, digest = nil)
+          current.enter_render(template, digest)
         end
 
         #: () -> void
@@ -174,6 +187,25 @@ module Herb
         #: () -> bool
         def self.scoped?
           current.scoped?
+        end
+
+        #: (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> void
+        def self.measurement(key, origin:, code: nil, message: nil, description: nil, kind: :metric, per: :render, &block)
+          measurements << Measurement.new(key: key, origin: origin, code: code, message: message, description: description, kind: kind, per: per, block: block)
+
+          nil
+        end
+
+        #: () -> Array[Herb::Engine::Runtime::Session::Measurement]
+        def self.measurements
+          @measurements ||= [] #: Array[Measurement]
+        end
+
+        #: () -> void
+        def self.clear_measurements
+          measurements.clear
+
+          nil
         end
 
         #: () -> void
@@ -224,9 +256,9 @@ module Herb
           report.empty? && entries.empty?
         end
 
-        #: (String?, Integer, Integer, ?Symbol?) -> void
-        def enter(template, line, column, via = nil)
-          @frames.push([template, line, column, via])
+        #: (String?, Integer, Integer, ?Symbol?, ?end_line: Integer?, ?end_column: Integer?) -> void
+        def enter(template, line, column, via = nil, end_line: nil, end_column: nil)
+          @frames.push([template, line, column, via, end_line, end_column])
 
           nil
         end
@@ -266,7 +298,7 @@ module Herb
 
           return unless frame
 
-          entry = (@entries[[@renders.last, frame[0], frame[1], frame[2]]] ||= Entry.new(frame[0], frame[1], frame[2]))
+          entry = (@entries[[@renders.last, frame[0], frame[1], frame[2]]] ||= Entry.new(frame[0], frame[1], frame[2], frame[4], frame[5]))
 
           entry.observe(key, value)
 
@@ -282,11 +314,11 @@ module Herb
         # The tag that is open when a render starts is the tag that started it, so the call site
         # comes for free. Without it the tree would say a partial rendered twice under one parent but
         # not from where, which `stack` can say and a payload built from the tree alone could not.
-        #: (String?) -> String
-        def enter_render(template)
+        #: (String?, ?String?) -> String
+        def enter_render(template, digest = nil)
           id = (@minted += 1).to_s
 
-          report.render(id, template, @renders.last, called_from: @frames.last)
+          report.render(id, template, @renders.last, called_from: @frames.last, digest: digest)
           @renders.push(id)
 
           id
@@ -320,6 +352,22 @@ module Herb
           @entries.values.sort_by { |entry| [entry.template.to_s, entry.line, entry.column] }
         end
 
+        #: () -> Array[Herb::Diagnostic]
+        def apply_measurements
+          self.class.measurements.flat_map do |measurement|
+            measure(
+              measurement.key,
+              origin: measurement.origin,
+              code: measurement.code,
+              message: measurement.message,
+              description: measurement.description,
+              kind: measurement.kind,
+              per: measurement.per,
+              &measurement.block
+            )
+          end
+        end
+
         # Turns what was observed under one key into one diagnostic per tag that saw any.
         #
         #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
@@ -335,13 +383,10 @@ module Herb
         # only sometimes, and which of those it is depends on what the tag is for. Reporting it as a
         # warning would make that call on the reader's behalf and get it wrong often enough to train
         # them to ignore it.
-        #: (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
-        def measure(key, origin:, code: nil, message: nil)
-          entries.filter_map { |entry|
-            observed = entry[key]
-
-            next if observed.empty?
-
+        #
+        #: (Symbol, origin: String, ?code: String?, ?message: String?, ?description: (^(Array[untyped]) -> String)?, ?kind: Symbol, ?per: Symbol) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        def measure(key, origin:, code: nil, message: nil, description: nil, kind: :metric, per: :render)
+          measurable(key, per).filter_map { |entry, observed|
             value = yield(observed)
 
             record(
@@ -349,15 +394,42 @@ module Herb
                 template: entry.template.to_s,
                 message: message || value,
                 severity: nil,
-                kind: :metric,
+                kind: kind,
                 origin: origin,
                 code: code,
                 location: entry.location,
                 value: value,
+                description: description&.call(observed),
                 data: { key => observed }
               )
             )
           }
+        end
+
+        private
+
+        #: (Symbol, Symbol) -> Array[[Herb::Engine::Runtime::Entry, Array[untyped]]]
+        def measurable(key, per)
+          found = [] #: Array[[Herb::Engine::Runtime::Entry, Array[untyped]]]
+
+          entries.each do |entry|
+            observed = entry[key]
+
+            found << [entry, observed] unless observed.empty?
+          end
+
+          return found if per == :render
+
+          merged = {} #: Hash[Array[untyped], [Herb::Engine::Runtime::Entry, Array[untyped]]]
+
+          found.each do |entry, observed|
+            position = [entry.template, entry.line, entry.column]
+            already = merged[position]
+
+            merged[position] = already ? [already[0], already[1] + observed] : [entry, observed]
+          end
+
+          merged.values
         end
       end
     end

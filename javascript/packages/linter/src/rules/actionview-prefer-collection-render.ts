@@ -94,6 +94,7 @@ class PreferCollectionRenderVisitor extends BaseRuleVisitor {
 export class ActionViewPreferCollectionRenderRule extends ParserRule {
   static ruleName = "actionview-prefer-collection-render"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

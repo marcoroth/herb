@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0047_emits an escaped ERB comment as literal text"
+input: "{source: \"<%%# a comment %>\\n\", locals: {}, options: {}}"
+---
+<%# a comment %>

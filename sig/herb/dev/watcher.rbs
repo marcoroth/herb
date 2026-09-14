@@ -40,11 +40,16 @@ module Herb
 
       attr_reader file_states: Hash[String, String]
 
-      # : (config: Herb::Configuration, root: String) { (Event) -> void } -> void
-      def initialize: (config: Herb::Configuration, root: String) { (Event) -> void } -> void
+      attr_reader watch_paths: Array[String]
+
+      # : (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
+      def initialize: (config: Herb::Configuration, root: String, ?watch_paths: Array[String]?) { (Event) -> void } -> void
 
       # : (?String) -> Integer
       def index: (?String) -> Integer
+
+      # : () -> Hash[String, String]
+      def sources: () -> Hash[String, String]
 
       # : () -> void
       def run: () -> void
@@ -57,8 +62,20 @@ module Herb
 
       private
 
+      # : (Array[String]?) -> Array[String]
+      def resolve_watch_paths: (Array[String]?) -> Array[String]
+
+      # : (Array[String]) -> Array[String]
+      def asset_watch_paths: (Array[String]) -> Array[String]
+
+      # : (String) -> String
+      def relative_for: (String) -> String
+
       # : (Cruise::Event) -> void
       def handle: (Cruise::Event) -> void
+
+      # : (String, String) -> void
+      def handle_asset: (String, String) -> void
 
       # : (String, String, String) -> Event?
       def normalize: (String, String, String) -> Event?

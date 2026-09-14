@@ -1,0 +1,10 @@
+---
+source: "Engine::CLITest#test_0033_compile erb comments not in output"
+input: "test_0033_compile erb comments not in output"
+---
+_buf = ::String.new; _buf << '<div>
+'.freeze;
+ _buf << '  <p>Visible content</p>
+</div>
+'.freeze;
+_buf.to_s

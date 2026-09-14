@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0003_names its own module in the default escape function"
+input: "engine_erubi_divergence_test-3"
+---
+_buf = ::String.new; _buf << ::Erubi.h(( content ));
+_buf.to_s

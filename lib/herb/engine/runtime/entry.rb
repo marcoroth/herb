@@ -13,13 +13,17 @@ module Herb
         attr_reader :template #: String?
         attr_reader :line #: Integer
         attr_reader :column #: Integer
+        attr_reader :end_line #: Integer?
+        attr_reader :end_column #: Integer?
         attr_reader :observations #: Hash[Symbol, Array[untyped]]
 
-        #: (String?, Integer, Integer) -> void
-        def initialize(template, line, column)
+        #: (String?, Integer, Integer, ?Integer?, ?Integer?) -> void
+        def initialize(template, line, column, end_line = nil, end_column = nil)
           @template = template
           @line = line
           @column = column
+          @end_line = end_line
+          @end_column = end_column
           @observations = {} #: Hash[Symbol, Array[untyped]]
         end
 
@@ -42,7 +46,7 @@ module Herb
 
         #: () -> Herb::Location
         def location
-          Herb::Location.from(line, column, line, column)
+          Herb::Location.from(line, column, end_line || line, end_column || column)
         end
 
         #: () -> String

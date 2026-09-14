@@ -308,6 +308,54 @@
   color: var(--herb-dev-tools-ink);
 }
 
+.herb-dev-tools-highlight {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--herb-dev-tools-border);
+  border-radius: 999px;
+  background: var(--herb-dev-tools-surface);
+  color: var(--herb-dev-tools-ink-faint);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.herb-dev-tools-highlight:hover {
+  border-color: var(--herb-dev-tools-ink-faint);
+  color: var(--herb-dev-tools-ink);
+}
+
+.herb-dev-tools-highlight-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.herb-dev-tools-action-icon {
+  gap: 4px;
+  padding: 0 7px;
+  color: var(--herb-dev-tools-ink-faint);
+  flex: none;
+  overflow: visible;
+}
+
+.herb-dev-tools-action-icon:hover {
+  color: var(--herb-dev-tools-ink);
+}
+
+.herb-dev-tools-muted-count {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.herb-dev-tools-metrics-toggle.herb-dev-tools-metrics-toggle-open {
+  border-color: var(--herb-dev-tools-ink-faint);
+  background: #f4f4f5;
+  color: var(--herb-dev-tools-ink);
+}
+
 .herb-dev-tools-window-controls {
   display: flex;
   align-items: center;
@@ -389,6 +437,38 @@
 .herb-dev-tools-filters-severity {
   border-top: 1px solid var(--herb-dev-tools-line);
   border-bottom: 1px solid var(--herb-dev-tools-line);
+}
+
+.herb-dev-tools-mutes {
+  border-bottom: 1px solid var(--herb-dev-tools-line);
+}
+
+.herb-dev-tools-mute {
+  border: 1px solid var(--herb-dev-tools-ink);
+  border-radius: 999px;
+  background: var(--herb-dev-tools-ink);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+
+.herb-dev-tools-mute:hover {
+  opacity: 0.85;
+}
+
+.herb-dev-tools-mute.herb-dev-tools-mute-off {
+  border-color: var(--herb-dev-tools-border);
+  background: var(--herb-dev-tools-surface);
+  color: var(--herb-dev-tools-ink-faint);
+  text-decoration: line-through;
+}
+
+.herb-dev-tools-mute.herb-dev-tools-mute-off:hover {
+  border-color: var(--herb-dev-tools-ink-faint);
+  color: var(--herb-dev-tools-ink-soft);
+  opacity: 1;
 }
 
 .herb-dev-tools-filter {
@@ -574,6 +654,7 @@
 }
 
 .herb-dev-tools-metric {
+  flex: none;
   padding: 2px 7px;
   border-radius: 999px;
   background: #eef2ff;
@@ -581,6 +662,7 @@
   color: #3730a3;
   font-size: 10px;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .herb-dev-tools-code {
@@ -726,6 +808,39 @@
 .herb-dev-tools-ansi {
   padding: 8px;
   font-size: 11px;
+}
+
+.herb-dev-tools-observed {
+  margin-top: 0;
+  border: 1px solid var(--herb-dev-tools-border);
+  border-radius: 8px;
+  background: var(--herb-dev-tools-page);
+  color: var(--herb-dev-tools-ink-soft);
+}
+
+.herb-dev-tools-observed > summary {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.herb-dev-tools-observed-key {
+  margin: 0;
+  padding: 4px 8px 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--herb-dev-tools-ink-faint);
+}
+
+.herb-dev-tools-observed-list {
+  margin: 2px 0 8px;
+  padding: 0 8px;
+  overflow-x: auto;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .herb-dev-tools-fix {

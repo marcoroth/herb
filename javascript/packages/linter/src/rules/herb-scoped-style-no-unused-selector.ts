@@ -379,6 +379,7 @@ class ScopedStyleNoUnusedSelectorVisitor extends ElementStackVisitor {
 export class HerbScopedStyleNoUnusedSelectorRule extends ParserRule {
   static ruleName = "herb-scoped-style-no-unused-selector"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

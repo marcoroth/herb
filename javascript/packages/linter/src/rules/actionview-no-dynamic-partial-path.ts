@@ -49,6 +49,7 @@ class ActionViewNoDynamicPartialPathVisitor extends BaseRuleVisitor {
 export class ActionViewNoDynamicPartialPathRule extends ParserRule {
   static ruleName = "actionview-no-dynamic-partial-path"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

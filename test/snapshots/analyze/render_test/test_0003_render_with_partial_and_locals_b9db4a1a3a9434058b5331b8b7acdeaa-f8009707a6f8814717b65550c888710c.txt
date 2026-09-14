@@ -29,21 +29,23 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: (2 items)
-    │   │           ├── @ RubyRenderLocalNode (location: (1:38)-(1:51))
-    │   │           │   ├── name: "title" (location: (1:38)-(1:44))
-    │   │           │   └── value:
-    │   │           │       └── @ RubyLiteralNode (location: (1:45)-(1:51))
-    │   │           │           └── content: "@title"
-    │   │           │
-    │   │           │
-    │   │           └── @ RubyRenderLocalNode (location: (1:53)-(1:66))
-    │   │               ├── name: "body" (location: (1:53)-(1:58))
-    │   │               └── value:
-    │   │                   └── @ RubyLiteralNode (location: (1:59)-(1:66))
-    │   │                       └── content: "\"Hello\""
-    │   │
-    │   │
+    │   │       ├── locals: (2 items)
+    │   │       │   ├── @ RubyRenderLocalNode (location: (1:38)-(1:51))
+    │   │       │   │   ├── name: "title" (location: (1:38)-(1:44))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ RubyLiteralNode (location: (1:45)-(1:51))
+    │   │       │   │           └── content: "@title"
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ RubyRenderLocalNode (location: (1:53)-(1:66))
+    │   │       │       ├── name: "body" (location: (1:53)-(1:58))
+    │   │       │       └── value:
+    │   │       │           └── @ RubyLiteralNode (location: (1:59)-(1:66))
+    │   │       │               └── content: "\"Hello\""
+    │   │       │
+    │   │       │
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

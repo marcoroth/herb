@@ -175,7 +175,14 @@ errors:
 
     - name: "ERBCaseWithConditionsError"
       message:
-        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`), or set `strict: false` to allow this."
+        arguments: []
+
+      fields: []
+
+    - name: "ERBCaseInlinePatternMatchError"
+      message:
+        template: "A `case` statement and its first `in` pattern on the same line read as Ruby's one-line pattern match, not as a `case`/`in`. Put the `in` pattern on its own line, or in its own ERB tag (e.g., `<% case x %>` followed by `<% in y %>`)."
         arguments: []
 
       fields: []
@@ -227,6 +234,35 @@ errors:
 
         - name: "close_column"
           type: "size_t"
+
+    - name: "UnclosedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) is missing its closing `-->`."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+      suggestion:
+        template: "Add `-->` where the comment should end."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
+    - name: "NestedCommentError"
+      message:
+        template: "Comment opened at (%u:%u) contains another `<!--` at (%u:%u)."
+        arguments:
+          - "comment_start->location.start.line"
+          - "comment_start->location.start.column"
+          - "nested_start->location.start.line"
+          - "nested_start->location.start.column"
+      suggestion:
+        template: "Comments cannot nest. The outer comment ends at the first `-->`, so remove the inner `<!--` or close the outer comment before it."
+      fields:
+        - name: "comment_start"
+          type: "token"
+
+        - name: "nested_start"
+          type: "token"
 
     - name: "InvalidCommentClosingTagError"
       message:
@@ -282,6 +318,19 @@ errors:
         - name: "tag_name"
           type: "token"
 
+    - name: "EndTagWithTrailingSolidusError"
+      message:
+        template: "Closing tag `</%s>` at (%u:%u) ends with `/>` instead of `>`."
+        arguments:
+          - "tag_name->value"
+          - "tag_name->location.start.line"
+          - "tag_name->location.start.column"
+      suggestion:
+        template: "Close it with `>`. A closing tag cannot self-close."
+      fields:
+        - name: "tag_name"
+          type: "token"
+
     - name: "UnclosedQuoteError"
       message:
         template: "Attribute value opened with %s at (%u:%u) was never closed."
@@ -308,6 +357,69 @@ errors:
       fields:
         - name: "attribute_name"
           type: "string"
+
+    - name: "MissingWhitespaceBetweenAttributesError"
+      message:
+        template: "Missing whitespace between attributes at (%u:%u). `%s` is parsed as the start of a new attribute."
+        arguments:
+          - "found->location.start.line"
+          - "found->location.start.column"
+          - "found->value"
+      suggestion:
+        template: "Add a space before it."
+      fields:
+        - name: "found"
+          type: "token"
+
+    - name: "UnexpectedCharacterInAttributeNameError"
+      message:
+        template: "Unexpected `%s` in attribute name at (%u:%u)."
+        arguments:
+          - "character->value"
+          - "character->location.start.line"
+          - "character->location.start.column"
+      suggestion:
+        template: "Quotes cannot appear in an attribute name. Check the quoting of the previous attribute value."
+      fields:
+        - name: "character"
+          type: "token"
+
+    - name: "UnexpectedCharacterInUnquotedAttributeValueError"
+      message:
+        template: "Unexpected `%s` in unquoted attribute value at (%u:%u)."
+        arguments:
+          - "character->value"
+          - "character->location.start.line"
+          - "character->location.start.column"
+      suggestion:
+        template: "Wrap the value in quotes."
+      fields:
+        - name: "character"
+          type: "token"
+
+    - name: "UnexpectedEqualsSignBeforeAttributeNameError"
+      message:
+        template: "Unexpected `=` before attribute name at (%u:%u)."
+        arguments:
+          - "equals->location.start.line"
+          - "equals->location.start.column"
+      suggestion:
+        template: "Remove the `=`, or put an attribute name in front of it."
+      fields:
+        - name: "equals"
+          type: "token"
+
+    - name: "UnexpectedSolidusInTagError"
+      message:
+        template: "Unexpected `/` in tag at (%u:%u)."
+        arguments:
+          - "solidus->location.start.line"
+          - "solidus->location.start.column"
+      suggestion:
+        template: "Remove it, or use `/>` to self-close the tag."
+      fields:
+        - name: "solidus"
+          type: "token"
 
     - name: "UnclosedERBTagError"
       message:
@@ -573,6 +685,128 @@ warnings:
   fields: []
   types: []
 
+parser_options:
+  fields:
+    - name: "action_view_helpers"
+      type: "boolean"
+      default: false
+      description: "Whether ActionView tag helper transformation was enabled during parsing."
+
+    - name: "analyze"
+      type: "boolean"
+      default: true
+      description: "Whether analysis was performed during parsing."
+
+    - name: "arena_stats"
+      type: "boolean"
+      const_name: "CAPTURE_ARENA_STATS"
+      default: false
+      only: ["ruby"]
+      description: "Whether arena allocation statistics were captured during parsing."
+
+    - name: "dot_notation_tags"
+      type: "boolean"
+      default: false
+      description: "Whether dot-notation component tags (e.g. Dialog.Button) are parsed as HTML elements."
+
+    - name: "erb_openers"
+      type: "string_array"
+      c_name: "erb_openers"
+      count_name: "erb_opener_count"
+      lex: true
+      skip: ["java"]
+      description: "ERB tag openers recognized in addition to the built-in ones, written without the leading `<%`."
+
+    - name: "herb_directives"
+      type: "boolean"
+      default: false
+      description: "Whether `<%# herb: %>` directive nodes were parsed during parsing."
+
+    - name: "html"
+      type: "boolean"
+      default: true
+      description: "Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text."
+
+    - name: "iteration_nodes"
+      type: "boolean"
+      default: false
+      description: "Whether iteration nodes were parsed during parsing."
+
+    - name: "max_errors"
+      type: "uint32"
+      default: 25
+      nullable: true
+      null_sentinel: 0
+      description: "Maximum number of errors to report. nil/null means unlimited."
+
+    - name: "prism_nodes"
+      type: "boolean"
+      default: false
+      description: "Whether Prism node serialization was enabled during parsing."
+
+    - name: "prism_nodes_deep"
+      type: "boolean"
+      default: false
+      description: "Whether deep Prism node serialization was enabled during parsing."
+
+    - name: "prism_program"
+      type: "boolean"
+      default: false
+      description: "Whether the full Prism ProgramNode was serialized on the DocumentNode."
+
+    - name: "render_nodes"
+      type: "boolean"
+      default: false
+      description: "Whether ActionView render call detection was enabled during parsing."
+
+    - name: "strict"
+      type: "boolean"
+      default: true
+      description: "Whether strict mode was enabled during parsing."
+
+    - name: "strict_locals"
+      type: "boolean"
+      default: false
+      description: "Whether strict locals analysis was enabled during parsing."
+
+    - name: "timeout"
+      type: "uint32"
+      c_name: "timeout_ms"
+      default_ms: 1000
+      ruby_unit: "seconds"
+      description: "Parse timeout in milliseconds. 0 disables the timeout."
+
+    - name: "track_locations"
+      type: "boolean"
+      default: true
+      description: "Whether `location` and `range` were materialized during parsing."
+
+    - name: "track_whitespace"
+      type: "boolean"
+      default: false
+      description: "Whether whitespace tracking was enabled during parsing."
+
+    - name: "transform_conditionals"
+      type: "boolean"
+      default: false
+      description: "Whether postfix conditional transformation was enabled during parsing."
+
+  internal_fields:
+    - name: "deadline_ms"
+      type: "uint64"
+      default: 0
+
+    - name: "error_count"
+      type: "pointer_uint32"
+
+    - name: "start_column"
+      type: "uint32"
+      default: 0
+
+    - name: "start_line"
+      type: "uint32"
+      default: 0
+
 nodes:
   # fields:
   #   - name: type
@@ -760,6 +994,7 @@ nodes:
           kind:
             - "LiteralNode"
             - "ERBContentNode"
+            - "ERBCommentNode"
 
     - name: "HTMLAttributeNode"
       fields:
@@ -1402,6 +1637,14 @@ nodes:
           kind:
             - "RubyRenderLocalNode"
 
+        - name: "state"
+          type: "array"
+          kind:
+            - "HerbStateDeclarationNode"
+
+        - name: "state_location"
+          type: "location"
+
     - name: "ERBRenderNode"
       fields:
         - name: "tag_opening"
@@ -1564,3 +1807,14 @@ nodes:
           type: "array"
           kind:
             - "HerbStateDeclarationNode"
+
+    - name: "ERBCommentNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"

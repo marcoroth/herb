@@ -1,0 +1,12 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0042_emits an escaped ERB case as literal text"
+input: "{source: \"<%% case status %>\\n<%% when :active %>\\n  on\\n<%% else %>\\n  off\\n<%% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<% case status %>
+<% when :active %>
+  on
+<% else %>
+  off
+<% end %>
+'.freeze;
+_buf.to_s

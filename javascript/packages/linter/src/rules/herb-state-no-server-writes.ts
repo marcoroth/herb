@@ -254,6 +254,7 @@ class StateNoServerWritesVisitor extends BaseRuleVisitor {
 export class HerbStateNoServerWritesRule extends ParserRule {
   static ruleName = "herb-state-no-server-writes"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

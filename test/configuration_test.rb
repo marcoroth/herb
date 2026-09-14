@@ -46,7 +46,8 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
     assert_equal "0.10.3", config.version
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
 
   test "loads configuration using YAML anchors and aliases" do
@@ -61,10 +62,9 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
-    assert_includes config.file_include_patterns, "**/*.other.erb"
-    assert_includes config.file_exclude_patterns, "**/*.custom.erb"
-    assert_includes config.file_exclude_patterns, "**/*.other.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb", "**/*.other.erb"], config.file_include_patterns
+
+    assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "**/*.custom.erb", "**/*.other.erb"], config.file_exclude_patterns
   end
 
   test "searches parent directories for config file" do
@@ -81,7 +81,8 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(subdir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
 
   test "include patterns are additive with defaults" do
@@ -93,9 +94,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_include_patterns, "**/*.html"
-    assert_includes config.file_include_patterns, "**/*.html.erb"
-    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
 
   test "exclude patterns are additive with defaults" do
@@ -107,9 +106,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.file_exclude_patterns, "node_modules/**/*"
-    assert_includes config.file_exclude_patterns, "vendor/**/*"
-    assert_includes config.file_exclude_patterns, "custom/**/*"
+    assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "custom/**/*"], config.file_exclude_patterns
   end
 
   test "exclude patterns that duplicate defaults result in duplicates" do
@@ -137,9 +134,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.linter_include_patterns, "**/*.html.erb"
-    assert_includes config.linter_include_patterns, "**/*.xml.erb"
-    assert_includes config.linter_include_patterns, "**/*.custom.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.xml.erb", "**/*.custom.erb"], config.linter_include_patterns
   end
 
   test "linter_exclude_patterns combines files and linter patterns" do
@@ -154,9 +149,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.linter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.linter_exclude_patterns, "public/**/*"
-    assert_includes config.linter_exclude_patterns, "legacy/**/*"
+    assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "public/**/*", "legacy/**/*"], config.linter_exclude_patterns
   end
 
   test "formatter_include_patterns combines files and formatter patterns" do
@@ -171,9 +164,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.formatter_include_patterns, "**/*.html.erb"
-    assert_includes config.formatter_include_patterns, "**/*.xml.erb"
-    assert_includes config.formatter_include_patterns, "**/*.custom.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.xml.erb", "**/*.custom.erb"], config.formatter_include_patterns
   end
 
   test "formatter_exclude_patterns combines files and formatter patterns" do
@@ -188,9 +179,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.formatter_exclude_patterns, "node_modules/**/*"
-    assert_includes config.formatter_exclude_patterns, "public/**/*"
-    assert_includes config.formatter_exclude_patterns, "generated/**/*"
+    assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*", "public/**/*", "generated/**/*"], config.formatter_exclude_patterns
   end
 
   test "linter_enabled_for_path? returns true for normal paths" do
@@ -317,7 +306,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config["files"]["include"], "**/*.custom.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config["files"]["include"]
     assert_equal({ "key" => "value" }, config["custom"])
   end
 
@@ -330,7 +319,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_includes config.dig(:files, :include), "**/*.custom.erb"
+    assert_equal(["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.dig(:files, :include))
   end
 
   test "module-level configuration accessor" do
@@ -342,7 +331,7 @@ class ConfigurationTest < Minitest::Spec
 
     Herb.configure(@temp_dir)
 
-    assert_includes Herb.configuration.file_include_patterns, "**/*.custom.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], Herb.configuration.file_include_patterns
   end
 
   test "reset_configuration clears cached config" do
@@ -366,16 +355,13 @@ class ConfigurationTest < Minitest::Spec
   test "default_file_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_file_patterns
 
-    assert_includes patterns, "**/*.html"
-    assert_includes patterns, "**/*.html.erb"
-    assert_includes patterns, "**/*.turbo_stream.erb"
+    assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb"], patterns
   end
 
   test "default_exclude_patterns class method returns defaults" do
     patterns = Herb::Configuration.default_exclude_patterns
 
-    assert_includes patterns, "node_modules/**/*"
-    assert_includes patterns, "vendor/**/*"
+    assert_equal ["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*"], patterns
   end
 
   test "linter config is accessible" do
@@ -476,6 +462,187 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal 1, files.size
     assert files.first.end_with?("index.html.erb")
+  end
+
+  test "user files.include overrides default excludes in find_files" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "keep"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "skip"))
+    File.write(File.join(@temp_dir, "vendor", "keep", "kept.html.erb"), "")
+    File.write(File.join(@temp_dir, "vendor", "skip", "skipped.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("vendor/keep/kept.html.erb") })
+    refute(files.any? { |f| f.end_with?("vendor/skip/skipped.html.erb") })
+  end
+
+  test "user files.include overrides default excludes in enabled_for_path?" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/file.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/other/file.html.erb", :linter)
+  end
+
+  test "user files.include override still respects tool-level excludes" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*"
+      linter:
+        exclude:
+          - "vendor/keep/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/file.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/keep/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include overrides default excludes in find_files_for_tool" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "keep"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    File.write(File.join(@temp_dir, "vendor", "keep", "kept.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "excluded.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files_for_linter
+
+    assert(files.any? { |f| f.end_with?("vendor/keep/kept.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/excluded.html.erb") })
+  end
+
+  test "user files.include naming a default-excluded directory opts the whole tree back in" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "gems", "primer"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    File.write(File.join(@temp_dir, "vendor", "gems", "primer", "button.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "dep.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("vendor/gems/primer/button.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/dep.html.erb") })
+
+    assert config.enabled_for_path?("vendor/gems/primer/button.html.erb", :linter)
+    refute config.enabled_for_path?("node_modules/pkg/dep.html.erb", :linter)
+  end
+
+  test "broad user files.include does not override default excludes" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "**/*.html.erb"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "app", "views"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "node_modules", "pkg"))
+    FileUtils.mkdir_p(File.join(@temp_dir, "vendor", "bundle"))
+    File.write(File.join(@temp_dir, "app", "views", "index.html.erb"), "")
+    File.write(File.join(@temp_dir, "node_modules", "pkg", "dep.html.erb"), "")
+    File.write(File.join(@temp_dir, "vendor", "bundle", "gem.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("app/views/index.html.erb") })
+    refute(files.any? { |f| f.end_with?("node_modules/pkg/dep.html.erb") })
+    refute(files.any? { |f| f.end_with?("vendor/bundle/gem.html.erb") })
+
+    refute config.enabled_for_path?("node_modules/pkg/dep.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/bundle/gem.html.erb", :linter)
+  end
+
+  test "user files.include does not override a more specific user files.exclude" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/**/*.html.erb"
+        exclude:
+          - "app/views/legacy/**/*"
+    YAML
+
+    FileUtils.mkdir_p(File.join(@temp_dir, "app", "views", "legacy"))
+    File.write(File.join(@temp_dir, "app", "views", "index.html.erb"), "")
+    File.write(File.join(@temp_dir, "app", "views", "legacy", "old.html.erb"), "")
+
+    config = Herb::Configuration.load(@temp_dir)
+    files = config.find_files
+
+    assert(files.any? { |f| f.end_with?("app/views/index.html.erb") })
+    refute(files.any? { |f| f.end_with?("app/views/legacy/old.html.erb") })
+
+    refute config.enabled_for_path?("app/views/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include overrides a less specific user files.exclude" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/legacy/keep/**/*.html.erb"
+        exclude:
+          - "app/views/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("app/views/legacy/keep/kept.html.erb", :linter)
+    refute config.enabled_for_path?("app/views/legacy/old.html.erb", :linter)
+  end
+
+  test "user files.include does not override an exclude that is not directory scoped" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "app/views/**/*.html.erb"
+        exclude:
+          - "**/*.generated.html.erb"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("app/views/index.html.erb", :linter)
+    refute config.enabled_for_path?("app/views/index.generated.html.erb", :linter)
+  end
+
+  test "user files.include must override every matching exclude to win" do
+    write_config(<<~YAML)
+      files:
+        include:
+          - "vendor/keep/**/*.html.erb"
+        exclude:
+          - "vendor/keep/legacy/**/*"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.enabled_for_path?("vendor/keep/kept.html.erb", :linter)
+    refute config.enabled_for_path?("vendor/keep/legacy/old.html.erb", :linter)
   end
 
   test "find_files_for_tool uses tool-specific patterns" do
@@ -581,7 +748,7 @@ class ConfigurationTest < Minitest::Spec
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_equal({ security: false, nesting: true, accessibility: true }, config.enabled_validators)
+    assert_equal({ security: false, nesting: true, accessibility: true, generator_template: true }, config.enabled_validators)
   end
 
   test "enabled_validators accepts overrides" do

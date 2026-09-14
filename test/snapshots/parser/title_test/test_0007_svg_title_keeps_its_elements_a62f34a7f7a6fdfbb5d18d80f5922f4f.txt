@@ -1,0 +1,109 @@
+---
+source: "Parser::TitleTest#test_0007_svg title keeps its elements"
+input: "<svg><title>Icon <tspan>x</tspan></title><path d=\"M0 0\"/></svg>"
+---
+@ DocumentNode (location: (1:0)-(1:63))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:63))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "svg" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "svg" (location: (1:1)-(1:4))
+        ├── body: (2 items)
+        │   ├── @ HTMLElementNode (location: (1:5)-(1:41))
+        │   │   ├── open_tag:
+        │   │   │   └── @ HTMLOpenTagNode (location: (1:5)-(1:12))
+        │   │   │       ├── tag_opening: "<" (location: (1:5)-(1:6))
+        │   │   │       ├── tag_name: "title" (location: (1:6)-(1:11))
+        │   │   │       ├── tag_closing: ">" (location: (1:11)-(1:12))
+        │   │   │       ├── children: []
+        │   │   │       └── is_void: false
+        │   │   │
+        │   │   ├── tag_name: "title" (location: (1:6)-(1:11))
+        │   │   ├── body: (2 items)
+        │   │   │   ├── @ HTMLTextNode (location: (1:12)-(1:17))
+        │   │   │   │   └── content: "Icon "
+        │   │   │   │
+        │   │   │   └── @ HTMLElementNode (location: (1:17)-(1:33))
+        │   │   │       ├── open_tag:
+        │   │   │       │   └── @ HTMLOpenTagNode (location: (1:17)-(1:24))
+        │   │   │       │       ├── tag_opening: "<" (location: (1:17)-(1:18))
+        │   │   │       │       ├── tag_name: "tspan" (location: (1:18)-(1:23))
+        │   │   │       │       ├── tag_closing: ">" (location: (1:23)-(1:24))
+        │   │   │       │       ├── children: []
+        │   │   │       │       └── is_void: false
+        │   │   │       │
+        │   │   │       ├── tag_name: "tspan" (location: (1:18)-(1:23))
+        │   │   │       ├── body: (1 item)
+        │   │   │       │   └── @ HTMLTextNode (location: (1:24)-(1:25))
+        │   │   │       │       └── content: "x"
+        │   │   │       │
+        │   │   │       ├── close_tag:
+        │   │   │       │   └── @ HTMLCloseTagNode (location: (1:25)-(1:33))
+        │   │   │       │       ├── tag_opening: "</" (location: (1:25)-(1:27))
+        │   │   │       │       ├── tag_name: "tspan" (location: (1:27)-(1:32))
+        │   │   │       │       ├── children: []
+        │   │   │       │       └── tag_closing: ">" (location: (1:32)-(1:33))
+        │   │   │       │
+        │   │   │       ├── is_void: false
+        │   │   │       └── element_source: "HTML"
+        │   │   │
+        │   │   ├── close_tag:
+        │   │   │   └── @ HTMLCloseTagNode (location: (1:33)-(1:41))
+        │   │   │       ├── tag_opening: "</" (location: (1:33)-(1:35))
+        │   │   │       ├── tag_name: "title" (location: (1:35)-(1:40))
+        │   │   │       ├── children: []
+        │   │   │       └── tag_closing: ">" (location: (1:40)-(1:41))
+        │   │   │
+        │   │   ├── is_void: false
+        │   │   └── element_source: "HTML"
+        │   │
+        │   └── @ HTMLElementNode (location: (1:41)-(1:57))
+        │       ├── open_tag:
+        │       │   └── @ HTMLOpenTagNode (location: (1:41)-(1:57))
+        │       │       ├── tag_opening: "<" (location: (1:41)-(1:42))
+        │       │       ├── tag_name: "path" (location: (1:42)-(1:46))
+        │       │       ├── tag_closing: "/>" (location: (1:55)-(1:57))
+        │       │       ├── children: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:47)-(1:55))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:47)-(1:48))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:47)-(1:48))
+        │       │       │       │               └── content: "d"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: "=" (location: (1:48)-(1:49))
+        │       │       │       └── value:
+        │       │       │           └── @ HTMLAttributeValueNode (location: (1:49)-(1:55))
+        │       │       │               ├── open_quote: """ (location: (1:49)-(1:50))
+        │       │       │               ├── children: (1 item)
+        │       │       │               │   └── @ LiteralNode (location: (1:50)-(1:54))
+        │       │       │               │       └── content: "M0 0"
+        │       │       │               │
+        │       │       │               ├── close_quote: """ (location: (1:54)-(1:55))
+        │       │       │               └── quoted: true
+        │       │       │
+        │       │       │
+        │       │       └── is_void: true
+        │       │
+        │       ├── tag_name: "path" (location: (1:42)-(1:46))
+        │       ├── body: []
+        │       ├── close_tag: ∅
+        │       ├── is_void: true
+        │       └── element_source: "HTML"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:57)-(1:63))
+        │       ├── tag_opening: "</" (location: (1:57)-(1:59))
+        │       ├── tag_name: "svg" (location: (1:59)-(1:62))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:62)-(1:63))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

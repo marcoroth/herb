@@ -340,8 +340,43 @@ module Engine
         </div>
       ERB
 
-      test "a server value inside a client branch warns while state reads and top-level values stay silent" do
+      test "a server value inside a steerable client branch stays silent, since a refetch fills it" do
         diagnostics, = report(CLIENT_BRANCH)
+
+        assert_empty diagnostics
+      end
+
+      test "a server-driven conditional keeps its branches silent" do
+        diagnostics, = report(CLIENT_BRANCH.sub("<% if editing %>", "<% if message.editable? %>"))
+
+        assert_empty diagnostics
+      end
+
+      ITEM_BRANCH = <<~ERB
+        <%# herb:state (filter: "all") %>
+        <ul>
+        <% @messages.each do |message| %>
+          <%# herb:key message.id %>
+          <%# herb:state (pending: false) %>
+          <li>
+            <% if pending %>
+              Sending
+            <% else %>
+              <span><%= message.sent_label %></span>
+            <% end %>
+          </li>
+        <% end %>
+        </ul>
+      ERB
+
+      test "a server value in the branch the item defaults pick stays silent, since any refetch fills it" do
+        diagnostics, = report(ITEM_BRANCH)
+
+        assert_empty diagnostics
+      end
+
+      test "a server value in a branch the item defaults never pick still warns" do
+        diagnostics, = report(ITEM_BRANCH.sub("Sending", "<b><%= message.queued_label %></b>").sub("<span><%= message.sent_label %></span>", "Sent"))
 
         assert_equal 1, diagnostics.length
 
@@ -349,14 +384,39 @@ module Engine
 
         assert_equal :warning, warning.severity
         assert_equal "herb-slots-branch", warning.code
-        assert_equal "`<%= message.sent_label %>` sits inside a branch the client can show on its own, but its value comes from the server. The server only computes values for the branch it renders, so showing this branch ahead of the server leaves the value empty.", warning.message
-        assert_equal 4, warning.location.start.line
+        assert_equal "`<%= message.queued_label %>` sits inside a branch the client can show on its own, but its value comes from the server. The server only computes values for the branch it renders, so showing this branch ahead of the server leaves the value empty.", warning.message
       end
 
-      test "a server-driven conditional keeps its branches silent" do
-        diagnostics, = report(CLIENT_BRANCH.sub("<% if editing %>", "<% if message.editable? %>"))
+      test "a server value behind a seeded item default still warns, since each item picks its own branch" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (filter: "all") %>
+          <ul>
+          <% @messages.each do |message| %>
+            <%# herb:key message.id %>
+            <%# herb:state (starred: message.starred) %>
+            <li>
+              <% if starred %>
+                <span><%= message.starred_label %></span>
+              <% end %>
+            </li>
+          <% end %>
+          </ul>
+        ERB
 
-        assert_empty diagnostics
+        assert_equal 1, diagnostics.length
+        assert_equal "herb-slots-branch", diagnostics.first.code
+      end
+
+      test "a server value inside a derived-state branch still warns, since the derived name never rides the header" do
+        diagnostics, = report(<<~ERB)
+          <%# herb:state (unread: 0, alerting: unread > 3) %>
+          <% if alerting %>
+            <span><%= message.sent_label %></span>
+          <% end %>
+        ERB
+
+        assert_equal 1, diagnostics.length
+        assert_equal "herb-slots-branch", diagnostics.first.code
       end
 
       test "a computed boolean attribute on a form control warns that it cannot bind" do

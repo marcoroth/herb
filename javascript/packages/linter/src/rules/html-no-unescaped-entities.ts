@@ -1,6 +1,6 @@
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 import { BaseRuleVisitor, locationFromContentOffset } from "../utils/rule-utils.js"
-import { getTagLocalName, isValidCharacterReference } from "@herb-tools/core"
+import { getTagLocalName, isValidCharacterReference, RAW_TEXT_ELEMENTS } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
@@ -71,8 +71,6 @@ function findUnescapedOccurrences(value: string): UnescapedOccurrence[] {
   return occurrences
 }
 
-const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
-
 // Per the HTML5 spec (§13.2.5.36, §13.2.5.37), no characters are parse errors
 // in quoted attribute values. Entity checks only apply to text content.
 class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAutofixContext> {
@@ -126,6 +124,7 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
 export class HTMLNoUnescapedEntitiesRule extends ParserRule<UnescapedEntitiesAutofixContext> {
   static ruleName = "html-no-unescaped-entities"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
   static unsafeAutocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

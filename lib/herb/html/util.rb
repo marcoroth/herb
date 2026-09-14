@@ -1,23 +1,15 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
+require_relative "elements"
+
 module Herb
   module HTML
     module Util
-      # TODO: extract to shared utility for all languages in .yml
-      VOID_ELEMENTS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].freeze #: Array[String]
-      RCDATA_ELEMENTS = ["textarea", "title"].freeze #: Array[String]
-      RAW_TEXT_ELEMENTS = ["script", "style", "xmp", "iframe", "noembed", "noframes", "plaintext"].freeze #: Array[String]
-
-      # https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
-      BOOLEAN_ATTRIBUTES = [
-        "allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact",
-        "controls", "declare", "default", "defer", "disabled", "formnovalidate",
-        "hidden", "inert", "ismap", "itemscope", "loop", "multiple", "muted",
-        "nomodule", "nohref", "noresize", "noshade", "novalidate", "nowrap",
-        "open", "playsinline", "readonly", "required", "reversed", "scoped",
-        "seamless", "selected", "sortable", "truespeed", "typemustmatch"
-      ].freeze #: Array[String]
+      VOID_ELEMENTS = Elements::VOID_ELEMENTS #: Array[String]
+      RCDATA_ELEMENTS = Elements::RCDATA_ELEMENTS #: Array[String]
+      RAW_TEXT_ELEMENTS = Elements::RAW_TEXT_ELEMENTS #: Array[String]
+      BOOLEAN_ATTRIBUTES = Elements::BOOLEAN_ATTRIBUTES #: Array[String]
 
       #: (String) -> bool
       def self.void_element?(tag_name)

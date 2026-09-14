@@ -1,0 +1,89 @@
+---
+source: "Analyze::RenderTest#test_0040_render with a state hash and a block records the state"
+input: |2-
+<%= render "shared/panel", state: { open: panel_open } do %>
+  <p>inside</p>
+<% end %>
+options: {render_nodes: true, herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render "shared/panel", state: { open: panel_open } do " (location: (1:3)-(1:58))
+    │   ├── tag_closing: "%>" (location: (1:58)-(1:60))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(3:9))
+    │   │       ├── partial: "shared/panel" (location: (1:11)-(1:25))
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: ∅
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       ├── locals: []
+    │   │       ├── state: (1 item)
+    │   │       │   └── @ HerbStateDeclarationNode (location: (1:36)-(1:52))
+    │   │       │       ├── name: "open" (location: (1:36)-(1:41))
+    │   │       │       ├── default_value:
+    │   │       │       │   └── @ RubyLiteralNode (location: (1:42)-(1:52))
+    │   │       │       │       └── content: "panel_open"
+    │   │       │       │
+    │   │       │       └── kind: "bare"
+    │   │       │
+    │   │       └── state_location: (location: (1:27)-(1:54))
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:60)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:15))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:11))
+    │   │   │   │       └── content: "inside"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:11)-(2:15))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:11)-(2:13))
+    │   │   │   │       ├── tag_name: "p" (location: (2:13)-(2:14))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:15)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

@@ -3,7 +3,9 @@
 
 require "pathname"
 
+require_relative "../analysis/partial_resolver"
 require_relative "context/origin"
+require_relative "context/replacements"
 
 module Herb
   class Visitor
@@ -33,16 +35,26 @@ module Herb
       attr_reader :options #: Hash[Symbol, untyped]
       attr_reader :data #: Hash[Symbol, untyped]
 
-      #: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
-      def initialize(file_path: nil, project_path: nil, options: {}, **data)
+      #: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], ?resolver: untyped, **untyped) -> void
+      def initialize(file_path: nil, project_path: nil, options: {}, resolver: nil, **data)
         @file_path = self.class.coerce_file_path(file_path)
         @project_path_cache = [] #: Array[Pathname]
         @project_path_cache << self.class.coerce_project_path(project_path) if project_path
         @relative_file_path_cache = [] #: Array[String]
+        @resolver_cache = [] #: Array[untyped]
+        @resolver_cache << resolver if resolver
         @options = options.dup.freeze
-        @data = data.tap { |values| values[:origin] ||= Origin.new }.freeze
+        @data = self.class.with_records(data).freeze
 
         freeze
+      end
+
+      #: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+      def self.with_records(data)
+        data[:origin] ||= Origin.new
+        data[:replacements] ||= Replacements.new
+
+        data
       end
 
       #: () -> Pathname
@@ -55,9 +67,19 @@ module Herb
         @relative_file_path_cache[0] ||= self.class.derive_relative_file_path(file_path, project_path)
       end
 
+      #: () -> untyped
+      def resolver
+        @resolver_cache[0] ||= Analysis::PartialResolver.new(project_path)
+      end
+
       #: () -> Herb::Visitor::Context::Origin
       def origin
         data[:origin]
+      end
+
+      #: () -> Herb::Visitor::Context::Replacements
+      def replacements
+        data[:replacements]
       end
 
       #: (Symbol) -> untyped
@@ -67,13 +89,14 @@ module Herb
         when :project_path then project_path
         when :relative_file_path then relative_file_path
         when :options then options
+        when :resolver then resolver
         else data[key]
         end
       end
 
       #: (Symbol) -> bool
       def key?(key)
-        [:file_path, :project_path, :relative_file_path, :options].include?(key) || data.key?(key)
+        [:file_path, :project_path, :relative_file_path, :options, :resolver].include?(key) || data.key?(key)
       end
 
       #: (Symbol, ?untyped) -> untyped
@@ -90,7 +113,8 @@ module Herb
           file_path: extra.fetch(:file_path, file_path),
           project_path: extra.fetch(:project_path, project_path),
           options: extra.fetch(:options, options),
-          **data.merge(extra.except(:file_path, :project_path, :options))
+          resolver: extra.fetch(:resolver, @resolver_cache[0]),
+          **data.merge(extra.except(:file_path, :project_path, :options, :resolver))
         )
       end
 
@@ -101,6 +125,7 @@ module Herb
           project_path: project_path,
           relative_file_path: relative_file_path,
           options: options,
+          resolver: resolver,
           data: data,
         }
       end

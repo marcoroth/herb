@@ -3,10 +3,10 @@ import { HerbDisableCommentBaseVisitor } from "./herb-disable-comment-base.js"
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBContentNode, ParseResult } from "@herb-tools/core"
+import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
 
 class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
-  protected checkHerbDisableComment(node: ERBContentNode, content: string): void {
+  protected checkHerbDisableComment(node: ERBCommentNode, content: string): void {
     const trimmed = content.trim()
     const looksLikeHerbDisable = trimmed.startsWith("herb:disable")
     if (!looksLikeHerbDisable) return
@@ -49,6 +49,7 @@ class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
 export class HerbDisableCommentMalformedRule extends ParserRule {
   static ruleName = "herb-disable-comment-malformed"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
