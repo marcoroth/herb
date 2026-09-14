@@ -325,9 +325,7 @@ jobs:
         env:
           NO_COLOR: "1"
         run: |-
-          npx tsx javascript/packages/minifier/scripts/verify-corpus.ts \
-            --baseline=javascript/packages/minifier/scripts/corpus-baseline.json \
-            "corpus/erb/**/*.erb"
+          npx tsx javascript/packages/minifier/scripts/verify-corpus.ts "corpus/erb/**/*.erb"
 
   printer:
     name: Printer Roundtrip
