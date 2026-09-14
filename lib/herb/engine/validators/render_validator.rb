@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "base"
-require_relative "../../analysis/partial_resolution"
 
 module Herb
   class Engine
@@ -26,16 +25,16 @@ module Herb
         def validate_partial_exists(node)
           return unless filename
 
-          source_directory = project_path.join(filename).dirname
-          resolved = node.resolve(view_root: view_root, source_directory: source_directory)
+          name = node.partial_path.to_s
+          resolver = context.resolver
 
-          return if resolved
+          return if resolver.resolve(name, from: filename)
 
           message = "Partial '#{node.partial_path}' could not be resolved."
-          searched = node.candidate_paths(nil, view_root, source_directory)
+          searched = resolver.candidates(name, from: filename)
 
           if searched.any?
-            relative_paths = searched.map { |path| relative_to_project(path) }.uniq
+            relative_paths = searched.map { |path| resolver.identifier_for(path) }.uniq
             message += "\n     Looked in:\n"
 
             relative_paths.each do |path|
@@ -43,7 +42,7 @@ module Herb
             end
           end
 
-          suggestions = node.similar_partials(view_root: view_root, source_directory: source_directory)
+          suggestions = resolver.similar(name, from: filename)
 
           if suggestions.any?
             partial_suggestions, hint_suggestions = suggestions.partition { |suggestion| !suggestion.include?("exists as a template") }
@@ -64,22 +63,8 @@ module Herb
           )
         end
 
-        def view_root
-          @view_root ||= Analysis::PartialResolution.view_root_for(project_path)
-        end
-
         def filename
           context.file_path
-        end
-
-        def project_path
-          context.project_path
-        end
-
-        def relative_to_project(path)
-          path.relative_path_from(project_path).to_s
-        rescue ArgumentError
-          path.to_s
         end
       end
     end

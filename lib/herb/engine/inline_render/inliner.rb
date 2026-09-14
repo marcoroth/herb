@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../../analysis/partial_resolution"
+require_relative "../../analysis/partial_resolver"
 
 module Herb
   class Engine
@@ -14,8 +14,7 @@ module Herb
         def initialize(options = {})
           @project_path = options[:project_path] || Pathname.new(Dir.pwd)
           @filename = options[:filename]
-          @view_root = find_view_root
-          @source_directory = find_source_directory
+          @resolver = options[:resolver] || Analysis::PartialResolver.new(@project_path)
           @format = find_format
         end
 
@@ -62,13 +61,7 @@ module Herb
         end
 
         def resolve_path(node)
-          candidates = node.candidate_paths(nil, @view_root, @source_directory)
-
-          return candidates.find(&:exist?) unless @format
-
-          preferred, rest = candidates.partition { |path| path.basename.to_s.include?(".#{@format}.") }
-
-          (preferred + rest).find(&:exist?)
+          @resolver.resolve(node.partial_path.to_s, from: @filename, format: @format)&.path
         end
 
         def own_locals(source)
@@ -122,16 +115,6 @@ module Herb
           parts = File.basename(@filename).split(".")
 
           parts.length >= 3 ? parts[-2] : nil
-        end
-
-        def find_view_root
-          Analysis::PartialResolution.view_root_for(@project_path)
-        end
-
-        def find_source_directory
-          return nil unless @filename
-
-          @project_path.join(Pathname.new(@filename).dirname)
         end
       end
     end
