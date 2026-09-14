@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0045_emits escaped ERB tags with custom literal delimiters"
+input: "{source: \"<%% literal %>\\n<%%= name %>\\n<%%- a -%>\\n\", options: {literal_prefix: \"{%\", literal_postfix: \"%}\"}}"
+---
+_buf = ::String.new; _buf << '{% literal %}
+{%= name %}
+{%- a -%}
+'.freeze;
+_buf.to_s
