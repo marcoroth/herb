@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0046_emits an escaped ERB block with custom literal delimiters"
+input: "{source: \"<%% for item in @items %>\\n  <li><%%= item %></li>\\n<%% end %>\\n\", locals: {}, options: {literal_prefix: \"{%\", literal_postfix: \"%}\"}}"
+---
+{% for item in @items %}
+  <li>{%= item %}</li>
+{% end %}

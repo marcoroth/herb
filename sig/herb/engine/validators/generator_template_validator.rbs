@@ -5,7 +5,7 @@ module Herb
     module Validators
       # Reports a template that writes literal ERB, which is a generator template and not a page.
       #
-      # The engine itself compiles `<%%` to the literal `<%` the way Erubi does, so a sweep over a
+      # The engine itself compiles `<%%` to literal text the way Erubi does, so a sweep over a
       # project's templates gets one of these instead of a file it cannot make sense of.
       class GeneratorTemplateValidator < Base
         def visit_erb_node: (untyped node) -> untyped

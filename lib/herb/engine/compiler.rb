@@ -19,6 +19,8 @@ module Herb
         @source_lines = options[:source]&.lines
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @trim = options[:trim] != false
+        @literal_prefix = options[:literal_prefix] || "<%"
+        @literal_postfix = options[:literal_postfix] || "%>"
         @tokens = [] #: Array[untyped]
         @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
@@ -412,7 +414,10 @@ module Herb
       private
 
       def add_escaped_erb_tag(node)
-        add_text("#{node.tag_opening.value.sub("<%%", "<%")}#{node.content.value}#{node.tag_closing&.value}")
+        opening = node.tag_opening.value.sub("<%%") { @literal_prefix }
+        closing = (node.tag_closing&.value || "").sub(/%>\z/) { @literal_postfix }
+
+        add_text("#{opening}#{node.content.value}#{closing}")
       end
 
       def add_escaped_erb_block(node)

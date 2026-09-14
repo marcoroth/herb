@@ -49,6 +49,8 @@ If a framework renders `.erb` files through the standard-library `ERB` by defaul
 | `ensure` | Wrap in begin/ensure block |
 | `src` | Initial source string |
 | `trim` | Fold the whitespace around standalone `<% %>` and `<%# %>` tags into the code (default `true`) |
+| `literal_prefix` | Opening delimiter an escaped tag compiles to (default `<%`) |
+| `literal_postfix` | Closing delimiter an escaped tag compiles to (default `%>`) |
 
 ### Whitespace trimming
 
@@ -179,6 +181,18 @@ Herb::Engine.new(source, parser_options: { strict: false })
 ### Escaped tags
 
 `<%% %>` and `<%%= %>` are escaped ERB, and the engine compiles them to the literal text `<% %>` and `<%= %>`, the same as Erubi. Block tags are included, so `<%% form_with do %>` and its matching `<%% end %>` both reach the output as text.
+
+Comments and control flow are included too, so `<%%# note %>` and `<%% if admin? %>` reach the output as text like any other escaped tag.
+
+`literal_prefix` and `literal_postfix` choose the delimiters that escaped tags compile to. They default to `<%` and `%>`, which is what makes an escaped tag round-trip to ordinary ERB, and a template that generates something else can say so:
+
+```ruby
+Herb::Engine.new(%(<%%= item %>\n), literal_prefix: "{%", literal_postfix: "%}").src
+# => _buf = ::String.new; _buf << '{%= item %}\n'.freeze;
+# => _buf.to_s
+```
+
+Only the delimiters themselves are substituted. Everything the tag carries between them, including the `=` of an output tag and the `-` of a trimming one, is emitted verbatim, so `<%%- x -%>` becomes `{%- x -%}`.
 
 A template that writes literal ERB is usually a generator template, one whose own output is an ERB file, and compiling it is rarely what a project sweep wants. That judgement lives in [`GeneratorTemplateValidator`](#validators) instead of in the engine, so `herb analyze` skips such a file while a caller that means to compile it simply leaves the validator out.
 

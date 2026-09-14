@@ -384,5 +384,26 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "emits escaped ERB tags with custom literal delimiters" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block with custom literal delimiters" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB comment as literal text" do
+      template = "<%%# a comment %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

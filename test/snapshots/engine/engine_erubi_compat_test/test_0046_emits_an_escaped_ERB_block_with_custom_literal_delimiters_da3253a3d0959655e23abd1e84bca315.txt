@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0046_emits an escaped ERB block with custom literal delimiters"
+input: "{source: \"<%% for item in @items %>\\n  <li><%%= item %></li>\\n<%% end %>\\n\", options: {literal_prefix: \"{%\", literal_postfix: \"%}\"}}"
+---
+_buf = ::String.new; _buf << '{% for item in @items %}
+  <li>{%= item %}</li>
+{% end %}
+'.freeze;
+_buf.to_s

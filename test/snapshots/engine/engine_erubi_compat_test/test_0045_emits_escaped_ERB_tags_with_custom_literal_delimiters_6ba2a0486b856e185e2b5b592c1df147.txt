@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0045_emits escaped ERB tags with custom literal delimiters"
+input: "{source: \"<%% literal %>\\n<%%= name %>\\n<%%- a -%>\\n\", locals: {}, options: {literal_prefix: \"{%\", literal_postfix: \"%}\"}}"
+---
+{% literal %}
+{%= name %}
+{%- a -%}

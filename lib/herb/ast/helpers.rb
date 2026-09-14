@@ -108,12 +108,14 @@ module Herb
       #: (Herb::AST::ERBContentNode) -> bool
       def inline_ruby_comment?(node)
         return false unless node.is_a?(Herb::AST::ERBContentNode)
-        return false if erb_comment?(node.tag_opening&.value || "")
 
-        content = node.content&.value || ""
-        stripped = content.lstrip
+        opening = node.tag_opening&.value.to_s
 
-        stripped.start_with?("#") && !content.include?("\n")
+        return false if erb_comment?(opening) || erb_escaped?(opening)
+
+        content = node.content&.value.to_s
+
+        content.lstrip.start_with?("#") && !content.include?("\n")
       end
     end
   end
