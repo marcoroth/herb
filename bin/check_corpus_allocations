@@ -1,0 +1,24 @@
+#!/bin/bash
+
+corpus="${1:-corpus/erb}"
+report="${2:-corpus-allocations.txt}"
+
+find "$corpus" -name '*.erb' -type f -print0 | xargs -0 ./bench_allocs > "$report"
+status=$?
+
+grep "FAILED" "$report" | head -n 50
+
+if [ "$status" -ne 0 ]; then
+  echo "The last files checked before the failure were:"
+  tail -n 5 "$report"
+fi
+
+awk '/allocs:/ {
+  parses++
+  allocs += $4
+  deallocs += $6
+} END {
+  printf "%d parses, %d allocations, %d deallocations, %d not freed\n", parses, allocs, deallocs, allocs - deallocs
+}' "$report"
+
+exit "$status"

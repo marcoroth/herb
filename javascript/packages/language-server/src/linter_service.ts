@@ -19,6 +19,8 @@ import type { RuleClass } from "@herb-tools/linter"
 import type { AncestorChain } from "@herb-tools/analysis"
 import type { ProjectIndex } from "@herb-tools/analysis/node"
 
+const PARSER_NO_ERRORS = "parser-no-errors"
+
 const FRAME_VERBS: Record<string, string> = {
   render: "rendered from",
   layout: "rendered into",
@@ -190,6 +192,12 @@ export class LinterService {
     return information
   }
 
+  private editorRules(config?: Config): RuleClass[] {
+    const { enabled } = Linter.filterRulesByConfig(this.allRules, config?.config?.linter?.rules, config?.configVersion)
+
+    return enabled.filter(ruleClass => ruleClass.ruleName !== PARSER_NO_ERRORS)
+  }
+
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
     if (!this.shouldLintFile(textDocument.uri)) {
       return { diagnostics: [], warnings: [] }
@@ -210,26 +218,7 @@ export class LinterService {
 
       warnings.push(...this.takeCustomRuleWarnings())
 
-      const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
-
-      const config = Config.fromObject({
-        framework: projectConfig?.config?.framework,
-        template_engine: projectConfig?.config?.template_engine,
-        linter: {
-          ...linterConfig,
-          rules: {
-            ...linterConfig.rules,
-            'parser-no-errors': { enabled: false }
-          }
-        }
-      }, {
-        projectPath: projectConfig?.projectPath || process.cwd(),
-        configVersion: projectConfig?.configVersion
-      })
-
-      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, config.configVersion)
-
-      this.linter = new Linter(Herb, filteredRules, config, this.allRules)
+      this.linter = new Linter(Herb, this.editorRules(projectConfig), projectConfig, this.allRules)
       this.linter.mode = "editor"
     }
 
@@ -239,6 +228,8 @@ export class LinterService {
       fileName: this.index.relativePathFor(textDocument.uri) ?? textDocument.uri,
       partials: this.index.partials,
       partialCallers: this.index?.callers,
+      indentWidth: settings?.formatter?.indentWidth,
+      indentStyle: settings?.formatter?.indentStyle,
     })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {

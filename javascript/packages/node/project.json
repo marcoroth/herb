@@ -5,17 +5,19 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/extension/libherb", "{projectRoot}/extension/prism"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
       },
-      "dependsOn": ["@herb-tools/core:build"]
+      "dependsOn": ["templates:generate", "prism:build", "@herb-tools/core:build"]
     },
     "test": {
       "executor": "nx:run-script",
       "options": {
         "script": "test"
-      }
+      },
+      "dependsOn": ["build"]
     },
     "clean": {
       "executor": "nx:run-script",

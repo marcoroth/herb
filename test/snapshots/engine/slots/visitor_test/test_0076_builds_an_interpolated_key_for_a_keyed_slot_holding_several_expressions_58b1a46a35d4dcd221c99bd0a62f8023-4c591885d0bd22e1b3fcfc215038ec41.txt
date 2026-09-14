@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0076_builds an interpolated key for a keyed slot holding several expressions"
+input: |2-
+<%# herb:slots %>
+<div herb-key="<%= @track %>:<%= @number %>">x</div>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 8cf4cfda
+
+slots:
+  index=0  type=keyed  node_path=[2]  key_source=herb_key  key_expression="\"\#{@track}:\#{@number}\""

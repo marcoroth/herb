@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -67,6 +67,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
 export class HTMLAllowedScriptTypeRule extends ParserRule {
   static ruleName = "html-allowed-script-type"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

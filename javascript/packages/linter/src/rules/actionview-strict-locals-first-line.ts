@@ -1,9 +1,8 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { createLiteral } from "@herb-tools/core"
 
 import { isERBStrictLocalsNode, isHTMLTextNode } from "@herb-tools/core"
-import { isPartialFile } from "./file-utils.js"
 
 import type { ParseResult, DocumentNode, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -40,11 +39,9 @@ class ActionViewStrictLocalsFirstLineVisitor extends BaseRuleVisitor {
   }
 
   visitERBStrictLocalsNode(node: ERBStrictLocalsNode): void {
-    if (isPartialFile(this.context.fileName) !== true) return
-
     if (node.location.start.line !== 1) {
       this.addOffense(
-        "Strict locals declaration must be on the first line of the partial.",
+        "Strict locals declaration must be on the first line of the template.",
         node.location
       )
     }
@@ -64,12 +61,11 @@ export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
     return {
       enabled: false,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    if (isPartialFile(context?.fileName) !== true) return []
-
     const visitor = new ActionViewStrictLocalsFirstLineVisitor(this.ruleName, context)
     visitor.visit(result.value)
 

@@ -7,6 +7,7 @@
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
+#include "../include/lexer/token.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/string.h"
 #include "../include/prism/prism_helpers.h"
@@ -90,6 +91,130 @@ bool has_then_keyword(analyzed_ruby_T* analyzed) {
 bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
   return (has_case_node(analyzed) && has_when_node(analyzed))
       || (has_case_match_node(analyzed) && has_in_node(analyzed));
+}
+
+typedef struct {
+  const uint8_t* source_start;
+  uint32_t offset;
+  bool found;
+} inline_condition_offset_T;
+
+static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
+  inline_condition_offset_T* context = (inline_condition_offset_T*) data;
+
+  uint32_t keyword_offset = UINT32_MAX;
+
+  if (node->type == PM_WHEN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_when_node_t*) node)->keyword_loc.start - context->source_start);
+  } else if (node->type == PM_IN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_in_node_t*) node)->in_loc.start - context->source_start);
+  } else if (node->type == PM_MATCH_PREDICATE_NODE) {
+    keyword_offset = (uint32_t) (((const pm_match_predicate_node_t*) node)->operator_loc.start - context->source_start);
+  }
+
+  if (keyword_offset != UINT32_MAX && (!context->found || keyword_offset < context->offset)) {
+    context->offset = keyword_offset;
+    context->found = true;
+  }
+
+  pm_visit_child_nodes(node, search_inline_condition_offset, context);
+
+  return false;
+}
+
+static hb_string_T control_continuation_keywords[] = HB_STRING_LIST("else", "elsif", "when", "in", "rescue", "ensure");
+static hb_string_T control_terminator_keywords[] = HB_STRING_LIST("end", "}");
+
+static bool matches_keyword(hb_string_T keyword, const hb_string_T* keywords, size_t count) {
+  for (size_t index = 0; index < count; index++) {
+    if (hb_string_equals(keyword, keywords[index])) { return true; }
+  }
+
+  return false;
+}
+
+static bool is_control_continuation_keyword(hb_string_T keyword) {
+  return matches_keyword(
+    keyword,
+    control_continuation_keywords,
+    sizeof(control_continuation_keywords) / sizeof(control_continuation_keywords[0])
+  );
+}
+
+static bool is_control_role_keyword(hb_string_T keyword) {
+  return is_control_continuation_keyword(keyword)
+      || matches_keyword(
+           keyword,
+           control_terminator_keywords,
+           sizeof(control_terminator_keywords) / sizeof(control_terminator_keywords[0])
+      );
+}
+
+bool control_role_split_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
+  if (!analyzed || !offset) { return false; }
+
+  uint32_t first = UINT32_MAX;
+  uint32_t second = UINT32_MAX;
+  bool first_continues = false;
+
+  for (const pm_diagnostic_t* diagnostic = (const pm_diagnostic_t*) analyzed->parser.error_list.head;
+       diagnostic != NULL;
+       diagnostic = (const pm_diagnostic_t*) diagnostic->node.next) {
+    if (diagnostic->diag_id != PM_ERR_UNEXPECTED_TOKEN_IGNORE) { continue; }
+
+    hb_string_T keyword = hb_string_from_data(
+      (const char*) diagnostic->location.start,
+      (size_t) (diagnostic->location.end - diagnostic->location.start)
+    );
+
+    if (!is_control_role_keyword(keyword)) { continue; }
+
+    uint32_t start = (uint32_t) (diagnostic->location.start - analyzed->parser.start);
+
+    if (start < first) {
+      second = first;
+      first = start;
+      first_continues = is_control_continuation_keyword(keyword);
+    } else if (start < second) {
+      second = start;
+    }
+  }
+
+  if (second == UINT32_MAX) { return false; }
+  if (!first_continues) { return false; }
+
+  *offset = second;
+
+  return true;
+}
+
+bool has_inline_pattern_match(analyzed_ruby_T* analyzed, hb_string_T content) {
+  if (!has_case_match_node(analyzed) || !has_in_node(analyzed)) { return false; }
+
+  uint32_t offset = 0;
+
+  if (!inline_condition_keyword_offset(analyzed, &offset)) { return false; }
+  if (offset > content.length) { return false; }
+
+  return memchr(content.data, '\n', offset) == NULL;
+}
+
+bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
+  if (!analyzed || !analyzed->root || !offset) { return false; }
+
+  inline_condition_offset_T context = {
+    .source_start = analyzed->parser.start,
+    .offset = UINT32_MAX,
+    .found = false,
+  };
+
+  pm_visit_node(analyzed->root, search_inline_condition_offset, &context);
+
+  if (!context.found) { return false; }
+
+  *offset = context.offset;
+
+  return true;
 }
 
 bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {
@@ -1074,4 +1199,139 @@ hb_array_T* extract_block_arguments_from_erb_node(
     prism_source_start,
     allocator
   );
+}
+
+bool is_erb_output_tag(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (!erb_node || !erb_node->tag_opening) { return false; }
+
+  hb_string_T opening = erb_node->tag_opening->value;
+
+  return opening.length >= 3 && opening.data[0] == '<' && opening.data[1] == '%' && opening.data[2] == '=';
+}
+
+static bool is_escape_neutral(hb_string_T content) {
+  for (uint32_t index = 0; index < content.length; index++) {
+    switch (content.data[index]) {
+      case '&':
+      case '<':
+      case '>':
+      case '"':
+      case '\'': return false;
+
+      default: break;
+    }
+  }
+
+  return true;
+}
+
+static bool is_plain_decimal_integer(hb_string_T source) {
+  uint32_t index = (source.length > 0 && source.data[0] == '-') ? 1 : 0;
+
+  if (index >= source.length) { return false; }
+  if (source.data[index] == '0' && (source.length - index) > 1) { return false; }
+
+  for (uint32_t position = index; position < source.length; position++) {
+    if (source.data[position] < '0' || source.data[position] > '9') { return false; }
+  }
+
+  return true;
+}
+
+static bool prism_node_static_output(const pm_node_t* node, hb_string_T* output) {
+  if (!node || !output) { return false; }
+
+  switch (node->type) {
+    case PM_STRING_NODE: {
+      const pm_string_t* unescaped = &((const pm_string_node_t*) node)->unescaped;
+
+      *output = hb_string_from_data((const char*) pm_string_source(unescaped), pm_string_length(unescaped));
+      break;
+    }
+
+    case PM_SYMBOL_NODE: {
+      const pm_string_t* unescaped = &((const pm_symbol_node_t*) node)->unescaped;
+
+      *output = hb_string_from_data((const char*) pm_string_source(unescaped), pm_string_length(unescaped));
+      break;
+    }
+
+    case PM_INTEGER_NODE: {
+      hb_string_T source =
+        hb_string_from_data((const char*) node->location.start, (size_t) (node->location.end - node->location.start));
+
+      if (!is_plain_decimal_integer(source)) { return false; }
+
+      *output = source;
+      break;
+    }
+
+    case PM_TRUE_NODE: *output = hb_string("true"); break;
+    case PM_FALSE_NODE: *output = hb_string("false"); break;
+    case PM_NIL_NODE: *output = HB_STRING_EMPTY; break;
+
+    default: return false;
+  }
+
+  return is_escape_neutral(*output);
+}
+
+static AST_NODE_T* create_static_output_node(
+  hb_string_T content,
+  static_output_node_type_T node_type,
+  position_T start_position,
+  position_T end_position,
+  hb_allocator_T* allocator
+) {
+  switch (node_type) {
+    case STATIC_OUTPUT_NODE_HTML_TEXT:
+      return (
+        AST_NODE_T*
+      ) ast_html_text_node_init(content, start_position, end_position, hb_array_init(0, allocator), allocator);
+
+    case STATIC_OUTPUT_NODE_LITERAL:
+      return (
+        AST_NODE_T*
+      ) ast_literal_node_init(content, start_position, end_position, hb_array_init(0, allocator), allocator);
+
+    default: return NULL;
+  }
+}
+
+bool append_static_output_node(
+  hb_array_T* statements,
+  const pm_statements_node_t* body,
+  const analyzed_ruby_T* analyzed,
+  position_T content_start,
+  static_output_node_type_T node_type,
+  hb_allocator_T* allocator
+) {
+  if (!statements || !body || !analyzed) { return false; }
+  if (node_type == STATIC_OUTPUT_NODE_NONE) { return false; }
+  if (body->body.size != 1) { return false; }
+
+  const pm_node_t* literal = body->body.nodes[0];
+  const uint8_t* parser_start = analyzed->parser.start;
+
+  if (literal->location.start < parser_start || literal->location.end > analyzed->parser.end) { return false; }
+
+  hb_string_T content;
+
+  if (!prism_node_static_output(literal, &content)) { return false; }
+  if (content.length == 0) { return true; }
+
+  size_t offset = (size_t) (literal->location.start - parser_start);
+  size_t length = (size_t) (literal->location.end - literal->location.start);
+
+  position_T start_position = { .line = content_start.line, .column = content_start.column + (uint32_t) offset };
+  position_T end_position = { .line = content_start.line,
+                              .column = content_start.column + (uint32_t) (offset + length) };
+
+  AST_NODE_T* node = create_static_output_node(content, node_type, start_position, end_position, allocator);
+
+  if (!node) { return false; }
+
+  hb_array_append(statements, node);
+
+  return true;
 }

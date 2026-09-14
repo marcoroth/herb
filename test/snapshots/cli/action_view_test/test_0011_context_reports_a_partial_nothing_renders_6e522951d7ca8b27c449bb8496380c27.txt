@@ -1,0 +1,12 @@
+---
+source: "CLI::ActionViewTest#test_0011_context reports a partial nothing renders"
+input: "orphan partial"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_orphan.html.erb
+
+ Not rendered by any template.
+

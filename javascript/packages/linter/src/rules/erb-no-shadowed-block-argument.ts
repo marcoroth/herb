@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
@@ -77,6 +77,7 @@ class NoShadowedBlockArgumentVisitor extends BaseRuleVisitor {
 export class ERBNoShadowedBlockArgumentRule extends ParserRule {
   static ruleName = "erb-no-shadowed-block-argument"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

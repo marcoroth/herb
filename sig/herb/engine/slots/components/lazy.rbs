@@ -1,0 +1,20 @@
+# Generated from lib/herb/engine/slots/components/lazy.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Components
+        # A deferred block the client requests when it nears the viewport, and
+        # never requests for content the reader never reaches.
+        class Lazy < Deferred
+          NAME: String
+
+          private
+
+          # : () -> String
+          def mode: () -> String
+        end
+      end
+    end
+  end
+end

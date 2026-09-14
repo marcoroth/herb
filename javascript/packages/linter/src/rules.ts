@@ -16,6 +16,7 @@ import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynami
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
+import { ActionViewNoMistypedLocalsRule } from "./rules/actionview-no-mistyped-locals.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
@@ -52,6 +53,7 @@ import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-cla
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
 import { ERBNoMethodDefinitionsRule } from "./rules/erb-no-method-definitions.js"
 import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
+import { ERBNoMultipleStatementsRule } from "./rules/erb-no-multiple-statements.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
@@ -82,6 +84,7 @@ import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
+import { HerbComponentRequiresSlotsRule } from "./rules/herb-component-requires-slots.js"
 import { HerbConfigFrameworkOptionRule } from "./rules/herb-config-framework-option.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
@@ -89,6 +92,25 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbIntoRequiresCollectionRule } from "./rules/herb-into-requires-collection.js"
+import { HerbSlotsSingleDirectiveRule } from "./rules/herb-slots-single-directive.js"
+import { HerbSlotsValidComponentsRule } from "./rules/herb-slots-valid-components.js"
+import { HerbSlotsValidModeRule } from "./rules/herb-slots-valid-mode.js"
+import { HerbStateNoSilentReadsRule } from "./rules/herb-state-no-silent-reads.js"
+import { HerbStateNoServerWritesRule } from "./rules/herb-state-no-server-writes.js"
+import { HerbStateNoShadowedStatesRule } from "./rules/herb-state-no-shadowed-states.js"
+import { HerbStateNoUnusedStatesRule } from "./rules/herb-state-no-unused-states.js"
+import { HerbStateRequiresSlotsRule } from "./rules/herb-state-requires-slots.js"
+import { HerbStateValidActionsRule } from "./rules/herb-state-valid-actions.js"
+import { HerbStateValidBindingsRule } from "./rules/herb-state-valid-bindings.js"
+import { HerbScopedStyleNoUnusedSelectorRule } from "./rules/herb-scoped-style-no-unused-selector.js"
+import { HerbScopedStyleRequireTopLevelRule } from "./rules/herb-scoped-style-require-top-level.js"
+import { HerbScopedStyleSingleDeclarationRule } from "./rules/herb-scoped-style-single-declaration.js"
+import { HerbStateDirectiveSyntaxRule } from "./rules/herb-state-directive-syntax.js"
+import { HerbStateSingleDeclarationRule } from "./rules/herb-state-single-declaration.js"
+import { HerbStateValidDeclarationRule } from "./rules/herb-state-valid-declaration.js"
+import { HerbStateValidReadsRule } from "./rules/herb-state-valid-reads.js"
+import { HerbValidSlotNamesRule } from "./rules/herb-valid-slot-names.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -99,6 +121,7 @@ import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-hea
 import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
+import { HTMLAttributeNameValidCharactersRule } from "./rules/html-attribute-name-valid-characters.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
@@ -117,12 +140,14 @@ import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attribu
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
+import { HTMLNoEmptyCSSRuleRule } from "./rules/html-no-empty-css-rule.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
 import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
 import { HTMLNoLiteralNBSPRule } from "./rules/html-no-literal-nbsp.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
+import { HTMLNoObsoleteTagsRule } from "./rules/html-no-obsolete-tags.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
@@ -168,6 +193,7 @@ export const rules: RuleClass[] = [
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
+  ActionViewNoMistypedLocalsRule,
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
@@ -204,6 +230,7 @@ export const rules: RuleClass[] = [
   ERBNoJavascriptTagHelperRule,
   ERBNoMethodDefinitionsRule,
   ERBNoModuleDefinitionsRule,
+  ERBNoMultipleStatementsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
@@ -234,6 +261,7 @@ export const rules: RuleClass[] = [
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 
+  HerbComponentRequiresSlotsRule,
   HerbConfigFrameworkOptionRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentMissingRulesRule,
@@ -241,6 +269,25 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbIntoRequiresCollectionRule,
+  HerbSlotsSingleDirectiveRule,
+  HerbSlotsValidComponentsRule,
+  HerbSlotsValidModeRule,
+  HerbStateNoSilentReadsRule,
+  HerbStateNoServerWritesRule,
+  HerbStateNoShadowedStatesRule,
+  HerbStateNoUnusedStatesRule,
+  HerbStateRequiresSlotsRule,
+  HerbStateValidActionsRule,
+  HerbStateValidBindingsRule,
+  HerbScopedStyleNoUnusedSelectorRule,
+  HerbScopedStyleRequireTopLevelRule,
+  HerbScopedStyleSingleDeclarationRule,
+  HerbStateDirectiveSyntaxRule,
+  HerbStateSingleDeclarationRule,
+  HerbStateValidDeclarationRule,
+  HerbStateValidReadsRule,
+  HerbValidSlotNamesRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,
@@ -251,6 +298,7 @@ export const rules: RuleClass[] = [
   HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeEqualsSpacingRule,
+  HTMLAttributeNameValidCharactersRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
@@ -269,12 +317,14 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
+  HTMLNoEmptyCSSRuleRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoEventHandlerAttributesRule,
   HTMLNoInlineScriptElementsRule,
   HTMLNoLiteralNBSPRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
+  HTMLNoObsoleteTagsRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,

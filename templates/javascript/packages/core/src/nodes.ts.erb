@@ -1,4 +1,5 @@
 import { Location } from "./location.js"
+import { locate, locatable } from "./locate.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError } from "./errors.js"
 import { deserializePrismNode, inspectPrismSerialized } from "./prism/index.js"
@@ -7,6 +8,8 @@ import type { PrismNode } from "./prism/index.js"
 import type { SerializedLocation } from "./location.js"
 import type { SerializedHerbError } from "./errors.js"
 import type { Visitor } from "./visitor.js"
+import type { Position } from "./position.js"
+import type { LocateResult } from "./locate.js"
 
 export type SerializedNodeType = string
 
@@ -42,6 +45,14 @@ export abstract class Node implements BaseNodeProps {
     this.errors = errors
   }
 
+  locate(position: Position): LocateResult | null {
+    return locate(this, position)
+  }
+
+  locatable(position: Position): boolean {
+    return locatable(this, position)
+  }
+
   setSource(source: string): void {
     this.source = source
     this.compactChildNodes().forEach(child => child.setSource(source))
@@ -50,7 +61,7 @@ export abstract class Node implements BaseNodeProps {
   toJSON(): SerializedNode {
     return {
       type: this.type,
-      location: this.location.toJSON(),
+      location: this.location ? this.location.toJSON() : (null as unknown as SerializedLocation),
       errors: this.errors,
     }
   }
@@ -72,7 +83,13 @@ export abstract class Node implements BaseNodeProps {
   }
 
   abstract treeInspect(indent?: number): string
-  abstract recursiveErrors(): HerbError[]
+  recursiveErrors(): HerbError[] {
+    const accumulator: HerbError[] = []
+    this.collectErrors(accumulator)
+    return accumulator
+  }
+
+  abstract collectErrors(accumulator: HerbError[]): void
   abstract accept(visitor: Visitor): void
   abstract childNodes(): (Node | null | undefined)[]
   abstract compactChildNodes(): Node[]
@@ -254,7 +271,7 @@ export class <%= node.name %> extends Node {
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({
       type: data.type,
-      location: Location.from(data.location),
+      location: Location.fromOptional(data.location),
       errors: (data.errors || []).map(error => HerbError.from(error)),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
@@ -375,18 +392,16 @@ export class <%= node.name %> extends Node {
   }
   <%- end -%>
 
-  recursiveErrors(): HerbError[] {
-    return [
-      ...this.errors,
-      <%- node.fields.each do |field| -%>
-      <%- case field -%>
-      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-      this.<%= field.name %> ? this.<%= field.name %>.recursiveErrors() : [],
-      <%- when Herb::Template::ArrayField -%>
-      ...this.<%= field.name %>.map(node => node.recursiveErrors()),
-      <%- end -%>
-      <%- end -%>
-    ].flat();
+  collectErrors(accumulator: HerbError[]): void {
+    if (this.errors.length > 0) accumulator.push(...this.errors);
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+    this.<%= field.name %>?.collectErrors(accumulator);
+    <%- when Herb::Template::ArrayField -%>
+    for (const node of this.<%= field.name %>) node.collectErrors(accumulator);
+    <%- end -%>
+    <%- end -%>
   }
 
   toJSON(): Serialized<%= node.name %> {
@@ -423,7 +438,7 @@ export class <%= node.name %> extends Node {
   treeInspect(): string {
     let output = "";
 
-    output += `@ <%= node.name %> ${this.location.treeInspectWithLabel()}\n`;
+    output += `@ <%= node.name %> ${this.location ? this.location.treeInspectWithLabel() : "(location: ∅)"}\n`;
     output += `├── errors: ${this.inspectArray(this.errors, "<%= node.fields.any? ? "│   " : "    " %>")}`;
     <%- node.field_visibilities.each do |visibility| -%>
     <%- field = visibility.field -%>
@@ -518,17 +533,40 @@ export type NodeType =
   | "<%= node.type %>"
   <%- end -%>
 
-export type ERBNodeType = Extract<NodeType, `AST_ERB_${string}`>;
+export type HTMLNodeType =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | "<%= node.type %>"
+  <%- end -%>
+
+export type HTMLNode =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.html? -%>
+  | <%= node.name %>
+  <%- end -%>
+
+export const HTMLNodeClasses = [
+  <%- nodes.each do |node| -%>
+  <%- next unless node.html? -%>
+  <%= node.name %>,
+  <%- end -%>
+]
+
+export type ERBNodeType =
+  <%- nodes.each do |node| -%>
+    <%- next unless node.erb_tag? -%>
+  | "<%= node.type %>"
+  <%- end -%>
 
 export type ERBNode =
   <%- nodes.each_with_index.map do |node, index| -%>
-    <%- next unless node.name.start_with?("ERB") -%>
+    <%- next unless node.erb_tag? -%>
   | <%= node.name %>
   <%- end -%>
 
 export const ERBNodeClasses = [
   <%- nodes.each_with_index.map do |node, index| -%>
-  <%- next unless node.name.start_with?("ERB") -%>
+  <%- next unless node.erb_tag? -%>
   <%= node.name %>,
   <%- end -%>
 ]

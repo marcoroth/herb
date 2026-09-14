@@ -82,6 +82,12 @@ The rewrite is also skipped when the same quoted string appears more than once i
 
 ## Configuration
 
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 Disable it in `.herb.yml` when short partial names are the house style:
 
 ```yaml

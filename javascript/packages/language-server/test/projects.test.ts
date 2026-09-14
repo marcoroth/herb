@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url"
 import { beforeAll, afterEach, describe, expect, test, vi } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Projects } from "../src/projects"
 import { WorkspaceFolders } from "../src/workspace_folders"
@@ -16,6 +17,14 @@ import { DefinitionProvider } from "@herb-tools/language-service"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
+
+function readFile(filePath: string): string | null {
+  try {
+    return readFileSync(filePath, "utf-8")
+  } catch {
+    return null
+  }
+}
 
 const roots: string[] = []
 
@@ -61,21 +70,21 @@ function foldersFor(folder: string): WorkspaceFolders {
   return new WorkspaceFolders(params)
 }
 
-function registryWith(_folder: string, workspaceFolders: WorkspaceFolders): Projects {
-  const parserService = new ParserService(Herb)
+function registryWith(_folder: string, workspaceFolders: WorkspaceFolders, parserService = new ParserService(Herb)): Projects {
   const capabilities = new Capabilities({ capabilities: {} } as InitializeParams)
 
   return new Projects(connection, workspaceFolders, {
     documents: { documents: {}, get: () => undefined } as unknown as Documents,
     parserService,
-    definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
+    definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
     userSettings: new UserSettings(connection, capabilities),
     capabilities,
+    readFile,
   })
 }
 
-function registryFor(folder: string): Projects {
-  return registryWith(folder, foldersFor(folder))
+function registryFor(folder: string, parserService?: ParserService): Projects {
+  return registryWith(folder, foldersFor(folder), parserService)
 }
 
 function uriFor(folder: string, path: string): string {
@@ -218,6 +227,97 @@ describe("Projects", () => {
     expect(await indexedOnResolve).toBeGreaterThan(0)
     expect(await first).toBe(await projects.ensure(uriFor(folder, "app/views/posts/_outer.html.erb")))
     expect(projects.all()).toHaveLength(1)
+  })
+
+  describe("parser options", () => {
+    const GRAPHQL_TEMPLATE = `<%graphql query Products($first: Int!) { products(first: $first) { id } } %>`
+
+    const PARSER_FILES = {
+      ".herb.yml": OUTER_CONFIG,
+      "app/views/posts/index.html.erb": GRAPHQL_TEMPLATE,
+      "storefront/.herb.yml": `parser:\n  erb_openers:\n    - graphql\n`,
+      "storefront/app/views/products/index.html.erb": GRAPHQL_TEMPLATE,
+    }
+
+    const PLAIN = "app/views/posts/index.html.erb"
+    const STOREFRONT = "storefront/app/views/products/index.html.erb"
+
+    function documentFor(folder: string, path: string): TextDocument {
+      return TextDocument.create(uriFor(folder, path), "erb", 1, GRAPHQL_TEMPLATE)
+    }
+
+    test("parses a document with the openers its own project names", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const parserService = new ParserService(Herb)
+      const projects = registryFor(folder, parserService)
+
+      await projects.ensure(uriFor(folder, STOREFRONT))
+      await projects.ensure(uriFor(folder, PLAIN))
+
+      expect(parserService.parseDocument(documentFor(folder, STOREFRONT)).diagnostics).toEqual([])
+    })
+
+    test("leaves a document in a sibling project on the default openers", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const parserService = new ParserService(Herb)
+      const projects = registryFor(folder, parserService)
+
+      await projects.ensure(uriFor(folder, PLAIN))
+      await projects.ensure(uriFor(folder, STOREFRONT))
+
+      expect(parserService.parseDocument(documentFor(folder, PLAIN)).diagnostics.length).toBeGreaterThan(0)
+    })
+
+    test("parses a fragment with the openers of the document it came from", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const parserService = new ParserService(Herb)
+      const projects = registryFor(folder, parserService)
+
+      await projects.ensure(uriFor(folder, STOREFRONT))
+      await projects.ensure(uriFor(folder, PLAIN))
+
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE, undefined, uriFor(folder, STOREFRONT)).recursiveErrors()).toEqual([])
+      expect(parserService.parseContent(GRAPHQL_TEMPLATE, undefined, uriFor(folder, PLAIN)).recursiveErrors().length).toBeGreaterThan(0)
+    })
+
+    test("picks up openers that are added to a project while the server runs", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const parserService = new ParserService(Herb)
+      const projects = registryFor(folder, parserService)
+
+      const project = await projects.ensure(uriFor(folder, PLAIN))
+
+      expect(parserService.parseDocument(documentFor(folder, PLAIN)).diagnostics.length).toBeGreaterThan(0)
+
+      writeFileSync(join(folder, ".herb.yml"), `parser:\n  erb_openers:\n    - graphql\n`, "utf-8")
+      await project!.refreshConfig()
+
+      expect(parserService.parseDocument(documentFor(folder, PLAIN)).diagnostics).toEqual([])
+    })
+
+    test("leaves a document outside every project on the default openers", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const parserService = new ParserService(Herb)
+      const projects = registryFor(folder, parserService)
+
+      await projects.ensure(uriFor(folder, STOREFRONT))
+
+      const outside = TextDocument.create("file:///somewhere/else/a.html.erb", "erb", 1, GRAPHQL_TEMPLATE)
+
+      expect(parserService.parseDocument(outside).diagnostics.length).toBeGreaterThan(0)
+    })
+
+    test("answers which config covers a document", async () => {
+      const folder = workspaceFolder(PARSER_FILES)
+      const projects = registryFor(folder)
+
+      await projects.ensure(uriFor(folder, PLAIN))
+      await projects.ensure(uriFor(folder, STOREFRONT))
+
+      expect(projects.configFor(uriFor(folder, STOREFRONT))?.parserOptions?.erb_openers).toEqual(["graphql"])
+      expect(projects.configFor(uriFor(folder, PLAIN))?.parserOptions?.erb_openers).toBeUndefined()
+      expect(projects.configFor("file:///somewhere/else/a.html.erb")).toBeUndefined()
+    })
   })
 
   test("resolves the innermost project for a path under both", async () => {

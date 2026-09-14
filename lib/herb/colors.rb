@@ -11,8 +11,22 @@ module Herb
 
     module_function
 
+    #: [T] (bool) { () -> T } -> T
+    def with_color(enabled)
+      previous = Thread.current[:herb_colors]
+      Thread.current[:herb_colors] = enabled
+
+      yield
+    ensure
+      Thread.current[:herb_colors] = previous
+    end
+
     #: () -> bool
     def enabled?
+      forced = Thread.current[:herb_colors]
+
+      return forced unless forced.nil?
+
       return false if ENV["NO_COLOR"]
       return false if defined?(IRB)
       return false if defined?(Minitest)

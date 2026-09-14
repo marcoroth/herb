@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions } from "@herb-tools/core"
@@ -46,6 +46,7 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
 export class HTMLAriaLabelIsWellFormattedRule extends ParserRule {
   static ruleName = "html-aria-label-is-well-formatted"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

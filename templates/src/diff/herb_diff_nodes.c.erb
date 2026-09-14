@@ -219,7 +219,7 @@ void herb_diff_node(
     <%- node_fields = all_fields.select { |field| field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) } -%>
     <%- content_tokens = token_fields.select { |field| %w[content tag_opening].include?(field.name) } -%>
     <%- has_comparisons = content_tokens.any? || string_fields.any? || array_fields.any? || node_fields.any? -%>
-    <%- is_erb_node = node.name.start_with?("ERB") || node.name.start_with?("Ruby") -%>
+    <%- is_erb_node = node.erb_tag? || node.name.start_with?("Ruby") -%>
     <%- if !has_comparisons -%>
     case <%= node.type %>: {
       herb_diff_emit_operation(result, HERB_DIFF_NODE_REPLACED, path, old_node, new_node, 0, 0);

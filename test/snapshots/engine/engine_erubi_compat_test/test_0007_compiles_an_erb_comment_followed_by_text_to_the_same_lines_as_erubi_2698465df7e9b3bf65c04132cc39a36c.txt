@@ -1,0 +1,8 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0007_compiles an erb comment followed by text to the same lines as erubi"
+input: "{source: \"<%# comment %>\\nhi\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << 'hi
+'.freeze;
+_buf.to_s

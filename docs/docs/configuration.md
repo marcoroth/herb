@@ -80,7 +80,7 @@ Every tool tailors itself to that answer. It decides what Herb may assume about 
 | `hanami` | Hanami views, with their parts and helpers |
 | `sinatra` | Sinatra templates, with their helpers |
 
-Rules that only make sense for one framework check this option and stay quiet otherwise, which is why `erb-prefer-image-tag-helper` never suggests `image_tag` in a project that doesn't render through Action View.
+Rules that only make sense for one framework declare which frameworks they apply to and stay quiet everywhere else. A rule that says nothing about frameworks applies to all of them. See the [`frameworks`](#rule-configuration-options) rule option for widening or narrowing that per rule.
 
 When the option isn't set, Herb falls back to `ruby` and treats every template as plain ERB, which is the most conservative behavior it has. The [`herb-config-framework-option`](/linter/rules/herb-config-framework-option.md) rule reports that, and suggests a value when a template shows what renders it:
 
@@ -264,13 +264,29 @@ linter:
       enabled: false
 ```
 
+`all` also accepts `severity`, which sets the default severity for every rule that doesn't specify its own:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    all:
+      severity: warning
+
+    # Individual rules can still set their own
+    html-img-require-alt:
+      severity: error
+```
+
+This is the shortest way to make a whole project report at one level. It supports the split form too, so `severity: { editor: hint, cli: error }` keeps the editor quiet while CI still fails.
+
 A few details worth knowing:
 
 - **Explicit configuration always wins.** A rule that appears in `rules` follows its own `enabled` setting, no matter what `all` says.
 - **Listing a rule without `enabled` enables it.** `html-img-require-alt: { severity: warning }` under `all: enabled: false` turns the rule on, the same way it would without `all`.
 - **`all: enabled: true` bypasses version gating.** Normally the `version` in your `.herb.yml` holds back rules introduced in later releases. Enabling everything means exactly that, so nothing gets held back. Under `all: enabled: false` version gating makes no difference either way, since those rules are off regardless.
 - **`--only` and `--all-rules` still take precedence**, since both flags ignore the rule configuration entirely.
-- Only `enabled` is meaningful on `all`. Other rule options like `severity` or `exclude` aren't inherited by the individual rules.
+- **`severity` on `all` sets the default severity.** Every rule that doesn't set its own `severity` reports at the one `all` gives, overriding the rule's built-in default.
+- Only `enabled` and `severity` are meaningful on `all`. Other rule options like `include`, `only`, `exclude`, and `frameworks` aren't inherited by the individual rules. Use `linter.include` and `linter.exclude` to scope the whole linter.
 
 ::: warning
 `all` is a reserved name inside `rules`, it's never treated as an actual rule.
@@ -318,6 +334,32 @@ linter:
         - 'app/views/admin/**/*'
 ```
 
+## Parser Configuration <Badge type="tip" text="^0.11.0" />
+
+Every Herb tool parses your templates, so anything that changes how a template is read belongs here:
+
+```yaml [.herb.yml]
+parser:
+  erb_openers:
+    - graphql
+```
+
+### `erb_openers`
+
+Extra ERB tag openers to recognize, written without the leading `<%`. A tag opened this way holds something other than Ruby, so its body is left out of the compiled template and is never reported as a Ruby error.
+
+The `graphql-client` gem is the common case. Without this setting a query written as `<%graphql … %>` is read as Ruby, and the linter, formatter, and Language Server all report it as broken. With it, the same file is clean:
+
+```yaml [.herb.yml]
+parser:
+  erb_openers:
+    - graphql
+```
+
+An opener ending in a letter, digit, or underscore matches only on a word boundary, so `graphql` picks up `<%graphql query %>` and leaves `<%graphql_helper %>` as ordinary Ruby. See [Parser Options](/parser-options#erb-openers) for the full behavior.
+
+Unlike the `engine` section below, `parser` is read by every tool, since all of them have to agree on how a template is read.
+
 ## Engine Configuration <Badge type="tip" text="v0.9.0+" />
 
 Configure the template engine behavior:
@@ -328,6 +370,7 @@ engine:
     security: true       # Enable/disable security validation (default: true)
     nesting: true        # Enable/disable HTML nesting validation (default: true)
     accessibility: true  # Enable/disable accessibility validation (default: true)
+    generator_template: true # Enable/disable the generator template check (default: true)
 ```
 
 The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
@@ -339,6 +382,7 @@ The engine runs validators on templates during compilation. Each validator can b
 - **`security`**: Detects ERB output tags (`<%= %>`) in unsafe positions like attribute names or attribute positions. Prevents potential XSS vulnerabilities. _(default: `true`)_
 - **`nesting`**: Validates HTML nesting rules, such as block elements inside `<p>`, nested anchors, or interactive elements inside `<button>`. _(default: `true`)_
 - **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
+- **`generator_template`**: Reports a template that writes literal ERB through `<%% %>`, which makes it a generator template instead of a page to render. Turning it off compiles such a file to its literal ERB output. _(default: `true`)_
 
 A validator that is disabled (`false`) is not built into the stack that `Herb::Engine::Validators.all` returns, so it never runs.
 
@@ -460,8 +504,29 @@ Result for linter:
 - Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
 - Excludes: All defaults + `public/**/*` + `legacy/**/*`
 
+### Include Precedence <Badge type="tip" text="^0.11.0" />
+
+When a file matches both an `include` and an `exclude` pattern, the more specific pattern wins. Herb compares the leading path segments of each pattern that contain no glob characters, and the `include` pattern takes precedence when it points at the same directory as the `exclude` pattern or at one below it.
+
+| `exclude` pattern | `include` pattern | Winner |
+| --- | --- | --- |
+| `vendor/**/*` | `vendor/keep/**/*.html.erb` | `include`, it names a directory below `vendor/` |
+| `vendor/**/*` | `**/*.html.erb` | `exclude`, the include names no directory |
+| `app/views/legacy/**/*` | `app/views/**/*.html.erb` | `exclude`, it is the more specific of the two |
+| `**/*.generated.html.erb` | `app/views/**/*.html.erb` | `exclude`, it selects files by name and not by location |
+
+The comparison is the same at every level, so this works with `files.include`, `linter.include`, and `formatter.include`. A file has to out-specify every `exclude` pattern it matches to be kept.
+
 ::: tip Including Previously Excluded Files
-If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+To lint files inside a default-excluded directory such as `vendor/**/*` or `coverage/**/*`, add a pattern naming the subdirectory you want back:
+
+```yaml [.herb.yml]
+files:
+  include:
+    - 'vendor/keep/**/*.html.erb'
+```
+
+Everything under `vendor/keep/` is now linted, and the rest of `vendor/` stays excluded. Widening the pattern to `**/*.html.erb` would not work, because a pattern that names no directory never overrides an `exclude`.
 :::
 
 ## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />

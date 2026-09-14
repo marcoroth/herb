@@ -5,6 +5,7 @@ export { HTMLToActionViewTagHelperRewriter, serializeTagHelperAttributes } from 
 export { StringRewriter } from "./string-rewriter.js"
 
 export { asMutable } from "./mutable.js"
+export { cloneNode } from "./clone.js"
 export { isASTRewriterClass, isStringRewriterClass, isRewriterClass } from "./type-guards.js"
 
 export { rewrite, rewriteString } from "./rewrite.js"

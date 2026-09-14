@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBIfNode, ERBUnlessNode, ERBWhenNode, ERBInNode, ParseResult, ParserOptions, Location } from "@herb-tools/core"
@@ -41,6 +41,7 @@ class ERBNoThenInControlFlowVisitor extends BaseRuleVisitor {
 export class ERBNoThenInControlFlowRule extends ParserRule {
   static ruleName = "erb-no-then-in-control-flow"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

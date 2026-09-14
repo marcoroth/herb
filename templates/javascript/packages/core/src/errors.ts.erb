@@ -67,8 +67,10 @@ export interface Serialized<%= error.name %> {
   <%= field.name %>: string | null;
   <%- when Herb::Template::PositionField -%>
   <%= field.name %>: SerializedPosition;
+  <%- when Herb::Template::SizeTField -%>
+  <%= field.name %>: number;
   <%- else -%>
-  <%= field.name %>: any; // <%= field.inspect %>
+  <% raise "Unexpected type: #{field.class}" %>
   <%- end -%>
   <%- end -%>
 }
@@ -87,8 +89,10 @@ export interface <%= error.name %>Props {
   <%= field.name %>: string | null;
   <%- when Herb::Template::PositionField -%>
   <%= field.name %>: Position;
+  <%- when Herb::Template::SizeTField -%>
+  <%= field.name %>: number;
   <%- else -%>
-  <%= field.name %>: any; // <%= field.inspect %>
+  <% raise "Unexpected type: #{field.class}" %>
   <%- end -%>
   <%- end -%>
 }
@@ -104,8 +108,10 @@ export class <%= error.name %> extends HerbError {
   readonly <%= field.name %>: string | null;
   <%- when Herb::Template::PositionField -%>
   readonly <%= field.name %>: Position;
+  <%- when Herb::Template::SizeTField -%>
+  readonly <%= field.name %>: number;
   <%- else -%>
-  readonly <%= field.name %>: any;
+  <% raise "Unexpected type: #{field.class}" %>
   <%- end -%>
   <%- end -%>
 

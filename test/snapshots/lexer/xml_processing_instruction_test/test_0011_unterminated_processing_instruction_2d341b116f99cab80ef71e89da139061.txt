@@ -1,0 +1,7 @@
+---
+source: "Lexer::XMLProcessingInstructionTest#test_0011_unterminated processing instruction"
+input: "<?marker"
+---
+#<Herb::Token type="TOKEN_XML_PROCESSING_INSTRUCTION_START" value="<?" range=[0, 2] start=(1:0) end=(1:2)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="marker" range=[2, 8] start=(1:2) end=(1:8)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[8, 8] start=(1:8) end=(1:8)>

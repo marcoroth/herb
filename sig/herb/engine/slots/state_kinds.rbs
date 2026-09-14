@@ -1,0 +1,24 @@
+# Generated from lib/herb/engine/slots/state_kinds.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The kinds a `herb:state` default can have, and what each one means to the compiler.
+      module StateKinds
+        PRISM: Hash[String, Symbol]
+
+        NODE: Hash[String, Symbol]
+
+        LITERAL: Array[Symbol]
+
+        UNKNOWN: Array[Symbol]
+
+        FALSY: Array[Symbol]
+
+        NILABLE: Array[Symbol]
+
+        ARTICLES: Hash[String, String]
+      end
+    end
+  end
+end

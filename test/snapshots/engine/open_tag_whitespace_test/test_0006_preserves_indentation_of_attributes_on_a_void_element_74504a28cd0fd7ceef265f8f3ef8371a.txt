@@ -1,0 +1,10 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0006_preserves indentation of attributes on a void element"
+input: "{source: \"<input\\n  type=\\\"text\\\"\\n  name=\\\"title\\\"\\n>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<input
+  type="text"
+  name="title"
+>
+'.freeze;
+_buf.to_s

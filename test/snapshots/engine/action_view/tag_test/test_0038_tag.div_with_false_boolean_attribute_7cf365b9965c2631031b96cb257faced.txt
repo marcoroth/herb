@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0038_tag.div with false boolean attribute"
 input: "{source: \"<%= tag.div disabled: false %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<div></div>'.freeze;
-_buf.to_s
+'<div></div>'.freeze

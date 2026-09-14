@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import {
@@ -300,6 +300,7 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
 export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranchAutofixContext> {
   static ruleName = "erb-no-duplicate-branch-elements"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
   static autocorrectable = true
   static autofixRequiresContext = true
   static reindentAfterAutofix = true

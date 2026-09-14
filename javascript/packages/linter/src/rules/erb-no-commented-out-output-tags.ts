@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import type { ParseResult, ERBNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -35,6 +35,7 @@ class ERBNoCommentedOutOutputTagsVisitor extends BaseRuleVisitor {
 export class ERBNoCommentedOutOutputTagsRule extends ParserRule {
   static ruleName = "erb-no-commented-out-output-tags"
   static introducedIn = this.version("0.10.3")
+  static defaultEnabledIn = this.version("0.10.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

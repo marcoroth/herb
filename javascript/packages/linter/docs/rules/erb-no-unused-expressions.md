@@ -56,6 +56,14 @@ ViewComponent slot setters are intentional side effects and are not flagged, inc
 <% end %>
 ```
 
+A `with_*` call on an object yielded by any ERB block is treated the same way, so component libraries that wrap `render` in a helper are not flagged:
+
+```erb
+<%= card_component do |card| %>
+  <% card.with_title("Title") %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb

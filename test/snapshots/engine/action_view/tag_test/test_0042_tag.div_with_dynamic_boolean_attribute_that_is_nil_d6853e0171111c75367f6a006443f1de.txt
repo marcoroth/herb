@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0042_tag.div with dynamic boolean attribute that is nil"
 input: "{source: \"<%= tag.div hidden: maybe %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {maybe: nil}}}"
 ---
-_buf = ::String.new; _buf << '<div'.freeze; if (maybe); _buf << ' hidden'.freeze; end; _buf << '></div>'.freeze;
-_buf.to_s
+if (maybe); "<div hidden></div>".freeze; else "<div></div>".freeze;end;

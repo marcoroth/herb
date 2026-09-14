@@ -1,0 +1,8 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0014_preserves indentation of an inline erb conditional among attributes"
+input: "{source: \"<input\\n  type=\\\"text\\\"\\n  <% if required %>required<% end %>\\n>\\n\", locals: {required: true}, options: {}}"
+---
+<input
+  type="text"
+  required
+>

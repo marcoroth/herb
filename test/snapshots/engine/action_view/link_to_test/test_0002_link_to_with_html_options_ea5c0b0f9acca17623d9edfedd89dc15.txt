@@ -2,5 +2,4 @@
 source: "Engine::ActionView::LinkToTest#test_0002_link_to with html options"
 input: "{source: \"<%= link_to \\\"Click me\\\", \\\"#\\\", class: \\\"example\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<a class="example" href="#">Click me</a>'.freeze;
-_buf.to_s
+'<a class="example" href="#">Click me</a>'.freeze

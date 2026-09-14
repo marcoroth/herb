@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
-import { ASTRewriter, StringRewriter, isASTRewriterClass, isStringRewriterClass, isRewriterClass } from "@herb-tools/rewriter"
+import { ASTRewriter, StringRewriter, isASTRewriterClass, isStringRewriterClass, isRewriterClass } from "../src/index.js"
 
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 
 describe("Type Guards", () => {
   test("isASTRewriterClass identifies PreFormatRewriter classes", () => {
@@ -9,8 +9,8 @@ describe("Type Guards", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T): T {
+        return node
       }
     }
 
@@ -41,8 +41,8 @@ describe("Type Guards", () => {
       get name() { return "test" }
       get description() { return "Test" }
 
-      rewrite(result: ParseResult): ParseResult {
-        return result
+      rewrite<T extends Node>(node: T): T {
+        return node
       }
     }
 

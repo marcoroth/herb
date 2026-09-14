@@ -1,7 +1,7 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+import { BaseRuleVisitor, findParent } from "../utils/rule-utils.js"
 
-import { isTagAttributesCall } from "./action-view-utils.js"
+import { isTagAttributesCall } from "../utils/action-view-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, createERBOutputNode, createERBSilentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
@@ -76,11 +76,13 @@ export class ActionViewNoUnnecessaryTagAttributesRule extends ParserRule<Unneces
   static autocorrectable = true
   static ruleName = "actionview-no-unnecessary-tag-attributes"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

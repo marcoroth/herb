@@ -1,6 +1,8 @@
 use crate::errors::{AnyError, ErrorNode};
 use crate::herb::ParserOptions;
+use crate::locate::{locatable, locate, LocateResult};
 use crate::nodes::{DocumentNode, Node};
+use crate::position::Position;
 use std::fmt;
 
 pub struct ParseResult {
@@ -8,15 +10,29 @@ pub struct ParseResult {
   pub source: String,
   pub errors: Vec<AnyError>,
   pub options: ParserOptions,
+  pub error_count: Option<u32>,
 }
 
 impl ParseResult {
   pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions) -> Self {
+    Self::with_error_count(value, source, errors, options, None)
+  }
+
+  pub fn locate(&self, position: Position) -> Option<LocateResult<'_>> {
+    locate(self, position)
+  }
+
+  pub fn locatable(&self, position: Position) -> bool {
+    locatable(self, position)
+  }
+
+  pub fn with_error_count(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions, error_count: Option<u32>) -> Self {
     Self {
       value,
       source,
       errors,
       options: options.clone(),
+      error_count,
     }
   }
 
@@ -31,6 +47,11 @@ impl ParseResult {
   pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
     let mut all_errors: Vec<&dyn ErrorNode> = Vec::new();
     all_errors.extend(self.errors.iter().map(|e| e as &dyn ErrorNode));
+
+    if self.error_count == Some(0) {
+      return all_errors;
+    }
+
     all_errors.extend(self.value.recursive_errors());
     all_errors
   }

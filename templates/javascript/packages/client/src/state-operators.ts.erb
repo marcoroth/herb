@@ -1,0 +1,15 @@
+export const MIRRORED_COMPARISONS: Record<string, string> = {
+<%- state_operators.select(&:mirrored).each do |operator| -%>
+  <%= operator.operator.inspect %>: <%= operator.mirrored.inspect %>,
+<%- end -%>
+}
+
+export const NEGATED_COMPARISONS: Record<string, string> = {
+<%- state_operators.each do |operator| -%>
+  <%= operator.operator.inspect %>: <%= operator.negated.inspect %>,
+<%- end -%>
+}
+
+export const ORDERED_COMPARISONS: ReadonlySet<string> = new Set([<%= state_operators.select(&:ordered?).map { |operator| operator.operator.inspect }.join(", ") %>])
+
+export const COMPARISON_OPERATORS: ReadonlySet<string> = new Set([<%= state_operators.map { |operator| operator.operator.inspect }.join(", ") %>])

@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isHTMLAttributeValueNode, isERBContentNode, getAttributes, findAttributeByName, hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -54,6 +54,7 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
 export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
   static ruleName = "html-avoid-both-disabled-and-aria-disabled"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

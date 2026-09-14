@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import { isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
@@ -65,11 +65,13 @@ class ActionViewNoRenderOptionShadowingVisitor extends BaseRuleVisitor {
 export class ActionViewNoRenderOptionShadowingRule extends ParserRule {
   static ruleName = "actionview-no-render-option-shadowing"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

@@ -2,6 +2,8 @@ import { z } from "zod"
 
 import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
+
 export const SeveritySchema = z.enum(DIAGNOSTIC_SEVERITIES)
 
 export const SeverityConfigSchema = z.union([
@@ -14,12 +16,25 @@ export const FilesConfigSchema = z.object({
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
 }).strict().optional()
 
+export const FRAMEWORKS = {
+  ruby: "Ruby",
+  actionview: "Action View",
+  hanami: "Hanami",
+  sinatra: "Sinatra",
+} as const
+
+export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
+
+export const ENVIRONMENT_NAMES = ["cli", "browser"] as const
+
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
+  frameworks: z.array(z.enum(FRAMEWORK_NAMES)).optional().describe("Frameworks this rule applies to (defaults to every framework)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
+  environments: z.array(z.enum(ENVIRONMENT_NAMES)).optional().describe("Where this rule runs: 'cli' for templates read from source, 'browser' for a rendered page read from a live DOM. Defaults to ['cli'], so a rule only runs against a rendered page when it says it can"),
 })
 
 export const RuleConfigSchema = RuleConfigBaseSchema.optional()
@@ -48,20 +63,17 @@ export const FormatterConfigSchema = z.object({
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
-export const FRAMEWORKS = {
-  ruby: "Ruby",
-  actionview: "Action View",
-  hanami: "Hanami",
-  sinatra: "Sinatra",
-} as const
-
-export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
-
 export const FrameworkSchema = z.enum(FRAMEWORK_NAMES).optional()
+
+export const EnvironmentSchema = z.enum(ENVIRONMENT_NAMES)
   .describe("Framework context (default: 'ruby')")
 
 export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
   .describe("Template engine used for compilation (default: 'erubi')")
+
+export const ParserConfigSchema = z.object({
+  erb_openers: z.array(z.string().min(1)).optional().describe("ERB tag openers recognized in addition to the built-in ones, written without the leading `<%` (e.g., ['graphql'] makes `<%graphql ... %>` a tag whose body is not Ruby)"),
+}).strict().optional()
 
 export const EngineConfigSchema = z.record(z.string(), z.unknown()).nullish()
 
@@ -70,6 +82,7 @@ export const HerbConfigSchema = z.object({
   framework: FrameworkSchema,
   template_engine: TemplateEngineSchema,
   files: FilesConfigSchema.describe("Top-level file configuration"),
+  parser: ParserConfigSchema.describe("Parser configuration shared by every Herb tool"),
   engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,
   formatter: FormatterConfigSchema,
@@ -78,4 +91,33 @@ export const HerbConfigSchema = z.object({
 export type HerbConfigSchemaType = z.infer<typeof HerbConfigSchema>
 export type RuleConfigSchemaType = z.infer<typeof RuleConfigSchema>
 export type FilesConfigSchemaType = z.infer<typeof FilesConfigSchema>
+export type ParserConfigSchemaType = z.infer<typeof ParserConfigSchema>
 export type SeveritySchemaType = z.infer<typeof SeveritySchema>
+
+export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+
+export type LinterMode = "editor" | "cli"
+
+export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
+  if (typeof severity === "string") {
+    return severity
+  }
+
+  return severity[mode]
+}
+
+/**
+ * Pseudo rule name used inside `linter.rules` to set the default `enabled`
+ * state for every rule that isn't explicitly configured.
+ *
+ * ```yaml
+ * linter:
+ *   rules:
+ *     all:
+ *       enabled: false
+ *
+ *     html-no-event-handlers:
+ *       enabled: true
+ * ```
+ */
+export const ALL_RULES_KEY = "all"

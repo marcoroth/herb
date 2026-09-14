@@ -1,0 +1,9 @@
+---
+source: "Engine::SourceAttributionTest::an element that renders more than once#test_0001_carries the line it was written at, not the line it rendered at"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <li><%= item %></li>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"a\", \"b\", \"c\"]}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<ul data-herb-source="app/views/posts/_card.html.erb:1:1">
+    <li data-herb-source="app/views/posts/_card.html.erb:3:5">a</li>
+    <li data-herb-source="app/views/posts/_card.html.erb:3:5">b</li>
+    <li data-herb-source="app/views/posts/_card.html.erb:3:5">c</li>
+</ul>

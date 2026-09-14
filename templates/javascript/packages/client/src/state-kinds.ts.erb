@@ -1,0 +1,49 @@
+export type StateDefaultKind =
+<%- state_kinds.each do |kind| -%>
+  | <%= kind.name.inspect %>
+<%- end -%>
+
+export type StateValueKind =
+<%- state_kinds.select(&:value?).each do |kind| -%>
+  | <%= kind.name.inspect %>
+<%- end -%>
+
+export const STATE_DEFAULT_KINDS: readonly StateDefaultKind[] = [<%= state_kinds.map { |kind| kind.name.inspect }.join(", ") %>]
+
+export const LITERAL_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:literal?).map { |kind| kind.name.inspect }.join(", ") %>])
+
+export const UNKNOWN_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:unknown?).map { |kind| kind.name.inspect }.join(", ") %>])
+
+export const FALSY_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:falsy?).map { |kind| kind.name.inspect }.join(", ") %>])
+
+export const NILABLE_STATE_KINDS: ReadonlySet<string> = new Set([<%= state_kinds.select(&:nilable?).map { |kind| kind.name.inspect }.join(", ") %>])
+
+export const PRISM_LITERAL_KINDS: Record<string, StateDefaultKind> = {
+<%- state_kinds.select(&:literal?).each do |kind| -%>
+<%- kind.prism_nodes.each do |node| -%>
+  <%= node.inspect %>: <%= kind.name.inspect %>,
+<%- end -%>
+<%- end -%>
+}
+
+const STATE_KIND_ARTICLES: Record<string, string> = {
+<%- state_kinds.each do |kind| -%>
+  <%= kind.name.inspect %>: <%= kind.article.inspect %>,
+<%- end -%>
+}
+
+export function stateKindArticle(kind: string): string {
+  const known = STATE_KIND_ARTICLES[kind]
+
+  if (known) {
+    return known
+  }
+
+  const spelled = kind.charAt(0).toUpperCase() + kind.slice(1)
+
+  if (spelled === "") {
+    return "a value"
+  }
+
+  return /^[AEIOU]/.test(spelled) ? `an ${spelled}` : `a ${spelled}`
+}

@@ -2,4 +2,6 @@
 # frozen_string_literal: true
 
 require_relative "../lib/herb"
+require_relative "../lib/herb/cli"
+
 Herb::CLI.new(ARGV).call

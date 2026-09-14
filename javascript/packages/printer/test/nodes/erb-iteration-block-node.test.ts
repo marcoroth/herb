@@ -4,6 +4,8 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { ERBIterationBlockNode } from "@herb-tools/core"
 
+import type { RubyLiteralNode, RubyParameterNode } from "@herb-tools/core"
+
 import {
   expectNodeToPrint,
   expectPrintRoundTrip,
@@ -59,7 +61,7 @@ describe("ERBIterationBlockNode Printing", () => {
     expect(node.call_operator?.value).toBe(".")
     expect(node.message?.value).toBe("each")
     expect(node.block_opening?.value).toBe("do")
-    expect(node.block_arguments.map(argument => argument.name?.value)).toEqual(["user"])
+    expect(node.block_arguments.map(argument => (argument as RubyParameterNode).name?.value)).toEqual(["user"])
   })
 
   test("message identifies which iteration method was used", () => {
@@ -94,7 +96,7 @@ describe("ERBIterationBlockNode Printing", () => {
     for (const [source, expected] of cases) {
       const node = Herb.parse(source, { track_whitespace: true, ...iterationNodes }).value.children[0] as ERBIterationBlockNode
 
-      expect(node.arguments.map(argument => argument.content), source).toEqual(expected)
+      expect(node.arguments.map(argument => (argument as RubyLiteralNode).content), source).toEqual(expected)
     }
   })
 
@@ -115,10 +117,10 @@ describe("ERBIterationBlockNode Printing", () => {
 
     expect(
       node.block_arguments.map(argument => [
-        argument.name?.value,
-        argument.kind,
-        argument.required,
-        argument.default_value?.content ?? null
+        (argument as RubyParameterNode).name?.value,
+        (argument as RubyParameterNode).kind,
+        (argument as RubyParameterNode).required,
+        (argument as RubyParameterNode).default_value?.content ?? null
       ])
     ).toEqual([
       ["item", "positional", true, null],
@@ -134,7 +136,7 @@ describe("ERBIterationBlockNode Printing", () => {
   test("block parameter default locations point at the default in the source", () => {
     const source = `<% @items.each do |item, total = (item.size * 2)| %><% end %>`
     const node = Herb.parse(source, { track_whitespace: true, ...iterationNodes }).value.children[0] as ERBIterationBlockNode
-    const total = node.block_arguments[1]
+    const total = node.block_arguments[1] as RubyParameterNode
 
     expect(total.default_value?.content).toBe("(item.size * 2)")
     expect(
@@ -154,7 +156,7 @@ describe("ERBIterationBlockNode Printing", () => {
     for (const [source, expected] of cases) {
       const node = Herb.parse(source, { track_whitespace: true, ...iterationNodes }).value.children[0] as ERBIterationBlockNode
 
-      expect(node.block_arguments.map(argument => argument.name?.value), source).toEqual(expected)
+      expect(node.block_arguments.map(argument => (argument as RubyParameterNode).name?.value), source).toEqual(expected)
     }
   })
 

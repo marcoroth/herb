@@ -1,0 +1,274 @@
+import dedent from "dedent"
+import { describe, test } from "vitest"
+import { ERBNoMultipleStatementsRule } from "../../src/rules/erb-no-multiple-statements.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBNoMultipleStatementsRule)
+
+describe("erb-no-multiple-statements", () => {
+  test("passes for a single statement in a silent ERB tag", () => {
+    expectNoOffenses('<% user = User.find(1) %>')
+  })
+
+  test("passes for a single expression in an output ERB tag", () => {
+    expectNoOffenses('<%= user.name %>')
+  })
+
+  test("passes for an empty ERB tag", () => {
+    expectNoOffenses('<%  %>')
+  })
+
+  test("passes for an ERB comment", () => {
+    expectNoOffenses('<%# this is a comment %>')
+  })
+
+  test("passes for an ERB comment with a semicolon", () => {
+    expectNoOffenses('<%# this; is a; comment %>')
+  })
+
+  test("passes for multiple statements on multiple lines", () => {
+    expectNoOffenses(dedent`
+      <%
+        user = User.find(1)
+        post = user.posts.first
+      %>
+    `)
+  })
+
+  test("passes for a single method call", () => {
+    expectNoOffenses('<%= render partial: "header" %>')
+  })
+
+  test("passes for a single assignment", () => {
+    expectNoOffenses('<% @user = current_user %>')
+  })
+
+  test("passes for a single method chain", () => {
+    expectNoOffenses('<%= user.posts.where(published: true).count %>')
+  })
+
+  test("passes for a ternary operator", () => {
+    expectNoOffenses('<%= user.admin? ? "Admin" : "User" %>')
+  })
+
+  test("passes for single-line ERB tags with single statements next to each other", () => {
+    expectNoOffenses(dedent`
+      <% user = User.find(1) %>
+      <% post = user.posts.first %>
+    `)
+  })
+
+  test("passes for ERB control flow on a single line", () => {
+    expectNoOffenses(dedent`
+      <% if user.admin? %>
+        <span>Admin</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a single statement inside a block", () => {
+    expectNoOffenses(dedent`
+      <% posts.each do |post| %>
+        <% title = post.title %>
+      <% end %>
+    `)
+  })
+
+  test("passes for a self-contained conditional on a single line", () => {
+    expectNoOffenses('<% if user.admin?; role = "admin"; else; role = "user"; end %>')
+  })
+
+  test("passes for a block with multiple statements in its body", () => {
+    expectNoOffenses('<% [1, 2].each { |number| squared = number * number; total += squared } %>')
+  })
+
+  test("fails for multiple statements inside a block", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 25],
+    )
+
+    assertOffenses(dedent`
+      <% posts.each do |post| %>
+        <% title = post.title; author = post.author %>
+      <% end %>
+    `)
+  })
+
+  test("fails for multiple statements inside a conditional branch", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [4, 23],
+    )
+
+    assertOffenses(dedent`
+      <% if user.admin? %>
+        <span>Admin</span>
+      <% else %>
+        <% name = user.name; role = user.role %>
+      <% end %>
+    `)
+  })
+
+  test("fails for two statements separated by a semicolon", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 24],
+    )
+
+    assertOffenses('<% user = User.find(1); post = user.posts.first %>')
+  })
+
+  test("fails for two statements in an output ERB tag", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 25],
+    )
+
+    assertOffenses('<%= user = User.find(1); user.name %>')
+  })
+
+  test("fails for three statements separated by semicolons", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 10],
+    )
+
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 17],
+    )
+
+    assertOffenses('<% a = 1; b = 2; c = 3 %>')
+  })
+
+  test("fails for multiple statements in a template context", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 26],
+    )
+
+    assertOffenses(dedent`
+      <div>
+        <% user = User.find(1); post = user.posts.first %>
+      </div>
+    `)
+  })
+
+  test("reports multiple offenses for multiple single-line ERB tags with multiple statements", () => {
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [1, 10],
+    )
+
+    expectWarning(
+      "Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.",
+      [2, 10],
+    )
+
+    assertOffenses(dedent`
+      <% a = 1; b = 2 %>
+      <% c = 3; d = 4 %>
+    `)
+  })
+  test("passes for a control-flow tag that only opens its branch", () => {
+    expectNoOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else %>
+        <span>User</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a case with its conditions in their own tags", () => {
+    expectNoOffenses(dedent`
+      <% case status %>
+      <% when "ok" %>
+        <span>OK</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a begin with rescue and ensure in their own tags", () => {
+    expectNoOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% rescue %>
+        <span>Failed</span>
+      <% ensure %>
+        <span>Done</span>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with else", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else
+        raise ArgumentError %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a single-line tag with else", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 9])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else; raise ArgumentError %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with when", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 2])
+
+    assertOffenses(dedent`
+      <% case status %>
+      <% when "ok"
+        logged = true %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with rescue", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% rescue => error
+        report(error) %>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with ensure", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
+
+    assertOffenses(dedent`
+      <% begin %>
+        <span>Body</span>
+      <% ensure
+        cleanup %>
+      <% end %>
+    `)
+  })
+
+  test("reports every statement sharing a tag with a control-flow keyword", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 9])
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 16])
+
+    assertOffenses(dedent`
+      <% if admin? %>
+        <span>Admin</span>
+      <% else; a = 1; b = 2 %>
+      <% end %>
+    `)
+  })
+})

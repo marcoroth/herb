@@ -3,14 +3,16 @@ import { mkdirSync, writeFileSync, rmSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
-import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node"
+import { CodeActionParams, Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node"
+import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
 import { CodeActionProvider } from "../src/code_action_provider"
 import { Project } from "../src/project"
 
-import type { TextDocumentEdit } from "vscode-languageserver/node"
+import type { TextDocumentEdit, TextEdit } from "vscode-languageserver/node"
+import type { PersonalHerbSettings } from "../src/user_settings"
 
 const RULE = "herb-config-framework-option"
 const URI = "file:///project/app/views/users/show.html.erb"
@@ -36,8 +38,8 @@ describe("CodeActionProvider", () => {
     writeFileSync(join(projectPath, ".herb.yml"), content)
   }
 
-  async function createService() {
-    const project = { root: projectPath, herbBackend: Herb } as unknown as Project
+  async function createService(settings: Partial<PersonalHerbSettings> = {}) {
+    const project = { root: projectPath, herbBackend: Herb, settingsFor: async () => settings } as unknown as Project
     const config = await Config.loadForEditor(projectPath, "0.10.3")
 
     return new CodeActionProvider(project, config)
@@ -53,6 +55,16 @@ describe("CodeActionProvider", () => {
     }
   }
 
+  function disableDiagnostic(rule: string): Diagnostic {
+    return {
+      range: Range.create(0, 0, 0, 0),
+      message: `Offense from ${rule}.`,
+      severity: DiagnosticSeverity.Error,
+      source: "Herb Linter ",
+      data: { rule }
+    }
+  }
+
   function setFrameworkActions(actions: Awaited<ReturnType<CodeActionProvider["createCodeActions"]>>) {
     return actions.filter(action => action.title.includes("Set `framework"))
   }
@@ -64,7 +76,7 @@ describe("CodeActionProvider", () => {
 
     const documentChanges = action.edit?.documentChanges as TextDocumentEdit[]
 
-    return documentChanges[documentChanges.length - 1].edits[0].newText
+    return (documentChanges[documentChanges.length - 1].edits[0] as TextEdit).newText
   }
 
   it("offers the suggested framework when the offense names one", async () => {
@@ -130,5 +142,47 @@ describe("CodeActionProvider", () => {
     const actions = setFrameworkActions(service.createCodeActions(URI, [diagnostic], "<%= image_tag %>"))
 
     expect(actions).toHaveLength(0)
+  })
+
+  it("asks the client to open the config with a server command", async () => {
+    writeConfig("version: 0.10.3\n")
+
+    const service = await createService()
+    const diagnostic = disableDiagnostic("html-tag-name-lowercase")
+
+    const actions = service.createCodeActions(URI, [diagnostic], "<DIV></DIV>")
+    const action = actions.find(action => action.title.includes("in `.herb.yml`"))
+
+    expect(action?.command).toEqual({
+      title: "Open .herb.yml",
+      command: "herb.openDocument",
+      arguments: [`file://${join(projectPath, ".herb.yml")}`]
+    })
+  })
+
+  it("fixes indentation to the style the diagnostics were reported against", async () => {
+    const service = await createService({ formatter: { indentStyle: "tab", indentWidth: 2 } })
+    const document = TextDocument.create(URI, "erb", 1, "<div>\n  <span>Hello</span>\n</div>\n")
+
+    const diagnostic: Diagnostic = {
+      range: Range.create(1, 0, 1, 2),
+      message: "Indent with tabs instead of spaces.",
+      severity: DiagnosticSeverity.Error,
+      source: "Herb Linter ",
+      code: "source-indentation",
+      data: { rule: "source-indentation" }
+    }
+
+    const params = {
+      textDocument: { uri: URI },
+      range: diagnostic.range,
+      context: { diagnostics: [diagnostic] }
+    } as CodeActionParams
+
+    const actions = await service.autofixCodeActions(params, document)
+    const fix = actions.find(action => action.title.includes("Indent with tabs"))
+
+    expect(fix).toBeDefined()
+    expect(fix?.edit?.changes?.[URI][0].newText).toBe("<div>\n\t<span>Hello</span>\n</div>\n")
   })
 })

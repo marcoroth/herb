@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { getStaticAttributeValue, getAttribute, getAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -47,11 +47,13 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
 export class HTMLIframeHasTitleRule extends ParserRule {
   static ruleName = "html-iframe-has-title"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

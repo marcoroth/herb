@@ -1,6 +1,6 @@
 import { BYTE_ORDER_MARK, Location, positionFromOffset } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "../utils/rule-utils.js"
 import { SourceRule } from "../types.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -23,6 +23,7 @@ export class ERBNoByteOrderMarkRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-no-byte-order-mark"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

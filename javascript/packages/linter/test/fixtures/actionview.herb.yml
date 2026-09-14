@@ -1,0 +1,4 @@
+# Used by tests that need the fixtures linted as an Action View project, since
+# the linter's own .herb.yml sets `framework: ruby` and the `actionview-*` rules
+# only run when the framework is Action View.
+framework: actionview

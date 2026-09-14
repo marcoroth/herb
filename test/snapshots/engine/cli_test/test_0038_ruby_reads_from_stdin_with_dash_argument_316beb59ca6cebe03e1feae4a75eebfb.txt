@@ -1,0 +1,5 @@
+---
+source: "Engine::CLITest#test_0038_ruby reads from stdin with dash argument"
+input: "test_0038_ruby reads from stdin with dash argument"
+---
+         user.name  ;      

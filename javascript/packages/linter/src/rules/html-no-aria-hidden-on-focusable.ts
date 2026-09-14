@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isKeyboardFocusableElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isKeyboardFocusableElement } from "../utils/rule-utils.js"
 import { getAttributeValue, findAttributeByName, getAttributes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -38,11 +38,13 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
   static ruleName = "html-no-aria-hidden-on-focusable"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

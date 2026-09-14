@@ -1,5 +1,6 @@
 export * from "./linter.js"
 export * from "./rules/index.js"
+export * from "./utils/index.js"
 export * from "./types.js"
 
 export { ruleDocumentationUrl } from "./urls.js"

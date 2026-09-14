@@ -9,7 +9,7 @@ describe("actionview-no-unnecessary-html-safe autofix", () => {
     await Herb.load()
   })
 
-  const autofix = (input: string) => new Linter(Herb, [ActionViewNoUnnecessaryHTMLSafeRule]).autofix(input)
+  const autofix = (input: string) => new Linter(Herb, [ActionViewNoUnnecessaryHTMLSafeRule]).autofix(input, { framework: "actionview" })
 
   test("fixes a String literal marked as HTML-safe in attribute position", () => {
     const result = autofix(`<div <%= 'style="display: none;"'.html_safe %>></div>`)

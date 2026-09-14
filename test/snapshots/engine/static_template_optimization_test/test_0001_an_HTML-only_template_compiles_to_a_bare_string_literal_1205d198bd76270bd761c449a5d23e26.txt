@@ -1,0 +1,5 @@
+---
+source: "Engine::StaticTemplateOptimizationTest#test_0001_an HTML-only template compiles to a bare string literal"
+input: "{source: \"<div class=\\\"a\\\">Hello</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<div class="a">Hello</div>'.freeze

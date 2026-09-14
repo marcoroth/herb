@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 
-import { isDebugOutputCall } from "./prism-rule-utils.js"
+import { isDebugOutputCall } from "../utils/prism-rule-utils.js"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -21,6 +21,7 @@ class DebugOutputCallCollector extends PrismVisitor {
 export class ERBNoDebugOutputRule extends ParserRule {
   static ruleName = "erb-no-debug-output"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

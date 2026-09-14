@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::a tag helper the parser resolved#test_0003_is stamped when an attribute is only known at render time"
+input: "{source: \"<%= content_tag :div, \\\"x\\\", class: level %>\", locals: {level: \"high\"}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div class="high" data-herb-source="app/views/posts/_card.html.erb:1:1">x</div>

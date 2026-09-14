@@ -1,0 +1,61 @@
+---
+kinds:
+  - name: "boolean"
+    article: "a Boolean"
+    prism_nodes: ["TrueNode", "FalseNode"]
+    literal: true
+    value: true
+    falsy: true
+
+  - name: "integer"
+    article: "an Integer"
+    prism_nodes: ["IntegerNode"]
+    literal: true
+    value: true
+
+  - name: "float"
+    article: "a Float"
+    prism_nodes: ["FloatNode"]
+
+  - name: "string"
+    article: "a String"
+    prism_nodes: ["StringNode"]
+    literal: true
+    value: true
+
+  - name: "symbol"
+    article: "a Symbol"
+    prism_nodes: ["SymbolNode"]
+    literal: true
+    value: true
+
+  - name: "nil"
+    article: "a Nil"
+    prism_nodes: ["NilNode"]
+    literal: true
+    value: true
+    falsy: true
+    nilable: true
+
+  - name: "array"
+    article: "an Array"
+    prism_nodes: ["ArrayNode"]
+
+  - name: "hash"
+    article: "a Hash"
+    prism_nodes: ["HashNode", "KeywordHashNode"]
+
+  - name: "bare"
+    article: "a value"
+    prism_nodes: ["LocalVariableReadNode"]
+    unknown: true
+
+  - name: "seeded"
+    article: "a value"
+    value: true
+    unknown: true
+    falsy: true
+    nilable: true
+
+  - name: "missing"
+    article: "a value"

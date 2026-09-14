@@ -1,4 +1,5 @@
-import { Highlighter } from "@herb-tools/highlighter"
+import { Herb } from "@herb-tools/node-wasm"
+import { Highlighter, DEFAULT_THEME } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
 import { name, version } from "../../../package.json"
@@ -17,7 +18,7 @@ export class GitHubActionsFormatter extends BaseFormatter {
 
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
-    this.highlighter = new Highlighter()
+    this.highlighter = new Highlighter(DEFAULT_THEME, Herb)
   }
 
   private static readonly MESSAGE_ESCAPE_MAP: Record<string, string> = {

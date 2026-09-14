@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { PrismVisitor, filterHTMLAttributeNodes, getAttributeName, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 

@@ -6,18 +6,21 @@ use std::ffi::{CStr, CString};
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
   pub track_whitespace: bool,
+  pub track_locations: bool,
   pub analyze: bool,
   pub strict: bool,
   pub action_view_helpers: bool,
   pub transform_conditionals: bool,
   pub render_nodes: bool,
   pub strict_locals: bool,
+  pub herb_directives: bool,
   pub iteration_nodes: bool,
   pub prism_nodes: bool,
   pub prism_nodes_deep: bool,
   pub prism_program: bool,
   pub dot_notation_tags: bool,
   pub html: bool,
+  pub erb_openers: Option<Vec<String>>,
   pub timeout: u32,
   pub max_errors: Option<u32>,
 }
@@ -26,18 +29,21 @@ impl Default for ParserOptions {
   fn default() -> Self {
     Self {
       track_whitespace: false,
+      track_locations: true,
       analyze: true,
       strict: true,
       action_view_helpers: false,
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_nodes: false,
       prism_nodes_deep: false,
       prism_program: false,
       dot_notation_tags: false,
       html: true,
+      erb_openers: None,
       timeout: 1000,
       max_errors: Some(25),
     }
@@ -49,6 +55,8 @@ pub struct ExtractRubyOptions {
   pub semicolons: bool,
   pub comments: bool,
   pub preserve_positions: bool,
+  pub custom_tags: bool,
+  pub erb_openers: Option<Vec<String>>,
 }
 
 impl Default for ExtractRubyOptions {
@@ -57,6 +65,8 @@ impl Default for ExtractRubyOptions {
       semicolons: true,
       comments: false,
       preserve_positions: true,
+      custom_tags: false,
+      erb_openers: None,
     }
   }
 }
@@ -106,19 +116,36 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
     let mut allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+    let mut error_count: u32 = 0;
 
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
       return Err("Failed to initialize allocator".to_string());
     }
 
+    let opener_strings: Vec<&str> = options
+      .erb_openers
+      .as_ref()
+      .map(|openers| openers.iter().map(|opener| opener.as_str()).collect())
+      .unwrap_or_default();
+
+    let opener_items: Vec<crate::bindings::hb_string_T> = opener_strings
+      .iter()
+      .map(|opener| crate::bindings::hb_string_T {
+        data: opener.as_ptr() as *mut std::ffi::c_char,
+        length: opener.len() as u32,
+      })
+      .collect();
+
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
+      track_locations: options.track_locations,
       analyze: options.analyze,
       strict: options.strict,
       action_view_helpers: options.action_view_helpers,
       transform_conditionals: options.transform_conditionals,
       render_nodes: options.render_nodes,
       strict_locals: options.strict_locals,
+      herb_directives: options.herb_directives,
       iteration_nodes: options.iteration_nodes,
       prism_program: options.prism_program,
       prism_nodes: options.prism_nodes,
@@ -129,8 +156,14 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       start_column: 0,
       timeout_ms: options.timeout,
       max_errors: options.max_errors.unwrap_or(0),
-      error_count: std::ptr::null_mut(),
+      error_count: &mut error_count,
       deadline_ms: 0,
+      erb_openers: if options.erb_openers.is_some() {
+        opener_items.as_ptr()
+      } else {
+        std::ptr::null()
+      },
+      erb_opener_count: opener_items.len(),
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -148,7 +181,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       "Failed to convert AST".to_string()
     })?;
 
-    let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
+    let result = ParseResult::with_error_count(document_node, source.to_string(), Vec::new(), options, Some(error_count));
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
     crate::ffi::hb_allocator_destroy(&mut allocator);
@@ -231,10 +264,31 @@ pub fn extract_ruby_with_options(source: &str, options: &ExtractRubyOptions) -> 
       return Err("Failed to initialize buffer".to_string());
     }
 
+    let opener_items: Vec<crate::bindings::hb_string_T> = options
+      .erb_openers
+      .as_ref()
+      .map(|openers| {
+        openers
+          .iter()
+          .map(|opener| crate::bindings::hb_string_T {
+            data: opener.as_ptr() as *mut std::ffi::c_char,
+            length: opener.len() as u32,
+          })
+          .collect()
+      })
+      .unwrap_or_default();
+
     let c_options = crate::bindings::herb_extract_ruby_options_T {
       semicolons: options.semicolons,
       comments: options.comments,
       preserve_positions: options.preserve_positions,
+      custom_tags: options.custom_tags,
+      erb_openers: if options.erb_openers.is_some() {
+        opener_items.as_ptr()
+      } else {
+        std::ptr::null()
+      },
+      erb_opener_count: opener_items.len(),
     };
 
     crate::ffi::herb_extract_ruby_to_buffer_with_options(c_source.as_ptr(), &mut output, &c_options, &mut allocator);
@@ -354,6 +408,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       action_view_helpers: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
@@ -361,12 +416,15 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       dot_notation_tags: false,
       transform_conditionals: false,
       html: true,
+      track_locations: true,
       start_line: 0,
       start_column: 0,
       timeout_ms: 1000,
       max_errors: 25,
       error_count: std::ptr::null_mut(),
       deadline_ms: 0,
+      erb_openers: std::ptr::null(),
+      erb_opener_count: 0,
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);

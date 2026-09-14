@@ -1,0 +1,29 @@
+---
+expected:
+  - file: helpy/app/views/admin/reports/team.html.erb
+    reason: "`<div class\"row\">` is a missing `=` that the old parser swallowed"
+    pull_request: 2593
+
+  - file: politwoops/app/views/admin/politicians/admin_user.html.erb
+    reason: "`width\"73\"` is a missing `=` that the old parser swallowed"
+    pull_request: 2593
+
+  - file: politwoops/app/views/politicians/all.html.erb
+    reason: "`width\"73\"` is a missing `=` that the old parser swallowed"
+    pull_request: 2593
+
+  - file: refinerycms/core/app/views/refinery/_html_tag.html.erb
+    reason: "`<!-->` now closes the conditional comment, revealing an `<html>` the partial never closes"
+    pull_request: 2601
+
+  - file: RescueRails/app/views/adopt_app_mailer/approved_to_adopt.html.erb
+    reason: "NestedCommentError in strict mode for `<!--[if !mso]><!-- -->`"
+    pull_request: 2601
+
+  - file: RescueRails/app/views/donation_mailer/donation_accounting_notification.html.erb
+    reason: "NestedCommentError in strict mode for `<!--[if !mso]><!-- -->`"
+    pull_request: 2601
+
+  - file: RescueRails/app/views/training_mailer/free_training_notice.html.erb
+    reason: "NestedCommentError in strict mode for `<!--[if !mso]><!-- -->`"
+    pull_request: 2601

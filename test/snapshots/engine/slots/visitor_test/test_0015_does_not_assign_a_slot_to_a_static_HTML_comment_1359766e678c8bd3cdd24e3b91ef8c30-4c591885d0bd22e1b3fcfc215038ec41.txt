@@ -1,0 +1,9 @@
+---
+source: "Engine::Slots::VisitorTest#test_0015_does not assign a slot to a static HTML comment"
+input: "<!-- just a note -->"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e3b0c442
+
+slots: (none)

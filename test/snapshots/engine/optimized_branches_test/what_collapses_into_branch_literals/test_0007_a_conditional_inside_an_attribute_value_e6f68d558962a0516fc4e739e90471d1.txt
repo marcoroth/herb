@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0007_a conditional inside an attribute value"
+input: "{source: \"<ul class=\\\"<% if flag %>a<% else %>b<% end %>\\\"></ul>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag; "<ul class=\"a\"></ul>".freeze;else; "<ul class=\"b\"></ul>".freeze;end;

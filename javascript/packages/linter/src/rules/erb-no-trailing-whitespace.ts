@@ -2,7 +2,7 @@ import { Location, Visitor } from "@herb-tools/core"
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 
 import { isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, isWhitespaceNode, getTagLocalName } from "@herb-tools/core"
-import { findNodeAtPosition } from "./rule-utils.js"
+import { findNodeAtPosition } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLTextNode, LiteralNode, WhitespaceNode, ParseResult, DocumentNode, ERBNode } from "@herb-tools/core"
@@ -97,6 +97,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
   static autocorrectable = true
   static ruleName = "erb-no-trailing-whitespace"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

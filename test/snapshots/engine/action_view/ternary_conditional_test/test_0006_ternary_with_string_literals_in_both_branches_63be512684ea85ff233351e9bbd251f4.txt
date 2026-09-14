@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0006_ternary with string literals in both branches"
+input: "{source: \"<%= active ? \\\"On\\\" : \\\"Off\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {active: true}}}"
+---
+if active ; "On".freeze;else; "Off".freeze;end;

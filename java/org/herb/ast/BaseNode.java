@@ -6,6 +6,8 @@ import org.herb.Location;
  * Abstract base class for all AST nodes.
  */
 public abstract class BaseNode implements Node {
+  protected abstract void collectErrors(java.util.List<Node> accumulator);
+
   protected final String type;
   protected final Location location;
   protected final java.util.List<Node> errors;

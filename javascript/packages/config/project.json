@@ -5,6 +5,11 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/lib/herb/defaults.yml"
+      ],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/tsconfig.tsbuildinfo"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"

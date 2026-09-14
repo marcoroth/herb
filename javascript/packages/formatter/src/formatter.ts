@@ -32,7 +32,7 @@ export class Formatter {
    * Creates a Formatter instance from a Config object (recommended).
    *
    * @param herb - The Herb backend instance for parsing
-   * @param config - Optional Config instance for formatter options
+   * @param config - Optional Config instance for formatter and parser options
    * @param options - Additional options to override config
    * @returns A configured Formatter instance
    */
@@ -51,7 +51,7 @@ export class Formatter {
       postRewriters: options.postRewriters,
     }
 
-    return new Formatter(herb, mergedOptions)
+    return new Formatter(herb, mergedOptions, config?.parserOptions ?? {})
   }
 
   /**
@@ -83,10 +83,44 @@ export class Formatter {
 
     const errors = result.recursiveErrors()
 
-    if (errors.length > 0) return { output: source, skipped: "parse-errors", errorCount: errors.length }
+    if (errors.length > 0) {
+      return this.formatPastStrictDiagnostics(input, source, options, filePath)
+          ?? { output: source, skipped: "parse-errors", errorCount: errors.length }
+    }
+
     if (isScaffoldTemplate(result)) return { output: source, skipped: "scaffold", errorCount: 0 }
     if (hasFormatterIgnoreDirective(result.value)) return { output: source, skipped: "ignore-directive", errorCount: 0 }
 
+    return this.print(input, result, options, filePath)
+  }
+
+  /**
+   * Formats a template only strict mode rejects, such as a `case` sharing an ERB tag with its
+   * first condition. A parse without strict mode carries no errors for those, so the formatter
+   * runs on that tree and keeps the result only when the output parses clean under strict. A
+   * template that errors either way is a real parse failure and stays untouched.
+   */
+  private formatPastStrictDiagnostics(
+    input: string,
+    source: string,
+    options: FormatOptions,
+    filePath?: string
+  ): FormatResult | null {
+    const lax = this.herb.parse(input, { ...this.parseOptions, strict: false })
+
+    if (lax.recursiveErrors().length > 0) return null
+    if (isScaffoldTemplate(lax)) return { output: source, skipped: "scaffold", errorCount: 0 }
+    if (hasFormatterIgnoreDirective(lax.value)) return { output: source, skipped: "ignore-directive", errorCount: 0 }
+
+    const candidate = this.print(input, lax, options, filePath)
+    const verified = this.herb.parse(candidate.output, { ...this.parseOptions, strict: true })
+
+    if (verified.recursiveErrors().length > 0) return null
+
+    return candidate
+  }
+
+  private print(input: string, result: ParseResult, options: FormatOptions, filePath?: string): FormatResult {
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
     let node = result.value

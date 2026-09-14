@@ -24,13 +24,11 @@ input: "<div class= "
         │       │
         │       ├── equals: "=" (location: (1:10)-(1:11))
         │       └── value:
-        │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:12))
+        │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:12))
         │               ├── errors: (1 error)
-        │               │   └── @ UnexpectedError (location: (1:12)-(1:12))
-        │               │       ├── message: "Unexpected Token. Expected: an identifier, a quote, or `<%`, found: end of file."
-        │               │       ├── description: "Unexpected Token"
-        │               │       ├── expected: "an identifier, a quote, or `<%`"
-        │               │       └── found: "end of file"
+        │               │   └── @ MissingAttributeValueError (location: (1:10)-(1:12))
+        │               │       ├── message: "Attribute `class` at (1:10) is missing a value after the equals sign."
+        │               │       └── attribute_name: "class"
         │               │
         │               ├── open_quote: ∅
         │               ├── children: []

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "../locate"
+
 module Herb
   #: type serialized_node = {
   #|  type: String,
@@ -32,7 +34,7 @@ module Herb
       def to_hash
         {
           type: type,
-          location: location.to_hash,
+          location: location&.to_hash,
           errors: errors.map(&:to_hash),
         }
       end
@@ -115,9 +117,37 @@ module Herb
         child_nodes.compact
       end
 
+      #: (Herb::Position) -> Herb::Locate::Result?
+      def locate(position)
+        Herb::Locate.call(self, position)
+      end
+
+      #: (Herb::Position) -> bool
+      def locatable?(position)
+        Herb::Locate.locatable?(self, position)
+      end
+
       #: () -> Array[Herb::Errors::Error]
       def recursive_errors
-        errors + compact_child_nodes.flat_map(&:recursive_errors)
+        accumulator = [] #: Array[Herb::Errors::Error]
+        collect_errors(accumulator)
+        accumulator
+      end
+
+      protected
+
+      #: (Array[Herb::Errors::Error] accumulator) -> void
+      def collect_errors(accumulator)
+        accumulator.concat(errors) unless errors.empty?
+
+        children = child_nodes
+        index = 0
+        count = children.size
+
+        while index < count
+          children[index]&.collect_errors(accumulator)
+          index += 1
+        end
       end
     end
   end

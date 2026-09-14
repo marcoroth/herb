@@ -2,6 +2,10 @@ import { resolve } from "path"
 import { defineConfig } from "vite"
 import { execSync } from "child_process"
 
+import { noNodeBuiltins } from "./vite-plugins/no-node-builtins.js"
+
+const { customLogger, plugin: noNodeBuiltinsPlugin } = noNodeBuiltins()
+
 function getCommitInfo() {
   let hash = "unknown"
   let tag = "unknown"
@@ -65,6 +69,13 @@ function getCommitInfo() {
 export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
+
+    // The highlighter writes for a terminal, so it asks Node what that terminal
+    // is. Standing in for the two things it reads keeps the CLI renderer usable
+    // here: leaving NO_COLOR unset keeps color on, and claiming a TTY is what
+    // makes it emit the same escape sequences it would in a real shell.
+    "process.env.NO_COLOR": "undefined",
+    "process.stdout": "({ isTTY: true, columns: 120 })",
   },
   resolve: {
     dedupe: ['@ruby/prism'],
@@ -94,5 +105,6 @@ export default defineConfig({
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173
   },
-  plugins: [],
+  customLogger,
+  plugins: [noNodeBuiltinsPlugin],
 })

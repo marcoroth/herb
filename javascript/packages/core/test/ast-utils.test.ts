@@ -3,6 +3,8 @@ import {
   isLiteralNode,
   filterLiteralNodes,
   isERBContentNode,
+  isInlineRubyCommentNode,
+  isCommentNode,
   isERBOutputNode,
   isERBControlFlowNode,
   hasERBContent,
@@ -30,6 +32,7 @@ import {
   HTMLElementNode,
   HTMLOpenTagNode,
   DocumentNode,
+  ERBCommentNode,
   ERBContentNode,
   ERBOpenTagNode,
   LiteralNode,
@@ -51,11 +54,51 @@ describe("ast-utils", () => {
       location: Location.from(1, 1, 1, 1)
     })
 
+  const createERBCommentNode = (content: string): ERBCommentNode =>
+    ERBCommentNode.build({
+      tag_opening: Token.from("TOKEN_ERB_START", "<%#"),
+      content: Token.from("TOKEN_ERB_CONTENT", content),
+      tag_closing: Token.from("TOKEN_ERB_END", "%>"),
+      location: Location.from(1, 1, 1, 1)
+    })
+
   const createRubyLiteralNode = (content: string): RubyLiteralNode =>
     RubyLiteralNode.build({ content, location: Location.from(1, 1, 1, 1) })
 
   const createAttributeNameNode = (children: Node[]): HTMLAttributeNameNode =>
     HTMLAttributeNameNode.build({ children, location: Location.from(1, 1, 1, 1) })
+
+  describe("isInlineRubyCommentNode", () => {
+    test("is false for an ERB comment, which has its own node type", () => {
+      expect(isInlineRubyCommentNode(createERBCommentNode(" a comment "))).toBe(false)
+    })
+
+    test("is true for a silent tag whose ruby is a comment", () => {
+      expect(isInlineRubyCommentNode(createERBContentNode("<%", " # a note "))).toBe(true)
+    })
+
+    test("is true for an output tag whose ruby is a comment", () => {
+      expect(isInlineRubyCommentNode(createERBContentNode("<%=", " # a note "))).toBe(true)
+    })
+
+    test("is false for a tag that only starts with a comment and then runs code", () => {
+      const node = createERBContentNode("<%", "\n# a note\nputs 1\n")
+
+      expect(isInlineRubyCommentNode(node)).toBe(false)
+      expect(isCommentNode(node)).toBe(false)
+    })
+
+    test("is false for a tag with no comment at all", () => {
+      expect(isInlineRubyCommentNode(createERBContentNode("<%", " puts 1 "))).toBe(false)
+    })
+  })
+
+  describe("isCommentNode", () => {
+    test("counts both ERB comment forms", () => {
+      expect(isCommentNode(createERBCommentNode(" a comment "))).toBe(true)
+      expect(isCommentNode(createERBContentNode("<%", " # a note "))).toBe(true)
+    })
+  })
 
   describe("isLiteralNode", () => {
     test("returns true for literal nodes", () => {
@@ -392,17 +435,16 @@ describe("ast-utils", () => {
 
     test("handles ERB without content", () => {
       const erbNode = createERBContentNode("<%", "")
-      erbNode.content = undefined
       const nodes = [createLiteralNode("test"), erbNode]
 
       expect(getCombinedStringFromNodes(nodes)).toBe("test<%%>")
     })
 
     test("handles unknown node types", () => {
-      const unknownNode: Node = {
-        type: "UNKNOWN_NODE" as any,
+      const unknownNode = {
+        type: "UNKNOWN_NODE",
         location: Location.from(1, 1, 1, 1)
-      }
+      } as unknown as Node
 
       const nodes = [createLiteralNode("test"), unknownNode]
 
@@ -431,7 +473,7 @@ describe("ast-utils", () => {
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(hasStaticAttributeName(attributeNode)).toBe(false)
     })
@@ -458,7 +500,7 @@ describe("ast-utils", () => {
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
@@ -485,7 +527,7 @@ describe("ast-utils", () => {
 
     test("returns null for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(getStaticAttributeName(attributeNode)).toBe(null)
     })
@@ -513,7 +555,7 @@ describe("ast-utils", () => {
 
     test("returns empty string for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
-      attributeNode.children = undefined as any
+      ;(attributeNode as any).children = undefined
 
       expect(getCombinedAttributeName(attributeNode)).toBe("")
     })
@@ -563,7 +605,7 @@ describe("ast-utils", () => {
       const result = findParentArray(document, target)
 
       expect(result?.index).toBe(1)
-      expect(result?.array).toBe(element.open_tag.children)
+      expect(result?.array).toBe((element.open_tag as HTMLOpenTagNode).children)
     })
 
     test("finds a node inside an attribute value", () => {
@@ -575,7 +617,7 @@ describe("ast-utils", () => {
       const result = findParentArray(document, target)
 
       expect(result?.index).toBe(0)
-      expect(result?.array).toBe(attribute.value.children)
+      expect(result?.array).toBe((attribute.value as HTMLAttributeValueNode).children)
     })
 
     test("finds a node in a linked else branch", () => {

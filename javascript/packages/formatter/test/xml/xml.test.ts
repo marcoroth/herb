@@ -729,4 +729,82 @@ describe("XML", () => {
       </Screen>
     `)
   })
+
+  test("XML stylesheet processing instruction", () => {
+    const source = dedent`
+      <?xml version="1.0" encoding="UTF-8"?>
+      <?xml-stylesheet type="text/xsl" href="feed.xsl"?>
+      <rss version="2.0">
+        <channel>
+            <title>Example</title>
+        </channel>
+      </rss>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <?xml version="1.0" encoding="UTF-8"?>
+
+      <?xml-stylesheet type="text/xsl" href="feed.xsl"?>
+
+      <rss version="2.0">
+        <channel>
+          <title>Example</title>
+        </channel>
+      </rss>
+    `)
+  })
+
+  test("processing instruction with ERB", () => {
+    const source = dedent`
+      <?xml version="1.0" encoding="UTF-8"?>
+      <?xml-stylesheet type="text/xsl" href="<%= stylesheet_path %>"?>
+      <feed>
+        <entry></entry>
+      </feed>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <?xml version="1.0" encoding="UTF-8"?>
+
+      <?xml-stylesheet type="text/xsl" href="<%= stylesheet_path %>"?>
+
+      <feed>
+        <entry></entry>
+      </feed>
+    `)
+  })
+
+  test("processing instruction nested inside an element", () => {
+    const source = dedent`
+      <document>
+      <?php echo "hello"; ?>
+      <body>
+      <p>Text</p>
+      </body>
+      </document>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <document>
+        <?php echo "hello"; ?>
+
+        <body>
+          <p>Text</p>
+        </body>
+      </document>
+    `)
+  })
+
+  test("processing instruction terminated with a single angle bracket", () => {
+    const source = dedent`
+      <?target some content>
+      <root></root>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <?target some content>
+
+      <root></root>
+    `)
+  })
 })

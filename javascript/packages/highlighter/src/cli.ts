@@ -7,6 +7,7 @@ import { resolve } from "path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Highlighter } from "./highlighter.js"
 import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
+import { resolveThemeInput } from "./file-api.js"
 
 import { name, version } from "../package.json"
 import { parseUnifiedDiff } from "./unified-diff.js"
@@ -272,7 +273,7 @@ export class CLI {
       process.exit(1)
     }
 
-    const highlighter = new Highlighter(theme)
+    const highlighter = new Highlighter(resolveThemeInput(theme), Herb)
     await highlighter.initialize()
 
     const renderOptions = { contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth }
@@ -316,7 +317,7 @@ export class CLI {
       const filePath = resolve(filename)
       const content = readFileSync(filePath, "utf-8")
 
-      const highlighter = new Highlighter(theme)
+      const highlighter = new Highlighter(resolveThemeInput(theme), Herb)
       await highlighter.initialize()
 
       const highlighted = highlighter.highlight(filePath, content, {

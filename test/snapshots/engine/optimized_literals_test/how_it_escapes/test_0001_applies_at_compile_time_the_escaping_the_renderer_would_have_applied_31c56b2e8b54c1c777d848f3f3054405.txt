@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0001_applies at compile time the escaping the renderer would have applied"
+input: "{source: \"<p><%= \\\"it's\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], escape: true}}"
+---
+'<p>it&#39;s</p>'.freeze

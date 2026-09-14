@@ -90,7 +90,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><%= tag.lineargradient id: "grad1" do %><stop offset="0%" /><% end %></svg>`
 
     const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -101,7 +101,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><%= content_tag :lineargradient, id: "grad1" do %><stop offset="0%" /><% end %></svg>`
 
     const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "actionview" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

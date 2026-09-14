@@ -17,14 +17,16 @@ module Herb
     attr_reader :origin #: String
     attr_reader :location #: Herb::Location?
     attr_reader :suggestion #: String?
+    attr_reader :description #: String?
     attr_reader :docs_url #: String?
     attr_reader :value #: String?
+    attr_reader :overlay #: Symbol?
     attr_reader :phase #: Symbol
     attr_reader :data #: Hash[Symbol, untyped]
     attr_reader :error_class #: Class?
 
-    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
-    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, docs_url: nil, value: nil, phase: :runtime, data: {}, error_class: nil)
+    #: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?description: String?, ?docs_url: String?, ?value: String?, ?overlay: Symbol?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    def initialize(template:, message:, severity: :error, kind: :diagnostic, origin: UNKNOWN_ORIGIN, node: nil, code: nil, location: nil, suggestion: nil, description: nil, docs_url: nil, value: nil, overlay: nil, phase: :runtime, data: {}, error_class: nil)
       @template = template
       @message = message
       @node = node
@@ -34,11 +36,18 @@ module Herb
       @origin = origin
       @location = location
       @suggestion = suggestion
+      @description = description
       @docs_url = docs_url
       @value = value
+      @overlay = overlay
       @phase = phase
       @data = data
       @error_class = error_class
+    end
+
+    #: (Array[Herb::Errors::Error], template: String, ?origin: String) -> Array[Diagnostic]
+    def self.from_errors(errors, template:, origin: "Herb Parser")
+      errors.map { |error| error.to_diagnostic(template: template, origin: origin) }
     end
 
     #: (String, Hash[Symbol, untyped]) -> Diagnostic
@@ -48,7 +57,7 @@ module Herb
       end
 
       new(
-        template: template,
+        template: entry[:template] || template,
         message: entry[:message],
         severity: entry[:severity],
         code: entry[:code],
@@ -57,16 +66,6 @@ module Herb
         location: location,
         phase: :compile
       )
-    end
-
-    #: (String) -> String
-    def self.code_for(type)
-      type
-        .gsub(/([A-Z])([A-Z][a-z])/, '\1_\2')
-        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-        .downcase
-        .sub(/_?error\z/, "")
-        .tr("_", "-")
     end
 
     #: () -> bool
@@ -113,15 +112,18 @@ module Herb
         origin: origin,
         location: location && serialized_location(location),
         suggestion: suggestion,
+        description: description,
         docs_url: docs_url,
         value: value,
+        overlay: overlay,
+        phase: phase,
       }.compact
     end
 
     alias to_hash to_h
 
-    #: () -> String
-    def to_ruby
+    #: (?String?) -> String
+    def to_ruby(compiled = nil)
       parts = [
         "message: #{message.inspect}",
         "severity: #{severity.inspect}",
@@ -130,6 +132,7 @@ module Herb
       ]
 
       parts << "suggestion: #{suggestion.inspect}" if suggestion
+      parts << "template: #{template.inspect}" if template && template != compiled
 
       if location
         parts << "line: #{location.start.line}" << "column: #{location.start.column}"

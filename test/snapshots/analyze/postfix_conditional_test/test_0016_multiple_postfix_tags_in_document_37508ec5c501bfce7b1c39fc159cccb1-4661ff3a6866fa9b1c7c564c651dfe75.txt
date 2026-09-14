@@ -13,12 +13,8 @@ options: {transform_conditionals: true}
     │   ├── tag_closing: "%>" (location: (1:29)-(1:29))
     │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
-    │   │   └── @ ERBContentNode (location: (1:0)-(1:29))
-    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   │       ├── content: " 'first' " (location: (1:3)-(1:12))
-    │   │       ├── tag_closing: "%>" (location: (1:27)-(1:29))
-    │   │       ├── parsed: false
-    │   │       └── valid: true
+    │   │   └── @ HTMLTextNode (location: (1:4)-(1:11))
+    │   │       └── content: "first"
     │   │
     │   ├── subsequent: ∅
     │   └── end_node:
@@ -37,12 +33,8 @@ options: {transform_conditionals: true}
     │   ├── tag_closing: "%>" (location: (2:35)-(2:35))
     │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
-    │   │   └── @ ERBContentNode (location: (2:0)-(2:35))
-    │   │       ├── tag_opening: "<%=" (location: (2:0)-(2:3))
-    │   │       ├── content: " 'second' " (location: (2:3)-(2:13))
-    │   │       ├── tag_closing: "%>" (location: (2:33)-(2:35))
-    │   │       ├── parsed: false
-    │   │       └── valid: true
+    │   │   └── @ HTMLTextNode (location: (2:4)-(2:12))
+    │   │       └── content: "second"
     │   │
     │   ├── else_clause: ∅
     │   └── end_node:

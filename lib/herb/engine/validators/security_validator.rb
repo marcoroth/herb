@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 # typed: true
 
-require_relative "../validator"
+require_relative "base"
 
 module Herb
   class Engine
     module Validators
-      class SecurityValidator < Validator
+      class SecurityValidator < Base
         def visit_html_open_tag_node(node)
           validate_tag_security(node)
 

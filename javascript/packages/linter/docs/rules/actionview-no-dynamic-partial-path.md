@@ -68,6 +68,12 @@ Only output tags are reported. A `render` in a silent `<% %>` tag discards its o
 
 ## Configuration
 
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 Disable it in `.herb.yml` when computed partial paths are deliberate:
 
 ```yaml

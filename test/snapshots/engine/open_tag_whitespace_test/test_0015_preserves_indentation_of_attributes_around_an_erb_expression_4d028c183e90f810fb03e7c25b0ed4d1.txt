@@ -1,0 +1,13 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0015_preserves indentation of attributes around an erb expression"
+input: "{source: \"<div\\n  class=\\\"foo\\\"\\n  id=\\\"<%= dom_id %>\\\"\\n  data-colour=\\\"chartreuse\\\"\\n>\\n  Content\\n</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div
+  class="foo"
+  id="'.freeze; _buf << ::Herb::Engine.attr((dom_id)); _buf << '"
+  data-colour="chartreuse"
+>
+  Content
+</div>
+'.freeze;
+_buf.to_s

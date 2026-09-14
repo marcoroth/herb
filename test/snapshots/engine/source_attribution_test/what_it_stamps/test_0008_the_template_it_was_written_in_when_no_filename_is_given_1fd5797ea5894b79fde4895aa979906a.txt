@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0008_the template it was written in when no filename is given"
+input: "{source: \"<div>x</div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>]}}"
+---
+<div data-herb-source="unknown:1:1">x</div>

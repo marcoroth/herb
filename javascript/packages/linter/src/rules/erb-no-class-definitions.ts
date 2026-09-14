@@ -24,6 +24,7 @@ class ClassDefinitionCollector extends PrismVisitor {
 export class ERBNoClassDefinitionsRule extends ParserRule {
   static ruleName = "erb-no-class-definitions"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

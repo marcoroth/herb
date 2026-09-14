@@ -5,8 +5,12 @@ import { Range, CodeActionKind } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { RewriteCodeActionProvider } from "../src/rewrite_code_action_provider"
+
+import type { FrameworkOptions } from "../src/types"
 import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
+
+import type { ParseOptions, ParseResult } from "@herb-tools/core"
 
 describe("RewriteCodeActionProvider", () => {
   let parserService: ParserService
@@ -22,10 +26,10 @@ describe("RewriteCodeActionProvider", () => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
 
-  function getCodeActions(content: string, startLine: number, startChar: number, endLine: number, endChar: number) {
+  function getCodeActions(content: string, startLine: number, startChar: number, endLine: number, endChar: number, options: FrameworkOptions = { framework: "actionview" }) {
     const document = createDocument(content)
     const range = Range.create(startLine, startChar, endLine, endChar)
-    return service.getCodeActions(document, range)
+    return service.getCodeActions(document, range, options)
   }
 
   describe("ActionView to HTML", () => {
@@ -97,6 +101,21 @@ describe("RewriteCodeActionProvider", () => {
       const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
       expect(changes[0].newText).toContain("container")
     })
+
+    it("only rewrites the selected nested tag helper", () => {
+      const content = dedent`
+        <%= tag.div do %>
+          <%= tag.span "text" %>
+        <% end %>
+      `
+
+      const actions = getCodeActions(content, 0, 0, 0, 17)
+      const convertAction = actions.find(a => a.title.includes("<div>"))
+      const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
+
+      expect(actions).toHaveLength(1)
+      expect(changes[0].newText).toContain('<%= tag.span "text" %>')
+    })
   })
 
   describe("HTML to ActionView", () => {
@@ -155,6 +174,35 @@ describe("RewriteCodeActionProvider", () => {
       const convertAction = actions.find(a => a.title.includes("tag.div"))
       expect(convertAction).toBeUndefined()
     })
+
+    it("offers actions when cursor is on a later line of a multiline opening tag", () => {
+      const content = dedent`
+        <div
+          class="panel">
+          Content
+        </div>
+      `
+
+      const actions = getCodeActions(content, 1, 2, 1, 7)
+
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      expect(convertAction).toBeDefined()
+    })
+
+    it("only rewrites the selected nested HTML element", () => {
+      const content = dedent`
+        <div>
+          <span>text</span>
+        </div>
+      `
+
+      const actions = getCodeActions(content, 0, 0, 0, 5)
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      const changes = convertAction!.edit!.changes!["file:///test.html.erb"]
+
+      expect(actions).toHaveLength(1)
+      expect(changes[0].newText).toContain("<span>text</span>")
+    })
   })
 
   describe("no actions", () => {
@@ -189,6 +237,53 @@ describe("RewriteCodeActionProvider", () => {
 
       const divAction = actions.find(a => a.title.includes("<div>"))
       expect(divAction).toBeUndefined()
+    })
+  })
+  describe("framework scoping", () => {
+    const content = '<%= tag.div class: "x" %>'
+
+    it("offers conversions for an Action View project", () => {
+      expect(getCodeActions(content, 0, 0, 0, 11).length).toBeGreaterThan(0)
+    })
+
+    it("offers nothing when the framework is not Action View", () => {
+      expect(getCodeActions(content, 0, 0, 0, 11, { framework: "sinatra" })).toEqual([])
+    })
+
+    it("offers nothing when no framework is configured", () => {
+      expect(getCodeActions(content, 0, 0, 0, 11, {})).toEqual([])
+    })
+  })
+
+  describe("parse result reuse", () => {
+    class CachingParserService extends ParserService {
+      private cache = new Map<string, ParseResult>()
+
+      parseContent(content: string, options?: ParseOptions, uri?: string): ParseResult {
+        const key = `${uri} ${JSON.stringify(options ?? null)} ${content}`
+        const cached = this.cache.get(key)
+
+        if (cached) return cached
+
+        const result = super.parseContent(content, options, uri)
+        this.cache.set(key, result)
+
+        return result
+      }
+    }
+
+    it("leaves a shared parse result alone, so later requests still see the helper", () => {
+      const content = '<%= tag.div class: "x" %>'
+      const document = createDocument(content)
+      const caching = new CachingParserService(Herb)
+      const provider = new RewriteCodeActionProvider(caching)
+      const options = { action_view_helpers: true, track_whitespace: true }
+
+      expect((caching.parseContent(content, options, document.uri).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
+
+      provider.getCodeActions(document, Range.create(0, 0, 0, 11), { framework: "actionview" })
+
+      expect((caching.parseContent(content, options, document.uri).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
     })
   })
 })

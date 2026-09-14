@@ -26,6 +26,10 @@ export class Location {
     }
   }
 
+  static fromOptional(location: SerializedLocation | null): Location {
+    return (location ? Location.from(location) : null) as unknown as Location
+  }
+
   static get zero() {
     return new Location(Position.zero, Position.zero)
   }
@@ -33,6 +37,18 @@ export class Location {
   constructor(start: Position, end: Position) {
     this.start = start
     this.end = end
+  }
+
+  contains(position: Position): boolean {
+    return position.compare(this.start) >= 0 && position.compare(this.end) < 0
+  }
+
+  covers(other: Location): boolean {
+    return this.start.compare(other.start) <= 0 && other.end.compare(this.end) <= 0
+  }
+
+  isEmpty(): boolean {
+    return this.start.equals(this.end)
   }
 
   toHash(): SerializedLocation {

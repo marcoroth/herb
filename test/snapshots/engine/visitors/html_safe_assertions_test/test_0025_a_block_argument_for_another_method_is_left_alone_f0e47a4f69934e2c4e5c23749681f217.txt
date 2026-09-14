@@ -1,0 +1,6 @@
+---
+source: "Engine::Visitors::HTMLSafeAssertionsTest#test_0025_a block argument for another method is left alone"
+input: "{source: \"<div><%= items.map(&:upcase).join %></div>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (items.map(&:upcase).join).to_s; _buf << '</div>'.freeze;
+_buf.to_s

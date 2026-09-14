@@ -24,6 +24,7 @@ class ReturnCollector extends PrismVisitor {
 export class ERBNoReturnRule extends ParserRule {
   static ruleName = "erb-no-return"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -1,0 +1,5 @@
+---
+source: "CLI::ActionViewTest#test_0017_an unknown subcommand exits with a failure"
+input: "unknown subcommand"
+---
+exit: 1

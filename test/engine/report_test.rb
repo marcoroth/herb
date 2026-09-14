@@ -1,11 +1,27 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 
 module Engine
   class ReportTest < Minitest::Spec
+    include SnapshotUtils
+
+    class Marker
+      attr_reader :entries, :anchor #: Array[String]
+
+      def initialize(anchor = :body)
+        @anchor = anchor
+        @entries = []
+      end #: Symbol
+
+      def add(entry) = @entries << entry
+      def empty? = @entries.empty?
+      def to_html = "<!--#{@entries.join(",")}-->"
+    end
+
     def report
-      @report ||= Herb::Engine::Report.new
+      @report ||= Herb::Engine::Runtime::Report.new
     end
 
     def diagnostic(template: "app/views/a.html.erb", message: "m", code: "c", line: 1)
@@ -23,8 +39,24 @@ module Engine
       assert_equal({ version: 1, diagnostics: [], renderTree: [], nodes: {}, sources: {} }, report.to_h)
     end
 
+    test "leaves the provenance out until there is any" do
+      refute_predicate report, :noted?
+      refute report.to_h.key?(:meta)
+
+      report.note(:herb_version, "0.10.3")
+
+      assert_predicate report, :noted?
+      assert_equal({ herb_version: "0.10.3" }, report.to_h[:meta])
+    end
+
+    test "ignores a note with nothing in it" do
+      report.note(:visitors, nil)
+
+      refute report.to_h.key?(:meta)
+    end
+
     test "carries the version the reader checks" do
-      assert_equal 1, Herb::Engine::Report::VERSION
+      assert_equal 1, Herb::Engine::Runtime::Report::VERSION
       assert_equal 1, report.to_h[:version]
     end
 
@@ -59,7 +91,7 @@ module Engine
     end
 
     test "drops the oldest past the cap rather than growing" do
-      capped = Herb::Engine::Report.new(max_diagnostics: 2)
+      capped = Herb::Engine::Runtime::Report.new(max_diagnostics: 2)
 
       capped.add(diagnostic(code: "first"))
       capped.add(diagnostic(code: "second"))
@@ -91,21 +123,19 @@ module Engine
       test "is inert JSON the reader can find" do
         report.add(diagnostic)
 
-        assert_includes report.to_html, '<script type="application/json" data-herb-diagnostics'
-        assert_includes report.to_html, "</script>"
+        assert_snapshot_matches(report.to_html, "report_test-0")
       end
 
       test "counts what it carries, so a test need not parse it" do
         report.add(diagnostic)
 
-        assert_includes report.to_html, 'data-count="1"'
+        assert_snapshot_matches(report.to_html, "report_test-1")
       end
 
       test "cannot close the script element early" do
         report.add(diagnostic(message: "</script><img src=x onerror=alert(1)>"))
 
-        refute_includes report.to_html, "</script><img"
-        assert_includes report.to_html, "\\u003c/script"
+        assert_snapshot_matches(report.to_html, "report_test-2")
         assert_equal 1, report.to_html.scan("</script>").length
       end
     end
@@ -139,8 +169,25 @@ module Engine
         assert_equal "m", entry["message"]
       end
 
-      # The payload is snake_case throughout, including the one key the published spec spells
-      # `docsUrl`. `runtime-report.ts` has to read `docs_url` for this to survive normalization.
+      test "nests a render tree position the way the reader looks for it" do
+        report.render("2", "app/views/posts/_post.html.erb", "1", called_from: [nil, 6, 10, "partial"])
+
+        node = JSON.parse(report.to_json)["renderTree"].last
+
+        assert_equal({ "line" => 6, "column" => 11 }, node["location"])
+        refute node.key?("line")
+        refute node.key?("column")
+      end
+
+      test "leaves a render tree node without a call site alone" do
+        report.render("1", "app/views/layouts/application.html.erb", nil)
+
+        node = JSON.parse(report.to_json)["renderTree"].last
+
+        refute node.key?("location")
+        refute node.key?("via")
+      end
+
       test "spells the documentation link the way the rest of the payload is spelled" do
         report.add(
           Herb::Diagnostic.new(
@@ -154,6 +201,60 @@ module Engine
 
         assert_equal "https://herb-tools.dev/diagnostics/x", entry["docs_url"]
         refute entry.key?("docsUrl")
+      end
+    end
+
+    describe "channels" do
+      test "builds a channel the first time its name is asked for" do
+        built = 0
+
+        2.times do
+          report.channel(:marker) do
+            built += 1
+
+            Marker.new
+          end
+        end
+
+        assert_equal 1, built
+      end
+
+      test "answers the same channel every time" do
+        assert_same report.channel(:marker) { Marker.new }, report.channel(:marker) { Marker.new }
+      end
+
+      test "keeps a channel for each name" do
+        report.channel(:one) { Marker.new }.add("a")
+        report.channel(:two) { Marker.new }.add("b")
+
+        assert_equal 2, report.channels.length
+      end
+
+      test "leaves out a channel that collected nothing" do
+        report.channel(:empty) { Marker.new }
+        report.channel(:filled) { Marker.new }.add("a")
+
+        assert_equal ["<!--a-->"], report.channels.map(&:to_html)
+      end
+
+      test "is empty while every channel is" do
+        report.channel(:marker) { Marker.new }
+
+        assert_predicate report, :empty?
+
+        report.channel(:marker) { Marker.new }.add("a")
+
+        refute_predicate report, :empty?
+      end
+
+      test "a channel does not make it reportable, which is about diagnostics" do
+        report.channel(:marker) { Marker.new }.add("a")
+
+        refute_predicate report, :reportable?
+      end
+
+      test "knows nothing about what a channel holds" do
+        assert_empty Herb::Engine::Runtime::Report.instance_methods(false).grep(/marker/)
       end
     end
   end

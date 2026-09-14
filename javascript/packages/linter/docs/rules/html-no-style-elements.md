@@ -15,6 +15,9 @@ This rule enforces:
 - No `<style>` tags embedded directly in templates.
 - No `style` tags generated via `content_tag` or `tag` helpers.
 
+> [!NOTE] Exception
+> `<style scoped>` blocks are allowed. A scoped block already applies only to the file it was written in, so moving it into an external stylesheet is what would spread it.
+
 ## Examples
 
 ### ✅ Good
@@ -23,6 +26,14 @@ This rule enforces:
 <head>
   <%= stylesheet_link_tag "application" %>
 </head>
+```
+
+```erb
+<style scoped>
+  .card { color: red; }
+</style>
+
+<div class="card">Confined to this file</div>
 ```
 
 ### 🚫 Bad

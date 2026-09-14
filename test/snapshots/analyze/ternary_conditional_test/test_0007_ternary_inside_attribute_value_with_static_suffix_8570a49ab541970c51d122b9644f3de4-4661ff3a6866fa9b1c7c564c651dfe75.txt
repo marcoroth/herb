@@ -32,12 +32,8 @@ options: {transform_conditionals: true}
     │   │       │               │   │   ├── tag_closing: "%>" (location: (1:43)-(1:43))
     │   │       │               │   │   ├── then_keyword: ∅
     │   │       │               │   │   ├── statements: (1 item)
-    │   │       │               │   │   │   └── @ ERBContentNode (location: (1:12)-(1:43))
-    │   │       │               │   │   │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
-    │   │       │               │   │   │       ├── content: " 'text' " (location: (1:22)-(1:30))
-    │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:41)-(1:43))
-    │   │       │               │   │   │       ├── parsed: false
-    │   │       │               │   │   │       └── valid: true
+    │   │       │               │   │   │   └── @ LiteralNode (location: (1:23)-(1:29))
+    │   │       │               │   │   │       └── content: "text"
     │   │       │               │   │   │
     │   │       │               │   │   ├── subsequent:
     │   │       │               │   │   │   └── @ ERBElseNode (location: (1:43)-(1:43))
@@ -45,12 +41,8 @@ options: {transform_conditionals: true}
     │   │       │               │   │   │       ├── content: " else " (location: (1:43)-(1:43))
     │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:43)-(1:43))
     │   │       │               │   │   │       └── statements: (1 item)
-    │   │       │               │   │   │           └── @ ERBContentNode (location: (1:12)-(1:43))
-    │   │       │               │   │   │               ├── tag_opening: "<%=" (location: (1:12)-(1:15))
-    │   │       │               │   │   │               ├── content: " 'hidden' " (location: (1:31)-(1:41))
-    │   │       │               │   │   │               ├── tag_closing: "%>" (location: (1:41)-(1:43))
-    │   │       │               │   │   │               ├── parsed: false
-    │   │       │               │   │   │               └── valid: true
+    │   │       │               │   │   │           └── @ LiteralNode (location: (1:32)-(1:40))
+    │   │       │               │   │   │               └── content: "hidden"
     │   │       │               │   │   │
     │   │       │               │   │   │
     │   │       │               │   │   └── end_node:

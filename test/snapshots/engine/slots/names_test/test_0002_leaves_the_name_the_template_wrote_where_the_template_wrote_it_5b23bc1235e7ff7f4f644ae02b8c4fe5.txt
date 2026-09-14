@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::NamesTest#test_0002_leaves the name the template wrote where the template wrote it"
+input: "{source: \"<p data-herb-name=\\\"body\\\"><%= @body %></p>\", locals: {\"@body\" => \"hi\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:7eaaf7b2:0--><p data-herb-name="body" data-herb-slot="0:child">hi</p><!--/herb-region:app/views/test.html.erb-->

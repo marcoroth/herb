@@ -2,5 +2,4 @@
 source: "Engine::ActionView::LinkToTest#test_0012_link_to with aria-label string key"
 input: "{source: \"<%= link_to \\\"More\\\", \\\"#\\\", \\\"aria-label\\\": \\\"Learn more about GitHub\\\" %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<a aria-label="Learn more about GitHub" href="#">More</a>'.freeze;
-_buf.to_s
+'<a aria-label="Learn more about GitHub" href="#">More</a>'.freeze

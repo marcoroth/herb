@@ -29,8 +29,10 @@ token_T* create_synthetic_token(
     size_t length = strlen(value);
     char* copied = hb_allocator_strndup(allocator, value, length);
     token->value = hb_string_from_data(copied, length);
+    token->owns_value = true;
   } else {
     token->value = HB_STRING_EMPTY;
+    token->owns_value = false;
   }
 
   token->type = type;

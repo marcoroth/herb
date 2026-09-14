@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0014_compile with slots warns on stderr about an unkeyed collection"
+input: "test_0014_compile with slots warns on stderr about an unkeyed collection"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["TEMPLATE"] += 1) - 1 ; _buf << '<!--herb-region:TEMPLATE:ec9cf1b2:'.freeze; _buf << __herb.h((_herb_occurrence)); _buf << '--><!--herb-slot:0:collection-->'.freeze; users.each do |user|; _buf << '<li data-herb-slot="1:child">'.freeze; _buf << __herb.h((user.name)); _buf << '</li>'.freeze; end; _buf << '<!--/herb-slot:0--><!--/herb-region:TEMPLATE-->'.freeze;
+_buf.to_s

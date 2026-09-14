@@ -1,0 +1,6 @@
+---
+source: "Engine::ScopedStyleVisitorTest#test_0003_swaps the scoped attribute for the anchor that says what it narrowed to"
+input: "{source: \"<style scoped>.a { color: red; }</style><h1>Hi</h1>\", options: {filename: \"app/views/posts/index.html.erb\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=Engine::ScopedStyleVisitorTest::Transform>]}}"
+---
+_buf = ::String.new; _buf << '<style data-herb-style-scoped="data-herb-scope-2940ba8a">.a { color: red; }/* narrowed */</style><h1 data-herb-scope-2940ba8a>Hi</h1>'.freeze;
+_buf.to_s

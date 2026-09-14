@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -36,6 +36,7 @@ export class HTMLAttributeEqualsSpacingRule extends ParserRule<AttributeEqualsSp
   static autocorrectable = true
   static ruleName = "html-attribute-equals-spacing"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

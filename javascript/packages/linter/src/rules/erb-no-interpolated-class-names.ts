@@ -1,11 +1,11 @@
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 
 import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
-import type { StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"
 
@@ -48,6 +48,7 @@ class ERBNoInterpolatedClassNamesVisitor extends AttributeVisitorMixin {
 export class ERBNoInterpolatedClassNamesRule extends ParserRule {
   static ruleName = "erb-no-interpolated-class-names"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

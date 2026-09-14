@@ -32,11 +32,17 @@ public class ErrorNode extends BaseNode {
 
   @Override
   public List<Node> recursiveErrors() {
-    if (errors != null && !errors.isEmpty()) {
-      return new ArrayList<>(errors);
-    }
+    List<Node> accumulator = new ArrayList<>();
+    collectErrors(accumulator);
 
-    return Collections.emptyList();
+    return accumulator;
+  }
+
+  @Override
+  protected void collectErrors(List<Node> accumulator) {
+    if (errors != null && !errors.isEmpty()) {
+      accumulator.addAll(errors);
+    }
   }
 
   @Override

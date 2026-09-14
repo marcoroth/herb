@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it leaves alone#test_0003_an element that is already stamped"
+input: "{source: \"<div>x</div>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>, #<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div data-herb-source="app/views/posts/_card.html.erb:1:1">x</div>

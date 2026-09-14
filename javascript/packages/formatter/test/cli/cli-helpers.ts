@@ -47,11 +47,11 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
       resolvePromise({ stdout, stderr, exitCode: 1 })
     }, 5000)
 
-    child.stdout.on("data", (data) => {
+    child.stdout?.on("data", (data) => {
       stdout += data.toString()
     })
 
-    child.stderr.on("data", (data) => {
+    child.stderr?.on("data", (data) => {
       stderr += data.toString()
     })
 

@@ -19,8 +19,22 @@ bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("<!DOCTYPE"), true);
 }
 
+static bool is_xml_name_character(char character) {
+  return isalnum(character) || character == '-' || character == '_' || character == ':' || character == '.';
+}
+
 bool lexer_peek_for_xml_declaration(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("<?xml"), true);
+  hb_string_T pattern = hb_string("<?xml");
+
+  if (!lexer_peek_for(lexer, offset, pattern, true)) { return false; }
+
+  return !is_xml_name_character(lexer_peek(lexer, offset + pattern.length));
+}
+
+bool lexer_peek_for_xml_processing_instruction(const lexer_T* lexer, uint32_t offset) {
+  if (lexer_peek(lexer, offset) != '<' || lexer_peek(lexer, offset + 1) != '?') { return false; }
+
+  return isalpha(lexer_peek(lexer, offset + 2));
 }
 
 bool lexer_peek_for_cdata_start(const lexer_T* lexer, uint32_t offset) {

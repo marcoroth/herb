@@ -96,5 +96,23 @@ module Analyze
         <%= condition ? 'yes' : 'no' %>
       HTML
     end
+
+    test "ternary with symbol branches" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= cond ? :active : :inactive %>
+      HTML
+    end
+
+    test "ternary with branches that would be HTML-escaped" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= cond ? '<b>' : 'a & b' %>
+      HTML
+    end
+
+    test "ternary with numeric branches that render differently than they are written" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= cond ? 1_000 : 0x1f %>
+      HTML
+    end
   end
 end

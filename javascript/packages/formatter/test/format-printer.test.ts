@@ -1,13 +1,14 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { FormatPrinter } from "../src"
+import { FormatPrinter, defaultFormatOptions } from "../src"
 
 import dedent from "dedent"
 
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode, Token } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode, Token } from "@herb-tools/core"
 
 function printerFor(source: string): FormatPrinter {
   return new FormatPrinter(source, {
+    ...defaultFormatOptions,
     indentWidth: 2,
     maxLineLength: 80
   })
@@ -22,8 +23,8 @@ describe("@herb-tools/formatter", () => {
     const source = `<div></div>`
     const result = Herb.parse(source)
     const divTag = result.value.children[0] as HTMLElementNode
-    const openTag = divTag.open_tag
-    const close_tag = divTag.close_tag
+    const openTag = divTag.open_tag as HTMLOpenTagNode
+    const close_tag = divTag.close_tag as HTMLCloseTagNode
 
     const printer = printerFor(source)
 

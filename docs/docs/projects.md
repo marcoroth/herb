@@ -25,11 +25,11 @@ These libraries provide access to the Herb Parser in different programming langu
 
 These specialized libraries provide additional functionality for working with HTML+ERB:
 
-* [Dev Server Client](/projects/client)
 * [Language Service](/projects/language-service)
 * [Highlighter](/projects/highlighter)
 * [Syntax Tree Printer](/projects/minifier)
 * [Printer](/projects/printer)
 * [Rewriter](/projects/rewriter)
 * [Config](/projects/config)
+* [Client Runtime](/projects/client)
 * [Core](/projects/core)

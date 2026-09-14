@@ -3,12 +3,12 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
-require_relative "../../lib/herb/engine/html_safe_assertions"
+require_relative "../../lib/herb/engine/runtime/html_safe_assertions"
 
 module Engine
   class HTMLSafeAssertionsTest < Minitest::Spec
     def violations(value, **)
-      Herb::Engine::HTMLSafeAssertions.violations_for(value, **).map(&:name)
+      Herb::Engine::Runtime::HTMLSafeAssertions.violations_for(value, **).map(&:name)
     end
 
     test "reports a script element" do
@@ -75,7 +75,7 @@ module Engine
     test "check returns the value it was given" do
       value = "<p>hi</p>"
 
-      assert_same value, Herb::Engine::HTMLSafeAssertions.check(value)
+      assert_same value, Herb::Engine::Runtime::HTMLSafeAssertions.check(value)
     end
   end
 end

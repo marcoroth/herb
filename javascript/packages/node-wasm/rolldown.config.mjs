@@ -1,4 +1,7 @@
-import { renameEmscriptenNodeRequire } from "./libherb-plugin.mjs"
+import { createRequire } from "module"
+
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = Object.keys(dependencies ?? {})
 
 export default {
   input: "src/index.ts",
@@ -14,7 +17,6 @@ export default {
       sourcemap: true,
     }
   ],
-  external: [/@ruby\/prism/],
+  external: (id) => runtimeDependencies.some((pkg) => id === pkg || id.startsWith(pkg + "/")),
   platform: "node",
-  plugins: [renameEmscriptenNodeRequire()],
 }

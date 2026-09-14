@@ -3,13 +3,16 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
+import { RubyLocalsIndex } from "./ruby_locals_index"
 
 import { isERBIfNode, isERBElseNode, isHTMLOpenTagNode } from "@herb-tools/core"
 import { erbTagToRange, tokenToRange, nodeToRange, openTagRanges, isPositionInRange, rangeSize } from "./range_utils"
+import { slotNameGroupAt } from "./herb_attribute_links"
 
 import type {
   Node,
   ERBNode,
+  ERBCommentNode,
   ERBContentNode,
   HTMLElementNode,
   HTMLConditionalElementNode,
@@ -34,6 +37,11 @@ export class DocumentHighlightCollector extends Visitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
+    this.addGroup([tokenToRange(node.tag_opening), tokenToRange(node.tag_closing)])
+    this.visitChildNodes(node)
+  }
+
+  visitERBCommentNode(node: ERBCommentNode): void {
     this.addGroup([tokenToRange(node.tag_opening), tokenToRange(node.tag_closing)])
     this.visitChildNodes(node)
   }
@@ -237,6 +245,26 @@ export class DocumentHighlightProvider {
   }
 
   getDocumentHighlights(textDocument: TextDocument, position: Position): DocumentHighlight[] {
+    const index = RubyLocalsIndex.build(this.parserService, textDocument)
+    const local = index.at(position)
+
+    if (local) {
+      return [
+        DocumentHighlight.create(local.declaration, DocumentHighlightKind.Write),
+        ...local.usages.map(usage => DocumentHighlight.create(usage, DocumentHighlightKind.Read)),
+        ...(local.defaultValue ? [DocumentHighlight.create(local.defaultValue, DocumentHighlightKind.Text)] : [])
+      ]
+    }
+
+    const slotGroup = slotNameGroupAt(index.herbAttributes, position, isPositionInRange)
+
+    if (slotGroup) {
+      return [
+        ...slotGroup.declarations.map(declaration => DocumentHighlight.create(declaration, DocumentHighlightKind.Write)),
+        ...slotGroup.usages.map(usage => DocumentHighlight.create(usage, DocumentHighlightKind.Read))
+      ]
+    }
+
     const parseResult = this.parserService.parseDocument(textDocument)
     const collector = new DocumentHighlightCollector()
     collector.visit(parseResult.document)

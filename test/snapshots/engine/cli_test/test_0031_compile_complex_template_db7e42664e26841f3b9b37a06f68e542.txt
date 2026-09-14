@@ -1,0 +1,25 @@
+---
+source: "Engine::CLITest#test_0031_compile complex template"
+input: "test_0031_compile complex template"
+---
+_buf = ::String.new; _buf << '<!DOCTYPE html>
+<html>
+  <head>
+    <title>'.freeze; _buf << (title).to_s; _buf << '</title>
+  </head>
+  <body>
+'.freeze;     if show_nav? 
+ _buf << '      <nav>
+'.freeze;         nav_items.each do |item| 
+ _buf << '          <a href="'.freeze; _buf << ::Herb::Engine.attr((item[:url])); _buf << '">'.freeze; _buf << (item[:title]).to_s; _buf << '</a>
+'.freeze;         end 
+ _buf << '      </nav>
+'.freeze;     end 
+ _buf << '        
+    <main>
+      '.freeze; _buf << (content).to_s; _buf << '
+    </main>
+  </body>
+</html>
+'.freeze;
+_buf.to_s

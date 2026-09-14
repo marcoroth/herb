@@ -44,10 +44,17 @@ rules:
           order:
             - name
             - message
+            - suggestion
             - fields
 
       - sort_keys:
           path: "errors.types[].message"
+          order:
+            - template
+            - arguments
+
+      - sort_keys:
+          path: "errors.types[].suggestion"
           order:
             - template
             - arguments
@@ -101,6 +108,10 @@ rules:
 
       - blank_lines:
           path: "errors.types[].message.arguments"
+          count: 0
+
+      - blank_lines:
+          path: "errors.types[].suggestion.arguments"
           count: 0
 
       - blank_lines:

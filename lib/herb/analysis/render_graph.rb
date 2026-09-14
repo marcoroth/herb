@@ -137,7 +137,7 @@ module Herb
         names = callers.flat_map(&:locals).uniq.sort
 
         InferredSignature.new(
-          locals: names.map { |name| StrictLocal.new(name: name, required: false) },
+          locals: names.map { |name| StrictLocal.new(name: name, required: false, default_source: nil) },
           call_site_count: callers.size,
           keyword_rest: !complete?
         )

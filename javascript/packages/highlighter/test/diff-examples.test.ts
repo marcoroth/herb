@@ -4,7 +4,7 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { Highlighter } from "../src/highlighter.js"
 import { renderDiffExamples } from "../examples/diff-view.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 describe("examples/diff-view.ts", () => {
   let highlighter: Highlighter

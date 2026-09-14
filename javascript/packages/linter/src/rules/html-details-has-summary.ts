@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { getTagLocalName, isHTMLElementNode } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -48,11 +48,13 @@ class DetailsHasSummaryVisitor extends BaseRuleVisitor {
 export class HTMLDetailsHasSummaryRule extends ParserRule {
   static ruleName = "html-details-has-summary"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

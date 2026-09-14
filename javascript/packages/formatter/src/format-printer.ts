@@ -30,10 +30,13 @@ import {
   isERBNode,
   isERBControlFlowNode,
   isERBCommentNode,
+  isInlineRubyCommentNode,
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
   getHelper,
+  continuesIntoNextNode,
+  continuesFromPreviousNode,
 } from "@herb-tools/core"
 
 import {
@@ -46,7 +49,12 @@ import {
   endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
-  isMultilineERBComment,
+  isOwnLineERBTag,
+  isERBBlockCommentDelimiter,
+  NON_SQUIGGLY_HEREDOC,
+  LEADING_LINE_BREAK,
+  LEADING_NEWLINE,
+  WHITESPACE_ONLY,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -78,6 +86,7 @@ import {
   HTMLCommentNode,
   HTMLDoctypeNode,
   WhitespaceNode,
+  ERBCommentNode,
   ERBContentNode,
   ERBBlockNode,
   ERBIterationBlockNode,
@@ -103,6 +112,7 @@ import {
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
   XMLDeclarationNode,
+  XMLProcessingInstructionNode,
   CDATANode,
   Token
 } from "@herb-tools/core"
@@ -597,8 +607,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * @param withFormatting - if true, format the content; if false, preserve original
    */
   reconstructERBNode(node: ERBNode, withFormatting: boolean = true): string {
-    const open = node.tag_opening?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
+    const open = node.tag_opening?.value ?? (continuesFromPreviousNode(node) ? "<%" : "")
+    const close = node.tag_closing?.value ?? (continuesIntoNextNode(node) ? "%>" : "")
     const content = node.content?.value ?? ""
     const inner = withFormatting ? this.formatERBContent(content) : content
 
@@ -1029,7 +1039,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(open + inner + close)
   }
 
-  visitERBCommentNode(node: ERBContentNode) {
+  visitERBCommentNode(node: ERBCommentNode | ERBContentNode) {
     const result = formatERBCommentLines(
       node.tag_opening?.value || "<%#",
       node?.content?.value || "",
@@ -1066,13 +1076,19 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(IdentityPrinter.print(node))
   }
 
+  visitXMLProcessingInstructionNode(node: XMLProcessingInstructionNode) {
+    this.pushWithIndent(IdentityPrinter.print(node))
+  }
+
   visitCDATANode(node: CDATANode) {
     this.pushWithIndent(IdentityPrinter.print(node))
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    if (isERBCommentNode(node)) {
+    if ((isERBCommentNode(node) || isInlineRubyCommentNode(node))) {
       this.visitERBCommentNode(node)
+    } else if (isERBBlockCommentDelimiter(node)) {
+      this.printVerbatimERBNode(node)
     } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
       this.printExpandedERBNode(node)
     } else {
@@ -1095,10 +1111,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private shouldExpandERBContent(node: ERBContentNode): boolean {
     const content = node.content?.value ?? ""
 
-    if (!/^[ \t]*\r?\n/.test(content)) return false
+    if (!LEADING_LINE_BREAK.test(content)) return false
     if (!content.trim().includes("\n")) return false
 
-    return !/<<(?!~)-?['"`]?[A-Za-z_]/.test(content)
+    return !NON_SQUIGGLY_HEREDOC.test(content)
   }
 
   /**
@@ -1136,6 +1152,21 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
 
     this.pushWithIndent(close)
+  }
+
+  /**
+   * Print an ERB tag exactly as it was written, indenting only its first line.
+   *
+   * Ruby recognizes `=begin` / `=end` only at the start of a line, so a tag carrying one
+   * is reproduced byte for byte and its later lines are left in the column the author put
+   * them in.
+   */
+  private printVerbatimERBNode(node: ERBContentNode) {
+    const [first, ...rest] = IdentityPrinter.print(node).split("\n")
+
+    this.pushWithIndent(first)
+
+    rest.forEach(line => this.push(line))
   }
 
   visitERBOpenTagNode(node: ERBOpenTagNode) {
@@ -1537,7 +1568,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (openTagClosing && this.startsItsOwnLine(node)) {
       const first = children[0]
       const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
-      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && LEADING_NEWLINE.test(first.content)
 
       if (startsOnNewLine || hasLeadingNewline) {
         return false
@@ -1563,7 +1594,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (!isInlineElement(tagName) && openTagClosing) {
       const first = children[0]
       const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
-      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && LEADING_NEWLINE.test(first.content)
       const contentStartsOnNewLine = startsOnNewLine || hasLeadingNewline
 
       if (contentStartsOnNewLine) {
@@ -1646,7 +1677,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const line = this.sourceLines[start.line - 1]
     if (line === undefined) return false
 
-    return /^\s*$/.test(line.slice(0, start.column))
+    return WHITESPACE_ONLY.test(line.slice(0, start.column))
   }
 
   private fitsOnCurrentLine(content: string): boolean {
@@ -1724,7 +1755,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Render an ERB node as a string
    */
-  renderERBAsString(node: ERBContentNode): string {
+  renderERBAsString(node: ERBContentNode | ERBCommentNode): string {
     return this.withInlineMode(() => this.capture(() => this.visit(node)).join(""))
   }
 
@@ -1856,7 +1887,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
-      if (isMultilineERBComment(child)) {
+      if (isOwnLineERBTag(child)) {
         return null
       }
 
@@ -1933,7 +1964,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        if (isMultilineERBComment(child)) {
+        if (isOwnLineERBTag(child)) {
           return null
         }
       } else {

@@ -1,14 +1,15 @@
-import { CodeAction, CodeActionKind, TextEdit, WorkspaceEdit, Range } from "vscode-languageserver-types"
+import { CodeAction, CodeActionKind, TextEdit, WorkspaceEdit, Range, Position } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { ActionViewTagHelperToHTMLRewriter, HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
+import { ActionViewTagHelperToHTMLRewriter, HTMLToActionViewTagHelperRewriter, cloneNode } from "@herb-tools/rewriter"
 import { isERBOpenTagNode, isHTMLOpenTagNode, HELPER_BY_SOURCE, findPreferredHelperForTag } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange } from "./range_utils"
 
 import type { Node, HTMLElementNode } from "@herb-tools/core"
+import type { FrameworkOptions } from "./types.js"
 
 interface CollectedElement {
   node: HTMLElementNode
@@ -49,11 +50,13 @@ export class RewriteCodeActionProvider {
     this.baseDir = baseDir
   }
 
-  getCodeActions(document: TextDocument, requestedRange: Range): CodeAction[] {
+  getCodeActions(document: TextDocument, requestedRange: Range, options?: FrameworkOptions): CodeAction[] {
+    if (options?.framework !== "actionview") return []
+
     const parseResult = this.parserService.parseContent(document.getText(), {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, document.uri)
 
     const collector = new ElementCollector()
     collector.visit(parseResult.value)
@@ -89,14 +92,14 @@ export class RewriteCodeActionProvider {
     const parseResult = this.parserService.parseContent(originalText, {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, document.uri)
 
     if (parseResult.failed) return null
 
     const rewriter = new ActionViewTagHelperToHTMLRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(cloneNode(parseResult.value as Node), { baseDir: this.baseDir, shallow: true })
 
-    const rewrittenText = IdentityPrinter.print(parseResult.value)
+    const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
     if (rewrittenText === originalText) return null
 
@@ -125,14 +128,14 @@ export class RewriteCodeActionProvider {
 
     const parseResult = this.parserService.parseContent(originalText, {
       track_whitespace: true,
-    })
+    }, document.uri)
 
     if (parseResult.failed) return null
 
     const rewriter = new HTMLToActionViewTagHelperRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
+    const rewrittenNode = rewriter.rewrite(cloneNode(parseResult.value as Node), { baseDir: this.baseDir, shallow: true })
 
-    const rewrittenText = IdentityPrinter.print(parseResult.value)
+    const rewrittenText = IdentityPrinter.print(rewrittenNode)
 
     if (rewrittenText === originalText) return null
 
@@ -159,12 +162,15 @@ export class RewriteCodeActionProvider {
   }
 
   private rangesOverlap(r1: Range, r2: Range): boolean {
-    if (r1.end.line < r2.start.line) return false
-    if (r1.start.line > r2.end.line) return false
-
-    if (r1.end.line === r2.start.line && r1.end.character < r2.start.character) return false
-    if (r1.start.line === r2.end.line && r1.start.character > r2.end.character) return false
+    if (this.comparePositions(r1.end, r2.start) < 0) return false
+    if (this.comparePositions(r2.end, r1.start) < 0) return false
 
     return true
+  }
+
+  private comparePositions(a: Position, b: Position): number {
+    if (a.line !== b.line) return a.line - b.line
+
+    return a.character - b.character
   }
 }

@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0050_key directive"
+input: |2-
+<%# herb:key item.id %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:23))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:key item.id " (location: (1:3)-(1:21))
+    │   ├── tag_closing: "%>" (location: (1:21)-(1:23))
+    │   ├── key: "key" (location: (1:9)-(1:12))
+    │   └── arguments: "item.id" (location: (1:13)-(1:20))
+    │
+    └── @ HTMLTextNode (location: (1:23)-(2:0))
+        └── content: "\n"

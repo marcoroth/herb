@@ -41,7 +41,7 @@ const PROJECT = {
 
 let parserService: ParserService
 
-function project(files: Record<string, string>): Project {
+function project(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "herb-lsp-references-"))
 
   roots.push(root)
@@ -80,6 +80,7 @@ async function serviceFor(files: Record<string, string>, buffers: Record<string,
   } as OpenDocuments
 
   const service = new ReferencesProvider(new DefinitionProvider(parserService, existsSync, readFile), index, documents, readFile)
+  service.setConfig({ framework: "actionview" })
 
   return { service, index, project: created, buffers }
 }
@@ -267,4 +268,64 @@ describe("ReferencesProvider", () => {
 
     expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([])
   })
+  test("finds nothing when the framework is not Action View", async () => {
+    const services = await serviceFor(PROJECT)
+
+    expect(referencesAt(services, "app/views/posts/_card.html.erb").length).toBeGreaterThan(0)
+
+    services.service.setConfig({ framework: "sinatra" })
+
+    expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([])
+  })
 })
+
+describe("herb state references", () => {
+  let parserService: ParserService
+
+  beforeAll(async () => {
+    await Herb.load()
+    parserService = new ParserService(Herb)
+  })
+
+  function build(): ReferencesProvider {
+    const definitionProvider = new DefinitionProvider(parserService, () => false, () => null)
+
+    return new ReferencesProvider(definitionProvider, { relativePathFor: () => null, callers: null } as never, { get: () => undefined }, () => null, parserService)
+  }
+
+  function referenceTexts(content: string, target: string, offset = 1, includeDeclaration = true): string[] {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const position = document.positionAt(content.indexOf(target) + offset)
+    const locations = build().getReferences(document, position, includeDeclaration)
+
+    return locations.map(location => document.getText(location.range))
+  }
+
+  const TEMPLATE =
+    '<%# herb:state (open: false) %>\n' +
+    '<button data-herb-toggle="open">Details</button>\n' +
+    "<% if open %><nav>menu</nav><% end %>"
+
+  test("finds every reference of a state from a read", () => {
+    expect(referenceTexts(TEMPLATE, "if open", 4).length).toBeGreaterThanOrEqual(3)
+    expect(referenceTexts(TEMPLATE, "if open", 4)).toContain("open")
+  })
+
+  test("leaves the declaration out when asked", () => {
+    const withDeclaration = referenceTexts(TEMPLATE, "if open", 4, true)
+    const without = referenceTexts(TEMPLATE, "if open", 4, false)
+
+    expect(without.length).toBe(withDeclaration.length - 1)
+  })
+
+  test("finds the sends naming a collection", () => {
+    const content =
+      '<ul data-herb-name="messages"><% @m.each do |m| %><li id="<%= m %>">x</li><% end %></ul>\n' +
+      '<form data-herb-into="messages"></form>'
+
+    const texts = referenceTexts(content, 'data-herb-name="messages', 20)
+
+    expect(texts.some(text => text.includes("data-herb-into"))).toBe(true)
+  })
+})
+

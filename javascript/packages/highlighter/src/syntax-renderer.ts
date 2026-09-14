@@ -1,5 +1,4 @@
 import { Token, RUBY_KEYWORDS } from "@herb-tools/core"
-import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "./color.js"
 
 import type { HerbBackend } from "@herb-tools/core"
@@ -18,6 +17,7 @@ type SyntaxRenderState = {
   expectingAttributeName: boolean
   expectingAttributeValue: boolean
   inComment: boolean
+  inErbComment: boolean
 }
 
 export class SyntaxRenderer {
@@ -25,10 +25,10 @@ export class SyntaxRenderer {
   private isColorEnabled: boolean
   private herb: HerbBackend
 
-  public constructor(colors: ColorScheme, herb?: HerbBackend) {
+  public constructor(colors: ColorScheme, herb: HerbBackend) {
     this.colors = colors
     this.isColorEnabled = process.env.NO_COLOR === undefined
-    this.herb = herb || Herb
+    this.herb = herb
   }
 
   public async initialize(): Promise<void> {
@@ -98,6 +98,7 @@ export class SyntaxRenderer {
       expectingAttributeName: false,
       expectingAttributeValue: false,
       inComment: false,
+      inErbComment: false,
     }
 
     for (let i = 0; i < tokens.length; i++) {
@@ -105,26 +106,31 @@ export class SyntaxRenderer {
       const nextToken = tokens[i + 1]
       const prevToken = tokens[i - 1]
 
-      if (token.range.start > lastEnd) {
-        highlighted += content.slice(lastEnd, token.range.start)
+      if (token.range.from > lastEnd) {
+        highlighted += content.slice(lastEnd, token.range.from)
       }
 
-      const tokenText = content.slice(token.range.start, token.range.end)
+      const tokenText = content.slice(token.range.from, token.range.to)
 
-      this.updateState(state, token, tokenText, nextToken, prevToken)
+      this.updateState(state, token, tokenText, content, nextToken, prevToken)
 
       const color = this.getContextualColor(state, token, tokenText)
 
       if (token.type === "TOKEN_ERB_CONTENT") {
-        const highlightedRuby = this.highlightRubyCode(tokenText)
-        highlighted += highlightedRuby
+        highlighted += state.inErbComment
+          ? this.applyColor(tokenText, this.colors.TOKEN_HTML_COMMENT_START)
+          : this.highlightRubyCode(tokenText)
       } else if (color !== undefined) {
         highlighted += this.applyColor(tokenText, color)
       } else {
         highlighted += tokenText
       }
 
-      lastEnd = token.range.end
+      if (token.type === "TOKEN_ERB_END" && state.inErbComment) {
+        state.inErbComment = false
+      }
+
+      lastEnd = token.range.to
     }
 
     if (lastEnd < content.length) {
@@ -134,11 +140,20 @@ export class SyntaxRenderer {
     return highlighted
   }
 
+  private isErbCommentTag(tagText: string, content: string, nextToken?: Token): boolean {
+    if (tagText.startsWith("<%#")) return true
+    if (tagText !== "<%-") return false
+    if (nextToken?.type !== "TOKEN_ERB_CONTENT") return false
+
+    return content.slice(nextToken.range.from, nextToken.range.to).startsWith("#")
+  }
+
   private updateState(
     state: SyntaxRenderState,
     token: Token,
     tokenText: string,
-    _nextToken?: Token,
+    content: string,
+    nextToken?: Token,
     _prevToken?: Token,
   ) {
     switch (token.type) {
@@ -205,6 +220,10 @@ export class SyntaxRenderer {
       case "TOKEN_HTML_COMMENT_END":
         state.inComment = false
         break
+
+      case "TOKEN_ERB_START":
+        state.inErbComment = state.inErbComment || this.isErbCommentTag(tokenText, content, nextToken)
+        break
     }
   }
 
@@ -221,6 +240,10 @@ export class SyntaxRenderer {
       token.type !== "TOKEN_ERB_CONTENT" &&
       token.type !== "TOKEN_ERB_END"
     ) {
+      return this.colors.TOKEN_HTML_COMMENT_START
+    }
+
+    if (state.inErbComment && token.type !== "TOKEN_ERB_CONTENT") {
       return this.colors.TOKEN_HTML_COMMENT_START
     }
 
@@ -243,7 +266,8 @@ export class SyntaxRenderer {
       case "TOKEN_QUOTE":
         if (state.inTag) {
           return "#98C379"
-        } break
+        }
+        break
     }
 
     if (!this.colors) {
@@ -251,6 +275,6 @@ export class SyntaxRenderer {
     }
 
     const color = this.colors[token.type as keyof ColorScheme]
-    return color !== undefined ? color : null
+    return typeof color === "string" ? color : null
   }
 }

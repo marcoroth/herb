@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/cli"
 
 require "tempfile"
 
 module Engine
   class CLITest < Minitest::Spec
+    include SnapshotUtils
+
     def setup
       @original_stdout = $stdout
       @original_stderr = $stderr
@@ -22,11 +25,15 @@ module Engine
     end
 
     def captured_output
-      @captured_stdout.string
+      @captured_stdout.string.dup
     end
 
     def captured_error
-      @captured_stderr.string
+      @captured_stderr.string.dup
+    end
+
+    def normalize_paths(text)
+      text.gsub(%r{[\w./-]*test_template\d+-\d+-\w+\.erb}, "TEMPLATE")
     end
 
     def with_temp_file(content)
@@ -54,10 +61,7 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--no-escape"]).call
         end
 
-        output = captured_output
-        assert_includes output, "_buf = ::String.new"
-        assert_includes output, "Hello "
-        assert_includes output, "(name).to_s"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -69,9 +73,7 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--escape"]).call
         end
 
-        output = captured_output
-        assert_includes output, "__herb = ::Herb::Engine"
-        assert_includes output, "__herb.h((user_input))"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -83,9 +85,7 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--no-escape"]).call
         end
 
-        output = captured_output
-        refute_includes output, "__herb = ::Herb::Engine"
-        assert_includes output, "(user_input).to_s"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -97,8 +97,67 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--freeze"]).call
         end
 
-        output = captured_output
-        assert_includes output, "# frozen_string_literal: true"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile with --no-trim" do
+      template = "<% a = 1 %>\ntext\n"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--no-trim"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile with --optimize resolves helpers into the markup they produce" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal "'<br>'.freeze\n", captured_output
+      end
+    end
+
+    test "compile with --optimize collapses a static conditional into branch literals" do
+      template = "<% if flag %>A<% else %>B<% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--optimize"]).call
+        end
+
+        assert_equal %(if flag ; "A".freeze;else; "B".freeze;end;\n), captured_output
+      end
+    end
+
+    test "compile without --optimize keeps the helper call" do
+      template = "<%= tag.br %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_equal "__herb = ::Herb::Engine; _buf = ::String.new; _buf << __herb.h((tag.br));\n_buf.to_s\n", captured_output
+      end
+    end
+
+    test "render with --optimize renders the folded output" do
+      template = %(<p><%= "hello" %></p>)
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--optimize"]).call
+        end
+
+        assert_equal "<p>hello</p>\n", captured_output
       end
     end
 
@@ -114,9 +173,156 @@ module Engine
         json_data = JSON.parse(output)
 
         assert_equal true, json_data["success"]
-        assert_includes json_data["source"], "_buf = ::String.new"
+        assert_snapshot_matches(json_data["source"], name)
         assert_equal File.basename(file_path), File.basename(json_data["filename"])
         assert_equal "_buf", json_data["bufvar"]
+      end
+    end
+
+    test "compile with slots emits markers" do
+      template = "<div><%= name %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+        assert_empty captured_error
+      end
+    end
+
+    test "compile with slots emits paired comments where an element cannot carry the slot" do
+      template = "<p>Hi <%= name %>!</p>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile without slots emits no markers" do
+      template = "<div><%= name %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile with slots warns on stderr about an unkeyed collection" do
+      template = "<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_match "Add a `herb-key` or `id` attribute to `<li>`", captured_error
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile without slots does not warn about an unkeyed collection" do
+      template = "<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_empty captured_error
+      end
+    end
+
+    test "render with slots emits markers around the rendered output" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "render without slots emits no markers" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "render in client mode parks the branch that did not run" do
+      template = "<div><% if false %><b>secret</b><% else %><i>guest</i><% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "client"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "render in server mode parks nothing" do
+      template = "<div><% if false %><b>secret</b><% else %><i>guest</i><% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "server"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "render picks up a herb:slots directive without the flag" do
+      template = "<%# herb:slots client %>\n<div><% if false %>a<% else %>b<% end %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "an unknown slots mode is rejected before anything is compiled" do
+      template = "<div><%= 1 + 1 %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", file_path, "--slots", "nonsense"]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+      end
+    end
+
+    test "compile picks up a herb:slots directive without the flag" do
+      template = "<%# herb:slots %>\n<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_snapshot_matches(normalize_paths(captured_output), name)
+        assert_match "Add a `herb-key` or `id` attribute to `<li>`", captured_error
       end
     end
 
@@ -136,8 +342,12 @@ module Engine
         json_data = JSON.parse(output)
 
         assert_equal false, json_data["success"]
-        assert_includes json_data["error"], "HTML+ERB Compilation Errors"
         assert_equal File.basename(file_path), File.basename(json_data["filename"])
+
+        assert_equal(
+          "TEMPLATE:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 1 more error)",
+          json_data["error"].gsub(file_path, "TEMPLATE")
+        )
       end
     end
 
@@ -154,9 +364,16 @@ module Engine
         end
 
         output = captured_output
-        assert_includes output, "HTML+ERB Compilation Errors"
-        assert_includes output, "Total errors:"
-        assert output.match?(/\d+:\d+/)
+
+        assert_equal(<<~REPORT, output.gsub(file_path, "TEMPLATE"))
+          \u2718 [MissingClosingTagError] Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope.
+
+              TEMPLATE:2:3:
+                2 \u2502   <span>Unclosed span
+                  \u2575   ~~~~~~
+
+            Add the closing tag, or make it self-closing.
+        REPORT
       end
     end
 
@@ -191,8 +408,7 @@ module Engine
         Herb::CLI.new(["compile", "/path/that/does/not/exist.erb"]).call
       end
 
-      output = captured_output
-      assert_includes output, "File doesn't exist"
+      assert_snapshot_matches(normalize_paths(captured_output), name)
     end
 
     test "compile no file provided" do
@@ -206,9 +422,7 @@ module Engine
           Herb::CLI.new(["compile"]).call
         end
 
-        output = captured_output
-        assert_includes output, "No file provided"
-        assert_includes output, "Usage:"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       ensure
         $stdin = original_stdin
       end
@@ -219,12 +433,7 @@ module Engine
         Herb::CLI.new(["help"]).call
       end
 
-      output = captured_output
-      assert_includes output, "compile [file]"
-      assert_includes output, "Compile ERB template to Ruby code"
-      assert_includes output, "--escape"
-      assert_includes output, "--no-escape"
-      assert_includes output, "--freeze"
+      assert_snapshot_matches(normalize_paths(captured_output), name)
     end
 
     test "version command still works" do
@@ -264,14 +473,7 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--no-escape"]).call
         end
 
-        output = captured_output
-
-        assert_includes output, "_buf = ::String.new"
-        assert_includes output, "<!DOCTYPE html>"
-        assert_includes output, "if show_nav?"
-        assert_includes output, "nav_items.each do |item|"
-        assert_includes output, "(title).to_s"
-        assert_includes output, "(content).to_s"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -289,11 +491,7 @@ module Engine
           Herb::CLI.new(["compile", file_path, "--no-escape"]).call
         end
 
-        output = captured_output
-
-        assert_includes output, "'<ul>\n'.freeze"
-        assert_includes output, "'    <li>'.freeze"
-        assert_includes output, "'</ul>\n'.freeze"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -310,10 +508,7 @@ module Engine
           Herb::CLI.new(["compile", file_path]).call
         end
 
-        output = captured_output
-
-        refute_includes output, "This is a comment"
-        assert_includes output, "Visible content"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -322,9 +517,7 @@ module Engine
         Herb::CLI.new(["unknown_command"]).call
       end
 
-      output = captured_output
-      assert_includes output, "Unknown command"
-      assert_includes output, "compile [file]"
+      assert_snapshot_matches(normalize_paths(captured_output), name)
     end
 
     test "lex reads from stdin with dash argument" do
@@ -333,10 +526,7 @@ module Engine
       with_stdin(template) do
         Herb::CLI.new(["lex", "-"]).call
 
-        output = captured_output
-        assert_includes output, "TOKEN_HTML_TAG_START"
-        assert_includes output, "TOKEN_IDENTIFIER"
-        assert_includes output, "div"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -346,10 +536,7 @@ module Engine
       with_stdin(template) do
         Herb::CLI.new(["parse", "-"]).call
 
-        output = captured_output
-        assert_includes output, "DocumentNode"
-        assert_includes output, "HTMLElementNode"
-        assert_includes output, "div"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -361,10 +548,7 @@ module Engine
           Herb::CLI.new(["compile", "-"]).call
         end
 
-        output = captured_output
-        assert_includes output, "_buf = ::String.new"
-        assert_includes output, "<div>"
-        assert_includes output, "__herb.h((name))"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -376,8 +560,7 @@ module Engine
           Herb::CLI.new(["ruby", "-"]).call
         end
 
-        output = captured_output
-        assert_includes output, "user.name"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -389,9 +572,7 @@ module Engine
           Herb::CLI.new(["html", "-"]).call
         end
 
-        output = captured_output
-        assert_includes output, "<div>"
-        assert_includes output, "</div>"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -422,7 +603,7 @@ module Engine
         json_data = JSON.parse(output)
 
         assert_equal true, json_data["success"]
-        assert_includes json_data["source"], "_buf = ::String.new"
+        assert_snapshot_matches(json_data["source"], name)
         assert_equal "-", json_data["filename"]
       end
     end
@@ -435,10 +616,7 @@ module Engine
           Herb::CLI.new(["compile", "-", "--no-escape", "--freeze"]).call
         end
 
-        output = captured_output
-        assert_includes output, "# frozen_string_literal: true"
-        assert_includes output, "(user_input).to_s"
-        refute_includes output, "__herb.h("
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -450,8 +628,7 @@ module Engine
           Herb::CLI.new(["render", "-"]).call
         end
 
-        output = captured_output
-        assert_includes output, "<div>Rendered content</div>"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       end
     end
 
@@ -460,10 +637,7 @@ module Engine
         Herb::CLI.new(["help"]).call
       end
 
-      output = captured_output
-      assert_includes output, "stdin:"
-      assert_includes output, "echo"
-      assert_includes output, "cat"
+      assert_snapshot_matches(normalize_paths(captured_output), name)
     end
 
     test "no file provided message includes stdin hint" do
@@ -477,9 +651,7 @@ module Engine
           Herb::CLI.new(["compile"]).call
         end
 
-        output = captured_output
-        assert_includes output, "No file provided"
-        assert_includes output, "pipe content via stdin"
+        assert_snapshot_matches(normalize_paths(captured_output), name)
       ensure
         $stdin = original_stdin
       end

@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0002_assigns indices in document order"
+input: "<p><%= @a %></p><p><%= @b %></p><p><%= @c %></p>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 14798b85
+
+slots:
+  index=0  type=child  node_path=[0, 0]  expression="@a"
+  index=1  type=child  node_path=[1, 0]  expression="@b"
+  index=2  type=child  node_path=[2, 0]  expression="@c"

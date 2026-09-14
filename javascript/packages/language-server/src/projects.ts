@@ -15,6 +15,10 @@ const FILE_SCHEME = "file://"
  * folder is a boundary rather than a unit. One folder can hold several projects
  * and each of them gets its own config, linter and partial index, keyed by the
  * root that `Config` itself would pick for a file.
+ *
+ * Services that are shared across projects, like the parser, resolve a
+ * document's config here instead of being handed one, so a workspace with
+ * several projects parses each document with its own project's options.
  */
 export class Projects {
   private readonly connection: Connection
@@ -29,6 +33,12 @@ export class Projects {
     this.connection = connection
     this.workspaceFolders = workspaceFolders
     this.shared = shared
+
+    shared.parserService.setConfigResolver(uri => this.configFor(uri))
+  }
+
+  configFor(uri: string): Config | undefined {
+    return this.get(uri)?.config
   }
 
   all(): Project[] {

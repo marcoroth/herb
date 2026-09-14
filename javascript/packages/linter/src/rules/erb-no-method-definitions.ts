@@ -49,6 +49,7 @@ class MethodDefinitionCollector extends PrismVisitor {
 export class ERBNoMethodDefinitionsRule extends ParserRule {
   static ruleName = "erb-no-method-definitions"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static consumesParserErrors = true
 
   get defaultConfig(): FullRuleConfig {

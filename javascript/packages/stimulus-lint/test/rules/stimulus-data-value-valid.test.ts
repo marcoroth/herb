@@ -245,7 +245,7 @@ describe('StimulusDataValueValidRule', () => {
             }
           }
         ]
-      } as Project
+      } as unknown as Project
 
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(0)

@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 
-import { isKeyboardFocusableElement } from "./rule-utils.js"
+import { isKeyboardFocusableElement } from "../utils/rule-utils.js"
 import { getStaticAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"

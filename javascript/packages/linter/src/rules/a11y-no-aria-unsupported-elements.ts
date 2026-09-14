@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 
 import { getAttributeName } from "@herb-tools/core"
 

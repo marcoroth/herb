@@ -3,10 +3,13 @@ import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
 import { ANSI_REGEX } from "../src/ansi.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 import { DiagnosticRenderer } from "../src/diagnostic-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
+
+import { Location } from "@herb-tools/core"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -15,7 +18,7 @@ describe("DiagnosticRenderer", () => {
   let syntaxRenderer: SyntaxRenderer
 
   beforeEach(async () => {
-    syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new DiagnosticRenderer(syntaxRenderer)
   })
@@ -25,10 +28,7 @@ describe("DiagnosticRenderer", () => {
   ): Diagnostic => ({
     message: "Test error message",
     severity: "error",
-    location: {
-      start: { line: 2, column: 5 },
-      end: { line: 2, column: 10 },
-    },
+    location: Location.from(2, 5, 2, 10),
     code: "test-rule",
     ...overrides,
   })
@@ -68,10 +68,7 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle custom context lines", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 5, column: 1 },
-          end: { line: 5, column: 5 },
-        },
+        location: Location.from(5, 1, 5, 5),
       })
       const content = dedent`
         line 1
@@ -112,10 +109,7 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle edge cases for line boundaries", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 5 },
-        },
+        location: Location.from(1, 1, 1, 5),
       })
       const content = "single line"
 
@@ -149,10 +143,7 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle multi-character error ranges", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 2, column: 5 },
-          end: { line: 2, column: 15 },
-        },
+        location: Location.from(2, 5, 2, 15),
       })
       const content = dedent`
         line 1
@@ -169,13 +160,70 @@ describe("DiagnosticRenderer", () => {
     })
   })
 
+  describe("fileUrl", () => {
+    const content = dedent`
+      line 1
+      line <error> content
+      line 3
+    `
+
+    const hyperlinks = (output: string) => {
+      return [...output.matchAll(/\x1b\]8;;(.*?)\x1b\\(.*?)\x1b\]8;;\x1b\\/g)].map(([, url, text]) => ({
+        url,
+        text: stripAnsiColors(text),
+      }))
+    }
+
+    it("links the marked line number to the file", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result)).toEqual([
+        { url: "file:///test/file.erb", text: "/test/file.erb:2:5" },
+        { url: "file:///test/file.erb", text: "2" },
+      ])
+    })
+
+    it("does not link the line numbers of context lines", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        contextLines: 1,
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("1")
+      expect(hyperlinks(result).map(({ text }) => text)).not.toContain("3")
+    })
+
+    it("links the line number of every marked line of a multi-line diagnostic", () => {
+      const diagnostic = createDiagnostic({ location: Location.from(1, 1, 3, 7) })
+      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, {
+        fileUrl: "file:///test/file.erb",
+      })
+
+      expect(hyperlinks(result).map(({ text }) => text)).toEqual(["/test/file.erb:1:1", "1", "2", "3"])
+    })
+
+    it("leaves the line numbers unlinked without a fileUrl", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content)
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+
+    it("leaves the line numbers unlinked when line numbers are hidden", () => {
+      const result = renderer.renderSingle("/test/file.erb", createDiagnostic(), content, {
+        fileUrl: "file:///test/file.erb",
+        showLineNumbers: false,
+      })
+
+      expect(hyperlinks(result)).toEqual([])
+    })
+  })
+
   describe("error handling", () => {
     it("should handle invalid line numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 999, column: 1 },
-          end: { line: 999, column: 5 },
-        },
+        location: Location.from(999, 1, 999, 5),
       })
       const content = dedent`
         line 1
@@ -193,10 +241,7 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle invalid column numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 2, column: 999 },
-          end: { line: 2, column: 1000 },
-        },
+        location: Location.from(2, 999, 2, 1000),
       })
       const content = dedent`
         line 1
@@ -230,10 +275,7 @@ describe("DiagnosticRenderer", () => {
     const multiLineDiagnostic = createDiagnostic({
       message: "Multi-line offense",
       severity: "warning",
-      location: {
-        start: { line: 4, column: 4 },
-        end: { line: 6, column: 13 },
-      },
+      location: Location.from(4, 4, 6, 13),
       code: "multi-line-rule",
     })
 
@@ -254,10 +296,7 @@ describe("DiagnosticRenderer", () => {
       `
 
       const diagnostic = createDiagnostic({
-        location: {
-          start: { line: 1, column: 0 },
-          end: { line: 3, column: 9 },
-        },
+        location: Location.from(1, 0, 3, 9),
       })
 
       const result = renderer.renderSingle("/test/file.erb", diagnostic, content, { wrapLines: false })
@@ -293,10 +332,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Class name should be shorter",
-        location: {
-          start: { line: 1, column: 13 },
-          end: { line: 1, column: 33 }
-        },
+        location: Location.from(1, 13, 1, 33),
         code: "class-name-length"
       })
 
@@ -319,10 +355,7 @@ describe("DiagnosticRenderer", () => {
       const diagnostic = createDiagnostic({
         message: "Content should be more descriptive",
         severity: "warning",
-        location: {
-          start: { line: 1, column: 95 },
-          end: { line: 1, column: 102 }
-        },
+        location: Location.from(1, 95, 1, 102),
         code: "content-description"
       })
 
@@ -344,10 +377,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Avoid 'should-be' in class names",
-        location: {
-          start: { line: 1, column: 45 },
-          end: { line: 1, column: 54 }
-        },
+        location: Location.from(1, 45, 1, 54),
         code: "class-naming-convention"
       })
 
@@ -369,10 +399,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Test diagnostic positioning",
-        location: {
-          start: { line: 1, column: 50 },
-          end: { line: 1, column: 55 }
-        },
+        location: Location.from(1, 50, 1, 55),
         code: "test-positioning"
       })
 
@@ -398,10 +425,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Long class name detected",
-        location: {
-          start: { line: 2, column: 13 }, // Points to long class name
-          end: { line: 2, column: 30 }
-        },
+        location: Location.from(2, 13, 2, 30), // Points to long class name
         code: "class-name-length"
       })
 
@@ -424,10 +448,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Test short line",
-        location: {
-          start: { line: 1, column: 13 },
-          end: { line: 1, column: 18 }
-        },
+        location: Location.from(1, 13, 1, 18),
         code: "test-short"
       })
 
@@ -454,10 +475,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Line too long",
-        location: {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 5 },
-        },
+        location: Location.from(1, 1, 1, 5),
         code: "line-length",
       })
 
@@ -477,10 +495,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "End content issue",
-        location: {
-          start: { line: 1, column: 95 },
-          end: { line: 1, column: 103 },
-        },
+        location: Location.from(1, 95, 1, 103),
         code: "end-content",
       })
 
@@ -500,10 +515,7 @@ describe("DiagnosticRenderer", () => {
 
       const diagnostic = createDiagnostic({
         message: "Middle issue",
-        location: {
-          start: { line: 1, column: 30 },
-          end: { line: 1, column: 44 },
-        },
+        location: Location.from(1, 30, 1, 44),
         code: "middle-content",
       })
 

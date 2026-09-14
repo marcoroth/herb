@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::what it stamps#test_0005_an element with a dynamic attribute"
+input: "{source: \"<div class=\\\"<%= level %>\\\">x</div>\", locals: {level: \"high\"}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<div class="high" data-herb-source="app/views/posts/_card.html.erb:1:1">x</div>

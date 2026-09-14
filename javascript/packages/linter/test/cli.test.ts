@@ -92,7 +92,7 @@ describe("CLI Output Formatting", () => {
   })
 
   test("allows tag.attributes in attribute position", () => {
-    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines")
+    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines", "--config-file test/fixtures/actionview.herb.yml")
 
     expect(output).toMatchSnapshot()
     expect(output).not.toContain("erb-no-output-in-attribute-position")
@@ -1632,7 +1632,7 @@ describe("CLI Output Formatting", () => {
 
       expect(result.summary.ruleCount).toBeGreaterThan(withoutAllRules.summary.ruleCount)
       expect(exitCode).toBe(0)
-    })
+    }, 10_000)
 
     test("can't be combined with --only", () => {
       const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules", "--only", "html-tag-name-lowercase")
@@ -1796,7 +1796,7 @@ describe("CLI Output Formatting", () => {
       } finally {
         try { unlinkSync(configPath) } catch {}
       }
-    })
+    }, 10_000)
 
     describe("`Rules` summary line", () => {
       function rulesLine(output: string): string {

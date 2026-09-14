@@ -321,6 +321,10 @@ impl Visitor for ERBToRubyStringPrinter {
     self.emit_xml_declaration(node);
   }
 
+  fn visit_xml_processing_instruction_node(&mut self, node: &XMLProcessingInstructionNode) {
+    self.emit_xml_processing_instruction(node);
+  }
+
   fn visit_cdata_node(&mut self, node: &CDATANode) {
     self.emit_cdata(node);
   }
@@ -434,6 +438,7 @@ fn node_children(node: &AnyNode) -> Option<&[AnyNode]> {
     AnyNode::HTMLCommentNode(n) => Some(&n.children),
     AnyNode::HTMLDoctypeNode(n) => Some(&n.children),
     AnyNode::XMLDeclarationNode(n) => Some(&n.children),
+    AnyNode::XMLProcessingInstructionNode(n) => Some(&n.children),
     AnyNode::CDATANode(n) => Some(&n.children),
     AnyNode::ERBCaseNode(n) => Some(&n.children),
     AnyNode::ERBCaseMatchNode(n) => Some(&n.children),

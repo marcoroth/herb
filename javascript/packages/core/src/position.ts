@@ -26,6 +26,24 @@ export class Position {
     this.column = column
   }
 
+  compare(other: Position): number {
+    if (this.line !== other.line) return this.line - other.line
+
+    return this.column - other.column
+  }
+
+  isBefore(other: Position): boolean {
+    return this.compare(other) < 0
+  }
+
+  isAfter(other: Position): boolean {
+    return this.compare(other) > 0
+  }
+
+  equals(other: Position): boolean {
+    return this.compare(other) === 0
+  }
+
   toHash(): SerializedPosition {
     return { line: this.line, column: this.column }
   }
@@ -73,4 +91,52 @@ export function positionFromOffset(source: string, offset: number): Position {
   }
 
   return new Position(line, column)
+}
+
+/**
+ * Converts a Position (line, column) to a character offset in a source string.
+ * Lines are 1-based, columns are 0-based.
+ *
+ * @param source - The source string the position is relative to
+ * @param position - The Position to resolve
+ * @returns A UTF-16 string index into `source`, or `null` when the position falls outside of it
+ */
+export function offsetFromPosition(source: string, position: Position): number | null {
+  if (position.line < 1 || position.column < 0) return null
+
+  let line = 1
+  let offset = 0
+
+  while (line < position.line) {
+    const newline = source.indexOf("\n", offset)
+
+    if (newline === -1) return null
+
+    offset = newline + 1
+    line++
+  }
+
+  const lineEnd = source.indexOf("\n", offset)
+  const lineLength = (lineEnd === -1 ? source.length : lineEnd) - offset
+
+  if (position.column > lineLength) return null
+
+  return offset + position.column
+}
+
+/**
+ * Extracts the text between two Positions from a source string.
+ *
+ * @param source - The source string both positions are relative to
+ * @param start - The Position to slice from
+ * @param end - The Position to slice to
+ * @returns The text between `start` and `end`, or `null` when either position falls outside of `source`
+ */
+export function sliceBetweenPositions(source: string, start: Position, end: Position): string | null {
+  const from = offsetFromPosition(source, start)
+  const to = offsetFromPosition(source, end)
+
+  if (from === null || to === null || from > to) return null
+
+  return source.slice(from, to)
 }

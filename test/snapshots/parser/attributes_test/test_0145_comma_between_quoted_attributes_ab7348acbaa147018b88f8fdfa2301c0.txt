@@ -1,0 +1,82 @@
+---
+source: "Parser::AttributesTest#test_0145_comma between quoted attributes"
+input: "<div class=\"a\", id=\"b\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:29))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:29))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:23))
+        │       ├── errors: (1 error)
+        │       │   └── @ MissingWhitespaceBetweenAttributesError (location: (1:14)-(1:15))
+        │       │       ├── message: "Missing whitespace between attributes at (1:14). `,` is parsed as the start of a new attribute."
+        │       │       └── found: "," (location: (1:14)-(1:15))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:22)-(1:23))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:14))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │   │   │               └── content: "class"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:14))
+        │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:12)-(1:13))
+        │       │   │           │       └── content: "a"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:13)-(1:14))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:14)-(1:15))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:15))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:14)-(1:15))
+        │       │   │   │               └── content: ","
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:16)-(1:22))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:16)-(1:18))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:16)-(1:18))
+        │       │       │               └── content: "id"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:18)-(1:19))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:19)-(1:22))
+        │       │               ├── open_quote: """ (location: (1:19)-(1:20))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:20)-(1:21))
+        │       │               │       └── content: "b"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:21)-(1:22))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:23)-(1:29))
+        │       ├── tag_opening: "</" (location: (1:23)-(1:25))
+        │       ├── tag_name: "div" (location: (1:25)-(1:28))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:28)-(1:29))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

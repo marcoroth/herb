@@ -1,0 +1,13 @@
+---
+source: "Parser::ERBOpenersTest#test_0005_an opener that is not configured is parsed as Ruby"
+input: "<%graphql query %>"
+options: {erb_openers: ["herb"]}
+---
+@ DocumentNode (location: (1:0)-(1:18))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:18))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: "graphql query " (location: (1:2)-(1:16))
+        ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        ├── parsed: true
+        └── valid: true

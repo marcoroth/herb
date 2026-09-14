@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, filterHTMLAttributeNodes, findAttributeByName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -54,11 +54,13 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
 export class HTMLImgRequireAltRule extends ParserRule {
   static ruleName = "html-img-require-alt"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

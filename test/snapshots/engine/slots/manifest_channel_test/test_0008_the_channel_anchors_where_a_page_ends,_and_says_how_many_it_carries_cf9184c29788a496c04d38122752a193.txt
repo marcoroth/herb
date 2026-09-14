@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::ManifestChannelTest#test_0008_the channel anchors where a page ends, and says how many it carries"
+input: "the container a response carries"
+---
+<template data-herb-manifests data-count="1">{"app/views/posts/_card.html.erb:db7ab613":{"file":"app\/views\/posts\/_card.html.erb","identifier":"app\/views\/posts\/_card.html.erb","version":"db7ab613","names":{"row":1},"parts":{"0":["row-","-x"]},"states":null}}</template>

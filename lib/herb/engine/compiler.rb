@@ -1,15 +1,14 @@
 # frozen_string_literal: false
 
+require_relative "../html/util"
+
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
-      EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze
-
-      TRAILING_WHITESPACE = /[ \t]+\z/
-      TRAILING_INDENTATION = /\n[ \t]+\z/
-      TRAILING_INDENTATION_CAPTURE = /\n([ \t]+)\z/
-      WHITESPACE_ONLY = /\A[ \t]+\z/
-      WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
+      PADDING_NEWLINES = Array.new(17) { |count| ("\n" * count).freeze }.freeze #: Array[String]
+      EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze #: Array[Symbol]
+      HORIZONTAL_SPACE = [" ", "\t"].freeze #: Array[String]
+      RAW_TEXT_ELEMENTS = ["script", "style"].freeze #: Array[String]
 
       attr_reader :tokens
 
@@ -17,20 +16,34 @@ module Herb
         super()
 
         @engine = engine
+        @source_lines = options[:source]&.lines
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
+        @trim = options[:trim] != false
         @tokens = [] #: Array[untyped]
+        @padding_before = nil #: Hash[Integer, Integer]?
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
         @last_trim_consumed_newline = false
+        @pending_trim_newline_index = nil #: Integer?
+        @pending_trim_owns_next_whitespace = false
+        @pending_span_extra_index = nil #: Integer?
         @pending_leading_whitespace = nil
         @pending_leading_whitespace_insert_index = 0
         @current_element_source = nil
       end
 
-      def generate_output
-        optimized_tokens = optimize_tokens(@tokens)
+      def optimized_tokens
+        @optimized_tokens ||= optimize_tokens(@tokens)
+      end
 
+      def static_template_text
+        return unless optimized_tokens.all? { |token| token[0] == :text }
+
+        optimized_tokens.map { |token| token[1] }.join
+      end
+
+      def generate_output
         optimized_tokens.each do |type, value, context, escaped|
           case type
           when :text
@@ -49,26 +62,30 @@ module Herb
             @engine.send(:add_expression_block, indicator_for(type), value)
           when :expr_block_end
             @engine.send(:add_expression_block_end, value, escaped: escaped)
+          when :chain
+            @engine.send(:add_expression_result, value)
           end
         end
       end
 
       def visit_document_node(node)
         visit_all(node.children)
+
+        restore_pending_leading_whitespace! if @trim_next_whitespace
+
+        settle_pending_trim_newline!(false)
       end
 
       def visit_html_element_node(node)
-        with_element_context(node) do
+        with_element_context(node) do |tag_name|
           visit(node.open_tag)
           visit_all(node.body)
 
-          tag_name = node.tag_name&.value&.downcase
-
           if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
             if node.close_tag.is_a?(Herb::AST::ERBEndNode)
-              remove_trailing_whitespace_from_last_token! if left_trim?(node.close_tag)
+              remove_trailing_whitespace_from_last_token! if @trim && left_trim?(node.close_tag)
               add_text("</#{tag_name}>")
-              @trim_next_whitespace = true
+              @trim_next_whitespace = true if @trim
             else
               add_text("</#{tag_name}>")
             end
@@ -96,7 +113,7 @@ module Herb
       end
 
       def visit_html_attribute_node(node)
-        add_whitespace(" ")
+        add_text(" ") unless preceded_by_whitespace?
 
         visit(node.name)
 
@@ -175,7 +192,7 @@ module Herb
       end
 
       def visit_whitespace_node(node)
-        add_whitespace(node.value.value)
+        add_text(node.value.value)
       end
 
       def visit_html_comment_node(node)
@@ -196,6 +213,13 @@ module Herb
         add_text(node.tag_closing.value)
       end
 
+      def visit_xml_processing_instruction_node(node)
+        add_text(node.tag_opening.value)
+        add_text(node.target.value)
+        visit_all(node.children)
+        add_text(node.tag_closing.value)
+      end
+
       def visit_cdata_node(node)
         add_text(node.tag_opening.value)
         visit_all(node.children)
@@ -208,9 +232,26 @@ module Herb
         process_erb_tag(node)
       end
 
+      def visit_erb_comment_node(node)
+        process_erb_tag(node)
+      end
+
       def visit_erb_control_node(node, &)
         if node.content
-          apply_trim(node, node.content.value.strip)
+          if node.tag_opening && erb_escaped?(node.tag_opening.value)
+            add_escaped_erb_tag(node)
+          elsif continues_into_next_node?(node)
+            @continued_head = node
+          else
+            head = @continued_head
+            @continued_head = nil
+
+            code_index = @tokens.length
+            raw = head ? head.content.value + node.content.value : node.content.value
+
+            apply_trim(head || node, raw.strip)
+            keep_line_count(node, at: code_index, raw: raw)
+          end
         end
 
         yield if block_given?
@@ -239,7 +280,7 @@ module Herb
       end
 
       def visit_erb_case_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_when_node(node)
@@ -275,7 +316,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, *case_parts(node))
       end
 
       def visit_erb_in_node(node)
@@ -289,17 +330,20 @@ module Herb
       def visit_erb_block_node(node)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_block(node) if erb_escaped?(opening)
 
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
-          code = node.content.value.strip
+          code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
+          code_index = @tokens.length
 
           @tokens << if should_escape
                        [:expr_block_escaped, code, current_context]
                      else
                        [:expr_block, code, current_context]
                      end
+
+          keep_line_count(node, at: code_index)
 
           @last_trim_consumed_newline = false
           @trim_next_whitespace = true if right_trim?(node)
@@ -328,11 +372,11 @@ module Herb
       end
 
       def visit_erb_block_end_node(node, escaped: false)
-        remove_trailing_whitespace_from_last_token! if left_trim?(node)
+        remove_trailing_whitespace_from_last_token! if @trim && left_trim?(node)
 
-        code = node.content.value.strip
+        code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
 
-        if at_line_start?
+        if @trim && at_line_start?
           leading_space = extract_and_remove_leading_space!
           right_space = " \n"
 
@@ -341,6 +385,12 @@ module Herb
         else
           @tokens << [:expr_block_end, code, current_context, escaped]
         end
+      end
+
+      def case_parts(node)
+        parts = [:conditions, :else_clause, :end_node]
+
+        erb_escaped?(node.tag_opening.value) ? [:children, *parts] : parts
       end
 
       def visit_erb_control_with_parts(node, *parts)
@@ -361,13 +411,22 @@ module Herb
 
       private
 
-      def check_for_escaped_erb_tag!(opening)
-        return unless opening.start_with?("<%%")
+      def add_escaped_erb_tag(node)
+        add_text("#{node.tag_opening.value.sub("<%%", "<%")}#{node.content.value}#{node.tag_closing&.value}")
+      end
 
-        raise Herb::Engine::GeneratorTemplateError,
-              "This file appears to be a generator template (a template used to generate ERB files) " \
-              "rather than a standard ERB template. It contains escaped ERB tags like <%%= %> which " \
-              "produce literal ERB output in the generated file."
+      def add_escaped_erb_block(node)
+        add_escaped_erb_tag(node)
+        visit_all(node.body)
+
+        end_node = node.end_node
+        return unless end_node
+
+        if erb_escaped?(end_node.tag_opening.value)
+          add_escaped_erb_tag(end_node)
+        else
+          visit(end_node)
+        end
       end
 
       def current_context
@@ -382,7 +441,7 @@ module Herb
         @context_stack.pop
       end
 
-      #: (untyped node) { () -> untyped } -> untyped
+      #: (untyped node) { (String?) -> untyped } -> untyped
       def with_element_context(node)
         tag_name = node.tag_name&.value&.downcase
         previous_element_source = @current_element_source
@@ -396,9 +455,9 @@ module Herb
           push_context(:style_content)
         end
 
-        yield
+        yield(tag_name)
 
-        pop_context if ["script", "style"].include?(tag_name)
+        pop_context if RAW_TEXT_ELEMENTS.include?(tag_name)
 
         @element_stack.pop if tag_name
         @current_element_source = previous_element_source
@@ -407,28 +466,67 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        check_for_escaped_erb_tag!(opening)
+        return add_escaped_erb_tag(node) if erb_escaped?(opening)
 
-        if !skip_comment_check && erb_comment?(opening)
+        if !skip_comment_check && erb_omitted?(opening)
+          unless @trim
+            keep_span_line_count(node)
+
+            return
+          end
+
           follows_newline = leading_space_follows_newline?
           remove_trailing_whitespace_from_last_token! if left_trim?(node)
+          swallows_newline = at_line_start?
 
-          if at_line_start?
+          if swallows_newline
             leading_space = extract_and_remove_leading_space!
             @trim_next_whitespace = true
             save_pending_leading_whitespace!(leading_space) if !leading_space.empty? && follows_newline
           end
+
+          keep_span_line_count(node, extra: swallows_newline ? 1 : 0)
+          @pending_span_extra_index = @tokens.length if swallows_newline
+
           return
         end
-        return if erb_graphql?(opening)
 
-        code = node.content.value.strip
+        code = ::Herb::Engine::Helpers.strip_trailing_comment(node.content.value.strip)
+
+        code_index = @tokens.length
 
         if erb_output?(opening)
           process_erb_output(node, opening, code)
         else
           apply_trim(node, code)
         end
+
+        absorbed = erb_output?(opening) && ::Herb::Engine::Helpers.ends_on_heredoc_terminator?(code) ? 1 : 0
+
+        keep_line_count(node, at: code_index, absorbed: absorbed)
+      end
+
+      #: (untyped, ?extra: Integer) -> void
+      def keep_span_line_count(node, extra: 0)
+        lines = node.content.value.count("\n") + extra
+
+        return unless lines.positive?
+
+        @padding_before ||= Hash.new(0)
+        @padding_before[@tokens.length] += lines
+      end
+
+      def keep_line_count(node, extra: 0, at: nil, absorbed: 0, raw: nil)
+        raw ||= node.content.value
+
+        leading = raw[0, raw.length - raw.lstrip.length].to_s.count("\n")
+        trailing = raw.count("\n") - raw.strip.count("\n") - leading + extra - absorbed
+
+        block_comment = raw.include?("=begin") || raw.include?("=end")
+
+        @padding_before ||= Hash.new(0)
+        @padding_before[at] += leading if at && leading.positive? && !block_comment
+        @padding_before[@tokens.length] += trailing if trailing.positive?
       end
 
       def add_text(text)
@@ -439,9 +537,14 @@ module Herb
           text = text.sub(/\A[ \t]*\r?\n/, "")
           @trim_next_whitespace = false
 
+          settle_pending_trim_newline!(@last_trim_consumed_newline)
+          settle_pending_span_extra!(@last_trim_consumed_newline)
           restore_pending_leading_whitespace! unless @last_trim_consumed_newline
         else
           @last_trim_consumed_newline = false
+
+          settle_pending_trim_newline!(false)
+          settle_pending_span_extra!(false)
         end
 
         @pending_leading_whitespace = nil
@@ -449,10 +552,6 @@ module Herb
         return if text.empty?
 
         @tokens << [:text, text, current_context]
-      end
-
-      def add_whitespace(whitespace)
-        @tokens << [:whitespace, whitespace, current_context]
       end
 
       def add_code(code)
@@ -471,82 +570,98 @@ module Herb
 
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
-
-        compacted = compact_whitespace_tokens(tokens)
+        return optimize_tokens_with_padding(tokens) if @padding_before
 
         optimized = [] #: Array[untyped]
-        current_text = ""
+        current_text = nil #: String?
         current_context = nil
 
-        compacted.each do |type, value, context, escaped|
+        tokens.each do |token|
+          type = token[0]
+
           if type == :text
-            current_text += value
-            current_context ||= context
+            value = token[1]
+
+            if current_text
+              current_text << value
+              current_context ||= token[2]
+            else
+              current_text = value.dup
+              current_context = token[2]
+            end
           else
-            unless current_text.empty?
+            if current_text
               optimized << [:text, current_text, current_context]
 
-              current_text = ""
+              current_text = nil
               current_context = nil
             end
 
-            optimized << [type, value, context, escaped]
+            optimized << [type, token[1], token[2], token[3]]
           end
         end
 
-        optimized << [:text, current_text, current_context] unless current_text.empty?
+        optimized << [:text, current_text, current_context] if current_text
 
         optimized
       end
 
-      def compact_whitespace_tokens(tokens)
-        return tokens if tokens.empty?
-
-        tokens.map.with_index { |token, index|
-          next token unless token[0] == :whitespace
-
-          next nil if adjacent_whitespace?(tokens, index)
-          next nil if whitespace_before_code_sequence?(tokens, index)
-
-          [:text, token[1], token[2]]
-        }.compact
+      def padding_newlines(count)
+        PADDING_NEWLINES[count] || ("\n" * count)
       end
 
-      def adjacent_whitespace?(tokens, index)
-        prev_token = index.positive? ? tokens[index - 1] : nil
-        next_token = index < tokens.length - 1 ? tokens[index + 1] : nil
+      def optimize_tokens_with_padding(tokens)
+        optimized = [] #: Array[untyped]
+        current_text = nil #: String?
+        current_context = nil
+        pending_padding = 0
 
-        trailing_whitespace?(prev_token) || leading_whitespace?(next_token)
-      end
+        tokens.each_with_index do |token, index|
+          pending_padding += @padding_before[index]
 
-      def trailing_whitespace?(token)
-        return false unless token
+          if token[0] == :text
+            if pending_padding.positive?
+              if current_text
+                optimized << [:text, current_text, current_context]
+                current_text = nil
+                current_context = nil
+              end
 
-        token[0] == :whitespace || (token[0] == :text && token[1] =~ /\s\z/)
-      end
+              optimized << [:code, padding_newlines(pending_padding), nil]
+              pending_padding = 0
+            end
 
-      def leading_whitespace?(token)
-        token && token[0] == :text && token[1] =~ /\A\s/
-      end
+            if current_text
+              current_text << token[1]
+              current_context ||= token[2]
+            else
+              current_text = token[1].dup
+              current_context = token[2]
+            end
 
-      def whitespace_before_code_sequence?(tokens, current_index)
-        previous_token = tokens[current_index - 1] if current_index.positive?
+            next
+          end
 
-        return false unless previous_token && previous_token[0] == :code
+          if current_text
+            optimized << [:text, current_text, current_context]
+            current_text = nil
+            current_context = nil
+          end
 
-        token_before_code = find_token_before_code_sequence(tokens, current_index)
+          if pending_padding.positive?
+            optimized << [:code, padding_newlines(pending_padding), nil]
+            pending_padding = 0
+          end
 
-        return false unless token_before_code
+          optimized << [token[0], token[1], token[2], token[3]]
+        end
 
-        trailing_whitespace?(token_before_code)
-      end
+        optimized << [:text, current_text, current_context] if current_text
 
-      def find_token_before_code_sequence(tokens, whitespace_index)
-        search_index = whitespace_index - 1
+        pending_padding += @padding_before[tokens.length]
+        optimized << [:code, padding_newlines(pending_padding), nil] if pending_padding.positive?
 
-        search_index -= 1 while search_index >= 0 && tokens[search_index][0] == :code
-
-        search_index >= 0 ? tokens[search_index] : nil
+        optimized
       end
 
       def process_erb_output(node, opening, code)
@@ -556,6 +671,8 @@ module Herb
           @trim_next_whitespace = false
           @last_trim_consumed_newline = false
         end
+
+        settle_pending_trim_newline!(false)
 
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
@@ -585,6 +702,36 @@ module Herb
         end
       end
 
+      #: (String) -> Integer
+      def trailing_space_length(text)
+        count = 0
+        count += 1 while count < text.length && HORIZONTAL_SPACE.include?(text[text.length - 1 - count])
+
+        count
+      end
+
+      #: (String) -> String
+      def trailing_spaces(text)
+        text[text.length - trailing_space_length(text), text.length].to_s
+      end
+
+      #: (String) -> void
+      def remove_trailing_spaces!(text)
+        text.replace(text[0, text.length - trailing_space_length(text)].to_s)
+      end
+
+      #: (String) -> bool
+      def whitespace_only?(text)
+        !text.empty? && trailing_space_length(text) == text.length
+      end
+
+      #: (String) -> bool
+      def trailing_indentation?(text)
+        spaces = trailing_space_length(text)
+
+        spaces.positive? && text[text.length - spaces - 1] == "\n"
+      end
+
       def at_line_start?
         return true if @tokens.empty?
 
@@ -592,7 +739,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
+          last_value.empty? || last_value.end_with?("\n") || (whitespace_only?(last_value) && preceding_token_ends_with_newline?) || trailing_indentation?(last_value)
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -612,11 +759,28 @@ module Herb
       end
 
       def left_trim?(node)
-        node.tag_opening.value == "<%-"
+        node.tag_opening&.value == "<%-"
       end
 
       def right_trim?(node)
         node.tag_closing&.value == "-%>"
+      end
+
+      def preceded_by_whitespace?
+        index = @tokens.length - 1
+        index -= 1 while index >= 0 && emits_nothing?(@tokens[index])
+
+        return false if index.negative?
+
+        token = @tokens[index]
+
+        return false unless token[0] == :text
+
+        token[1].match?(/\s\z/)
+      end
+
+      def emits_nothing?(token)
+        token[0] == :code || (token[0] == :text && token[1].empty?)
       end
 
       def last_text_token
@@ -631,7 +795,7 @@ module Herb
 
         text = token[1]
 
-        return Regexp.last_match(1) if text =~ TRAILING_INDENTATION_CAPTURE || text =~ WHITESPACE_ONLY_CAPTURE
+        return trailing_spaces(text) if trailing_indentation?(text) || whitespace_only?(text)
 
         ""
       end
@@ -642,10 +806,17 @@ module Herb
 
         text = token[1]
 
-        return true if text.match?(TRAILING_INDENTATION)
-        return true if @last_trim_consumed_newline && text.match?(WHITESPACE_ONLY)
+        return true if trailing_indentation?(text)
 
-        false
+        whitespace_only?(text) && (preceding_text_ends_with_newline? || @last_trim_consumed_newline)
+      end
+
+      def preceding_text_ends_with_newline?
+        return true unless @tokens.length >= 2
+
+        preceding = @tokens[-2]
+
+        preceding[0] == :text && preceding[1].end_with?("\n")
       end
 
       def extract_and_remove_leading_space!
@@ -654,9 +825,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ TRAILING_INDENTATION
-          text.sub!(TRAILING_WHITESPACE, "")
-        elsif text =~ WHITESPACE_ONLY
+        if trailing_indentation?(text)
+          remove_trailing_spaces!(text)
+        elsif whitespace_only?(text)
           text.replace("")
         end
 
@@ -666,21 +837,75 @@ module Herb
       end
 
       def apply_trim(node, code)
+        return add_code(code) unless @trim
+
         follows_newline = leading_space_follows_newline?
         removed_whitespace = left_trim?(node) ? remove_trailing_whitespace_from_last_token! : ""
 
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
-          right_space = Herb::Engine.heredoc?(code) ? "\n" : " \n"
+          right_space = if Herb::Engine::Helpers.heredoc?(code)
+                          "\n"
+                        elsif without_source?(node)
+                          " "
+                        else
+                          " \n"
+                        end
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
           @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
           @trim_next_whitespace = true
+
+          if right_space.end_with?(" \n")
+            @pending_trim_newline_index = @tokens.length - 1
+            @pending_trim_owns_next_whitespace = true
+          end
         else
           @tokens << [:code, code, current_context]
         end
+      end
+
+      def continues_into_next_node?(node)
+        node.tag_closing.nil? && !node.content.nil?
+      end
+
+      #: (untyped) -> bool
+      def without_source?(node)
+        position = node.tag_closing&.location&.end || node.location&.end
+
+        !position.nil? && !position.line.positive?
+      end
+
+      #: (bool) -> void
+      def settle_pending_span_extra!(keep)
+        index = @pending_span_extra_index
+
+        return unless index
+
+        @pending_span_extra_index = nil
+
+        return if keep
+
+        @padding_before[index] -= 1 if @padding_before&.key?(index)
+      end
+
+      #: (bool) -> void
+      def settle_pending_trim_newline!(keep)
+        index = @pending_trim_newline_index
+
+        return unless index
+
+        owned = @pending_trim_owns_next_whitespace
+
+        @pending_trim_newline_index = nil
+        @pending_trim_owns_next_whitespace = false
+
+        return if keep
+
+        @tokens[index][1] = @tokens[index][1].chomp
+        @trim_next_whitespace = false if owned
       end
 
       def save_pending_leading_whitespace!(whitespace)
@@ -692,6 +917,11 @@ module Herb
         return unless @pending_leading_whitespace
 
         @tokens.insert(@pending_leading_whitespace_insert_index, [:text, @pending_leading_whitespace, current_context])
+
+        return unless @pending_trim_newline_index
+        return if @pending_trim_newline_index < @pending_leading_whitespace_insert_index
+
+        @pending_trim_newline_index += 1
       end
 
       def remove_trailing_whitespace_from_last_token!
@@ -699,12 +929,12 @@ module Herb
         return "" unless token
 
         text = token[1]
-        removed = text[TRAILING_WHITESPACE] || ""
+        removed = trailing_spaces(text)
 
-        if text =~ TRAILING_INDENTATION
-          text.sub!(TRAILING_WHITESPACE, "")
+        if trailing_indentation?(text)
+          remove_trailing_spaces!(text)
           token[1] = text
-        elsif text =~ WHITESPACE_ONLY
+        elsif whitespace_only?(text)
           text.replace("")
           token[1] = text
         end

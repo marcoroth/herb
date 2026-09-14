@@ -5,7 +5,7 @@ import {
   StaticAttributeDynamicValueParams,
   DynamicAttributeStaticValueParams,
   DynamicAttributeDynamicValueParams
-} from "./rule-utils.js"
+} from "../utils/rule-utils.js"
 
 import { getStaticContentFromNodes } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
@@ -49,6 +49,7 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
 export class HTMLNoUnderscoresInAttributeNamesRule extends ParserRule {
   static ruleName = "html-no-underscores-in-attribute-names"
   static introducedIn = this.version("0.7.0")
+  static defaultEnabledIn = this.version("0.7.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

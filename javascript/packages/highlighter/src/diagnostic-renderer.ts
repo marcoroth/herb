@@ -200,7 +200,7 @@ export class DiagnosticRenderer {
       let markerStart = marker ? marker.start : 0
       let markerLength = marker ? Math.max(1, marker.end - marker.start) : 0
 
-      const prefix = showLineNumbers ? gutter.linePrefix(i, isTargetLine, isTargetLine ? color : undefined) : ""
+      const prefix = showLineNumbers ? gutter.linePrefix(i, isTargetLine, isTargetLine ? color : undefined, isTargetLine ? fileUrlOption : undefined) : ""
 
       const displayLine = isTargetLine ? line : dimStyledText(line)
 

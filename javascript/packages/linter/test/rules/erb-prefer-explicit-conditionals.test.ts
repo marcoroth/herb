@@ -65,7 +65,43 @@ describe("erb-prefer-explicit-conditionals", () => {
     `
 
     expectError(
-      'Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if selected %><%= "active" %><% end %>` instead.'
+      "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if selected %>active<% end %>` instead."
+    )
+
+    assertOffenses(html)
+  })
+
+  it("suggests the literal as static text when the output is a string literal", () => {
+    const html = dedent`
+      <%= "Saved" if notice? %>
+    `
+
+    expectError(
+      "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if notice? %>Saved<% end %>` instead."
+    )
+
+    assertOffenses(html)
+  })
+
+  it("keeps the output tag when the string is interpolated", () => {
+    const html = dedent`
+      <%= "Hello #{name}" if greeting? %>
+    `
+
+    expectError(
+      'Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if greeting? %><%= "Hello #{name}" %><% end %>` instead.'
+    )
+
+    assertOffenses(html)
+  })
+
+  it("keeps the output tag when the literal would be HTML-escaped", () => {
+    const html = dedent`
+      <%= "5 > 3" if comparison? %>
+    `
+
+    expectError(
+      'Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if comparison? %><%= "5 > 3" %><% end %>` instead.'
     )
 
     assertOffenses(html)

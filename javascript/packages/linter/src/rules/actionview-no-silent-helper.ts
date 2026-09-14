@@ -1,8 +1,8 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { isERBOutputNode, isPrismNodeType } from "@herb-tools/core"
-import { isActionViewHelperCall } from "./action-view-utils.js"
+import { isActionViewHelperCall } from "../utils/action-view-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig, BaseAutofixContext, Mutable } from "../types.js"
 import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -98,11 +98,13 @@ export class ActionViewNoSilentHelperRule extends ParserRule<ActionViewNoSilentH
   static autofixRequiresContext = true
   static ruleName = "actionview-no-silent-helper"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

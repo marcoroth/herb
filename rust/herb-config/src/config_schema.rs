@@ -15,13 +15,23 @@ pub struct FilesConfig {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[serde(deny_unknown_fields)]
+pub struct ParserConfig {
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub erb_openers: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RuleConfig {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub enabled: Option<bool>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub severity: Option<SeverityConfig>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub frameworks: Option<Vec<Framework>>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub auto_correct: Option<bool>,
@@ -126,6 +136,9 @@ pub struct HerbConfigOptions {
   pub files: Option<FilesConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub parser: Option<ParserConfig>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
   pub engine: Option<EngineConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -149,6 +162,9 @@ pub struct HerbConfig {
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub files: Option<FilesConfig>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub parser: Option<ParserConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub engine: Option<EngineConfig>,

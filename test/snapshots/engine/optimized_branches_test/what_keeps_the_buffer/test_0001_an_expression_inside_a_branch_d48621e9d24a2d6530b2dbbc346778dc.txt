@@ -1,0 +1,8 @@
+---
+source: "Engine::OptimizedBranchesTest::what keeps the buffer#test_0001_an expression inside a branch"
+input: "{source: \"<% if flag %>\\n  <%= greeting %>\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; if flag 
+ _buf << '  '.freeze; _buf << (greeting).to_s; _buf << '
+'.freeze; end ;
+_buf.to_s

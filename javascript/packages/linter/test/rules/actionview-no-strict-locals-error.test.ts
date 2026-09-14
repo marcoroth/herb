@@ -235,7 +235,7 @@ describe("actionview-no-strict-locals-error", () => {
       ["users/plain", declaration("app/views/users/_plain.html.erb", [{ name: "user", required: true }])],
     ]))
 
-    const locatedContext = { fileName: "app/views/posts/index.html.erb", partials: located }
+    const locatedContext = { fileName: "app/views/posts/index.html.erb", framework: "actionview" as const, partials: located }
 
     beforeAll(async () => {
       await Herb.load()

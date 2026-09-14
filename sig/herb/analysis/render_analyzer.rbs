@@ -54,6 +54,12 @@ module Herb
 
       def print_summary_line: (untyped result) -> untyped
 
+      # : (String) -> bool
+      def component_template?: (String) -> bool
+
+      # : (Array[Hash[Symbol, untyped]]) -> void
+      def print_warning_summary_line: (Array[Hash[Symbol, untyped]]) -> void
+
       private
 
       def print_partial_tree: (untyped partial_names, untyped render_graph, untyped partial_files, untyped view_root, untyped reachable, ?indent: untyped, ?visited: untyped) -> untyped
@@ -64,11 +70,20 @@ module Herb
 
       def trace_to_entry_points: (untyped partial_name, untyped reverse_graph, untyped _partial_files, untyped view_root) -> untyped
 
-      def print_results: (untyped result, untyped duration) -> untyped
+      def print_results: (untyped result, untyped duration, ?untyped warnings) -> untyped
 
       def check_dependencies: (untyped erb_files, untyped view_root) -> untyped
 
+      # : (Array[String], untyped, Pathname) -> Hash[String, Set[String]]
+      def collect_passed_locals: (Array[String], untyped, Pathname) -> Hash[String, Set[String]]
+
+      # : (Hash[Symbol, untyped]) -> String
+      def dynamic_call_display: (Hash[Symbol, untyped]) -> String
+
       def print_dependency_warnings: (untyped warnings) -> untyped
+
+      # : (Array[Hash[Symbol, untyped]]) -> void
+      def print_unknown_call_tally: (Array[Hash[Symbol, untyped]]) -> void
 
       def find_erb_files: () -> untyped
 

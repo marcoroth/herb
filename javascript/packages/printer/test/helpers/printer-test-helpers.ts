@@ -11,8 +11,8 @@ export function createLocation(line = 1, column = 1): Location {
   return Location.from(line, column, line, column)
 }
 
-export function createRange(start = 1, end = 2): Range {
-  return Range.from(start, end)
+export function createRange(from = 1, to = 2): Range {
+  return Range.from(from, to)
 }
 
 export function createToken(type = "", value = "", range = createRange(), location = createLocation()): Token {

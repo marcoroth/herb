@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import {
   getTagLocalName,
   getAttribute,
@@ -7,6 +7,7 @@ import {
   isERBNode,
   isERBOutputNode,
   isERBCommentNode,
+  isInlineRubyCommentNode,
   isHTMLOpenTagNode,
 } from "@herb-tools/core"
 
@@ -50,7 +51,7 @@ class ERBNoStatementInScriptVisitor extends BaseRuleVisitor {
     for (const child of nodes) {
       if (!isERBNode(child)) continue
       if (isERBOutputNode(child)) continue
-      if (isERBCommentNode(child)) continue
+      if ((isERBCommentNode(child) || isInlineRubyCommentNode(child))) continue
 
       const content = child.content?.value || ""
 
@@ -67,6 +68,7 @@ class ERBNoStatementInScriptVisitor extends BaseRuleVisitor {
 export class ERBNoStatementInScriptRule extends ParserRule {
   static ruleName = "erb-no-statement-in-script"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -1,0 +1,13 @@
+---
+source: "Engine::Slots::VisitorTest#test_0020_falls back to index and names the item to key when a collection item carries no key"
+input: "<% @u.each do |u| %><li>x</li><% end %>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: b3fe409f
+
+slots:
+  index=0  type=collection  node_path=[0]  expression="@u.each do |u|"  key_source=index
+
+warnings:
+  type=unkeyed_collection  tag_name="li"  message="Add a `herb-key` or `id` attribute to `<li>` so rows can be matched across updates. Without a key, inserting or reordering the collection re-renders every following row and discards its focus, scroll, and input state."

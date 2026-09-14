@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset, getHelper } from "@herb-tools/core"
 
@@ -235,6 +235,7 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
 export class ERBNoUnusedBlockArgumentRule extends ParserRule {
   static ruleName = "erb-no-unused-block-argument"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

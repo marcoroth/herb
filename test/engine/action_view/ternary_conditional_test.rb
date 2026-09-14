@@ -41,6 +41,28 @@ module Engine
           { admin: true }
         )
       end
+
+      test "ternary with string literals in both branches" do
+        assert_optimized_snapshot(
+          '<%= active ? "On" : "Off" %>',
+          { active: true }
+        )
+      end
+
+      test "ternary with string literals inside an attribute value" do
+        assert_optimized_snapshot(
+          '<div class="<%= active ? "on" : "off" %>">Body</div>',
+          { active: true }
+        )
+      end
+
+      test "ternary with literals that would be HTML-escaped" do
+        assert_compiled_snapshot(
+          '<%= active ? "5 > 3" : "a & b" %>',
+          escape: true,
+          visitors: [Herb::Engine::OptimizeVisitor.new]
+        )
+      end
     end
   end
 end

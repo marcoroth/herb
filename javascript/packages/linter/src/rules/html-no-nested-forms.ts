@@ -1,4 +1,4 @@
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 import { getHelpersForTag, getTagLocalName, isERBOutputNode, isHTMLOpenTagNode, PrismVisitor } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
@@ -135,11 +135,12 @@ class NestedFormVisitor extends ElementStackVisitor {
 export class HTMLNoNestedFormsRule extends ParserRule {
   static ruleName = "html-no-nested-forms"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
     }
   }
 

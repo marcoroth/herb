@@ -1,5 +1,5 @@
 import { SourceRule } from "../types.js"
-import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
+import { BaseSourceRuleVisitor, createEndOfFileLocation } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
@@ -26,6 +26,7 @@ export class ERBRequireTrailingNewlineRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-require-trailing-newline"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

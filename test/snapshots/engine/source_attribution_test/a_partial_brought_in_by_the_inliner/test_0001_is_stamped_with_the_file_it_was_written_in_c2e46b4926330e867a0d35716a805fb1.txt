@@ -1,0 +1,6 @@
+---
+source: "Engine::SourceAttributionTest::a partial brought in by the inliner#test_0001_is stamped with the file it was written in"
+input: "{source: \"<main><%= render \\\"shared/header\\\" %></main>\", locals: {}, options: {escape: false, project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::InlineRender::Visitor>, #<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/index.html.erb\"}}"
+---
+<main data-herb-source="app/views/posts/index.html.erb:1:1"><header data-herb-source="app/views/shared/_header.html.erb:1:1">Hello</header>
+</main>

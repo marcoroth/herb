@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0062_keeps the indentation of a comment on the first line that has trailing content"
+input: "{source: \"  <%# note %> b\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '   b
+'.freeze;
+_buf.to_s

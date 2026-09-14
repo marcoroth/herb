@@ -2,6 +2,8 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 import { GitHubActionsFormatter } from "../../src/cli/formatters/github-actions-formatter.js"
 import { name, version } from "../../package.json"
 import type { ProcessedFile } from "../../src/cli/file-processor.js"
+import { Location } from "@herb-tools/core"
+
 import type { Diagnostic } from "@herb-tools/core"
 
 describe("GitHubActionsFormatter", () => {
@@ -11,7 +13,7 @@ describe("GitHubActionsFormatter", () => {
 
   beforeEach(() => {
     formatter = new GitHubActionsFormatter(true, false)
-    consoleLogSpy = vi.spyOn(console, "log").mockImplementation()
+    consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -21,14 +23,7 @@ describe("GitHubActionsFormatter", () => {
   function createDiagnostic(overrides: Partial<Diagnostic> = {}): Diagnostic {
     return {
       message: "Test error message",
-      location: {
-        start: { line: 10, column: 5 },
-        end: { line: 10, column: 15 },
-        toJSON: () => ({
-          start: { line: 10, column: 5 },
-          end: { line: 10, column: 15 }
-        })
-      },
+      location: Location.from(10, 5, 10, 15),
       severity: "error",
       code: "test-rule",
       source: "Herb Linter",
@@ -119,14 +114,7 @@ describe("GitHubActionsFormatter", () => {
         offense: createDiagnostic({
           message: "Error 2",
           severity: "warning",
-          location: {
-            start: { line: 5, column: 10 },
-            end: { line: 5, column: 20 },
-            toJSON: () => ({
-              start: { line: 5, column: 10 },
-              end: { line: 5, column: 20 }
-            })
-          }
+          location: Location.from(5, 10, 5, 20)
         }),
         content: "<p>test</p>"
       }

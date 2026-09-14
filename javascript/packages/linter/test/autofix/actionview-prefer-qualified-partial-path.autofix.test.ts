@@ -17,7 +17,7 @@ const partials = new PartialIndex("app/views", new Map([
   ["application/flash", declaration("app/views/application/_flash.html.erb")],
 ]))
 
-const context = { fileName: "app/views/posts/index.html.erb", partials }
+const context = { fileName: "app/views/posts/index.html.erb", framework: "actionview" as const, partials }
 
 function fix(source: string, options: { includeUnsafe?: boolean, context?: any } = {}) {
   const linter = new Linter(Herb, [ActionViewPreferQualifiedPartialPathRule])
@@ -98,7 +98,7 @@ describe("actionview-prefer-qualified-partial-path autofix", () => {
   })
 
   test("qualifies a partial rendered from a partial in the same directory", () => {
-    const result = fix(`<%= render "card" %>`, { context: { fileName: "app/views/posts/_list.html.erb", partials } })
+    const result = fix(`<%= render "card" %>`, { context: { fileName: "app/views/posts/_list.html.erb", framework: "actionview", partials } })
 
     expect(result.source).toBe(`<%= render "posts/card" %>`)
   })

@@ -14,7 +14,7 @@ Prism.languages.tree = {
 
   // Location markers
   location: {
-    pattern: /\(location: \(\d+:\d+\)-\(\d+:\d+\)\)/,
+    pattern: /\(location: (?:\(\d+:\d+\)-\(\d+:\d+\)|∅)\)/,
     greedy: true,
   },
 

@@ -12,6 +12,16 @@
 #include <stddef.h>
 #include <string.h>
 
+position_T erb_content_start_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (erb_node->tag_opening != NULL) {
+    return erb_node->tag_opening->location.start;
+  } else if (erb_node->content != NULL) {
+    return erb_node->content->location.start;
+  } else {
+    return erb_node->base.location.start;
+  }
+}
+
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   if (erb_node->tag_closing != NULL) {
     return erb_node->tag_closing->location.end;
@@ -22,8 +32,9 @@ position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   }
 }
 
-location_T* compute_then_keyword(
-  AST_ERB_CONTENT_NODE_T* erb_node,
+location_T* compute_then_keyword_for_content(
+  token_T* content,
+  analyzed_ruby_T* analyzed_ruby,
   control_type_t control_type,
   hb_allocator_T* allocator
 ) {
@@ -32,10 +43,9 @@ location_T* compute_then_keyword(
     return NULL;
   }
 
-  token_T* content = erb_node->content;
-  const char* source = (content && !hb_string_is_empty(content->value))
-                       ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
-                       : NULL;
+  char* source = (content && !hb_string_is_empty(content->value))
+                 ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
+                 : NULL;
   location_T* then_keyword = NULL;
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
@@ -47,7 +57,7 @@ location_T* compute_then_keyword(
       then_keyword = get_then_keyword_location_elsif_wrapped(source, allocator);
     }
   } else {
-    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source, allocator);
+    then_keyword = get_then_keyword_location(analyzed_ruby, source, allocator);
   }
 
   if (then_keyword != NULL && content != NULL) {
@@ -59,7 +69,17 @@ location_T* compute_then_keyword(
     then_keyword->end.column = content_start.column + then_keyword->end.column;
   }
 
+  hb_allocator_dealloc(allocator, source);
+
   return then_keyword;
+}
+
+location_T* compute_then_keyword(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+) {
+  return compute_then_keyword_for_content(erb_node->content, erb_node->analyzed_ruby, control_type, allocator);
 }
 
 typedef struct {
@@ -132,7 +152,7 @@ AST_NODE_T* create_control_node(
                                         .content = erb_node->content,
                                         .tag_closing = erb_node->tag_closing,
                                         .then_keyword = compute_then_keyword(erb_node, control_type, allocator),
-                                        .start_position = erb_node->tag_opening->location.start,
+                                        .start_position = erb_content_start_position(erb_node),
                                         .end_position = erb_content_end_position(erb_node),
                                         .errors = erb_node->base.errors,
                                         .control_type = control_type,
@@ -158,9 +178,9 @@ AST_NODE_T* create_control_node(
 
 static AST_NODE_T* build_if_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_if_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     HERB_PRISM_NODE_EMPTY,
     context->children,
@@ -175,9 +195,9 @@ static AST_NODE_T* build_if_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_else_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_else_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     context->start_position,
     context->end_position,
@@ -188,9 +208,9 @@ static AST_NODE_T* build_else_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_when_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_when_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     context->children,
     context->start_position,
@@ -202,9 +222,9 @@ static AST_NODE_T* build_when_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_in_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_in_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     context->children,
     context->start_position,
@@ -222,9 +242,9 @@ static AST_NODE_T* build_rescue_node(control_builder_context_T* context) {
   }
 
   return (AST_NODE_T*) ast_erb_rescue_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     rescue_node,
     context->start_position,
@@ -236,9 +256,9 @@ static AST_NODE_T* build_rescue_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_ensure_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_ensure_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->children,
     context->start_position,
     context->end_position,
@@ -255,9 +275,9 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
   }
 
   return (AST_NODE_T*) ast_erb_unless_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->then_keyword,
     HERB_PRISM_NODE_EMPTY,
     context->children,
@@ -272,9 +292,9 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_while_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_while_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -287,9 +307,9 @@ static AST_NODE_T* build_while_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_until_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_until_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -302,9 +322,9 @@ static AST_NODE_T* build_until_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_for_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_for_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     context->end_node,
@@ -317,9 +337,9 @@ static AST_NODE_T* build_for_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_block_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_block_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     HERB_PRISM_NODE_EMPTY,
     context->children,
     hb_array_init(0, context->allocator),
@@ -336,9 +356,9 @@ static AST_NODE_T* build_block_node(control_builder_context_T* context) {
 
 static AST_NODE_T* build_yield_node(control_builder_context_T* context) {
   return (AST_NODE_T*) ast_erb_yield_node_init(
-    context->tag_opening,
-    context->content,
-    context->tag_closing,
+    token_copy(context->tag_opening, context->allocator),
+    token_copy(context->content, context->allocator),
+    token_copy(context->tag_closing, context->allocator),
     context->start_position,
     context->end_position,
     context->errors,

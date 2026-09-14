@@ -3,10 +3,12 @@
 
 #include "../ast/ast_nodes.h"
 #include "analyze.h"
+#include "helpers.h"
 
 AST_NODE_T* transform_ternary_expression(
   AST_ERB_CONTENT_NODE_T* erb_node,
   pm_if_node_t* if_node,
+  static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 );
 

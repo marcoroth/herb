@@ -16,4 +16,12 @@ class HerbTest < Minitest::Spec
     assert defined?(Parallel)
     assert_equal already_loaded, bundler_inline_loaded.call
   end
+
+  test "ensure_installed refuses to replace an active bundle for a missing gem" do
+    error = assert_raises(LoadError) do
+      Herb.ensure_installed("herb-test-gem-that-does-not-exist")
+    end
+
+    assert_equal 'Herb needs the `herb-test-gem-that-does-not-exist` gem. Add `gem "herb-test-gem-that-does-not-exist"` to the Gemfile.', error.message
+  end
 end

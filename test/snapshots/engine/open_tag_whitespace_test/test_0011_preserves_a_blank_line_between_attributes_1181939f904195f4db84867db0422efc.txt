@@ -1,0 +1,10 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0011_preserves a blank line between attributes"
+input: "{source: \"<div\\n\\n  class=\\\"foo\\\"\\n>Content</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div
+
+  class="foo"
+>Content</div>
+'.freeze;
+_buf.to_s

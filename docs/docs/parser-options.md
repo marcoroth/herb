@@ -35,6 +35,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | [`strict`](#strict)                     | `Boolean` | `true`                                    | Report diagnostics for patterns that are valid HTML+ERB but ambiguous for tooling                      |
 | [`analyze`](#analyze)                   | `Boolean` | `true`                                    | Run the post-parse analysis passes (ERB control-flow structure, HTML tag matching, Ruby syntax errors) |
 | [`track_whitespace`](#track-whitespace) | `Boolean` | `false`                                   | Keep insignificant whitespace in the syntax tree as `WhitespaceNode`s                                  |
+| [`track_locations`](#track-locations)   | `Boolean` | `true`                                    | Attach source locations and ranges to every node and token                                             |
 | `html`                                  | `Boolean` | `true`                                    | Parse HTML tags. When `false`, HTML-like content is treated as literal text                            |
 | `action_view_helpers`                   | `Boolean` | `false`                                   | Detect Action View tag helpers (`tag`, `content_tag`, `link_to`, …) and parse their block bodies       |
 | `transform_conditionals`                | `Boolean` | `false`                                   | Transform postfix conditionals and ternaries in ERB content                                            |
@@ -42,6 +43,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | `strict_locals`                         | `Boolean` | `false`                                   | Analyze `<%# locals: (…) %>` strict locals magic comments                                              |
 | `iteration_nodes`                       | `Boolean` | `false`                                   | Represent iteration blocks (`each`, `map`, …) as dedicated nodes                                       |
 | `dot_notation_tags`                     | `Boolean` | `false`                                   | Parse dot-notation component tags (like `<Dialog.Button>`) as HTML elements                            |
+| [`erb_openers`](#erb-openers)           | `Array`   | `[]`                                      | Extra ERB tag openers to recognize, written without the leading `<%`                                   |
 | `prism_nodes`                           | `Boolean` | `false`                                   | Attach the Prism node for each ERB tag's Ruby code                                                     |
 | `prism_nodes_deep`                      | `Boolean` | `false`                                   | Attach Prism nodes including their full subtrees                                                       |
 | `prism_program`                         | `Boolean` | `false`                                   | Attach the full Prism `ProgramNode` to the `DocumentNode`                                              |
@@ -64,7 +66,7 @@ With `strict: true`, the parser additionally reports:
 
 - **`OmittedClosingTagError`** for elements whose closing tag was omitted (`<li>`, `<p>`, `<td>`, and friends). The element is still built with an `HTMLOmittedCloseTagNode` either way, strict mode just adds the diagnostic.
 - **`StrayERBClosingTagError`** for a `%>` that is not part of an ERB tag and will therefore be rendered as plain text.
-- **`ERBCaseWithConditionsError`** for a `case` statement that carries its `when`/`in` conditions inside a single ERB tag, which cannot be reliably compiled or formatted.
+- **`ERBCaseWithConditionsError`** for a `case` statement that carries its first `when`/`in` condition inside a single ERB tag. The parser splits such a tag either way, so the template still compiles without strict mode. Strict mode adds the diagnostic because the first branch reads differently from every later one, and `herb format` rewrites the tag into two.
 
 ```erb
 <ul>
@@ -256,6 +258,75 @@ herb parse index.html.erb --track-whitespace
 > [!TIP]
 > Enable `track_whitespace` whenever you intend to print, rewrite, or format a template and need the output to match the input exactly. Herb's own printer, formatter, rewriter, and linter all opt into it. Leave it off when you are only inspecting or analyzing the tree, since the extra nodes are noise you would have to skip over.
 
+## `track_locations` <Badge type="tip" text="^0.11.0" />
+
+**Type:** `Boolean` **Default:** `true`
+
+Every node and token normally carries a `location` (a start and end `Position`) and, for tokens, a `range` of byte offsets. Building those objects is a meaningful share of the work a parse does, and callers that never read them pay for objects they immediately discard.
+
+With `track_locations: false`, the parser skips materializing them. `location` and `range` come back empty on every node and token:
+
+:::code-group
+```ruby [Ruby]
+result = Herb.parse("<div>Hello</div>", track_locations: false)
+
+result.value.location # => nil
+```
+
+```js [JavaScript]
+const result = Herb.parse("<div>Hello</div>", { track_locations: false })
+
+result.value.location // => null
+```
+:::
+
+Everything else about the tree is unchanged. The same nodes are built in the same order, and errors keep their locations so diagnostics stay usable.
+
+> [!WARNING]
+> Most tooling built on Herb reads locations, so disabling them is only safe for a pipeline you control end to end. The linter, formatter, printer, rewriter, and language server all require locations, and the type definitions in every binding still declare `location` as present. Use this when you parse purely to compile or inspect content, such as rendering a template with validation disabled.
+
+## `erb_openers` <Badge type="tip" text="^0.11.0" />
+
+**Type:** `Array` **Default:** `[]`
+
+Some ERB dialects carry tags whose body is not Ruby. The `graphql-client` gem writes queries as `<%graphql … %>`, for example. Herb has no such tag built in, so by default `<%graphql` lexes as a plain `<%` and the query body is treated as Ruby, which reports it as a pile of syntax errors.
+
+`erb_openers` names the extra openers to recognize. Write each one without the leading `<%`:
+
+:::code-group
+```ruby [Ruby]
+source = <<~ERB
+  <%graphql
+    query Products($first: Int!) {
+      products(first: $first) { id }
+    }
+  %>
+ERB
+
+Herb.parse(source).errors.size
+# => 7
+
+Herb.parse(source, erb_openers: ["graphql"]).errors.size
+# => 0
+```
+
+```js [JavaScript]
+Herb.parse(source).errors.length
+// => 7
+
+Herb.parse(source, { erb_openers: ["graphql"] }).errors.length
+// => 0
+```
+:::
+
+A configured tag's body is never parsed as Ruby, so it is left out of the compiled template and is never reported as a Ruby error.
+
+An opener that ends in a letter, digit, or underscore only matches on a word boundary. With `erb_openers: ["graphql"]`, the tag `<%graphql query %>` is a GraphQL tag, while `<%graphql_helper %>` and `<%graphqlish %>` stay ordinary Ruby. Openers that end in punctuation carry no such requirement, so `"?"` makes `<%?maybe %>` a tag.
+
+Configured openers never shadow the openings Herb already knows. The longest match wins, and a built-in opening wins a tie, so `erb_openers: ["="]` leaves `<%==` alone. `Herb.default_erb_openings` returns the openings that are always recognized.
+
+Every Herb tool reads this from the `parser` section of your [configuration file](/configuration#parser-configuration), so a project using such tags does not have to pass the option by hand.
+
 ## Inspecting the Options Used for a Parse
 
 Every parse result carries back the options that produced it, which is useful when the options came from a config file or a tool you do not control:
@@ -283,4 +354,4 @@ result.options.analyze           // => true
 
 ## Trying Options Out
 
-The [Herb Playground](/playground/) exposes `strict`, `analyze`, and `track_whitespace` as checkboxes, so you can see how each one changes the syntax tree for a given template without writing any code.
+The [Herb Playground](/playground/) exposes `strict`, `analyze`, and `track_whitespace` as checkboxes and `erb_openers` as a text field, so you can see how each one changes the syntax tree for a given template without writing any code.

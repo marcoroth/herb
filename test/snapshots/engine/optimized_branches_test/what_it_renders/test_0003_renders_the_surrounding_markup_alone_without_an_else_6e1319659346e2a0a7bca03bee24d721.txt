@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedBranchesTest::what it renders#test_0003_renders the surrounding markup alone without an else"
+input: "{source: \"<div>\\n  <% if flag %>\\n    shown\\n  <% end %>\\n</div>\", locals: {flag: false}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+<div>
+</div>

@@ -1,0 +1,21 @@
+# Generated from lib/herb/analysis/ruby_locals_index/local.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      class Local
+        attr_reader name: String
+
+        attr_reader declaration: Herb::Location
+
+        attr_reader usages: Array[Herb::Location]
+
+        # : (String, Herb::Location, Array[Herb::Location]) -> void
+        def initialize: (String, Herb::Location, Array[Herb::Location]) -> void
+
+        # : () -> Array[Herb::Location]
+        def locations: () -> Array[Herb::Location]
+      end
+    end
+  end
+end

@@ -1,0 +1,8 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0007_preserves indentation of attributes on a self-closing element"
+input: "{source: \"<img\\n  src=\\\"a.png\\\"\\n  alt=\\\"A\\\"\\n/>\\n\", locals: {}, options: {}}"
+---
+<img
+  src="a.png"
+  alt="A"
+/>

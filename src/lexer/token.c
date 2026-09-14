@@ -5,6 +5,7 @@
 #include "../include/lib/hb_string.h"
 #include "../include/location/position.h"
 #include "../include/location/range.h"
+#include "../include/util/utf8.h"
 #include "../include/util/util.h"
 
 #include <stdarg.h>
@@ -25,6 +26,7 @@ token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) 
   }
 
   token->value = value;
+  token->owns_value = false;
 
   token->type = type;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
@@ -53,6 +55,7 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("TOKEN_HTML_DOCTYPE");
     case TOKEN_XML_DECLARATION: return hb_string("TOKEN_XML_DECLARATION");
     case TOKEN_XML_DECLARATION_END: return hb_string("TOKEN_XML_DECLARATION_END");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("TOKEN_XML_PROCESSING_INSTRUCTION_START");
     case TOKEN_CDATA_START: return hb_string("TOKEN_CDATA_START");
     case TOKEN_CDATA_END: return hb_string("TOKEN_CDATA_END");
     case TOKEN_HTML_TAG_START: return hb_string("TOKEN_HTML_TAG_START");
@@ -94,6 +97,7 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
     case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
     case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_XML_PROCESSING_INSTRUCTION_START: return hb_string("`<?`");
     case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
     case TOKEN_CDATA_END: return hb_string("`]]>`");
     case TOKEN_HTML_TAG_START: return hb_string("`<`");
@@ -215,13 +219,89 @@ token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
 
   if (!new_token) { return NULL; }
 
-  new_token->value = token->value;
+  new_token->value = token->owns_value ? hb_string_copy(token->value, allocator) : token->value;
+  new_token->owns_value = token->owns_value;
 
   new_token->type = token->type;
   new_token->range = token->range;
   new_token->location = token->location;
 
   return new_token;
+}
+
+static position_T token_position_after(position_T position, hb_string_T value, uint32_t offset) {
+  uint32_t index = 0;
+
+  while (index < offset && index < value.length) {
+    if (is_newline(value.data[index])) {
+      position.line++;
+      position.column = 0;
+      index++;
+
+      continue;
+    }
+
+    position.column++;
+    index += utf8_sequence_length(hb_string_slice(value, index));
+  }
+
+  return position;
+}
+
+static token_T* token_from_slice(
+  const token_T* token,
+  hb_string_T value,
+  uint32_t offset,
+  position_T start,
+  position_T end,
+  hb_allocator_T* allocator
+) {
+  token_T* slice = hb_allocator_alloc(allocator, sizeof(token_T));
+
+  if (!slice) { return NULL; }
+
+  slice->value = token->owns_value ? hb_string_copy(value, allocator) : value;
+  slice->owns_value = token->owns_value;
+
+  slice->type = token->type;
+  slice->range = (range_T) { .from = token->range.from + offset, .to = token->range.from + offset + value.length };
+
+  location_from_positions(&slice->location, start, end);
+
+  return slice;
+}
+
+bool token_split(
+  const token_T* token,
+  const uint32_t offset,
+  hb_allocator_T* allocator,
+  token_T** head,
+  token_T** tail
+) {
+  if (!token || !head || !tail) { return false; }
+  if (offset == 0 || offset >= token->value.length) { return false; }
+  if (utf8_is_valid_continuation_byte((unsigned char) token->value.data[offset])) { return false; }
+
+  const position_T split = token_position_after(token->location.start, token->value, offset);
+
+  token_T* head_token =
+    token_from_slice(token, hb_string_range(token->value, 0, offset), 0, token->location.start, split, allocator);
+
+  if (!head_token) { return false; }
+
+  token_T* tail_token =
+    token_from_slice(token, hb_string_slice(token->value, offset), offset, split, token->location.end, allocator);
+
+  if (!tail_token) {
+    token_free(head_token, allocator);
+
+    return false;
+  }
+
+  *head = head_token;
+  *tail = tail_token;
+
+  return true;
 }
 
 bool token_value_empty(const token_T* token) {
@@ -236,6 +316,8 @@ bool token_is_escaped_erb_tag_opening(const token_T* token) {
 
 void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
+
+  if (token->owns_value) { hb_allocator_dealloc(allocator, (void*) token->value.data); }
 
   hb_allocator_dealloc(allocator, token);
 }

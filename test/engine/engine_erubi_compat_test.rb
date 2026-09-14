@@ -10,7 +10,7 @@ module Engine
     test "handles no tags" do
       template = "a\n"
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
     end
 
     test "handles basic erb expressions" do
@@ -35,7 +35,7 @@ module Engine
     test "escapes backslashes and apostrophes in text" do
       template = "<table>\n <tbody>' ' \\\\ \\\\\n</tbody>\n</table>"
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
     end
 
     test "strips whitespace with -%> tag" do
@@ -44,7 +44,7 @@ module Engine
         text
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
     end
 
     test "handles erb comments" do
@@ -54,6 +54,14 @@ module Engine
       ERB
 
       assert_compiled_snapshot(template)
+    end
+
+    test "compiles an erb comment to the same lines as erubi" do
+      assert_compiled_snapshot("<%# a comment %>\n<div>Content</div>\n", enforce_erubi_equality: true)
+    end
+
+    test "compiles an erb comment followed by text to the same lines as erubi" do
+      assert_compiled_snapshot("<%# comment %>\nhi\n", enforce_erubi_equality: true)
     end
 
     test "handles escape option" do
@@ -73,20 +81,20 @@ module Engine
     test "handles custom bufvar" do
       template = "<div>Test</div>"
 
-      assert_compiled_snapshot(template, { bufvar: "@output" })
+      assert_compiled_snapshot(template, { bufvar: "@output" }, enforce_erubi_equality: true)
     end
 
     test "handles freeze option" do
       template = "<div>Static content</div>"
 
-      assert_compiled_snapshot(template, { freeze: true })
+      assert_compiled_snapshot(template, { freeze: true }, enforce_erubi_equality: true)
     end
 
     test "handles freeze_template_literals option" do
       template = "<div>Content</div>"
 
-      assert_compiled_snapshot(template)
-      assert_compiled_snapshot(template, { freeze_template_literals: false })
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+      assert_compiled_snapshot(template, { freeze_template_literals: false }, enforce_erubi_equality: true)
     end
 
     test "handles custom preamble and postamble" do
@@ -98,7 +106,7 @@ module Engine
     test "handles ensure option" do
       template = "<div>Test</div>"
 
-      assert_compiled_snapshot(template, ensure: true)
+      assert_compiled_snapshot(template, { ensure: true }, enforce_erubi_equality: true)
     end
 
     test "handles custom escapefunc" do
@@ -169,6 +177,18 @@ module Engine
     test "handles XML declarations" do
       template = '<?xml version="1.0" encoding="UTF-8"?>'
 
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "handles XML processing instructions" do
+      template = '<?xml-stylesheet type="text/xsl" href="feed.xsl"?>'
+
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "handles XML processing instructions with ERB" do
+      template = '<?xml-stylesheet type="text/xsl" href="<%= path %>"?>'
+
       assert_compiled_snapshot(template)
     end
 
@@ -178,6 +198,191 @@ module Engine
 
     test "handles empty escaped erb tag surrounded by text" do
       assert_evaluated_snapshot("a <%%> b", {}, enforce_erubi_equality: true)
+    end
+
+    test "leaves whitespace before a <%- tag alone" do
+      template = <<~ERB
+        text
+          <%- a = 1 %>
+        after
+      ERB
+
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "handles case with conditions in separate erb tags" do
+      template = <<~ERB
+        <% case animal %>
+        <% when "cat" %>
+          <p>You chose a cat!</p>
+        <% when "dog" %>
+          <p>You chose a dog!</p>
+        <% else %>
+          <p>Unknown animal</p>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "handles case with a trimming tag before the first condition" do
+      template = <<~ERB
+        <% case animal -%>
+        <% when "cat" %>
+          <p>You chose a cat!</p>
+        <% else %>
+          <p>Unknown animal</p>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "handles case with its first condition in the same erb tag when not strict" do
+      template = <<~ERB
+        <% case animal
+        when "cat" %>
+          <p>You chose a cat!</p>
+        <% when "dog" %>
+          <p>You chose a dog!</p>
+        <% else %>
+          <p>Unknown animal</p>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, parser_options: { strict: false }, enforce_erubi_equality: true)
+    end
+
+    test "rejects case with its first condition in the same erb tag when strict" do
+      template = <<~ERB
+        <% case animal
+        when "cat" %>
+          <p>You chose a cat!</p>
+        <% end %>
+      ERB
+
+      error = assert_raises(Herb::Engine::ParseError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+    end
+
+    test "keeps the whitespace around a standalone code tag with trim: false" do
+      template = <<~ERB
+        <% a = 1 %>
+        text
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation in front of a code tag with trim: false" do
+      template = "before\n  <% a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around a comment with trim: false" do
+      template = "before\n  <%# comment %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "leaves whitespace before a <%- tag alone with trim: false" do
+      template = "before\n  <%- a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the newline after a code tag ending in -%> with trim: false" do
+      template = "<% a = 1 -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "drops the newline after an expression ending in -%> with trim: false" do
+      template = "<%= a -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around control flow with trim: false" do
+      template = <<~ERB
+        <% if a == 1 %>
+          yes
+        <% else %>
+          no
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block as literal text" do
+      template = "<%% foo do %>\nx\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text inside parsed HTML" do
+      template = "<div class=\"card\"><%%= name %></div>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB conditional as literal text" do
+      template = "<%% if admin? %>\n  <p>hi</p>\n<%% else %>\n  <p>bye</p>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB iteration as literal text" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB case as literal text" do
+      template = "<%% case status %>\n<%% when :active %>\n  on\n<%% else %>\n  off\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+    test "emits an escaped ERB case sharing a tag with its condition as literal text" do
+      template = "<%% case status when :active %>\n  on\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, parser_options: { strict: false })
+      assert_evaluated_snapshot(template, {}, { parser_options: { strict: false } }, enforce_erubi_equality: true)
+    end
+
+    test "keeps the line count when a continuation closes its block in the same tag" do
+      template = <<~ERB
+        <% begin %>
+          body
+        <% rescue; end %>
+        <%= after %>
+      ERB
+
+      assert_compiled_snapshot(template)
     end
   end
 end

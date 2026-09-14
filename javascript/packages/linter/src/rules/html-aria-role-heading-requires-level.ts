@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, isNilAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, isNilAttributeValue } from "../utils/rule-utils.js"
 import { getAttributeName, getAttributes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -23,6 +23,7 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
   static ruleName = "html-aria-role-heading-requires-level"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

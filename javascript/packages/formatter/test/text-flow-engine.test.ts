@@ -56,6 +56,10 @@ function createMockDelegate(options: { indent?: string, maxLineLength?: number }
       return `<${tagName}>${bodyText}</${tagName}>`
     },
 
+    tryRenderControlFlowInline(): string | null {
+      return null
+    },
+
     visit(node: Node) {
       visitedNodes.push(node)
     }
@@ -405,6 +409,7 @@ describe("TextFlowEngine", () => {
         tryRenderInlineElement(element: HTMLElementNode) {
           return `<${getTagName(element)}>x</${getTagName(element)}>`
         },
+        tryRenderControlFlowInline() { return null },
         visit(node: Node) { this.visitedNodes.push(node) },
       }
 

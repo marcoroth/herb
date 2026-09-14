@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use herb_config::{Config, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
+use herb_config::{Config, Framework, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
 
 fn default_include_patterns() -> Vec<String> {
   Config::get_default_file_patterns()
@@ -213,6 +213,15 @@ mod config_from_object {
     let config = Config::from_object(&HerbConfigOptions::default(), Path::new("/project"), Some("1.2.3"), None).unwrap();
 
     assert_eq!(config.version(), "1.2.3");
+  }
+
+  #[test]
+  fn creates_config_with_rule_frameworks() {
+    let config = config_from_yaml("linter:\n  rules:\n    actionview-no-silent-render:\n      frameworks:\n        - ruby\n        - actionview\n");
+
+    let rule = config.get_rule_config("actionview-no-silent-render").unwrap();
+
+    assert_eq!(rule.frameworks, Some(vec![Framework::Ruby, Framework::ActionView]));
   }
 }
 
@@ -516,6 +525,70 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn default_rule_severity_returns_none_when_all_is_not_configured() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    html-tag-name-lowercase:\n      severity: warning\n").default_rule_severity(),
+      None
+    );
+  }
+
+  #[test]
+  fn default_rule_severity_returns_the_all_pseudo_rule_setting() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n").default_rule_severity(),
+      Some(Severity::Warning.into())
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_falls_back_to_the_all_pseudo_rule() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Error.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_prefers_the_rule_severity_over_the_all_pseudo_rule() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity: warning\n    rule-a:\n      severity: info\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Error.into(), LinterMode::Cli),
+      Severity::Info
+    );
+    assert_eq!(
+      config.get_configured_severity("rule-b", Severity::Error.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_resolves_the_all_pseudo_rule_with_mode() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      severity:\n        editor: hint\n        cli: error\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Editor),
+      Severity::Hint
+    );
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Cli),
+      Severity::Error
+    );
+  }
+
+  #[test]
+  fn get_configured_severity_keeps_the_default_when_all_sets_only_enabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n");
+
+    assert_eq!(
+      config.get_configured_severity("rule-a", Severity::Warning.into(), LinterMode::Cli),
+      Severity::Warning
+    );
+  }
+
+  #[test]
   fn is_rule_disabled_returns_true_for_unconfigured_rules_when_all_is_disabled() {
     assert!(config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").is_rule_disabled("html-img-require-alt"));
   }
@@ -785,6 +858,64 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn a_more_specific_files_include_overrides_a_default_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/skip/skipped.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_naming_a_default_excluded_directory_opts_the_whole_tree_back_in() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/gems/primer/button.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_broad_files_include_does_not_override_excludes() {
+    let config = config_from_yaml("files:\n  include:\n    - '**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/gem.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_a_more_specific_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - 'app/views/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_an_exclude_that_is_not_directory_scoped() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - '**/*.generated.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/index.generated.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_must_override_every_matching_exclude_to_win() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\nlinter:\n  exclude:\n    - 'vendor/keep/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/keep/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_more_specific_tool_include_overrides_a_files_exclude() {
+    let config = config_from_yaml("files:\n  exclude:\n    - 'vendor/**/*'\nlinter:\n  include:\n    - 'vendor/special/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Formatter));
+  }
+
+  #[test]
   fn is_enabled_for_path_works_for_formatter_tool() {
     let config = config_from_yaml("formatter:\n  enabled: true\n  exclude:\n    - 'test/**/*'\n");
 
@@ -955,6 +1086,32 @@ mod config_instance_methods {
     let config = config_from_yaml_in("linter:\n  exclude:\n    - 'app/views/posts/**/*'\n", dir.path());
 
     assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![first]);
+  }
+
+  #[test]
+  fn find_files_for_tool_walks_into_a_directory_a_specific_include_opts_back_in() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "vendor/keep/kept.html.erb");
+    create_test_file(dir.path(), "vendor/skip/skipped.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
+  }
+
+  #[test]
+  fn find_files_for_tool_keeps_pruning_defaults_for_a_broad_include() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "app/views/index.html.erb");
+    create_test_file(dir.path(), "vendor/bundle/gem.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - '**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
   }
 
   #[test]

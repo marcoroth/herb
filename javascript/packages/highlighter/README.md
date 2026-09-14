@@ -90,7 +90,7 @@ herb-highlight diff fix.json
 import { Herb } from "@herb-tools/node-wasm"
 import { Highlighter } from "@herb-tools/highlighter"
 
-const highlighter = new Highlighter("default", Herb)
+const highlighter = new Highlighter("onedark", Herb)
 
 await highlighter.initialize()
 
@@ -98,6 +98,30 @@ highlighter.highlight(
   "filename.html.erb",
   "<% if true %><span>true</span><% end %>",
 )
+```
+
+## Node and the Browser
+
+There is one specifier, `@herb-tools/highlighter`. Under the `browser` export condition it resolves to a build with no Node built-ins in it, so a bundler picks the right one on its own.
+
+Everything that needs the filesystem or a Node backend lives only in the Node build, and is therefore a compile error rather than a runtime surprise in the browser:
+
+`loadCustomTheme`, `resolveThemeInput`, `highlightFileFromPath`, `highlightDiagnosticFromPath`, `highlightContent`, `highlightFile`
+
+The highlighter never provides a backend of its own, in either build. Always pass the one that suits the environment:
+
+```typescript
+import { Herb } from "@herb-tools/browser"
+import { Highlighter } from "@herb-tools/highlighter"
+
+const highlighter = new Highlighter("onedark", Herb)
+```
+
+```typescript
+import { Herb } from "@herb-tools/node-wasm"
+import { Highlighter } from "@herb-tools/highlighter"
+
+const highlighter = new Highlighter("onedark", Herb)
 ```
 
 ## Rendering a Diff

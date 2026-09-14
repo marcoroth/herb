@@ -1,4 +1,5 @@
 import { Config } from "@herb-tools/config"
+
 import { Herb, HerbBackend } from "@herb-tools/node-wasm"
 import { ProjectIndex } from "@herb-tools/analysis/node"
 
@@ -8,10 +9,12 @@ import { AutofixService } from "./autofix_service"
 
 import { CodeActionProvider } from "./code_action_provider"
 import { FormattingProvider } from "./formatting_provider"
+import { RuntimeReports } from "./runtime_reports"
 import { CompletionProvider, ReferencesProvider } from "@herb-tools/language-service"
 
 import { version } from "../package.json"
 
+import type { Framework } from "@herb-tools/config"
 import type { Connection } from "vscode-languageserver/node"
 import type { UserSettings, PersonalHerbSettings } from "./user_settings"
 import type { Capabilities } from "./capabilities"
@@ -42,6 +45,7 @@ export class Project {
   readonly formattingProvider: FormattingProvider
   readonly referencesProvider: ReferencesProvider
   readonly completionProvider: CompletionProvider
+  readonly runtimeReports: RuntimeReports
 
   private readonly connection: Connection
   private readonly userSettings: UserSettings
@@ -57,9 +61,10 @@ export class Project {
     this.configService = new ConfigService(root)
     this.index = new ProjectIndex({ root, backend: this.herbBackend, logger: connection.console })
     this.linterService = new LinterService(connection, userSettings, capabilities, this, this.index)
-    this.autofixService = new AutofixService(connection, undefined, this.index)
+    this.autofixService = new AutofixService(connection, this, undefined, this.index)
     this.codeActionProvider = new CodeActionProvider(this, undefined, this.index)
     this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
+    this.runtimeReports = new RuntimeReports(root)
 
     this.completionProvider = new CompletionProvider(
       shared.parserService,
@@ -72,6 +77,7 @@ export class Project {
       this.index,
       shared.documents,
       shared.readFile,
+      shared.parserService,
     )
   }
 
@@ -86,13 +92,19 @@ export class Project {
     await this.index.indexAll()
   }
 
+  get framework(): Framework | undefined {
+    return this.config?.config?.framework
+  }
+
   async loadConfig() {
     this.config = await this.readConfig()
 
     this.codeActionProvider.setConfig(this.config)
     this.autofixService.setConfig(this.config)
     this.linterService.setConfig(this.config)
-    this.completionProvider.setFramework(this.config?.config?.framework)
+    this.completionProvider.setConfig(this.config)
+    this.referencesProvider.setConfig(this.config)
+
     this.linterService.rebuildLinter()
   }
 

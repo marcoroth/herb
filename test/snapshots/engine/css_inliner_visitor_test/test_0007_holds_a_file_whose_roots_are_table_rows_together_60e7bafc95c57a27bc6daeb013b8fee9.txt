@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0007_holds a file whose roots are table rows together"
+input: "{source: \"<style>.cell { color: #008000 }</style><tr class=\\\"row\\\"><td class=\\\"cell\\\">Cell</td></tr>\", locals: {}, options: {filename: \"app/views/posts/_row.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<tr class="row"><td class="cell" style="color: #008000;">Cell</td></tr>

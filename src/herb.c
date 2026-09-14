@@ -8,16 +8,22 @@
 #include "include/lib/hb_array.h"
 #include "include/parser/parser.h"
 #include "include/version.h"
+#include "include/visitor.h"
 
 #include <prism.h>
 #include <stdlib.h>
 #include <string.h>
 
-HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* allocator) {
+HERB_EXPORTED_FUNCTION hb_array_T* herb_lex_with_options(
+  const char* source,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+) {
   if (!source) { source = ""; }
 
   lexer_T lexer = { 0 };
   lexer_init(&lexer, source, allocator);
+  lexer_apply_erb_openers(&lexer, options);
 
   token_T* token = NULL;
   hb_array_T* tokens = hb_array_init(128, allocator);
@@ -29,6 +35,18 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* 
   hb_array_append(tokens, token);
 
   return tokens;
+}
+
+HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* allocator) {
+  return herb_lex_with_options(source, NULL, allocator);
+}
+
+static bool herb_count_node_errors(const AST_NODE_T* node, void* data) {
+  if (node == NULL) { return false; }
+
+  if (node->errors != NULL) { *((uint32_t*) data) += (uint32_t) hb_array_size(node->errors); }
+
+  return true;
 }
 
 HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
@@ -46,7 +64,7 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   if (options != NULL) { parser_options = *options; }
 
   uint32_t error_count = 0;
-  parser_options.error_count = &error_count;
+  if (parser_options.error_count == NULL) { parser_options.error_count = &error_count; }
 
   parser_options_set_deadline(&parser_options);
 
@@ -60,6 +78,8 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
     lexer.previous_column = parser_options.start_column;
   }
 
+  lexer_apply_erb_openers(&lexer, &parser_options);
+
   herb_parser_init(&parser, &lexer, parser_options);
 
   AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
@@ -67,6 +87,11 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   herb_parser_deinit(&parser);
 
   if (parser_options.analyze) { herb_analyze_parse_tree(document, source, &parser_options, allocator); }
+
+  if (parser_options.error_count != NULL) {
+    *parser_options.error_count = 0;
+    herb_visit_node((AST_NODE_T*) document, herb_count_node_errors, parser_options.error_count);
+  }
 
   if (parser_options.prism_nodes || parser_options.prism_program) {
     herb_annotate_prism_nodes(
@@ -85,7 +110,8 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
       document->base.location.start,
       document->base.location.end,
       allocator,
-      &document->base.errors
+      &document->base.errors,
+      options
     );
   }
 

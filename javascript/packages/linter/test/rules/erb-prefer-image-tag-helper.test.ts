@@ -158,7 +158,7 @@ describe("erb-prefer-image-tag-helper", () => {
     })
 
     test("passes for img with ERB expression when no framework is configured", () => {
-      expectNoOffenses('<img src="<%= image_path("logo.png") %>" alt="Logo">')
+      expectNoOffenses('<img src="<%= image_path("logo.png") %>" alt="Logo">', { framework: undefined })
     })
   })
 })

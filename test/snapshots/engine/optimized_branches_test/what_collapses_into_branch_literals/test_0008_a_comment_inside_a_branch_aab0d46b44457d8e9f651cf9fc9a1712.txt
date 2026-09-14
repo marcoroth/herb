@@ -1,0 +1,9 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0008_a comment inside a branch"
+input: "{source: \"<% if flag %>\\n  <%# a\\n  multiline comment %>\\n  body\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag 
+ "  body\n".freeze;
+
+
+ else "".freeze;end ;

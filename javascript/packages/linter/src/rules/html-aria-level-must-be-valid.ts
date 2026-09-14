@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 import { getValidatableStaticContent, hasERBOutput, filterLiteralNodes, filterERBContentNodes, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -65,6 +65,7 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
   static ruleName = "html-aria-level-must-be-valid"
   static introducedIn = this.version("0.4.3")
+  static defaultEnabledIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

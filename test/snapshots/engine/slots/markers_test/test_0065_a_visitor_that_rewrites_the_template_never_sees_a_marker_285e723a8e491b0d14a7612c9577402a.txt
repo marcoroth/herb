@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0065_a visitor that rewrites the template never sees a marker"
+input: "markers_test-5"
+---
+<!--herb-region:app/views/test.html.erb:0417e5d5:0--><div data-herb-slot="0:child">Marco</div><!--/herb-region:app/views/test.html.erb-->

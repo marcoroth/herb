@@ -1,0 +1,7 @@
+---
+source: "Engine::InlineRenderTest::what the copy has to keep meaning#test_0009_inlines a partial that assigns a name the template has a local for"
+input: "inline_render_test-4"
+---
+_buf = ::String.new; label = "template" ; ->(; label) { ; label = "partial"; _buf << '<i>'.freeze; _buf << (label).to_s; _buf << '</i>
+'.freeze; }.call() ;
+_buf.to_s

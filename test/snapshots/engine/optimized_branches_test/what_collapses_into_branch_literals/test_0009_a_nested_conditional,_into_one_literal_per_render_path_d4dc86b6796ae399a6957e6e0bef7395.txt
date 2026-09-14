@@ -1,0 +1,9 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0009_a nested conditional, into one literal per render path"
+input: "{source: \"<% if flag %>\\n  <% if other %>\\n    x\\n  <% end %>\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag 
+  if other 
+ "    x\n".freeze;
+ else "".freeze;  end 
+ else "".freeze;end ;

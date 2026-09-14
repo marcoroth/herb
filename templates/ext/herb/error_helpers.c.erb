@@ -40,7 +40,7 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   <%- when Herb::Template::PositionField -%>
   VALUE <%= error.human %>_<%= field.name %> = rb_position_from_c_struct(<%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>);
+  VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>, &HERB_DEFAULT_PARSER_OPTIONS);
   <%- when Herb::Template::TokenTypeField -%>
   hb_string_T _<%= field.name %>_string = token_type_to_string(<%= error.human %>-><%= field.name %>);
   VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new(_<%= field.name %>_string.data, _<%= field.name %>_string.length);

@@ -87,6 +87,14 @@ Helpers that only exist on the form builder are also **not** reported. `button` 
 <%= tag.name %>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 * [Rails `ActionView::Helpers::TagHelper#tag`](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)

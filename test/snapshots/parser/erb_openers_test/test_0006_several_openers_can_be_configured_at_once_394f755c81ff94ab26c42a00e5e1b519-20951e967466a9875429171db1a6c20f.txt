@@ -1,0 +1,50 @@
+---
+source: "Parser::ERBOpenersTest#test_0006_several openers can be configured at once"
+input: |2-
+<%graphql query { id } %>
+<%herb slot :header %>
+<%? maybe %>
+<%= name %>
+options: {erb_openers: ["graphql", "herb", "?"]}
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (8 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:25))
+    │   ├── tag_opening: "<%graphql" (location: (1:0)-(1:9))
+    │   ├── content: " query { id } " (location: (1:9)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (1:25)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (2:0)-(2:22))
+    │   ├── tag_opening: "<%herb" (location: (2:0)-(2:6))
+    │   ├── content: " slot :header " (location: (2:6)-(2:20))
+    │   ├── tag_closing: "%>" (location: (2:20)-(2:22))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (2:22)-(3:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (3:0)-(3:12))
+    │   ├── tag_opening: "<%?" (location: (3:0)-(3:3))
+    │   ├── content: " maybe " (location: (3:3)-(3:10))
+    │   ├── tag_closing: "%>" (location: (3:10)-(3:12))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (3:12)-(4:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (4:0)-(4:11))
+    │   ├── tag_opening: "<%=" (location: (4:0)-(4:3))
+    │   ├── content: " name " (location: (4:3)-(4:9))
+    │   ├── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (4:11)-(5:0))
+        └── content: "\n"

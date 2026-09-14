@@ -1,10 +1,13 @@
-import { ParserRule } from "../types"
-import { ElementStackVisitor, isHeadOnlyTag, isBodyOnlyTag } from "./rule-utils"
-import { hasAttribute, getTagLocalName } from "@herb-tools/core"
+import { HERB_ATTRIBUTES } from "@herb-tools/client/directives"
 
-import type { ParseResult, HTMLElementNode, ParserOptions } from "@herb-tools/core"
-import type * as Nodes from "@herb-tools/core"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
+import { isHeadOnlyTag, isBodyOnlyTag } from "../utils/rule-utils"
+
+import { ParserRule } from "../types"
+import { ElementStackVisitor } from "../utils/rule-utils"
+
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
+import type { ParserOptions, ParseResult, HTMLElementNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, ERBCaseMatchNode } from "@herb-tools/core"
 
 const inTheBodyNotTheHead = (ancestors: string[]) => ancestors.includes("body") && !ancestors.includes("head")
 
@@ -18,19 +21,19 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
   private bodyOnlyTagName: string | null = null
   private conditionalDepth = 0
 
-  visitERBIfNode(node: Nodes.ERBIfNode): void {
+  visitERBIfNode(node: ERBIfNode): void {
     this.withinConditional(() => super.visitERBIfNode(node))
   }
 
-  visitERBUnlessNode(node: Nodes.ERBUnlessNode): void {
+  visitERBUnlessNode(node: ERBUnlessNode): void {
     this.withinConditional(() => super.visitERBUnlessNode(node))
   }
 
-  visitERBCaseNode(node: Nodes.ERBCaseNode): void {
+  visitERBCaseNode(node: ERBCaseNode): void {
     this.withinConditional(() => super.visitERBCaseNode(node))
   }
 
-  visitERBCaseMatchNode(node: Nodes.ERBCaseMatchNode): void {
+  visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
     this.withinConditional(() => super.visitERBCaseMatchNode(node))
   }
 
@@ -40,15 +43,16 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
     if (tagName && isHeadOnlyTag(tagName)) {
       const isAllowedInSVG = (tagName === "title" || tagName === "style") && this.isInsideElement("svg")
       const isMetaWithItemprop = tagName === "meta" && hasAttribute(node, "itemprop")
+      const isScopedStyle = tagName === "style" && (hasAttribute(node, "scoped") || hasAttribute(node, HERB_ATTRIBUTES.styleScoped))
 
-      if (!isAllowedInSVG && !isMetaWithItemprop) {
+      if (!isAllowedInSVG && !isMetaWithItemprop && !isScopedStyle) {
         const { verdict, chain } = this.placementAcrossCallers(inTheBodyNotTheHead)
         const message = `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`
 
         if (verdict === "always") {
-          this.addOffenseWithCallChain(message, node.location, chain)
+          this.addOffenseWithCallChain(message, node.open_tag?.location ?? node.location, chain)
         } else if (verdict === "mixed") {
-          this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<body>\`.`, node.location, chain)
+          this.addOffenseWithCallChain(`${message} At least one call site renders this file inside the \`<body>\`.`, node.open_tag?.location ?? node.location, chain)
         } else if (verdict === "unknown" && this.alwaysRenders) {
           this.undecided.push({ tagName, node })
         }
@@ -66,7 +70,7 @@ class HeadOnlyElementsVisitor extends ElementStackVisitor {
     for (const { tagName, node } of this.undecided) {
       this.addOffense(
         `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag. This template also renders the body-only element \`<${this.bodyOnlyTagName}>\`, so one of the two is misplaced.`,
-        node.location,
+        node.open_tag?.location ?? node.location,
       )
     }
   }
@@ -90,12 +94,14 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-head-only-elements"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml", "**/*.xml.erb"]
+      exclude: ["**/*.xml", "**/*.xml.erb"],
+      environments: ["cli", "browser"],
     }
   }
 

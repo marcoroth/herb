@@ -33,7 +33,11 @@ describe("actionview-prefer-link-to-helper", () => {
   })
 
   test("passes when the framework is not Action View", () => {
-    expectNoOffenses('<a href="<%= dashboard_path %>">Dashboard</a>')
+    expectNoOffenses('<a href="<%= dashboard_path %>">Dashboard</a>', { framework: "ruby" })
+  })
+
+  test("passes when no framework is configured", () => {
+    expectNoOffenses('<a href="<%= dashboard_path %>">Dashboard</a>', { framework: undefined })
   })
 
   test("passes for an href that holds more than the expression", () => {

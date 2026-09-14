@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 
-import { isSleepCall } from "./prism-rule-utils.js"
+import { isSleepCall } from "../utils/prism-rule-utils.js"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -21,6 +21,7 @@ class SleepCallCollector extends PrismVisitor {
 export class ERBNoSleepRule extends ParserRule {
   static ruleName = "erb-no-sleep"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

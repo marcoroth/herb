@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import type { ParseResult, HTMLConditionalOpenTagNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -20,6 +20,7 @@ class ERBNoConditionalOpenTagRuleVisitor extends BaseRuleVisitor {
 export class ERBNoConditionalOpenTagRule extends ParserRule {
   static ruleName = "erb-no-conditional-open-tag"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

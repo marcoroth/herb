@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { isERBOutputNode } from "@herb-tools/core"
 
 import type { ERBIterationBlockNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -32,6 +32,7 @@ class PreferEachOverMapVisitor extends BaseRuleVisitor {
 export class ERBPreferEachOverMapRule extends ParserRule {
   static ruleName = "erb-prefer-each-over-map"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

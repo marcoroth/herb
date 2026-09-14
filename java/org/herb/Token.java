@@ -40,16 +40,16 @@ public class Token {
                                .replace("\r", "\\r")
                                .replace("\t", "\\t")
                                .replace("\"", "\\\"");
-    return String.format("\"%s\" (location: %s)", escapedValue, location);
+    return String.format("\"%s\" (location: %s)", escapedValue, location != null ? location : "∅");
   }
 
   public String inspect() {
     return String.format("#<Herb::Token type=\"%s\" value=\"%s\" range=%s start=%s end=%s>",
       type,
       inspectValue(),
-      range.inspect(),
-      location.getStart().inspect(),
-      location.getEnd().inspect()
+      range != null ? range.inspect() : "∅",
+      location != null ? location.getStart().inspect() : "∅",
+      location != null ? location.getEnd().inspect() : "∅"
     );
   }
 
@@ -76,7 +76,7 @@ public class Token {
 
     Token other = (Token) obj;
 
-    return type.equals(other.type) && value.equals(other.value) && location.equals(other.location);
+    return type.equals(other.type) && value.equals(other.value) && java.util.Objects.equals(location, other.location);
   }
 
   @Override
@@ -84,7 +84,7 @@ public class Token {
     int result = type.hashCode();
 
     result = 31 * result + value.hashCode();
-    result = 31 * result + location.hashCode();
+    result = 31 * result + java.util.Objects.hashCode(location);
 
     return result;
   }

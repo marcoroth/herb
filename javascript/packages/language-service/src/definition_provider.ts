@@ -2,6 +2,8 @@ import { Hover, Location, LocationLink, MarkupKind, Position, Range } from "vsco
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserService } from "./parser_service"
 import { isPositionInRange, lspRangeFromLocation } from "./range_utils"
+import { RubyLocalsIndex } from "./ruby_locals_index"
+import { slotNameGroupAt } from "./herb_attribute_links"
 import { pathFromUri, uriFromPath } from "./uri"
 import { RenderCollector } from "./render_collector"
 
@@ -10,6 +12,7 @@ import * as path from "./posix_path"
 import { getTagName, isERBStrictLocalsNode, isHTMLElementNode, isPureWhitespaceNode } from "@herb-tools/core"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
+import type { FrameworkOptions } from "./types.js"
 import type { DocumentNode, ERBRenderNode, Node } from "@herb-tools/core"
 
 const VIEWS_DIRECTORY = "/app/views/"
@@ -50,7 +53,13 @@ export class DefinitionProvider {
     this.viewRootFor = viewRootFor
   }
 
-  getDefinition(document: TextDocument, position: Position): LocationLink[] {
+  getDefinition(document: TextDocument, position: Position, options?: FrameworkOptions): LocationLink[] {
+    const herb = this.getHerbDefinition(document, position)
+
+    if (herb.length > 0) return herb
+
+    if (options?.framework !== "actionview") return []
+
     const reference = this.referenceAt(document, position)
 
     if (!reference || !this.isStatic(reference)) return []
@@ -65,7 +74,40 @@ export class DefinitionProvider {
     }))
   }
 
-  getHover(document: TextDocument, position: Position): Hover | null {
+  private getHerbDefinition(document: TextDocument, position: Position): LocationLink[] {
+    const index = RubyLocalsIndex.build(this.parserService, document)
+    const local = index.at(position)
+
+    if (local) {
+      const onDefault = local.defaultValue !== undefined && isPositionInRange(position, local.defaultValue)
+      const origin = local.usages.find(usage => isPositionInRange(position, usage))
+        ?? (onDefault ? local.defaultValue : local.declaration)
+
+      return [{
+        originSelectionRange: origin,
+        targetUri: document.uri,
+        targetRange: local.declaration,
+        targetSelectionRange: local.declaration,
+      }]
+    }
+
+    const group = slotNameGroupAt(index.herbAttributes, position, isPositionInRange)
+
+    if (!group || group.declarations.length === 0) return []
+
+    const origin = group.usages.find(usage => isPositionInRange(position, usage)) ?? group.declarations[0]
+
+    return group.declarations.map(declaration => ({
+      originSelectionRange: origin,
+      targetUri: document.uri,
+      targetRange: declaration,
+      targetSelectionRange: declaration,
+    }))
+  }
+
+  getHover(document: TextDocument, position: Position, options?: FrameworkOptions): Hover | null {
+    if (options?.framework !== "actionview") return null
+
     const reference = this.referenceAt(document, position)
 
     if (!reference) return null
@@ -138,7 +180,7 @@ export class DefinitionProvider {
   }
 
   partialReferences(document: TextDocument): PartialReference[] {
-    const result = this.parserService.parseContent(document.getText(), { render_nodes: true })
+    const result = this.parserService.parseContent(document.getText(), { render_nodes: true }, document.uri)
     const collector = new RenderCollector()
 
     collector.visit(result.value as DocumentNode)
@@ -227,8 +269,9 @@ export class DefinitionProvider {
 
     if (!source) return []
 
-    const declaration = this.strictLocalsDeclaration(source)
-    const body = this.outline(source)
+    const uri = uriFromPath(filePath)
+    const declaration = this.strictLocalsDeclaration(source, uri)
+    const body = this.outline(source, uri)
     const parts: string[] = []
 
     if (declaration) parts.push(declaration)
@@ -239,8 +282,8 @@ export class DefinitionProvider {
     return ["", "```erb", parts.join("\n\n"), "```"]
   }
 
-  private strictLocalsDeclaration(source: string): string | null {
-    const result = this.parserService.parseContent(source, { strict_locals: true })
+  private strictLocalsDeclaration(source: string, uri: string): string | null {
+    const result = this.parserService.parseContent(source, { strict_locals: true }, uri)
     const node = result.value.compactChildNodes().find(child => isERBStrictLocalsNode(child))
 
     if (!node) return null
@@ -250,8 +293,8 @@ export class DefinitionProvider {
     return lines.join("\n").trim()
   }
 
-  private outline(source: string): string[] {
-    const result = this.parserService.parseContent(source, { strict_locals: true, track_whitespace: true })
+  private outline(source: string, uri: string): string[] {
+    const result = this.parserService.parseContent(source, { strict_locals: true, track_whitespace: true }, uri)
 
     const nodes = result.value.compactChildNodes()
       .filter(child => !isERBStrictLocalsNode(child))

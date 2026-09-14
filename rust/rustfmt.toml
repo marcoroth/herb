@@ -12,6 +12,7 @@ remove_nested_parens = true
 # run using `cargo +nightly fmt`
 ignore = [
   "herb-printer/src/printer_visitor.rs",
+  "src/action_view_helpers.rs",
   "src/ast/nodes.rs",
   "src/errors.rs",
   "src/nodes.rs",

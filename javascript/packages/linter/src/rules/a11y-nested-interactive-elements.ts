@@ -1,4 +1,4 @@
-import { ElementStackVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "../utils/rule-utils.js"
 import { getTagLocalName, getStaticAttributeValue } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -80,7 +80,8 @@ export class A11yNestedInteractiveElementsRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

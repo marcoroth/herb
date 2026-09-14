@@ -3,6 +3,8 @@ import * as path from "./posix_path"
 import { CodeAction, CodeActionKind, CreateFile, OptionalVersionedTextDocumentIdentifier, Range, TextDocumentEdit, TextEdit, WorkspaceEdit } from "vscode-languageserver-types"
 
 import { ExtractPartialAnalyzer } from "./extract_partial_analyzer"
+
+import type { FrameworkOptions } from "./types.js"
 import { ParserService } from "./parser_service"
 import type { ExtractedLocal } from "./extract_partial_analyzer"
 import { pathFromUri, uriFromPath } from "./uri"
@@ -64,7 +66,8 @@ export class ExtractCodeActionProvider {
     this.fileExists = fileExists
   }
 
-  getCodeActions(document: TextDocument, requestedRange: Range): CodeAction[] {
+  getCodeActions(document: TextDocument, requestedRange: Range, options?: FrameworkOptions): CodeAction[] {
+    if (options?.framework !== "actionview") return []
     if (!this.capabilities.supportsResourceCreation) return []
     if (!this.isTemplate(document.uri)) return []
 

@@ -57,6 +57,28 @@ describe("html-no-block-inside-inline", () => {
     expectNoOffenses(`<span>Text before <code>code</code> text after</span>`)
   })
 
+  test("passes for SVG inside inline elements", () => {
+    expectNoOffenses(`
+      <button><svg><a><g><path d="M0 0h1v1z"></path></g></a></svg></button>
+      <span><svg><circle cx="1" cy="1" r="1"></circle></svg></span>
+      <label><svg><title>Icon</title></svg> Label</label>
+    `)
+  })
+
+  test("still fails for block elements after SVG inside inline elements", () => {
+    expectError('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
+    assertOffenses(`<span><svg><path></path></svg><div>Invalid block</div></span>`)
+  })
+
+  test.each(["foreignObject", "desc", "title"])("resumes HTML checks inside SVG %s integration points", integrationPoint => {
+    expectError('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
+    assertOffenses(`<svg><${integrationPoint}><span><div>Invalid block</div></span></${integrationPoint}></svg>`)
+  })
+
+  test("does not carry an outer inline constraint into SVG integration points", () => {
+    expectNoOffenses(`<span><svg><foreignObject><div>Valid HTML inside SVG</div></foreignObject></svg></span>`)
+  })
+
   test("fails for list inside inline element", () => {
     expectError('Block-level element `<ul>` cannot be placed inside inline element `<span>`.')
     assertOffenses(`<span><ul><li>Item</li></ul></span>`)

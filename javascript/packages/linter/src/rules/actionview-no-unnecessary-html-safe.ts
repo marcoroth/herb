@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
 
@@ -93,12 +93,14 @@ class ActionViewNoUnnecessaryHTMLSafeVisitor extends BaseRuleVisitor<Unnecessary
 export class ActionViewNoUnnecessaryHTMLSafeRule extends ParserRule<UnnecessaryHTMLSafeAutofixContext> {
   static ruleName = "actionview-no-unnecessary-html-safe"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "error",
+      frameworks: ["actionview"],
     }
   }
 

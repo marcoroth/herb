@@ -14,7 +14,8 @@ mod severity;
 pub use config::{Config, FoundConfigFile, FromObjectOptions, LoadOptions, SeverityOverridable, Tool, ALL_RULES_KEY, CONFIG_PATH, MISNAMED_CONFIG_PATHS};
 
 pub use config_schema::{
-  EngineConfig, FilesConfig, FormatterConfig, Framework, HerbConfig, HerbConfigOptions, IndentStyle, LinterConfig, RewriterConfig, RuleConfig, TemplateEngine,
+  EngineConfig, FilesConfig, FormatterConfig, Framework, HerbConfig, HerbConfigOptions, IndentStyle, LinterConfig, ParserConfig, RewriterConfig, RuleConfig,
+  TemplateEngine,
 };
 
 pub use defaults::DEFAULT_VERSION;

@@ -1,0 +1,23 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0013_state directive with an empty payload"
+input: |2-
+<%# herb:state %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:17))
+    │   ├── errors: (1 error)
+    │   │   └── @ HerbStateMissingParenthesisError (location: (1:15)-(1:15))
+    │   │       ├── message: "The `herb:state` directive requires parentheses. Expected `herb:state (...)` but got `herb:state `."
+    │   │       └── rest: ""
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state " (location: (1:3)-(1:15))
+    │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: ∅
+    │   └── states: []
+    │
+    └── @ HTMLTextNode (location: (1:17)-(2:0))
+        └── content: "\n"

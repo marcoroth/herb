@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { Location, PrismVisitor, getHelper } from "@herb-tools/core"
 
@@ -82,6 +82,7 @@ class StrictLocalsCollector extends BaseRuleVisitor {
 export class HerbConfigFrameworkOptionRule extends ParserRule {
   static ruleName = "herb-config-framework-option"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static reportsOncePerRun = true
 
   get defaultConfig(): FullRuleConfig {

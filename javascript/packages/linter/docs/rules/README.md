@@ -24,6 +24,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
 - [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
+- [`actionview-no-mistyped-locals`](./actionview-no-mistyped-locals.md) - Disallow literal `render` arguments that contradict a strict local's declared default type
 - [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
 - [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
@@ -37,7 +38,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-prefer-link-to-helper`](./actionview-prefer-link-to-helper.md) - Prefer `link_to` over a manual `<a>` tag with an ERB `href`
 - [`actionview-prefer-pluralize-helper`](./actionview-prefer-pluralize-helper.md) - Prefer the `pluralize` helper over a separate count and `String#pluralize`
 - [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
-- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
+- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of a template with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
 
@@ -63,6 +64,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
 - [`erb-no-method-definitions`](./erb-no-method-definitions.md) - Disallow method definitions in ERB templates
 - [`erb-no-module-definitions`](./erb-no-module-definitions.md) - Disallow module definitions in ERB templates
+- [`erb-no-multiple-statements`](./erb-no-multiple-statements.md) - Disallow multiple Ruby statements in a single ERB tag
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
@@ -103,6 +105,26 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-component-requires-slots`](./herb-component-requires-slots.md) - Require a `herb:slots` directive on templates using component tags.
+- [`herb-into-requires-collection`](./herb-into-requires-collection.md) - Require `data-herb-into` to name a keyed collection.
+- [`herb-scoped-style-no-unused-selector`](./herb-scoped-style-no-unused-selector.md) - No unused selector in a `<style scoped>` block.
+- [`herb-scoped-style-require-top-level`](./herb-scoped-style-require-top-level.md) - Require a `<style scoped>` block to be a top-level element.
+- [`herb-scoped-style-single-declaration`](./herb-scoped-style-single-declaration.md) - One `<style scoped>` block per file.
+- [`herb-slots-single-directive`](./herb-slots-single-directive.md) - Allow one `herb:slots` directive per template.
+- [`herb-slots-valid-components`](./herb-slots-valid-components.md) - Validate component structure and attributes in slots templates.
+- [`herb-slots-valid-mode`](./herb-slots-valid-mode.md) - Validate the `herb:slots` mode.
+- [`herb-state-no-silent-reads`](./herb-state-no-silent-reads.md) - Disallow bare state reads in silent tags.
+- [`herb-state-no-server-writes`](./herb-state-no-server-writes.md) - Disallow server-side writes to declared states.
+- [`herb-state-no-shadowed-states`](./herb-state-no-shadowed-states.md) - Disallow block arguments that shadow a declared `herb:state` name.
+- [`herb-state-no-unused-states`](./herb-state-no-unused-states.md) - Disallow unused `herb:state` declarations.
+- [`herb-state-requires-slots`](./herb-state-requires-slots.md) - Require a `herb:slots` directive for `herb:state`.
+- [`herb-state-directive-syntax`](./herb-state-directive-syntax.md) - Spell the `herb:state` directive in its canonical form.
+- [`herb-state-single-declaration`](./herb-state-single-declaration.md) - One `herb:state` declaration per scope.
+- [`herb-state-valid-actions`](./herb-state-valid-actions.md) - Validate `data-herb-*` action attributes.
+- [`herb-state-valid-bindings`](./herb-state-valid-bindings.md) - Validate the kind a bound form control holds.
+- [`herb-state-valid-declaration`](./herb-state-valid-declaration.md) - Validate `herb:state` declarations.
+- [`herb-state-valid-reads`](./herb-state-valid-reads.md) - Validate how declared states are read.
+- [`herb-valid-slot-names`](./herb-valid-slot-names.md) - Validate `data-herb-name` slot names.
 
 
 #### HTML
@@ -116,6 +138,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - The `role` attribute must have a valid WAI-ARIA Role.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [`html-attribute-equals-spacing`](./html-attribute-equals-spacing.md) - No whitespace around `=` in HTML attributes
+- [`html-attribute-name-valid-characters`](./html-attribute-name-valid-characters.md) - Requires letters, digits, and hyphens in attribute names
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.
@@ -134,12 +157,14 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
+- [`html-no-empty-css-rule`](./html-no-empty-css-rule.md) - No empty CSS rule in a `<style>` block.
 - [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
 - [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
 - [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
 - [`html-no-literal-nbsp`](./html-no-literal-nbsp.md) - Disallow literal non-breaking spaces, prefer `&nbsp;`
 - [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
+- [`html-no-obsolete-tags`](./html-no-obsolete-tags.md) - Disallow obsolete HTML tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
@@ -150,7 +175,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
 - [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-require-closing-tags`](./html-require-closing-tags.md) - Require closing tags for non-void HTML elements
-- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
+- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require a `nonce` attribute on inline scripts
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 
 

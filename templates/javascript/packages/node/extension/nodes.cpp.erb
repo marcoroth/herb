@@ -11,11 +11,11 @@ extern "C" {
 #include "../extension/libherb/include/lib/hb_array.h"
 }
 
-napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
-napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array);
+napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node, const parser_options_T* options);
+napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array, const parser_options_T* options);
 
 <%- nodes.each do |node| -%>
-napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>) {
+napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>, const parser_options_T* options) {
   if (!<%= node.human %>) {
     napi_value null_value;
     napi_get_null(env, &null_value);
@@ -28,7 +28,12 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_value type = CreateStringFromHbString(env, ast_node_type_to_string(&<%= node.human %>->base));
   napi_set_named_property(env, result, "type", type);
 
-  napi_value location = CreateLocation(env, <%= node.human %>->base.location);
+  napi_value location;
+  if (options->track_locations) {
+    location = CreateLocation(env, <%= node.human %>->base.location);
+  } else {
+    napi_get_null(env, &location);
+  }
   napi_set_named_property(env, result, "location", location);
 
   napi_value errors = ErrorsArrayFromCArray(env, <%= node.human %>->base.errors);
@@ -41,11 +46,11 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>, options);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::TokenField -%>
-  napi_value <%= field.name %> = CreateToken(env, <%= node.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = CreateToken(env, <%= node.human %>-><%= field.name %>, options);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::BooleanField -%>
@@ -54,7 +59,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::ArrayField -%>
-  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>, options);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::ElementSourceField -%>
@@ -63,7 +68,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
 
   <%- when Herb::Template::LocationField -%>
   napi_value <%= field.name %>;
-  if (<%= node.human %>-><%= field.name %> != NULL) {
+  if (options->track_locations && <%= node.human %>-><%= field.name %> != NULL) {
     <%= field.name %> = CreateLocation(env, *<%= node.human %>-><%= field.name %>);
   } else {
     napi_get_null(env, &<%= field.name %>);
@@ -119,7 +124,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
 }
 <%- end -%>
 
-napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array) {
+napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array, const parser_options_T* options) {
   napi_value result;
   napi_create_array(env, &result);
 
@@ -129,7 +134,7 @@ napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array) {
     for (size_t i = 0; i < hb_array_size(array); i++) {
       AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
       if (child_node) {
-        napi_value js_child = NodeFromCStruct(env, child_node);
+        napi_value js_child = NodeFromCStruct(env, child_node, options);
         napi_set_element(env, result, index++, js_child);
       }
     }
@@ -138,7 +143,7 @@ napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array) {
   return result;
 }
 
-napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node) {
+napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node, const parser_options_T* options) {
   if (!node) {
     napi_value null_value;
     napi_get_null(env, &null_value);
@@ -148,7 +153,7 @@ napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node) {
   switch (node->type) {
   <%- nodes.each do |node| -%>
     case <%= node.type %>:
-      return <%= node.human %>NodeFromCStruct(env, (<%= node.struct_type %>*) node);
+      return <%= node.human %>NodeFromCStruct(env, (<%= node.struct_type %>*) node, options);
       break;
   <%- end -%>
     default:

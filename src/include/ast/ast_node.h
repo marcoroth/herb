@@ -16,6 +16,7 @@ void ast_node_init(
   hb_allocator_T* allocator
 );
 void ast_node_free(AST_NODE_T* node, hb_allocator_T* allocator);
+void ast_node_rebase_tokens(AST_NODE_T* node, const char* from, const char* to, size_t length);
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_allocator_T* allocator);
 

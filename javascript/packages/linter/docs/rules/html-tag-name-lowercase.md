@@ -22,6 +22,12 @@ The rule will be disabled when:
 - The file extension is `.xml` or `.xml.erb`
 :::
 
+::: tip Components
+This rule does not apply to component tags, which are capitalized on purpose. That covers the built-in components a `herb:slots` template compiles away, such as `<Fragment>`, `<Fallback>`, `<Async>` and `<Lazy>`, and it covers any other capitalized tag that does not name an HTML element.
+
+A capitalized tag that does name an HTML element, such as `<Div>`, is still an offense, since that one is meant as plain HTML.
+:::
+
 ::: tip SVG Elements
 This rule does not apply to child elements within `<svg>` tags, as SVG element names are case-sensitive and may require specific capitalization (e.g., `linearGradient`, `clipPath`). However, the rule still applies to the `<svg>` element itself.
 :::
@@ -38,6 +44,15 @@ This rule does not apply to child elements within `<svg>` tags, as SVG element n
 <span>Label</span>
 
 <%= content_tag(:div, "Hello world!") %>
+```
+
+```erb
+<%# herb:slots client %>
+
+<Async>
+  <p><%= Geo.locate(city) %></p>
+  <Fallback><p class="pulse">Looking it up</p></Fallback>
+</Async>
 ```
 
 ### 🚫 Bad

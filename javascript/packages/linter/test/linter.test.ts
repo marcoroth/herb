@@ -89,7 +89,7 @@ describe("@herb-tools/linter", () => {
   describe("Rule enablement", () => {
     class EnabledParserRule extends ParserRule {
       static ruleName = "enabled-parser-rule"
-      static introducedIn = "0.1.0"
+      static introducedIn = "0.1.0" as const
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -108,7 +108,7 @@ describe("@herb-tools/linter", () => {
 
     class DisabledParserRule extends ParserRule {
       static ruleName = "disabled-parser-rule"
-      static introducedIn = "0.1.0"
+      static introducedIn = "0.1.0" as const
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -131,7 +131,7 @@ describe("@herb-tools/linter", () => {
 
     class FileBasedRule extends SourceRule {
       static ruleName = "file-based-rule"
-      static introducedIn = "0.1.0"
+      static introducedIn = "0.1.0" as const
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -154,7 +154,7 @@ describe("@herb-tools/linter", () => {
 
     class ContentBasedRule extends ParserRule {
       static ruleName = "content-based-rule"
-      static introducedIn = "0.1.0"
+      static introducedIn = "0.1.0" as const
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -389,7 +389,7 @@ describe("@herb-tools/linter", () => {
     test("filters rules based on default config", () => {
       class EnabledByDefaultRule extends ParserRule {
         static ruleName = "enabled-by-default-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -411,7 +411,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledByDefaultRule extends ParserRule {
         static ruleName = "disabled-by-default-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -443,7 +443,7 @@ describe("@herb-tools/linter", () => {
     test("user config can enable a disabled-by-default rule", () => {
       class DisabledByDefaultRule extends ParserRule {
         static ruleName = "disabled-by-default-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -563,7 +563,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.from() with config enables and overrides severity", () => {
       class TestRule extends ParserRule {
         static ruleName = "test-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -622,7 +622,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.filterRulesByConfig with empty config returns default enabled", () => {
       class EnabledRule extends ParserRule {
         static ruleName = "enabled-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -633,7 +633,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledRule extends ParserRule {
         static ruleName = "disabled-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -651,7 +651,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.filterRulesByConfig respects user config", () => {
       class EnabledRule extends ParserRule {
         static ruleName = "enabled-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -662,7 +662,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledRule extends ParserRule {
         static ruleName = "disabled-rule"
-        static introducedIn = "0.1.0"
+        static introducedIn = "0.1.0" as const
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -993,6 +993,97 @@ describe("@herb-tools/linter", () => {
       )
 
       expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("`all: severity` applies to rules without an explicit severity", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "warning" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(2)
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["warning", "warning"])
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+    })
+
+    test("an explicit rule severity wins over `all: severity`", () => {
+      const html = '<DIV id=\'1\'>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "warning" },
+            "html-attribute-double-quotes": { severity: "info" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule, HTMLAttributeDoubleQuotesRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+      expect(lintResult.info).toBe(1)
+    })
+
+    test("`all: severity` overrides a rule's own default severity", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: "hint" }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["hint", "hint"])
+      expect(lintResult.hints).toBe(2)
+    })
+
+    test("`all: severity` supports the editor and cli split form", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { severity: { editor: "hint", cli: "error" } }
+          }
+        }
+      })
+
+      const cliLinter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+
+      const editorLinter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      editorLinter.mode = "editor"
+
+      expect(cliLinter.lint(html).offenses.map(offense => offense.severity)).toEqual(["error", "error"])
+      expect(editorLinter.lint(html).offenses.map(offense => offense.severity)).toEqual(["hint", "hint"])
+    })
+
+    test("rules keep their own default severity when `all` sets only `enabled`", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            all: { enabled: true }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses.map(offense => offense.severity)).toEqual(["error", "error"])
+      expect(lintResult.errors).toBe(2)
     })
 
     test("`--all-rules` takes precedence over the `all` pseudo rule", () => {

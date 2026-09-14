@@ -1,6 +1,9 @@
 import { describe, test, expect, vi } from "vitest"
 
 import { UserSettings } from "../src/user_settings"
+import { defaultPersonalSettings } from "@herb-tools/config"
+import { defaultFormatOptions } from "@herb-tools/formatter"
+import { defaultInlayHintOptions } from "@herb-tools/language-service"
 import { Capabilities } from "../src/capabilities"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
@@ -29,6 +32,17 @@ describe("UserSettings", () => {
   }
 
   describe("defaults", () => {
+    test("agree with the formatter's own defaults", () => {
+      expect(defaultPersonalSettings.formatter?.indentWidth).toBe(defaultFormatOptions.indentWidth)
+      expect(defaultPersonalSettings.formatter?.indentStyle).toBe(defaultFormatOptions.indentStyle)
+      expect(defaultPersonalSettings.formatter?.maxLineLength).toBe(defaultFormatOptions.maxLineLength)
+    })
+
+    test("agree with the inlay hint provider's own defaults", () => {
+      expect(defaultPersonalSettings.inlayHints?.minimumLines).toBe(defaultInlayHintOptions.minimumLines)
+      expect(defaultPersonalSettings.inlayHints?.maximumClasses).toBe(defaultInlayHintOptions.maximumClasses)
+    })
+
     test("enable the linter and fixing on save", () => {
       const settings = settingsFor(mockParams)
 
@@ -72,7 +86,9 @@ describe("UserSettings", () => {
           indentWidth: 2,
           indentStyle: "space",
           maxLineLength: 80
-        }
+        },
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        runtimeReports: { inlayHints: true }
       })
 
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
@@ -94,8 +110,64 @@ describe("UserSettings", () => {
           indentWidth: 2,
           indentStyle: "space",
           maxLineLength: 80
-        }
+        },
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        runtimeReports: { inlayHints: true }
       })
+    })
+
+    test("falls back to what the client sent at initialize when it answers with nothing", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue(null)
+
+      const settings = settingsFor(withConfiguration)
+
+      settings.global = { inlayHints: { enabled: false, minimumLines: 7, maximumClasses: 4 } }
+
+      const result = await settings.getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: false, minimumLines: 7, maximumClasses: 4 })
+      expect(result.linter?.enabled).toBe(true)
+    })
+
+    test("keeps the inlay hint settings the user set", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { enabled: false, minimumLines: 5, maximumClasses: 1 }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: false, minimumLines: 5, maximumClasses: 1 })
+    })
+
+    test("fills in the inlay hint settings the user left out", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { minimumLines: 5 }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.inlayHints).toEqual({ enabled: true, minimumLines: 5, maximumClasses: 2 })
+    })
+
+    test("stops offering the runtime hints once the user turns them off", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        runtimeReports: { inlayHints: false }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.runtimeReports?.inlayHints).toBe(false)
+      expect(result.inlayHints?.enabled).toBe(true)
+    })
+
+    test("leaves the runtime hints on for a user who only turned the closing tag hints off", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { enabled: false }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.runtimeReports?.inlayHints).toBe(true)
     })
 
     test("keeps fixOnSave when the user turns it off", async () => {

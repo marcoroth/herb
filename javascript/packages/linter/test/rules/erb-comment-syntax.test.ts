@@ -29,6 +29,15 @@ describe("ERBCommentSyntax", () => {
     `)
   })
 
+  test("shouldn't flag strict locals declaration since erb-strict-locals-comment-syntax covers it", () => {
+    expectNoOffenses(dedent`
+      <% # locals: () %>
+      <% # locals: (user:) %>
+      <% # locals: (user: "default") %>
+      <% # locals: (user: "default", **attributes) %>
+    `)
+  })
+
   test("when the ERB comment syntax is incorrect", () => {
     expectError("Use `<%#` instead of `<% #`. Ruby comments immediately after ERB tags can cause parsing issues.")
 

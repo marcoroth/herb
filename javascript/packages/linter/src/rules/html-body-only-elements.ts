@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { ElementStackVisitor, isBodyOnlyTag } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -30,12 +30,13 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-body-only-elements"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml", "**/*.xml.erb"]
+      exclude: ["**/*.xml", "**/*.xml.erb"],
     }
   }
 

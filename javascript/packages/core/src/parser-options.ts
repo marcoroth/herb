@@ -1,11 +1,17 @@
-export interface ParseOptions {
+export interface LexOptions {
+  erb_openers?: string[]
+}
+
+export interface ParseOptions extends LexOptions {
   track_whitespace?: boolean
+  track_locations?: boolean
   analyze?: boolean
   strict?: boolean
   action_view_helpers?: boolean
   transform_conditionals?: boolean
   render_nodes?: boolean
   strict_locals?: boolean
+  herb_directives?: boolean
   iteration_nodes?: boolean
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
@@ -16,22 +22,33 @@ export interface ParseOptions {
   max_errors?: number | null
 }
 
-export type SerializedParserOptions = Required<ParseOptions>
+export type SerializedParserOptions = Required<Omit<ParseOptions, "erb_openers">> & { erb_openers: string[] }
+
+export function commentedERBTagPrefixes(defaultOpenings: string[], erbOpeners: string[]): string[] {
+  const defaultPrefixes = defaultOpenings
+    .map(opening => opening.slice("<%".length))
+    .filter(prefix => prefix !== "" && prefix !== "#")
+
+  return [...erbOpeners, ...defaultPrefixes].sort((a, b) => b.length - a.length)
+}
 
 export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   track_whitespace: false,
+  track_locations: true,
   analyze: true,
   strict: true,
   action_view_helpers: false,
   transform_conditionals: false,
   render_nodes: false,
   strict_locals: false,
+  herb_directives: false,
   iteration_nodes: false,
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
   dot_notation_tags: false,
   html: true,
+  erb_openers: [],
   timeout: 1000,
   max_errors: 25,
 }
@@ -45,6 +62,9 @@ export class ParserOptions {
 
   /** Whether whitespace tracking was enabled during parsing. */
   readonly track_whitespace: boolean
+
+  /** Whether `location` and `range` were materialized during parsing. */
+  readonly track_locations: boolean
 
   /** Whether analysis was performed during parsing. */
   readonly analyze: boolean
@@ -60,6 +80,7 @@ export class ParserOptions {
 
   /** Whether strict locals analysis was enabled during parsing. */
   readonly strict_locals: boolean
+  readonly herb_directives: boolean
   readonly iteration_nodes: boolean
 
   /** Whether Prism node serialization was enabled during parsing. */
@@ -77,6 +98,9 @@ export class ParserOptions {
   /** Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text. */
   readonly html: boolean
 
+  /** ERB tag openers recognized in addition to the built-in ones, written without the leading `<%`. */
+  readonly erb_openers: string[]
+
   /** Parse timeout in milliseconds. 0 disables the timeout. */
   readonly timeout: number
 
@@ -90,17 +114,20 @@ export class ParserOptions {
   constructor(options: ParseOptions = {}) {
     this.strict = options.strict ?? DEFAULT_PARSER_OPTIONS.strict
     this.track_whitespace = options.track_whitespace ?? DEFAULT_PARSER_OPTIONS.track_whitespace
+    this.track_locations = options.track_locations ?? DEFAULT_PARSER_OPTIONS.track_locations
     this.analyze = options.analyze ?? DEFAULT_PARSER_OPTIONS.analyze
     this.action_view_helpers = options.action_view_helpers ?? DEFAULT_PARSER_OPTIONS.action_view_helpers
     this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
     this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
+    this.herb_directives = options.herb_directives ?? DEFAULT_PARSER_OPTIONS.herb_directives
     this.iteration_nodes = options.iteration_nodes ?? DEFAULT_PARSER_OPTIONS.iteration_nodes
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program
     this.dot_notation_tags = options.dot_notation_tags ?? DEFAULT_PARSER_OPTIONS.dot_notation_tags
     this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
+    this.erb_openers = options.erb_openers ?? DEFAULT_PARSER_OPTIONS.erb_openers
     this.timeout = options.timeout ?? DEFAULT_PARSER_OPTIONS.timeout
     this.max_errors = options.max_errors ?? DEFAULT_PARSER_OPTIONS.max_errors
   }

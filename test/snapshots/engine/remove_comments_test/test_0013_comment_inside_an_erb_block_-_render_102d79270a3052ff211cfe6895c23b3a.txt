@@ -1,0 +1,10 @@
+---
+source: "Engine::RemoveCommentsTest#test_0013_comment inside an erb block - render"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <!-- item -->\\n    <li><%= item %></li>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"A\", \"B\"]}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<ul>
+    
+    <li>A</li>
+    
+    <li>B</li>
+</ul>

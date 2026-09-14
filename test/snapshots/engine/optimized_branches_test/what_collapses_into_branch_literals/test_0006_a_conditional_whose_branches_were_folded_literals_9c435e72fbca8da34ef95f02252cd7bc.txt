@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0006_a conditional whose branches were folded literals"
+input: "{source: \"<% if flag %><%= \\\"yes\\\" %><% else %><%= \\\"no\\\" %><% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag ; "yes".freeze;else; "no".freeze;end;

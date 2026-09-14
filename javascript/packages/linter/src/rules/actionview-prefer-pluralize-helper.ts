@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import {
   isERBContentNode,
   isERBOutputNode,
@@ -203,11 +203,13 @@ class ActionViewPreferPluralizeHelperVisitor extends BaseRuleVisitor {
 export class ActionViewPreferPluralizeHelperRule extends ParserRule {
   static ruleName = "actionview-prefer-pluralize-helper"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "warning",
+      frameworks: ["actionview"],
     }
   }
 

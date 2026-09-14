@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest::what it asks of the passes around it#test_0003_refuses to run before the pass that rewrites the blocks it reads"
+input: "visitor_test-2"
+---
+Herb::Engine::CSSInliner::Visitor reads the `<style>` blocks a template holds, so it has to run after Herb::Engine::ScopedStyle::Visitor, which rewrites them. It would otherwise decide what to do about a block Herb::Engine::ScopedStyle::Visitor goes on to take out. Put it later in `visitors:`.

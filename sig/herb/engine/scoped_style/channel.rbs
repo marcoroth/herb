@@ -1,0 +1,45 @@
+# Generated from lib/herb/engine/scoped_style/channel.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module ScopedStyle
+      # The CSS every scoped block on a page narrowed, collected once however many times the files
+      # holding them rendered.
+      #
+      # A template compiled with `deliver: :hoist` registers here as it renders:
+      #
+      #     ::Herb::Engine::ScopedStyle::Channel.record("data-herb-scope-1a2b3c4d", ".title[data-herb-scope-1a2b3c4d]{color:red}")
+      #
+      # It is a channel on the session the page is collecting into, so it registers itself the first
+      # time anything records, and nothing in `Report` or `Session` has to know it exists.
+      class Channel
+        NAME: Symbol
+
+        ATTRIBUTE: String
+
+        ANCHOR: Symbol
+
+        # : (String, String) -> void
+        def self.record: (String, String) -> void
+
+        # : () -> void
+        def initialize: () -> void
+
+        # : (String, String) -> void
+        def add: (String, String) -> void
+
+        # : () -> Hash[String, String]
+        def styles: () -> Hash[String, String]
+
+        # : () -> Symbol
+        def anchor: () -> Symbol
+
+        # : () -> bool
+        def empty?: () -> bool
+
+        # : () -> String
+        def to_html: () -> String
+      end
+    end
+  end
+end

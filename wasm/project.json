@@ -5,6 +5,11 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": [
+        "{workspaceRoot}/javascript/packages/browser/build",
+        "{workspaceRoot}/javascript/packages/node-wasm/build",
+        "{projectRoot}/obj"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "command": "make all",

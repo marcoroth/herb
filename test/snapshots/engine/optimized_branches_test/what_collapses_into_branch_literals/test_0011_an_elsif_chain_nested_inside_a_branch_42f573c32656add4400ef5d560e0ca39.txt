@@ -1,0 +1,14 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0011_an elsif chain nested inside a branch"
+input: "{source: \"<div>\\n<% if flag %>\\n  <% if other %>\\n    deep\\n  <% elsif third %>\\n    mid\\n  <% end %>\\n<% else %>\\n  flat\\n<% end %>\\n</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+if flag 
+  if other 
+ "<div>\n    deep\n</div>".freeze;
+  elsif third 
+ "<div>\n    mid\n</div>".freeze;
+ else "<div>\n</div>".freeze;  end 
+else 
+ "<div>\n  flat\n</div>".freeze;
+end 

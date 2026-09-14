@@ -35,12 +35,8 @@ options: {transform_conditionals: true}
     │   │       │               │   │   ├── tag_closing: "%>" (location: (1:57)-(1:57))
     │   │       │               │   │   ├── then_keyword: ∅
     │   │       │               │   │   ├── statements: (1 item)
-    │   │       │               │   │   │   └── @ ERBContentNode (location: (1:22)-(1:57))
-    │   │       │               │   │   │       ├── tag_opening: "<%=" (location: (1:22)-(1:25))
-    │   │       │               │   │   │       ├── content: " 'active' " (location: (1:32)-(1:42))
-    │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:55)-(1:57))
-    │   │       │               │   │   │       ├── parsed: false
-    │   │       │               │   │   │       └── valid: true
+    │   │       │               │   │   │   └── @ LiteralNode (location: (1:33)-(1:41))
+    │   │       │               │   │   │       └── content: "active"
     │   │       │               │   │   │
     │   │       │               │   │   ├── subsequent:
     │   │       │               │   │   │   └── @ ERBElseNode (location: (1:57)-(1:57))
@@ -48,12 +44,8 @@ options: {transform_conditionals: true}
     │   │       │               │   │   │       ├── content: " else " (location: (1:57)-(1:57))
     │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:57)-(1:57))
     │   │       │               │   │   │       └── statements: (1 item)
-    │   │       │               │   │   │           └── @ ERBContentNode (location: (1:22)-(1:57))
-    │   │       │               │   │   │               ├── tag_opening: "<%=" (location: (1:22)-(1:25))
-    │   │       │               │   │   │               ├── content: " 'inactive' " (location: (1:43)-(1:55))
-    │   │       │               │   │   │               ├── tag_closing: "%>" (location: (1:55)-(1:57))
-    │   │       │               │   │   │               ├── parsed: false
-    │   │       │               │   │   │               └── valid: true
+    │   │       │               │   │   │           └── @ LiteralNode (location: (1:44)-(1:54))
+    │   │       │               │   │   │               └── content: "inactive"
     │   │       │               │   │   │
     │   │       │               │   │   │
     │   │       │               │   │   └── end_node:

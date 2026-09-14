@@ -64,8 +64,7 @@ module Engine
         Herb::Engine.new(template, filename: "app/views/test.erb", visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "app/views/test.erb"
-      assert_includes error.message, "ERB output tags"
+      assert_equal %(app/views/test.erb:1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.), error.message
       assert_equal "app/views/test.erb", error.filename.to_s
       assert_equal 1, error.line
       assert_equal 5, error.column
@@ -152,6 +151,12 @@ module Engine
           <%= "cleanup" %>
         <% end %>
       ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a multi-line block opening keeps the line its body starts on" do
+      template = "<%=\n  render(\n    x\n  ) do |c|\n%>\n  <%= c %>\n<% end %>\n"
 
       assert_compiled_snapshot(template)
     end

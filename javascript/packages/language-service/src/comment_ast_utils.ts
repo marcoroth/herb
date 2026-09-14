@@ -5,7 +5,7 @@ import { HTMLCommentNode, Token } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
-import { asMutable } from "@herb-tools/rewriter"
+import { asMutable, cloneNode } from "@herb-tools/rewriter"
 
 import type { Node, ERBContentNode } from "@herb-tools/core"
 
@@ -38,20 +38,17 @@ export function commentERBNode(node: ERBContentNode): void {
   }
 }
 
-export function uncommentERBNode(node: ERBContentNode): void {
+export function carriesCommentedTagPrefix(contentValue: string, prefixes: string[]): boolean {
+  return prefixes.some(prefix => contentValue.startsWith(` ${prefix} `))
+}
+
+export function uncommentERBNode(node: ERBContentNode, prefixes: string[]): void {
   const mutable = asMutable(node)
 
   if (mutable.tag_opening && mutable.tag_opening.value === "<%#") {
     const contentValue = mutable.content?.value || ""
 
-    if (
-      contentValue.startsWith(" graphql ") ||
-      contentValue.startsWith(" %= ") ||
-      contentValue.startsWith(" == ") ||
-      contentValue.startsWith(" % ") ||
-      contentValue.startsWith(" = ") ||
-      contentValue.startsWith(" - ")
-    ) {
+    if (carriesCommentedTagPrefix(contentValue, prefixes)) {
       mutable.tag_opening = Token.from(mutable.tag_opening.type, "<%")
       mutable.content = Token.from(mutable.content!.type, contentValue.substring(1))
     } else {
@@ -131,17 +128,18 @@ function getLineSegments(lineText: string, erbNodes: ERBContentNode[]): LineSegm
  * Comment a line using AST mutation for strategies where the parser produces flat children,
  * and text-segment manipulation for per-segment (where the parser nests nodes).
  */
-export function commentLineContent(content: string, erbNodes: ERBContentNode[], strategy: CommentStrategy, parserService: ParserService): string {
+export function commentLineContent(content: string, erbNodes: ERBContentNode[], strategy: CommentStrategy, parserService: ParserService, uri?: string): string {
   if (strategy === "per-segment") {
     return commentPerSegment(content, erbNodes)
   }
 
-  const parseResult = parserService.parseContent(content, { track_whitespace: true })
+  const parseResult = parserService.parseContent(content, { track_whitespace: true }, uri)
+  const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
-  parseResult.visit(lineCollector)
+
+  lineCollector.visit(document)
 
   const lineERBNodes = lineCollector.erbNodesPerLine.get(0) || []
-  const document = parseResult.value
   const children = asMutable(document).children
 
   switch (strategy) {
@@ -201,19 +199,20 @@ function commentPerSegment(content: string, erbNodes: ERBContentNode[]): string 
   }).join("")
 }
 
-export function uncommentLineContent(content: string, parserService: ParserService): string {
-  const parseResult = parserService.parseContent(content, { track_whitespace: true })
+export function uncommentLineContent(content: string, parserService: ParserService, uri?: string): string {
+  const parseResult = parserService.parseContent(content, { track_whitespace: true }, uri)
+  const prefixes = parserService.commentedERBTagPrefixes(parseResult.options.erb_openers, uri)
+  const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
 
-  parseResult.visit(lineCollector)
+  lineCollector.visit(document)
 
   const lineERBNodes = lineCollector.erbNodesPerLine.get(0) || []
-  const document = parseResult.value
   const children = asMutable(document).children
 
   for (const node of lineERBNodes) {
     if (isERBCommentNode(node)) {
-      uncommentERBNode(node)
+      uncommentERBNode(node, prefixes)
     }
   }
 
@@ -265,7 +264,7 @@ export function uncommentLineContent(content: string, parserService: ParserServi
 
       for (const erbNode of innerERBNodes) {
         if (isERBCommentNode(erbNode)) {
-          uncommentERBNode(erbNode)
+          uncommentERBNode(erbNode, prefixes)
         }
       }
 

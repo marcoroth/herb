@@ -1,0 +1,8 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0010_preserves indentation of boolean attributes"
+input: "{source: \"<div\\n  data-open\\n  data-sticky\\n>Content</div>\\n\", locals: {}, options: {}}"
+---
+<div
+  data-open
+  data-sticky
+>Content</div>

@@ -10,10 +10,10 @@
         "commands": [
           "bundle install",
           "make templates prism build/libherb.a"
-        ],
+        ]
       },
       "inputs": ["{projectRoot}/**/*"],
-      "outputs": ["{workspaceRoot}/src/*.o", "{workspaceRoot}/src/libherb.a"],
+      "outputs": ["{workspaceRoot}/build/libherb.a", "{workspaceRoot}/build/obj"],
       "dependsOn": ["templates:generate", "prism:build"]
     },
     "clean": {

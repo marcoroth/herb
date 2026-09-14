@@ -1,8 +1,0 @@
----
-source: "Engine::InstrumentationVisitorTest::what it says a render was reached by#test_0004_frames a template"
-input: "{source: \"<%= render template: \\\"posts/show\\\" %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
----
-_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
- ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0, :template) 
- _buf << (render template: "posts/show").to_s; ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
-_buf.to_s

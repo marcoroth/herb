@@ -44,7 +44,7 @@ describe("DiagnosticsPublisher", () => {
     } as InitializeParams
 
     const documents = { getAll: () => [] } as unknown as Documents
-    const linterService = { lintDocument: async () => ({ diagnostics: [] }) } as unknown as LinterService
+    const linterService = { lintDocument: async () => ({ diagnostics: [], warnings: [] }) } as unknown as LinterService
     const configService = { validateDocument: async () => [] } as unknown as ConfigService
 
     const workspaceFolders = new WorkspaceFolders(params)
@@ -72,7 +72,7 @@ describe("DiagnosticsPublisher", () => {
   test("publishes diagnostics for a document inside the project", async () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
-    await diagnostics.validate(documentFor(INSIDE))
+    await diagnostics.refreshDocument(documentFor(INSIDE))
 
     expect(published).toHaveLength(1)
     expect(published[0].uri).toBe(INSIDE)
@@ -82,7 +82,7 @@ describe("DiagnosticsPublisher", () => {
   test("publishes nothing but a retraction for a document outside the project", async () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
-    await diagnostics.validate(documentFor(OUTSIDE))
+    await diagnostics.refreshDocument(documentFor(OUTSIDE))
 
     expect(published).toEqual([{ uri: OUTSIDE, diagnostics: [] }])
   })
@@ -90,7 +90,7 @@ describe("DiagnosticsPublisher", () => {
   test("still reports when the client opened no folder", async () => {
     const { diagnostics, published } = diagnosticsFor(null)
 
-    await diagnostics.validate(documentFor(OUTSIDE))
+    await diagnostics.refreshDocument(documentFor(OUTSIDE))
 
     expect(published[0].diagnostics.length).toBeGreaterThan(0)
   })
@@ -98,7 +98,7 @@ describe("DiagnosticsPublisher", () => {
   test("still reports on an untitled buffer", async () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
-    await diagnostics.validate(documentFor("untitled:Untitled-1"))
+    await diagnostics.refreshDocument(documentFor("untitled:Untitled-1"))
 
     expect(published[0].diagnostics.length).toBeGreaterThan(0)
   })
@@ -107,8 +107,8 @@ describe("DiagnosticsPublisher", () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
     const other = `${WORKSPACE}/app/views/other.html.erb`
 
-    await diagnostics.validate(documentFor(INSIDE))
-    await diagnostics.validate(documentFor(other))
+    await diagnostics.refreshDocument(documentFor(INSIDE))
+    await diagnostics.refreshDocument(documentFor(other))
 
     published.length = 0
     diagnostics.clearWhere(uri => uri === INSIDE)
@@ -128,7 +128,7 @@ describe("DiagnosticsPublisher", () => {
   test("clearWhere does not retract the same document twice", async () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
-    await diagnostics.validate(documentFor(INSIDE))
+    await diagnostics.refreshDocument(documentFor(INSIDE))
 
     published.length = 0
     diagnostics.clearWhere(() => true)
@@ -148,7 +148,7 @@ describe("DiagnosticsPublisher", () => {
   test("clear retracts a document that was reported on earlier", async () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
-    await diagnostics.validate(documentFor(INSIDE))
+    await diagnostics.refreshDocument(documentFor(INSIDE))
     diagnostics.clear(INSIDE)
 
     expect(published).toHaveLength(2)

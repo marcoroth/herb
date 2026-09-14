@@ -22,5 +22,5 @@ exit: 0
  Node index (which DOM nodes are affected by each state change)
 
    @post (1 node)
-     └── [0,1] text_content @post.title
+     └── [0,0] text_content @post.title
 

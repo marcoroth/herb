@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0014_non-tag.attributes erb output in attribute position still blocked"
+input: "secure_compiler_test-5"
+---
+1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.

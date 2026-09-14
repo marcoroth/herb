@@ -103,6 +103,35 @@ public class HerbTest {
   }
 
   @Test
+  void testErrorCount() {
+    ParseResult clean = Herb.parse("<div class=\"example\">content</div>");
+    ParseResult unclosed = Herb.parse("<div>");
+    ParseResult rubyError = Herb.parse("<% if condition without end %>");
+
+    assertEquals(Integer.valueOf(0), clean.errorCount);
+    assertEquals(0, clean.recursiveErrors().size());
+
+    assertEquals(Integer.valueOf(1), unclosed.errorCount);
+    assertEquals(unclosed.errorCount.intValue(), unclosed.recursiveErrors().size());
+
+    assertEquals(Integer.valueOf(1), rubyError.errorCount);
+    assertEquals(rubyError.errorCount.intValue(), rubyError.recursiveErrors().size());
+  }
+
+  @Test
+  void testParserOptionsTrackLocations() {
+    String source = "<div class=\"example\">content</div>";
+
+    ParseResult withLocations = Herb.parse(source);
+    ParseResult withoutLocations = Herb.parse(source, ParserOptions.create().trackLocations(false));
+
+    assertNotNull(withLocations.value.getLocation());
+    assertNull(withoutLocations.value.getLocation());
+    assertEquals(withLocations.value.getType(), withoutLocations.value.getType());
+    assertEquals(withLocations.getErrorCount(), withoutLocations.getErrorCount());
+  }
+
+  @Test
   void testParserOptionsPrismNodes() {
     String source = "<%= user.name %>";
 

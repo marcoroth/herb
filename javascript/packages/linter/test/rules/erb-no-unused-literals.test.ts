@@ -468,6 +468,54 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for literal receivers in modifier predicates", () => {
+    expectNoOffenses(dedent`
+      <% l = "i" unless %w[a b].include?(l) %>
+      <% l = "i" if %w[a b].include?(l) %>
+      <% l = "i" while %w[a b].include?(l) %>
+    `)
+  })
+
+  test("passes for literal receivers in block predicates", () => {
+    expectNoOffenses(dedent`
+      <% if %w[a b].include?(l)
+           f = 1
+         end %>
+      <% unless %w[a b].include?(l)
+           f = 1
+         end %>
+      <% while %w[a b].include?(l)
+           f = 1
+         end %>
+      <% until %w[a b].include?(l)
+           f = 1
+         end %>
+    `)
+  })
+
+  test("passes for used literal receivers", () => {
+    expectNoOffenses(dedent`
+      <% f = %w[a b].include?(l) %>
+      <% if %w[a b].include?(l) %><p>x</p><% end %>
+    `)
+  })
+
+  test("fails for unused literals in conditional branches", () => {
+    expectError('Avoid using silent ERB tags for literals. `"if body"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"elsif body"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"else body"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% if %w[a b].include?(l)
+           "if body"
+         elsif %w[c d].include?(l)
+           "elsif body"
+         else
+           "else body"
+         end %>
+    `)
+  })
+
   test("fails for literals in conditional statements", () => {
     expectError('Avoid using silent ERB tags for literals. `"success"` is evaluated but never used or output.')
 

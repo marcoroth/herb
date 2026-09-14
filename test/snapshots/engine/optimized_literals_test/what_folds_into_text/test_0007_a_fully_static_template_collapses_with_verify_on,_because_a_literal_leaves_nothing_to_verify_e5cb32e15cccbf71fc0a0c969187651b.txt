@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::what folds into text#test_0007_a fully static template collapses with verify on, because a literal leaves nothing to verify"
+input: "{source: \"<h1><%= \\\"hello\\\" %></h1>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor verify=true>]}}"
+---
+'<h1>hello</h1>'.freeze

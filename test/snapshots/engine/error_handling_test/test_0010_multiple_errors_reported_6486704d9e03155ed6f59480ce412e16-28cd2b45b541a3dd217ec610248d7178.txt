@@ -1,0 +1,40 @@
+---
+source: "Engine::ErrorHandlingTest#test_0010_multiple errors reported"
+input: |2-
+<div>
+  <p>Unclosed paragraph
+  <img src="test.jpg"></img>
+</span>
+options: {validators: true}
+---
+[source]:1:1: Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope. (and 3 more errors) (Herb::Engine::ParseError)
+
+✘ [MissingClosingTagError] Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope.
+
+    [source]:1:1:
+      1 │ <div>
+        ╵ ~~~~~
+
+  Add the closing tag, or make it self-closing.
+
+✘ [OmittedClosingTagError] Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (5:0) for clarity, or set `strict: false` to allow this.
+
+    [source]:2:3:
+      2 │   <p>Unclosed paragraph
+        ╵   ~~~
+
+✘ [VoidElementClosingTagError] `img` is a void element and should not be used as a closing tag. Use `<img>` or `<img />` instead of `</img>`.
+
+    [source]:3:23:
+      3 │   <img src="test.jpg"></img>
+        ╵                       ~~~~~~
+
+  A void element cannot have a closing tag. Remove it, or write `<img />`.
+
+✘ [MissingOpeningTagError] Found closing tag `</span>` at (4:2) without a matching opening tag in the same scope.
+
+    [source]:4:1:
+      4 │ </span>
+        ╵ ~~~~~~~
+
+  Add the matching opening tag, or remove this closing tag.

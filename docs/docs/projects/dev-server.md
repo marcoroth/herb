@@ -25,7 +25,7 @@ The server starts watching all template files in the directory, diffs changes us
 The dev server consists of two parts:
 
 - **Server** (`lib/herb/dev/`): Ruby WebSocket server that watches files and broadcasts changes
-- **Client** (`@herb-tools/client`): JavaScript package that connects to the server and applies DOM patches
+- **Client** (part of `@herb-tools/dev-tools`): connects to the server and applies DOM patches
 
 ## CLI Output
 
@@ -53,4 +53,4 @@ The dev server consists of two parts:
 
 ## Links
 
-- [Dev Server Client (`@herb-tools/client`)](/projects/client)
+- [Dev Tools (`@herb-tools/dev-tools`)](/projects/dev-tools)

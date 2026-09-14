@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { isWhitespaceNode, isLiteralNode, isHTMLTextNode, isCommentNode, isERBNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
@@ -53,6 +53,7 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
 export class ERBNoCaseNodeChildrenRule extends ParserRule {
   static ruleName = "erb-no-case-node-children"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

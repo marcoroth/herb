@@ -1,5 +1,3 @@
-import { readFileSync } from "fs"
-
 import { SyntaxRenderer } from "./syntax-renderer.js"
 import { DiagnosticRenderer } from "./diagnostic-renderer.js"
 import { FileRenderer } from "./file-renderer.js"
@@ -26,6 +24,7 @@ export interface HighlightOptions {
   truncateLines?: boolean
   codeUrlBuilder?: (code: string) => string
   fileUrlBuilder?: (path: string, diagnostic: Diagnostic) => string
+  fileUrl?: string
   suffixBuilder?: (diagnostic: Diagnostic) => string | undefined
 }
 
@@ -49,7 +48,7 @@ export class Highlighter {
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
   private diffRenderer: DiffRenderer
 
-  constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
+  constructor(theme: ThemeInput, herb: HerbBackend) {
     const colors = resolveTheme(theme)
     this.syntaxRenderer = new SyntaxRenderer(colors, herb)
     this.diagnosticRenderer = new DiagnosticRenderer(this.syntaxRenderer)
@@ -89,6 +88,7 @@ export class Highlighter {
    *   - contextLines: Number of context lines around focus/diagnostics
    *   - focusLine: Line number to focus on (shows only that line with dimmed context)
    *   - showLineNumbers: Whether to show line numbers (default: true)
+   *   - fileUrl: URL that the file path and the focused line number link to
    * @returns The highlighted content with optional diagnostics or focused view
    */
   highlight(
@@ -109,6 +109,7 @@ export class Highlighter {
       truncateLines = false,
       codeUrlBuilder,
       fileUrlBuilder,
+      fileUrl: fileUrlOption,
       suffixBuilder,
     } = options
 
@@ -174,6 +175,7 @@ export class Highlighter {
         maxWidth,
         wrapLines,
         truncateLines,
+        fileUrlOption,
       )
     }
 
@@ -245,79 +247,4 @@ export class Highlighter {
     return this.diffRenderer.renderFromHunks(path, hunks, options)
   }
 
-  // File reading wrapper functions
-
-  /**
-   * Convenience method that reads a file and highlights it
-   * @param filePath - Path to the file to read and highlight
-   * @param options - Configuration options
-   * @returns The highlighted file content with optional diagnostics
-   */
-  highlightFileFromPath(
-    filePath: string,
-    options: HighlightOptions = {},
-  ): string {
-    this.requireInitialized()
-
-    return this.highlight(filePath, readFile(filePath), options)
-  }
-
-  /**
-   * Convenience method that reads a file and renders a diagnostic
-   * @param filePath - Path to the file to read
-   * @param diagnostic - The diagnostic message to render
-   * @param options - Optional configuration
-   * @returns The highlighted diagnostic output
-   */
-  highlightDiagnosticFromPath(
-    filePath: string,
-    diagnostic: Diagnostic,
-    options: HighlightDiagnosticOptions = {},
-  ): string {
-    this.requireInitialized()
-
-    return this.highlightDiagnostic(filePath, diagnostic, readFile(filePath), options)
-  }
-}
-
-function readFile(filePath: string): string {
-  try {
-    return readFileSync(filePath, "utf8")
-  } catch (error) {
-    throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
-  }
-}
-
-/**
- * Convenience function to highlight content with a specific theme
- * @param content - The content to highlight
- * @param theme - The theme to use (defaults to "onedark")
- * @param options - Additional highlighting options
- * @returns The highlighted content
- */
-export async function highlightContent(
-  content: string,
-  theme: ThemeInput = "onedark",
-  options: HighlightOptions = {}
-): Promise<string> {
-  const highlighter = new Highlighter(theme)
-  await highlighter.initialize()
-  return highlighter.highlight("", content, options)
-}
-
-/**
- * Convenience function to highlight a file with a specific theme
- * @param filePath - The path to the file to highlight
- * @param theme - The theme to use (defaults to "onedark")
- * @param options - Additional highlighting options
- * @returns The highlighted file content
- */
-export async function highlightFile(
-  filePath: string,
-  theme: ThemeInput = "onedark",
-  options: HighlightOptions = {}
-): Promise<string> {
-  const highlighter = new Highlighter(theme)
-  await highlighter.initialize()
-  return highlighter.highlightFileFromPath(filePath, options)
 }

@@ -6,8 +6,11 @@ import {
   LiteralNode,
   HTMLTextNode,
   ERBContentNode,
+  HerbDirectiveNode,
 
 } from '../src/nodes.js'
+
+import type { Node } from '../src/nodes.js'
 
 import {
   isDocumentNode,
@@ -16,6 +19,7 @@ import {
   isERBContentNode,
   isHTMLNode,
   isERBNode,
+  isHerbDirectiveNode,
   isAnyOf,
   isNoneOf,
   isNode,
@@ -31,7 +35,8 @@ describe('Node Type Guards', () => {
     type: 'AST_DOCUMENT_NODE',
     location: Location.zero,
     errors: [],
-    children: []
+    children: [],
+    prism_node: null
   })
 
   const literalNode = new LiteralNode({
@@ -48,6 +53,17 @@ describe('Node Type Guards', () => {
     content: 'text'
   })
 
+  const herbDirectiveNode = new HerbDirectiveNode({
+    type: 'AST_HERB_DIRECTIVE_NODE',
+    location: Location.zero,
+    errors: [],
+    tag_opening: null,
+    content: null,
+    tag_closing: null,
+    key: null,
+    arguments: null,
+  })
+
   const erbContentNode = new ERBContentNode({
     type: 'AST_ERB_CONTENT_NODE',
     location: Location.zero,
@@ -56,7 +72,8 @@ describe('Node Type Guards', () => {
     content: null,
     tag_closing: null,
     parsed: false,
-    valid: true
+    valid: true,
+    prism_node: null
   })
 
   describe('Individual Type Guards', () => {
@@ -108,6 +125,25 @@ describe('Node Type Guards', () => {
       expect(isERBNode(erbContentNode)).toBe(true)
       expect(isERBNode(documentNode)).toBe(false)
       expect(isERBNode(literalNode)).toBe(false)
+      expect(isERBNode(htmlTextNode)).toBe(false)
+    })
+
+    it('narrows to HTMLNode so a caller can reach a shared field', () => {
+      const node: Node = htmlTextNode
+
+      expect(isHTMLNode(node)).toBe(true)
+
+      if (isHTMLNode(node)) {
+        expect(node.type).toBe('AST_HTML_TEXT_NODE')
+      }
+    })
+
+    it('counts a directive as an ERB node, since it is written as an ERB tag', () => {
+      expect(isHerbDirectiveNode(herbDirectiveNode)).toBe(true)
+      expect(isERBNode(herbDirectiveNode)).toBe(true)
+    })
+
+    it('leaves a node without ERB tag tokens out of the group', () => {
       expect(isERBNode(htmlTextNode)).toBe(false)
     })
   })
@@ -322,7 +358,7 @@ describe('Node Type Guards', () => {
       })
 
       it('should handle large arrays', () => {
-        const manyLiterals = Array.from({ length: 100 }).fill(literalNode)
+        const manyLiterals = Array.from({ length: 100 }, () => literalNode)
         expect(areAllOfType(manyLiterals, LiteralNode)).toBe(true)
         expect(areAllOfType(manyLiterals, HTMLTextNode)).toBe(false)
       })

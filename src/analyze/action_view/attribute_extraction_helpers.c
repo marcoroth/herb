@@ -238,6 +238,8 @@ static char* join_static_string_array(pm_array_node_t* array, hb_allocator_T* al
 
   char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
 
+  hb_buffer_free(&buffer);
+
   return result;
 }
 
@@ -302,6 +304,8 @@ static AST_NODE_T* create_attribute_from_value(
 
     if (raw_content && value_node->location.start) {
       char* ruby_content = raw_content;
+      hb_buffer_T wrapper;
+      bool wrapped = false;
 
       if (!is_nested && is_boolean_attribute(hb_string((char*) name_string))) {
         AST_NODE_T* conditional_attribute =
@@ -314,28 +318,31 @@ static AST_NODE_T* create_attribute_from_value(
 
       if (!is_nested && strcmp(name_string, "class") == 0
           && (value_node->type == PM_HASH_NODE || value_node->type == PM_ARRAY_NODE)) {
-        hb_buffer_T class_buffer;
-        hb_buffer_init(&class_buffer, value_length + 16, allocator);
-        hb_buffer_append(&class_buffer, "token_list(");
-        hb_buffer_append(&class_buffer, raw_content);
-        hb_buffer_append(&class_buffer, ")");
+        hb_buffer_init(&wrapper, value_length + 16, allocator);
+        hb_buffer_append(&wrapper, "token_list(");
+        hb_buffer_append(&wrapper, raw_content);
+        hb_buffer_append(&wrapper, ")");
 
-        ruby_content = hb_buffer_value(&class_buffer);
+        ruby_content = hb_buffer_value(&wrapper);
+        wrapped = true;
       }
 
       // Rails calls .to_json on non-string/symbol values inside data:/aria: hashes
       if (is_nested) {
-        hb_buffer_T json_buffer;
-        hb_buffer_init(&json_buffer, value_length + 64, allocator);
-        hb_buffer_append(&json_buffer, "::Herb::Engine.nested_attribute_value(");
-        hb_buffer_append(&json_buffer, raw_content);
-        hb_buffer_append(&json_buffer, ")");
+        hb_buffer_init(&wrapper, value_length + 64, allocator);
+        hb_buffer_append(&wrapper, "::Herb::Engine.nested_attribute_value(");
+        hb_buffer_append(&wrapper, raw_content);
+        hb_buffer_append(&wrapper, ")");
 
-        ruby_content = hb_buffer_value(&json_buffer);
+        ruby_content = hb_buffer_value(&wrapper);
+        wrapped = true;
       }
 
       AST_HTML_ATTRIBUTE_NODE_T* attribute =
         create_html_attribute_with_ruby_literal_precise(name_string, ruby_content, positions, allocator);
+
+      if (wrapped) { hb_buffer_free(&wrapper); }
+
       hb_allocator_dealloc(allocator, raw_content);
 
       return (AST_NODE_T*) attribute;
@@ -384,14 +391,19 @@ void resolve_nonce_attribute(hb_array_T* attributes, hb_allocator_T* allocator) 
         allocator
       );
 
-      hb_array_T* new_children = hb_array_init(1, allocator);
-      hb_array_append(new_children, (AST_NODE_T*) ruby_node);
-      attribute->value->children = new_children;
+      for (size_t child = 0; child < hb_array_size(attribute->value->children); child++) {
+        ast_node_free(hb_array_get(attribute->value->children, child), allocator);
+      }
+
+      attribute->value->children->size = 0;
+      hb_array_append(attribute->value->children, (AST_NODE_T*) ruby_node);
+
       return;
     }
 
     if (hb_string_equals(literal->content, hb_string("false"))) {
       hb_array_remove(attributes, index);
+
       return;
     }
   }

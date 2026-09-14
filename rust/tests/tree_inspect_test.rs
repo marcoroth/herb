@@ -10,14 +10,14 @@ fn test_document_with_text_node() {
   let loc = Location::new(Position::new(1, 0), Position::new(1, 5));
 
   let text_node = HTMLTextNode {
-    node_type: "HTMLTextNode".to_string(),
+    node_type: "AST_HTML_TEXT_NODE".to_string(),
     location: loc,
     errors: vec![],
     content: "Hello".to_string(),
   };
 
   let doc_node = DocumentNode {
-    node_type: "DocumentNode".to_string(),
+    node_type: "AST_DOCUMENT_NODE".to_string(),
     location: Location::new(Position::new(1, 0), Position::new(2, 0)),
     errors: vec![],
     children: vec![AnyNode::HTMLTextNode(Box::new(text_node))],

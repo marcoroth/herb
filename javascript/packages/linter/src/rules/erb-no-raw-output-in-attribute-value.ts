@@ -1,10 +1,10 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "../utils/rule-utils.js"
 import { isERBNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, Node } from "@herb-tools/core"
-import type { StaticAttributeDynamicValueParams, DynamicAttributeDynamicValueParams } from "./rule-utils.js"
+import type { StaticAttributeDynamicValueParams, DynamicAttributeDynamicValueParams } from "../utils/rule-utils.js"
 
 class ERBNoRawOutputInAttributeValueVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeDynamicValue({ valueNodes, attributeNode }: StaticAttributeDynamicValueParams): void {
@@ -32,6 +32,7 @@ class ERBNoRawOutputInAttributeValueVisitor extends AttributeVisitorMixin {
 export class ERBNoRawOutputInAttributeValueRule extends ParserRule {
   static ruleName = "erb-no-raw-output-in-attribute-value"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -27,5 +27,23 @@
   "TOKEN_AMPERSAND": "yellow",
   "TOKEN_CHARACTER": "white",
   "TOKEN_ERROR": "red",
-  "TOKEN_EOF": null
+  "TOKEN_EOF": null,
+  "ANSI_PALETTE": {
+    "black": "#000000",
+    "red": "#BB0000",
+    "green": "#00BB00",
+    "yellow": "#BBBB00",
+    "blue": "#0000BB",
+    "magenta": "#BB00BB",
+    "cyan": "#00BBBB",
+    "white": "#FFFFFF",
+    "bright-black": "#555555",
+    "bright-red": "#FF5555",
+    "bright-green": "#00FF00",
+    "bright-yellow": "#FFFF55",
+    "bright-blue": "#5555FF",
+    "bright-magenta": "#FF55FF",
+    "bright-cyan": "#55FFFF",
+    "bright-white": "#FFFFFF"
+  }
 }

@@ -1,0 +1,20 @@
+---
+source: "Parser::XMLProcessingInstructionTest#test_0009_processing instruction after text content"
+input: "Hello <?marker name=\"placeholder\"> World"
+---
+@ DocumentNode (location: (1:0)-(1:40))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:6))
+    │   └── content: "Hello "
+    │
+    ├── @ XMLProcessingInstructionNode (location: (1:6)-(1:34))
+    │   ├── tag_opening: "<?" (location: (1:6)-(1:8))
+    │   ├── target: "marker" (location: (1:8)-(1:14))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:14)-(1:33))
+    │   │       └── content: " name=\"placeholder\""
+    │   │
+    │   └── tag_closing: ">" (location: (1:33)-(1:34))
+    │
+    └── @ HTMLTextNode (location: (1:34)-(1:40))
+        └── content: " World"

@@ -378,6 +378,46 @@ println!("{}", prism_version());
 ```
 :::
 
+## Locating a Node
+
+### `herb::locate(node: &dyn Node, position: Position) -> Option<LocateResult>`
+
+Finds the most specific node at a position, and the nodes it sits inside. A position that comes back from a rendered page, an editor, or a diagnostic is a node before it is anything anyone can act on, and this is what turns one into the other.
+
+A node's location contains its start and stops short of its end, so two nodes sitting next to each other never both answer for the character between them. A node with no location of its own answers for nothing, which keeps a synthesized node from swallowing the position of the node it was built next to. A position outside everything the given node covers belongs to no node.
+
+Ancestors read nearest first, so the enclosing element a caller wants is the first one that answers.
+
+Columns are 0-based character offsets into their line, which is what the parser reports.
+
+```rust
+use herb::locate::locate;
+use herb::position::Position;
+
+let result = herb::parse("<div><span>hi</span></div>").unwrap();
+let found = result.locate(Position::new(1, 12)).unwrap();
+
+found.node.node_type();
+// => "AST_HTML_TEXT_NODE"
+
+found.ancestors.iter().map(|node| node.node_type()).collect::<Vec<_>>();
+// => ["AST_HTML_ELEMENT_NODE", "AST_HTML_ELEMENT_NODE", "AST_DOCUMENT_NODE"]
+
+found.innermost(|node| node.node_type() == "AST_HTML_ELEMENT_NODE");
+// => the nearest element the position is inside
+
+found.path();
+// => outermost first, ending with the node that was found
+```
+
+`innermost` starts with the node itself, so it answers with the node when the node already matches the predicate. A position that belongs to no node answers `None`.
+
+Every node answers too through the `NodeLocate` trait, so a walk can start from the node a caller already holds. `result.locate(position)` and `node.locate(position)` are the same walk from different starting points, and `herb::locate` takes either. `locatable` asks the same question without walking, and answers whether a position falls anywhere inside a node or what it holds.
+
+The walk goes by how much source a node and everything it holds cover together, which is not the same as the node's own location. A branch of an `if` holds the branch after it, and each branch is positioned where it was written, so the node holding the chain ends before what it holds. Walking by a node's own location would leave every branch but the first unreachable. `ancestors` is therefore the walk that was taken, whether or not each node along it covers the position itself, and a caller that wants only the nodes the position is really inside filters on `node.location().contains(position)`.
+
+The positions this reads come from `Location::contains`, `Location::covers` and `Location::is_empty`. `Position` derives `Ord`, so positions compare and sort the way they read.
+
 ## AST Types
 
 The parsed AST consists of various node types that represent different parts of the document:

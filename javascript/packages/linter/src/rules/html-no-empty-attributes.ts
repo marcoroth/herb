@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "../utils/rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { Visitor, isERBOutputNode, isERBEscapedNode, isERBOpenTagNode } from "@herb-tools/core"
 
@@ -124,6 +124,7 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
 export class HTMLNoEmptyAttributesRule extends ParserRule {
   static ruleName = "html-no-empty-attributes"
   static introducedIn = this.version("0.7.0")
+  static defaultEnabledIn = this.version("0.7.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

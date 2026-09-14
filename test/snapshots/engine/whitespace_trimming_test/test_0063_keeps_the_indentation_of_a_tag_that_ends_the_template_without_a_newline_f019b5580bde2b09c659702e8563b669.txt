@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0063_keeps the indentation of a tag that ends the template without a newline"
+input: "{source: \"  <% x = 1 %>\", locals: {}, options: {}}"
+---
+  

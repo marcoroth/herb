@@ -1,6 +1,0 @@
----
-source: "CLI::ActionViewTest#test_0006_flow rejects a path that is not a file"
-input: "missing file"
----
-exit: 1
-Not a file: '<project>/app/views/posts/missing.html.erb'.

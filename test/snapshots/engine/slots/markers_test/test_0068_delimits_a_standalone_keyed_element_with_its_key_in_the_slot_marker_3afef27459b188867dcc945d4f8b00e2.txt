@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::MarkersTest#test_0068_delimits a standalone keyed element with its key in the slot marker"
+input: "{source: \"<%# herb:slots %>\\n<div herb-key=\\\"<%= @id %>\\\"><%= @name %></div>\", locals: {\"@id\" => 7, \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:0aada304:0-->
+<!--herb-slot:0:keyed:7--><div data-herb-slot="1:child">Marco</div><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

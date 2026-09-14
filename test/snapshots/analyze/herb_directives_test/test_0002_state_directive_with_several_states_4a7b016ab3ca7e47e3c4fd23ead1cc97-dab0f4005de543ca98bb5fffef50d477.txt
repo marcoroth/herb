@@ -1,0 +1,42 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0002_state directive with several states"
+input: |2-
+<%# herb:state (open: false, count: 0, title: "") %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:52))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state (open: false, count: 0, title: "") " (location: (1:3)-(1:50))
+    │   ├── tag_closing: "%>" (location: (1:50)-(1:52))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: "(open: false, count: 0, title: "")" (location: (1:15)-(1:49))
+    │   └── states: (3 items)
+    │       ├── @ HerbStateDeclarationNode (location: (1:16)-(1:27))
+    │       │   ├── name: "open" (location: (1:16)-(1:20))
+    │       │   ├── default_value:
+    │       │   │   └── @ RubyLiteralNode (location: (1:22)-(1:27))
+    │       │   │       └── content: "false"
+    │       │   │
+    │       │   └── kind: "boolean"
+    │       │
+    │       ├── @ HerbStateDeclarationNode (location: (1:29)-(1:37))
+    │       │   ├── name: "count" (location: (1:29)-(1:34))
+    │       │   ├── default_value:
+    │       │   │   └── @ RubyLiteralNode (location: (1:36)-(1:37))
+    │       │   │       └── content: "0"
+    │       │   │
+    │       │   └── kind: "integer"
+    │       │
+    │       └── @ HerbStateDeclarationNode (location: (1:39)-(1:48))
+    │           ├── name: "title" (location: (1:39)-(1:44))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:46)-(1:48))
+    │           │       └── content: "\"\""
+    │           │
+    │           └── kind: "string"
+    │
+    │
+    └── @ HTMLTextNode (location: (1:52)-(2:0))
+        └── content: "\n"

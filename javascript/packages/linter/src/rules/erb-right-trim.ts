@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -28,6 +28,7 @@ export class ERBRightTrimRule extends ParserRule<ERBRightTrimAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-right-trim"
   static introducedIn = this.version("0.7.5")
+  static defaultEnabledIn = this.version("0.7.5")
 
   get defaultConfig(): FullRuleConfig {
     return {

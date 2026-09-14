@@ -1,0 +1,36 @@
+---
+source: "Parser::TrackLocationsTest#test_0007_mismatched tag errors keep their locations when track_locations is false"
+input: |2-
+<div>hello</span>
+options: {track_locations: false}
+---
+@ DocumentNode (location: ∅)
+└── children: (4 items)
+    ├── @ HTMLOpenTagNode (location: ∅)
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(1:5))
+    │   │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │       └── opening_tag: "div" (location: (1:1)-(1:4))
+    │   │
+    │   ├── tag_opening: "<" (location: ∅)
+    │   ├── tag_name: "div" (location: ∅)
+    │   ├── tag_closing: ">" (location: ∅)
+    │   ├── children: []
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: ∅)
+    │   └── content: "hello"
+    │
+    ├── @ HTMLCloseTagNode (location: ∅)
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (1:10)-(1:17))
+    │   │       ├── message: "Found closing tag `</span>` at (1:12) without a matching opening tag in the same scope."
+    │   │       └── closing_tag: "span" (location: (1:12)-(1:16))
+    │   │
+    │   ├── tag_opening: "</" (location: ∅)
+    │   ├── tag_name: "span" (location: ∅)
+    │   ├── children: []
+    │   └── tag_closing: ">" (location: ∅)
+    │
+    └── @ HTMLTextNode (location: ∅)
+        └── content: "\n"

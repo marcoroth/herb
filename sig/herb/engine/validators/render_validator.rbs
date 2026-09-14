@@ -3,7 +3,7 @@
 module Herb
   class Engine
     module Validators
-      class RenderValidator < Validator
+      class RenderValidator < Base
         def visit_erb_render_node: (untyped node) -> untyped
 
         private

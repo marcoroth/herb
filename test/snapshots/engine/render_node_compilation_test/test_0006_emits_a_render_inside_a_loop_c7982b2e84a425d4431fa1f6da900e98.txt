@@ -2,6 +2,5 @@
 source: "Engine::RenderNodeCompilationTest#test_0006_emits a render inside a loop"
 input: "{source: \"<% posts.each do |post| %><%= render post %><% end %>\", options: {parser_options: {render_nodes: true}}}"
 ---
-_buf = ::String.new; posts.each do |post| 
- _buf << (render post).to_s; end;
+_buf = ::String.new; posts.each do |post| ; _buf << (render post).to_s; end;
 _buf.to_s

@@ -6,8 +6,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DocumentSymbolProvider } from "../src/document_symbol_provider"
-import { ParserService } from "@herb-tools/language-service"
+import { ParserService } from "../src/parser_service"
 import type { DocumentSymbol } from "vscode-languageserver/node"
+import type { Framework } from "@herb-tools/core"
 
 describe("DocumentSymbolProvider", () => {
   let service: DocumentSymbolProvider
@@ -19,7 +20,7 @@ describe("DocumentSymbolProvider", () => {
   })
 
   function symbols(content: string): DocumentSymbol[] {
-    return service.getDocumentSymbols(TextDocument.create("file:///test.html.erb", "erb", 1, content))
+    return service.getDocumentSymbols(TextDocument.create("file:///test.html.erb", "erb", 1, content), { framework: "actionview" })
   }
 
   function outline(content: string): string[] {
@@ -58,15 +59,15 @@ describe("DocumentSymbolProvider", () => {
     expect(outline(`<div id="main"></div>`)).toEqual(["div#main", "  [id]"])
   })
 
-  it("qualifies an element by its classes", () => {
-    expect(outline(`<div class="card featured"></div>`)).toEqual(["div.card.featured", "  [class]"])
+  it("qualifies an element by its class", () => {
+    expect(outline(`<div class="card"></div>`)).toEqual(["div.card", "  [class]"])
   })
 
   it("combines the id and the classes", () => {
     expect(outline(`<div id="main" class="card"></div>`)).toEqual(["div#main.card", "  [id]", "  [class]"])
   })
 
-  it("drops utility classes rather than burying the name", () => {
+  it("drops a utility list rather than naming the element after half of it", () => {
     const content = `<div class="flex items-center justify-between rounded-lg bg-white p-4"></div>`
 
     expect(outline(content)).toEqual(["div", "  [class]"])
@@ -78,9 +79,9 @@ describe("DocumentSymbolProvider", () => {
     expect(outline(content)).toEqual(["div#main", "  [id]", "  [class]"])
   })
 
-  it("keeps classes right up to the limit", () => {
-    expect(outline(`<div class="card featured"></div>`)).toEqual(["div.card.featured", "  [class]"])
-    expect(outline(`<div class="card featured wide"></div>`)).toEqual(["div", "  [class]"])
+  it("names the element after a lone class, but not after one of several", () => {
+    expect(outline(`<div class="card"></div>`)).toEqual(["div.card", "  [class]"])
+    expect(outline(`<div class="card featured"></div>`)).toEqual(["div", "  [class]"])
   })
 
   it("ignores an id it cannot read statically", () => {
@@ -228,7 +229,7 @@ describe("DocumentSymbolProvider", () => {
       expect(outline(`<%= tag.br %>`)).toEqual(["br"])
     })
 
-    it("drops utility classes from a tag helper too", () => {
+    it("drops a utility list from a tag helper too", () => {
       expect(outline(`<%= tag.div class: "flex items-center p-4" %>`)).toEqual(["div", "  [class]"])
     })
   })
@@ -300,5 +301,23 @@ describe("DocumentSymbolProvider", () => {
     const content = `<% posts.each do |post| %>\n  <%= render "posts/card", post: post %>\n<% end %>`
 
     expect(outline(content)).toEqual(["posts.each do |post|", "  render posts/card"])
+  })
+  describe("framework scoping", () => {
+    const content = '<%= tag.div class: "x" %>'
+
+    function symbolsFor(framework?: Framework) {
+      const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+
+      return service.getDocumentSymbols(document, { framework })
+    }
+
+    it("labels a tag helper as its rendered element for an Action View project", () => {
+      expect(JSON.stringify(symbolsFor("actionview"))).toContain("div")
+    })
+
+    it("does not treat a tag helper as an element when the framework is not Action View", () => {
+      expect(JSON.stringify(symbolsFor("sinatra"))).not.toContain("div")
+      expect(JSON.stringify(symbolsFor(undefined))).not.toContain("div")
+    })
   })
 })

@@ -1,0 +1,5 @@
+---
+source: "Engine::ControlFlowClosingTest#test_0006_ensure and end in same ERB tag"
+input: "{source: \"<% begin %>\\n  <span>Body</span>\\n<% ensure\\nend %>\\n\", locals: {}, options: {escape: false}}"
+---
+  <span>Body</span>

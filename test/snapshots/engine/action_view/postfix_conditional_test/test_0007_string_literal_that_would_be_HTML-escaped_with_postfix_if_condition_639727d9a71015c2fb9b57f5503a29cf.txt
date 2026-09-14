@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0007_string literal that would be HTML-escaped with postfix if condition"
+input: "{source: \"<%= \\\"5 > 3\\\" if condition %>\", options: {escape: true, visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if condition ; "5 &gt; 3".freeze; else "".freeze;end;

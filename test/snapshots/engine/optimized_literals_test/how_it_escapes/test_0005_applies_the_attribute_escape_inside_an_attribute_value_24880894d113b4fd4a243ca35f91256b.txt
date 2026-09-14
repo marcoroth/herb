@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::how it escapes#test_0005_applies the attribute escape inside an attribute value"
+input: "{source: \"<img alt=\\\"<%= \\\"Herb's logo\\\" %>\\\">\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<img alt="Herb&#39;s logo">'.freeze

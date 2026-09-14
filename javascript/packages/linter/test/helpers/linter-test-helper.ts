@@ -11,6 +11,8 @@ import type { RuleClass } from "../../src/types.js"
 interface ExpectedLocation {
   line?: number
   column?: number
+  endLine?: number
+  endColumn?: number
 }
 
 type LocationInput = ExpectedLocation | [number, number] | [number]
@@ -79,6 +81,17 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
+  const declaredFrameworks = ruleInstance.defaultConfig?.frameworks
+  const wantsActionViewHelpers = ruleParserOptions.action_view_helpers === true
+  const defaultFramework = declaredFrameworks?.[0] ?? (wantsActionViewHelpers ? "actionview" : undefined)
+
+  const resolveContext = (options?: any | TestOptions) => {
+    const context = options?.context ?? options
+
+    if (defaultFramework === undefined) return context
+
+    return { framework: defaultFramework, ...context }
+  }
 
   beforeAll(async () => {
     await Herb.load()
@@ -111,7 +124,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     hasAsserted = true
 
-    const context = options?.context ?? options
+    const context = resolveContext(options)
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
@@ -198,7 +211,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     hasAsserted = true
 
-    const context = options?.context ?? options
+    const context = resolveContext(options)
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
@@ -334,6 +347,14 @@ function matchOffenses(
       }
 
       if (exp.location?.column !== undefined && exp.location.column !== actualOffense.location.start.column) {
+        return false
+      }
+
+      if (exp.location?.endLine !== undefined && exp.location.endLine !== actualOffense.location.end.line) {
+        return false
+      }
+
+      if (exp.location?.endColumn !== undefined && exp.location.endColumn !== actualOffense.location.end.column) {
         return false
       }
 

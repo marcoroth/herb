@@ -27,7 +27,7 @@
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>, allocator);
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
@@ -118,7 +118,7 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     hb_array_free(&<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::StringField -%>
-  if (<%= node.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
+  if (!hb_string_is_empty(<%= node.human %>-><%= field.name %>)) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
   <%- when Herb::Template::PrismNodeField -%>
   /* prism_node is a borrowed reference into the prism context, not freed here */
   <%- when Herb::Template::AnalyzedRubyField -%>
@@ -143,6 +143,45 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   ast_free_base_node(&<%= node.human %>->base, allocator);
 }
 <%- end -%>
+
+static void ast_rebase_token(token_T* token, const char* from, const char* to, size_t length) {
+  if (token == NULL || token->value.data == NULL) { return; }
+  if (token->value.data < from || token->value.data >= from + length) { return; }
+
+  token->value.data = (char*) to + (token->value.data - from);
+}
+
+void ast_node_rebase_tokens(AST_NODE_T* node, const char* from, const char* to, size_t length) {
+  if (!node) { return; }
+
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    case <%= node.type %>: {
+      <%- if node.fields.none? { |f| [Herb::Template::TokenField, Herb::Template::NodeField, Herb::Template::ArrayField].include?(f.class) } -%>
+      break;
+      <%- else -%>
+      <%= node.struct_type %>* typed = (<%= node.struct_type %>*) node;
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::TokenField -%>
+      ast_rebase_token(typed-><%= field.name %>, from, to, length);
+      <%- when Herb::Template::BorrowedNodeField -%>
+      <%- when Herb::Template::NodeField -%>
+      ast_node_rebase_tokens((AST_NODE_T*) typed-><%= field.name %>, from, to, length);
+      <%- when Herb::Template::ArrayField -%>
+      if (typed-><%= field.name %> != NULL) {
+        for (size_t i = 0; i < hb_array_size(typed-><%= field.name %>); i++) {
+          ast_node_rebase_tokens((AST_NODE_T*) hb_array_get(typed-><%= field.name %>, i), from, to, length);
+        }
+      }
+      <%- end -%>
+      <%- end -%>
+      break;
+      <%- end -%>
+    }
+    <%- end -%>
+  }
+}
 
 void ast_node_free(AST_NODE_T* node, hb_allocator_T* allocator) {
   if (!node) { return; }

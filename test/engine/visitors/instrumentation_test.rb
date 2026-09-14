@@ -1,0 +1,270 @@
+# frozen_string_literal: true
+
+require_relative "../../test_helper"
+require "herb/engine/visitors/instrumentation_visitor"
+
+module Engine
+  class InstrumentationTest < Minitest::Spec
+    include SnapshotUtils
+
+    FILENAME = "app/views/test.html.erb"
+
+    RENDERS = {
+      "a partial" => %(<%= render "posts/card" %>),
+      "a collection" => %(<%= render partial: "card", collection: @posts %>),
+      "a layout" => %(<%= render layout: "box" do %>inner<% end %>),
+      "a template" => %(<%= render template: "posts/show" %>),
+      "an object, which only Rails can classify" => %(<%= render @post %>),
+    }.freeze
+
+    SOURCES = {
+      "plain output" => "<div><%= 1 + 1 %></div>",
+      "a block" => "<% [1, 2].each do |n| %><%= n %><% end %>",
+      "an assignment carried to a later tag" => "<% total = 40 + 2 %><%= total %>",
+      "an output assignment" => "<%= total = 7 %>",
+      "a conditional" => "<% if true %>yes<% else %>no<% end %>",
+      "a comment" => "<%# ignored %>ok",
+      "markup around a tag" => "<p>before</p><%= 1 %><p>after</p>",
+    }.freeze
+
+    def instrumented(source)
+      assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::InstrumentationVisitor.new])
+    end
+
+    def compile(source, instrument: true)
+      visitors = instrument ? [Herb::Engine::InstrumentationVisitor.new] : []
+
+      Herb::Engine.new(source, filename: FILENAME, visitors: visitors).src
+    end
+
+    def render(source, instrument: true)
+      Object.new.instance_eval(compile(source, instrument: instrument))
+    end
+
+    describe "what it emits" do
+      test "wraps an output tag" do
+        instrumented("<div><%= title %></div>")
+      end
+
+      test "frames a block rather than wrapping it" do
+        instrumented("<% items.each do |item| %><%= item %><% end %>")
+      end
+
+      test "frames an assignment rather than wrapping it" do
+        instrumented("<%= total = 1 %>")
+      end
+
+      test "opens and closes around a statement" do
+        instrumented("<% total = 1 %>")
+      end
+
+      test "leaves a comment alone" do
+        instrumented("<%# nothing to see %>")
+      end
+
+      test "reaches into a conditional" do
+        instrumented("<% if admin? %><%= secret %><% end %>")
+      end
+
+      test "wraps an output tag in a template that ends with a blank line" do
+        instrumented("<div><%= title %></div>\n\n")
+      end
+    end
+
+    describe "what it must not change" do
+      SOURCES.each do |name, source|
+        test "renders #{name} the same as an uninstrumented template" do
+          assert_equal render(source, instrument: false), render(source)
+        end
+      end
+    end
+
+    describe "what it attributes" do
+      def observed(source)
+        compiled = compile(source)
+
+        session = Herb::Engine::Runtime::Session.capture do
+          Object.new.instance_eval(compiled)
+        end
+
+        session.entries
+      end
+
+      def self.watching_object
+        Object.new.tap do |object|
+          object.define_singleton_method(:watch) do |value|
+            Herb::Engine::Runtime::Session.observe(:seen, value)
+            value
+          end
+        end
+      end
+
+      test "puts what happened under the tag that caused it" do
+        source = "<div><%= watch(1) %></div>\n<%= watch(2) %>"
+        compiled = compile(source)
+
+        session = Herb::Engine::Runtime::Session.capture do
+          self.class.watching_object.instance_eval(compiled)
+        end
+
+        assert_equal([[1, 5], [2, 0]], session.entries.map { |entry| [entry.line, entry.column] })
+        assert_equal([[1], [2]], session.entries.map { |entry| entry[:seen] })
+      end
+
+      test "names the template it came from" do
+        source = "<%= watch(1) %>"
+        compiled = compile(source)
+
+        session = Herb::Engine::Runtime::Session.capture do
+          self.class.watching_object.instance_eval(compiled)
+        end
+
+        assert_equal [FILENAME], session.entries.map(&:template)
+      end
+
+      test "reaches the payload as a metric naming the tag that caused it" do
+        source = "<ul>\n  <% [1, 2].each do |n| %>\n    <li><%= watch(n) %></li>\n  <% end %>\n</ul>"
+        compiled = compile(source)
+
+        session = Herb::Engine::Runtime::Session.capture do
+          self.class.watching_object.instance_eval(compiled)
+        end
+
+        session.measure(:seen, origin: "Herb Engine", code: "sql-queries") { |seen|
+          "#{seen.size} SQL queries"
+        }
+
+        diagnostic = session.diagnostics.first
+
+        assert_equal "#{FILENAME}:3:9: [sql-queries] 2 SQL queries", diagnostic.to_s
+        assert_equal :metric, diagnostic.kind
+      end
+
+      test "collects every pass of a loop under the one tag that repeats" do
+        source = "<% [1, 2, 3].each do |n| %><%= watch(n) %><% end %>"
+        compiled = compile(source)
+
+        session = Herb::Engine::Runtime::Session.capture do
+          self.class.watching_object.instance_eval(compiled)
+        end
+
+        seen = session.entries.find { |entry| entry[:seen].any? }
+
+        assert_equal [1, 2, 3], seen[:seen]
+      end
+    end
+
+    describe "what it attributes a render to" do
+      test "frames the whole template as one render" do
+        compiled = compile("<div><%= 1 + 1 %></div>")
+
+        session = Herb::Engine::Runtime::Session.capture { Object.new.instance_eval(compiled) }
+
+        assert_equal [{ id: "1", template: FILENAME }], session.report.render_tree
+      end
+
+      test "gives an annotation made while it renders that render's node" do
+        compiled = compile("<%= annotated %>")
+        object = Object.new
+
+        object.define_singleton_method(:annotated) do
+          Herb::Engine::Runtime::Session.annotate(:render_time, 2.5, origin: "reactionview")
+          "x"
+        end
+
+        session = Herb::Engine::Runtime::Session.capture { object.instance_eval(compiled) }
+
+        assert_equal({ "1" => { "reactionview" => { render_time: 2.5 } } }, session.report.nodes)
+      end
+
+      test "leaves the render open for locals the template assigns afterwards" do
+        assert_equal render("<% total = 40 + 2 %><%= total %>", instrument: false), render("<% total = 40 + 2 %><%= total %>")
+      end
+    end
+
+    describe "what it says a render was reached by" do
+      RENDERS.each do |name, source|
+        test "frames #{name}" do
+          instrumented(source)
+        end
+      end
+
+      test "frames a render tag at all" do
+        assert_snapshot_matches(compile(%(<%= render "posts/card" %>)), "instrumentation_test-0")
+      end
+
+      test "leaves a render tag a render tag" do
+        compiled = compile(%(<%= render "posts/card" %>))
+
+        assert_snapshot_matches(compiled, "instrumentation_test-1")
+      end
+
+      test "keeps the body of a render that takes a block" do
+        assert_snapshot_matches(compile(%(<%= render layout: "box" do %>inner<% end %>)), "instrumentation_test-2")
+      end
+    end
+
+    describe "capturing what a tag rendered" do
+      def captured(source, capture_output:)
+        Herb::Engine.new(
+          source,
+          filename: FILENAME,
+          visitors: [Herb::Engine::InstrumentationVisitor.new(capture_output: capture_output)]
+        ).src
+      end
+
+      def calls(compiled)
+        compiled.scan(/Session\.(output|at)\(/).flatten.tally
+      end
+
+      test "captures nothing unless it was asked to" do
+        assert_snapshot_matches(compile(%(<div><%= t(".title") %></div>)), "instrumentation_test-3")
+      end
+
+      test "captures only the tags that match" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: /\A\s*t[\s(]/)
+
+        assert_equal({ "output" => 1, "at" => 1 }, calls(compiled))
+      end
+
+      test "captures every output tag when told to capture everything" do
+        compiled = captured(%(<div><%= t(".title") %><%= post.body %></div>), capture_output: true)
+
+        assert_equal({ "output" => 2 }, calls(compiled))
+      end
+
+      test "takes anything that answers to call" do
+        assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(source) { source.include?("body") }), "instrumentation_test-4")
+      end
+
+      test "leaves a tag it cannot make sense of alone" do
+        assert_snapshot_matches(captured(%(<%= post.body %>), capture_output: ->(_source) { raise "boom" }), "instrumentation_test-5")
+      end
+
+      test "records the value the tag rendered, filed against the tag" do
+        compiled = captured(%(<div><%= title %></div>), capture_output: true)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["Upcoming events"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "records one value per render of a tag inside a collection" do
+        compiled = captured(%(<% items.each do |item| %><%= item %><% end %>), capture_output: true)
+        context = Struct.new(:items).new(["alpha", "beta", "gamma"])
+
+        session = Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }
+
+        assert_equal([["alpha", "beta", "gamma"]], session.entries.map { |entry| entry[:output] })
+      end
+
+      test "still renders what it would have rendered" do
+        source = %(<div><%= title %></div>)
+        context = Class.new { def title = "Upcoming events" }.new
+
+        assert_equal "<div>Upcoming events</div>", context.instance_eval(captured(source, capture_output: true))
+      end
+    end
+  end
+end

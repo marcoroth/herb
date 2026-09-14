@@ -1,0 +1,7 @@
+---
+source: "Engine::CLIStdinTest#test_0007_shell: compile with json flag and stdin"
+input: "cli_stdin_test-6"
+---
+_buf = ::String.new; _buf << '<div>Test</div>
+'.freeze;
+_buf.to_s

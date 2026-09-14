@@ -1,0 +1,9 @@
+---
+source: "Engine::Slots::VisitorTest#test_0037_does not assign a slot to non-output ERB"
+input: "<% x = 1 %><p>static</p>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: e3b0c442
+
+slots: (none)

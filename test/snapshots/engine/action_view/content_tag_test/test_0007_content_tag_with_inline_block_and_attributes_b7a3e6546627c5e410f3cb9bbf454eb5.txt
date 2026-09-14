@@ -2,5 +2,4 @@
 source: "Engine::ActionView::ContentTagTest#test_0007_content_tag with inline block and attributes"
 input: "{source: \"<%= content_tag(:div, class: \\\"container\\\") { \\\"Hello\\\" } %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<div class="container">Hello</div>'.freeze;
-_buf.to_s
+'<div class="container">Hello</div>'.freeze

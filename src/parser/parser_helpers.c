@@ -6,6 +6,7 @@
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/parser/foreign_content_elements.h"
 #include "../include/parser/parser.h"
 
 #include <stdarg.h>
@@ -39,6 +40,7 @@ token_T* parser_pop_open_tag(const parser_T* parser) {
  */
 bool parser_in_svg_context(const parser_T* parser) {
   if (!parser || !parser->open_tags_stack) { return false; }
+  if (parser->svg_depth > 0) { return true; }
 
   size_t stack_size = hb_array_size(parser->open_tags_stack);
 
@@ -55,39 +57,64 @@ bool parser_in_svg_context(const parser_T* parser) {
 
 // ===== Foreign Content Handling =====
 
-foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
-  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
+static const foreign_content_element_T* parser_find_foreign_content_element(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return NULL; }
 
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  for (size_t i = 0; i < FOREIGN_CONTENT_ELEMENTS_COUNT; i++) {
+    if (hb_string_equals_case_insensitive(tag_name, hb_string(FOREIGN_CONTENT_ELEMENTS[i].name))) {
+      return &FOREIGN_CONTENT_ELEMENTS[i];
+    }
+  }
 
-  return FOREIGN_CONTENT_UNKNOWN;
+  return NULL;
+}
+
+// raise HERB_MAX_FOREIGN_CONTENT_ELEMENTS when config/html_elements.yml outgrows it
+typedef char
+  herb_foreign_content_capacity_check[(FOREIGN_CONTENT_ELEMENTS_COUNT <= HERB_MAX_FOREIGN_CONTENT_ELEMENTS) ? 1 : -1];
+
+int parser_foreign_content_element_index(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? (int) (element - FOREIGN_CONTENT_ELEMENTS) : -1;
+}
+
+foreign_content_kind_T parser_get_foreign_content_kind(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->kind : FOREIGN_CONTENT_NONE;
+}
+
+bool parser_foreign_content_has_end_tag(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->has_end_tag : false;
+}
+
+bool parser_foreign_content_is_html_only(hb_string_T tag_name) {
+  const foreign_content_element_T* element = parser_find_foreign_content_element(tag_name);
+
+  return element ? element->html_only : false;
 }
 
 bool parser_is_foreign_content_tag(hb_string_T tag_name) {
-  return parser_get_foreign_content_type(tag_name) != FOREIGN_CONTENT_UNKNOWN;
+  return parser_get_foreign_content_kind(tag_name) != FOREIGN_CONTENT_NONE;
 }
 
-hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) {
-  switch (type) {
-    case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
-    case FOREIGN_CONTENT_STYLE: return hb_string("style");
-    default: return HB_STRING_EMPTY;
-  }
-}
-
-void parser_enter_foreign_content(parser_T* parser, foreign_content_type_T type) {
+void parser_enter_foreign_content(parser_T* parser, foreign_content_kind_T kind, hb_string_T tag_name) {
   if (parser == NULL) { return; }
 
   parser->state = PARSER_STATE_FOREIGN_CONTENT;
-  parser->foreign_content_type = type;
+  parser->foreign_content_kind = kind;
+  parser->foreign_content_tag_name = tag_name;
 }
 
 void parser_exit_foreign_content(parser_T* parser) {
   if (parser == NULL) { return; }
 
   parser->state = PARSER_STATE_DATA;
-  parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
+  parser->foreign_content_kind = FOREIGN_CONTENT_NONE;
+  parser->foreign_content_tag_name = HB_STRING_NULL;
 }
 
 void parser_append_unexpected_error_impl(
@@ -111,7 +138,8 @@ void parser_append_unexpected_error_impl(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   hb_allocator_dealloc(parser->allocator, expected);
@@ -133,7 +161,8 @@ void parser_append_unexpected_error_string(
     token->location.start,
     token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   token_free(token, parser->allocator);
@@ -146,7 +175,8 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
     parser->current_token->location.start,
     parser->current_token->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 }
 
@@ -192,7 +222,8 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
       token->location.start,
       token->location.end,
       parser->allocator,
-      array
+      array,
+      &parser->options
     );
   }
 
@@ -210,12 +241,13 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     open_tag->tag_name->location.start,
     open_tag->tag_name->location.end,
     parser->allocator,
-    errors
+    errors,
+    &parser->options
   );
 
   return ast_html_element_node_init(
     (AST_NODE_T*) open_tag,
-    open_tag->tag_name,
+    token_copy(open_tag->tag_name, parser->allocator),
     body,
     NULL,
     false,
@@ -242,7 +274,8 @@ void parser_handle_mismatched_tags(
       actual_tag->location.start,
       actual_tag->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   } else {
     append_missing_opening_tag_error(
@@ -250,17 +283,16 @@ void parser_handle_mismatched_tags(
       close_tag->tag_name->location.start,
       close_tag->tag_name->location.end,
       parser->allocator,
-      errors
+      errors,
+      &parser->options
     );
   }
 }
 
-bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_type_T expected_type) {
-  hb_string_T expected_tag_name = parser_get_foreign_content_closing_tag(expected_type);
+bool parser_is_foreign_content_closing_tag_name(const parser_T* parser, hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name) || hb_string_is_empty(parser->foreign_content_tag_name)) { return false; }
 
-  if (hb_string_is_empty(tag_name) || hb_string_is_empty(expected_tag_name)) { return false; }
-
-  return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
+  return hb_string_equals_case_insensitive(parser->foreign_content_tag_name, tag_name);
 }
 
 void parser_synchronize(parser_T* parser, hb_array_T** errors) {

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0007_ternary with string literals inside an attribute value"
+input: "{source: \"<div class=\\\"<%= active ? \\\"on\\\" : \\\"off\\\" %>\\\">Body</div>\", locals: {active: true}, options: {action_view_helpers: true}}"
+---
+<div class="on">Body</div>

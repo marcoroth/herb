@@ -3,7 +3,7 @@ import { IdentityPrinter } from "@herb-tools/printer"
 import { ASTRewriter } from "./ast-rewriter.js"
 import { StringRewriter } from "./string-rewriter.js"
 
-import type { HerbBackend, Node } from "@herb-tools/core"
+import type { HerbBackend, Node, NotLocationless } from "@herb-tools/core"
 import type { RewriteContext } from "./context.js"
 
 export type Rewriter = ASTRewriter | StringRewriter
@@ -57,7 +57,7 @@ export interface RewriteResult {
  * @param options - Optional configuration for the rewrite operation
  * @returns Object containing the rewritten string and Node
  */
-export function rewrite<T extends Node>(node: T, rewriters: Rewriter[], options: RewriteOptions = {}): RewriteResult & { node: T } {
+export function rewrite<T extends Node>(node: T & NotLocationless, rewriters: Rewriter[], options: RewriteOptions = {}): RewriteResult & { node: T } {
   const { baseDir = process.cwd(), filePath } = options
 
   const context: RewriteContext = { baseDir, filePath }

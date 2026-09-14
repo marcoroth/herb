@@ -1,6 +1,6 @@
 import { type Node, Location } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "../utils/rule-utils.js"
 import { positionFromOffset } from "@herb-tools/core"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
@@ -44,6 +44,7 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-no-extra-newline"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

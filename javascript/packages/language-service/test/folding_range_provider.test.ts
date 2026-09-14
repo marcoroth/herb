@@ -498,4 +498,21 @@ describe("FoldingRangeProvider", () => {
       expect(ranges.length).toBeGreaterThanOrEqual(15)
     })
   })
+
+  describe("ERB comments", () => {
+    it("creates a folding range for a multi-line ERB comment", () => {
+      const content = dedent`
+        <%#
+          a comment
+          over several lines
+        %>
+      `
+
+      const ranges = service.getFoldingRanges(createDocument(content))
+
+      expect(ranges).toEqual([
+        { startLine: 0, startCharacter: 3, endLine: 2, endCharacter: 0 },
+      ])
+    })
+  })
 })

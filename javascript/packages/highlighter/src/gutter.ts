@@ -1,4 +1,4 @@
-import { colorize } from "./color.js"
+import { colorize, hyperlink } from "./color.js"
 
 import type { Color } from "./color.js"
 
@@ -12,9 +12,20 @@ export const GUTTER_WIDTH = 4 + 3 + 1 + 1 + 1;
 export const MIN_CONTENT_WIDTH = 40;
 
 export const separator = (): string => colorize("│", "gray")
-export const lineNumber = (number: number, emphasized: boolean): string => colorize(number.toString().padStart(3, " "), emphasized ? "bold" : "gray")
+
+export const lineNumber = (number: number, emphasized: boolean, url?: string): string => {
+  const text = number.toString()
+  const color = emphasized ? "bold" : "gray"
+
+  if (url === undefined) {
+    return colorize(text.padStart(3, " "), color)
+  }
+
+  return `${" ".repeat(Math.max(0, 3 - text.length))}${hyperlink(colorize(text, color), url)}`
+}
+
 export const markerPrefix = (marker?: Color): string => marker ? colorize("  → ", marker) : "    "
-export const linePrefix = (number: number, emphasized: boolean, marker?: Color): string => `${markerPrefix(marker)}${lineNumber(number, emphasized)} ${separator()} `
+export const linePrefix = (number: number, emphasized: boolean, marker?: Color, url?: string): string => `${markerPrefix(marker)}${lineNumber(number, emphasized, url)} ${separator()} `
 export const pointerPrefix = (): string => `        ${separator()}`
 export const continuationPrefix = (): string => `        ${separator()} `
 export const availableWidth = (maxWidth: number): number => Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)

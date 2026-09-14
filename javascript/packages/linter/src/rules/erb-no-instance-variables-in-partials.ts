@@ -1,7 +1,7 @@
 import { PrismVisitor, PrismNodes , locationFromByteOffset } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
-import { isPartialFile } from "./file-utils.js"
+import { isPartialFile } from "../utils/file-utils.js"
 
 import type { ParseResult, ParserOptions, PrismLocation } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -60,6 +60,7 @@ class InstanceVariableCollector extends PrismVisitor {
 export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
   static ruleName = "erb-no-instance-variables-in-partials"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { getAttribute, getStaticAttributeValue, getTagLocalName, isERBOpenTagNode, isHTMLOpenTagNode, isRubyLiteralNode, filterHTMLAttributeNodes, findAttributeByName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -85,11 +85,13 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
 export class HTMLAnchorRequireHrefRule extends ParserRule {
   static ruleName = "html-anchor-require-href"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

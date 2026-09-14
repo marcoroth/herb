@@ -5,6 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/tsconfig.tsbuildinfo"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"

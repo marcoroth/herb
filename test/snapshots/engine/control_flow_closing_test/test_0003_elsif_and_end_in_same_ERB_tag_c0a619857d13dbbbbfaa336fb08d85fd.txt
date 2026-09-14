@@ -1,0 +1,5 @@
+---
+source: "Engine::ControlFlowClosingTest#test_0003_elsif and end in same ERB tag"
+input: "{source: \"<% if first %>\\n  <span>First</span>\\n<% elsif second\\nend %>\\n\", locals: {first: true, second: false}, options: {escape: false}}"
+---
+  <span>First</span>

@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0057_trim: false keeps the newline after the end of a block expression"
+input: "{source: \"<%= wrapper do %>\\n  <p>hi</p>\\n<% end %>\\nafter\\n\", options: {trim: false}}"
+---
+_buf = ::String.new; _buf << (wrapper do; _buf << '
+  <p>hi</p>
+'.freeze; end); _buf << '
+after
+'.freeze;
+_buf.to_s

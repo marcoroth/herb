@@ -1,0 +1,8 @@
+---
+source: "Lexer::XMLProcessingInstructionTest#test_0005_processing instruction with colon in target"
+input: "<?soap:envelope?>"
+---
+#<Herb::Token type="TOKEN_XML_PROCESSING_INSTRUCTION_START" value="<?" range=[0, 2] start=(1:0) end=(1:2)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="soap:envelope" range=[2, 15] start=(1:2) end=(1:15)>
+#<Herb::Token type="TOKEN_XML_DECLARATION_END" value="?>" range=[15, 17] start=(1:15) end=(1:17)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[17, 17] start=(1:17) end=(1:17)>

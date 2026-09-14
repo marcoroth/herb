@@ -1,0 +1,10 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0007_preserves indentation of attributes on a self-closing element"
+input: "{source: \"<img\\n  src=\\\"a.png\\\"\\n  alt=\\\"A\\\"\\n/>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<img
+  src="a.png"
+  alt="A"
+/>
+'.freeze;
+_buf.to_s

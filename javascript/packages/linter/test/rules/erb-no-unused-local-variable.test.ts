@@ -407,4 +407,11 @@ describe("erb-no-unused-local-variable", () => {
       <% end %>
     `)
   })
+  test("does not flag an assignment to a declared state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (pending: false) %>
+      <% pending = true %>
+      <% if pending? %>Sending<% end %>
+    `)
+  })
 })

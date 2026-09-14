@@ -42,11 +42,11 @@ napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* 
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::NodeField -%>
-  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= error.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= error.human %>-><%= field.name %>, &HERB_DEFAULT_PARSER_OPTIONS);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::TokenField -%>
-  napi_value <%= field.name %> = CreateToken(env, <%= error.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = CreateToken(env, <%= error.human %>-><%= field.name %>, &HERB_DEFAULT_PARSER_OPTIONS);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::TokenTypeField -%>
@@ -68,7 +68,7 @@ napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* 
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::ArrayField -%>
-  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= error.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= error.human %>-><%= field.name %>, &HERB_DEFAULT_PARSER_OPTIONS);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- else -%>

@@ -6,20 +6,22 @@ module Herb
 
     attr_reader options: Herb::ParserOptions
 
-    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
-    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
+    attr_reader error_count: Integer?
+
+    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
+    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions, ?Integer?) -> void
 
     # : () -> Array[Herb::Errors::Error]
     def errors: () -> Array[Herb::Errors::Error]
 
-    # : () -> bool
-    def failed?: () -> bool
-
-    # : () -> bool
-    def success?: () -> bool
-
     # : () -> String
     def pretty_errors: () -> String
+
+    # : (Herb::Position) -> Herb::Locate::Result?
+    def locate: (Herb::Position) -> Herb::Locate::Result?
+
+    # : (Herb::Position) -> bool
+    def locatable?: (Herb::Position) -> bool
 
     # : (Visitor) -> void
     def visit: (Visitor) -> void

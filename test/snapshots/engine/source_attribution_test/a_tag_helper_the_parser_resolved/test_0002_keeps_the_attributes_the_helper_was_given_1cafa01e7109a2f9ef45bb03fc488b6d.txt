@@ -1,0 +1,5 @@
+---
+source: "Engine::SourceAttributionTest::a tag helper the parser resolved#test_0002_keeps the attributes the helper was given"
+input: "{source: \"<%= link_to \\\"Home\\\", \\\"/\\\", class: \\\"nav\\\" %>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+<a class="nav" href="/" data-herb-source="app/views/posts/_card.html.erb:1:1">Home</a>

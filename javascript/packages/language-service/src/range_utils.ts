@@ -10,6 +10,10 @@ export function lspLine(herbPosition: SerializedPosition): number {
   return herbPosition.line - 1
 }
 
+export function hasSourceLocation(herbLocation: { start: { line: number } } | null | undefined): boolean {
+  return !!herbLocation && herbLocation.start.line > 0
+}
+
 export function lspRangeFromLocation(herbLocation: SerializedLocation): Range {
   return Range.create(lspPosition(herbLocation.start), lspPosition(herbLocation.end))
 }

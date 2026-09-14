@@ -1,0 +1,8 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0006_compiles an erb comment to the same lines as erubi"
+input: "{source: \"<%# a comment %>\\n<div>Content</div>\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << '<div>Content</div>
+'.freeze;
+_buf.to_s

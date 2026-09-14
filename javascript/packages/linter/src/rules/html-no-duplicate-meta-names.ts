@@ -1,7 +1,7 @@
 import { isHTMLElementNode, isHTMLOpenTagNode, getAttributeName, getAttributeValue, forEachAttribute } from "@herb-tools/core"
 import { getTagLocalName } from "@herb-tools/core"
 
-import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils"
 import { ParserRule, BaseAutofixContext } from "../types"
 
 import type { ParseResult, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
@@ -185,11 +185,13 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-no-duplicate-meta-names"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

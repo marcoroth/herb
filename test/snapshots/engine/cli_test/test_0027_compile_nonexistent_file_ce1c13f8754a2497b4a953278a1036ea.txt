@@ -1,0 +1,5 @@
+---
+source: "Engine::CLITest#test_0027_compile nonexistent file"
+input: "test_0027_compile nonexistent file"
+---
+File doesn't exist: /path/that/does/not/exist.erb

@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { renderPartialExpression } from "@herb-tools/analysis"
 
@@ -120,6 +120,7 @@ class ActionViewPreferQualifiedPartialPathVisitor extends BaseRuleVisitor<Prefer
 export class ActionViewPreferQualifiedPartialPathRule extends ParserRule<PreferQualifiedPartialPathAutofixContext> {
   static ruleName = "actionview-prefer-qualified-partial-path"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static unsafeAutocorrectable = true
   static autofixRequiresContext = true
 
@@ -127,6 +128,7 @@ export class ActionViewPreferQualifiedPartialPathRule extends ParserRule<PreferQ
     return {
       enabled: true,
       severity: "info",
+      frameworks: ["actionview"],
     }
   }
 

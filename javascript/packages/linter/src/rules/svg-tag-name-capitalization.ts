@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { ElementStackVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
+import { ElementStackVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, Mutable, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLCloseTagNode, ERBOpenTagNode, Token, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -51,6 +51,7 @@ export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitaliz
   static autocorrectable = true
   static ruleName = "svg-tag-name-capitalization"
   static introducedIn = this.version("0.4.2")
+  static defaultEnabledIn = this.version("0.4.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

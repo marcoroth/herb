@@ -1,0 +1,7 @@
+---
+source: "Engine::ValidationModesTest#test_0014_the engine compiles a generator template to literal ERB without the validator"
+input: "{source: \"<%%= form.submit \\\"Save\\\" %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<%= form.submit "Save" %>
+'.freeze;
+_buf.to_s

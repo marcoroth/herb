@@ -12,6 +12,8 @@ Using the canonical form for boolean attributes improves readability, keeps HTML
 
 For example, instead of writing `disabled="disabled"` or `disabled="true"`, simply write `disabled`.
 
+One exemption: a value that reads a declared `herb:state`, bare or compared to a literal, like `checked="<%= agreed %>"` or `disabled="<%= draft == "" %>"`. The Herb engine compiles that to presence, rendering the attribute only when the read is truthy, so the value never reaches the page.
+
 ## Examples
 
 ### ✅ Good

@@ -21,11 +21,13 @@ typedef struct {
   uint32_t previous_column;
   char current_character;
   lexer_state_T state;
+  bool in_erb_comment;
   uint8_t malformed_erb_close_length;
 } lexer_state_snapshot_T;
 
 bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_for_xml_declaration(const lexer_T* lexer, uint32_t offset);
+bool lexer_peek_for_xml_processing_instruction(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_for_cdata_start(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_for_cdata_end(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, uint32_t offset);
@@ -104,6 +106,7 @@ static inline lexer_state_snapshot_T lexer_save_state(lexer_T* lexer) {
                                       .previous_column = lexer->previous_column,
                                       .current_character = lexer->current_character,
                                       .state = lexer->state,
+                                      .in_erb_comment = lexer->in_erb_comment,
                                       .malformed_erb_close_length = lexer->malformed_erb_close_length };
   return snapshot;
 }
@@ -117,6 +120,7 @@ static inline void lexer_restore_state(lexer_T* lexer, lexer_state_snapshot_T sn
   lexer->previous_column = snapshot.previous_column;
   lexer->current_character = snapshot.current_character;
   lexer->state = snapshot.state;
+  lexer->in_erb_comment = snapshot.in_erb_comment;
   lexer->malformed_erb_close_length = snapshot.malformed_erb_close_length;
 }
 

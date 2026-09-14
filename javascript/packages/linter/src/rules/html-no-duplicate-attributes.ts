@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext } from "../types.js"
-import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils.js"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -174,6 +174,7 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
 export class HTMLNoDuplicateAttributesRule extends ParserRule {
   static ruleName = "html-no-duplicate-attributes"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

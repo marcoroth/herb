@@ -23,8 +23,8 @@ export class Token {
 
     return new Token(
       tokenOrType.value,
-      Range.from(tokenOrType.range),
-      Location.from(tokenOrType.location),
+      Range.fromOptional(tokenOrType.range),
+      Location.fromOptional(tokenOrType.location),
       tokenOrType.type,
     )
   }
@@ -50,7 +50,7 @@ export class Token {
   }
 
   treeInspect(): string {
-    return `"${this.value}" ${this.location.treeInspectWithLabel()}`
+    return `"${this.value}" ${this.location ? this.location.treeInspectWithLabel() : "(location: ∅)"}`
   }
 
   valueInspect(): string {
@@ -60,7 +60,7 @@ export class Token {
   }
 
   inspect(): string {
-    return `#<Herb::Token type="${this.type}" value=${this.valueInspect()} range=${this.range.treeInspect()} start=${this.location.start.treeInspect()} end=${this.location.end.treeInspect()}>`
+    return `#<Herb::Token type="${this.type}" value=${this.valueInspect()} range=${this.range ? this.range.treeInspect() : "∅"} start=${this.location ? this.location.start.treeInspect() : "∅"} end=${this.location ? this.location.end.treeInspect() : "∅"}>`
   }
 
   toString(): string {

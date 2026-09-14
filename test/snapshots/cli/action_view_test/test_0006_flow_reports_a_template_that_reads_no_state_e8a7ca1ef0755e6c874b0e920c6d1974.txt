@@ -1,0 +1,12 @@
+---
+source: "CLI::ActionViewTest#test_0006_flow reports a template that reads no state"
+input: "<p>static</p>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/show.html.erb
+
+ This template does not read any instance variables or constants.
+

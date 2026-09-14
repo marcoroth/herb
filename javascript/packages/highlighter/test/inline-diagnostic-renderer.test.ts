@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest"
 import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 import { InlineDiagnosticRenderer } from "../src/inline-diagnostic-renderer.js"
+import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
+
+import { Location } from "@herb-tools/core"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -13,7 +16,7 @@ describe("InlineDiagnosticRenderer", () => {
   let renderer: InlineDiagnosticRenderer
 
   beforeEach(async () => {
-    const syntaxRenderer = new SyntaxRenderer(themes.onedark)
+    const syntaxRenderer = new SyntaxRenderer(themes.onedark, Herb)
     await syntaxRenderer.initialize()
     renderer = new InlineDiagnosticRenderer(syntaxRenderer)
   })
@@ -21,10 +24,7 @@ describe("InlineDiagnosticRenderer", () => {
   const createDiagnostic = (overrides: Partial<Diagnostic> = {}): Diagnostic => ({
     message: "Test error message",
     severity: "error",
-    location: {
-      start: { line: 2, column: 5 },
-      end: { line: 2, column: 10 },
-    },
+    location: Location.from(2, 5, 2, 10),
     code: "test-rule",
     ...overrides,
   })
@@ -56,10 +56,7 @@ describe("InlineDiagnosticRenderer", () => {
       message: "Multi-line offense",
       severity: "warning",
       code: "multi-line-rule",
-      location: {
-        start: { line: 2, column: 2 },
-        end: { line: 4, column: 11 },
-      },
+      location: Location.from(2, 2, 4, 11),
     })
 
     expect(render(content, [diagnostic])).toMatchSnapshot()
@@ -74,10 +71,7 @@ describe("InlineDiagnosticRenderer", () => {
 
     const diagnostic = createDiagnostic({
       message: "Multi-line offense",
-      location: {
-        start: { line: 1, column: 0 },
-        end: { line: 3, column: 9 },
-      },
+      location: Location.from(1, 0, 3, 9),
     })
 
     const result = render(content, [diagnostic])

@@ -23,6 +23,7 @@ struct SyntaxRenderState {
   expecting_attribute_name: bool,
   expecting_attribute_value: bool,
   in_comment: bool,
+  in_erb_comment: bool,
 }
 
 pub struct SyntaxRenderer {
@@ -83,21 +84,29 @@ impl SyntaxRenderer {
 
     let mut state = SyntaxRenderState::default();
 
-    for token in tokens {
+    for (index, token) in tokens.iter().enumerate() {
       if token.range.from > last_end {
         highlighted.push_str(slice(content, last_end, token.range.from));
       }
 
       let token_text = slice(content, token.range.from, token.range.to);
 
-      self.update_state(&mut state, token, token_text);
+      self.update_state(&mut state, token, token_text, content, tokens.get(index + 1));
 
       let color = self.contextual_color(&state, token, token_text);
 
       if token.token_type == "TOKEN_ERB_CONTENT" {
-        highlighted.push_str(&self.highlight_ruby_code(token_text));
+        if state.in_erb_comment {
+          highlighted.push_str(&self.apply_color(token_text, Some(self.colors.token_html_comment_start)));
+        } else {
+          highlighted.push_str(&self.highlight_ruby_code(token_text));
+        }
       } else {
         highlighted.push_str(&self.apply_color(token_text, color));
+      }
+
+      if token.token_type == "TOKEN_ERB_END" && state.in_erb_comment {
+        state.in_erb_comment = false;
       }
 
       last_end = token.range.to;
@@ -110,7 +119,27 @@ impl SyntaxRenderer {
     highlighted
   }
 
-  fn update_state(&self, state: &mut SyntaxRenderState, token: &Token, token_text: &str) {
+  fn is_erb_comment_tag(&self, tag_text: &str, content: &str, next_token: Option<&Token>) -> bool {
+    if tag_text.starts_with("<%#") {
+      return true;
+    }
+
+    if tag_text != "<%-" {
+      return false;
+    }
+
+    let Some(next) = next_token else {
+      return false;
+    };
+
+    if next.token_type != "TOKEN_ERB_CONTENT" {
+      return false;
+    }
+
+    slice(content, next.range.from, next.range.to).starts_with('#')
+  }
+
+  fn update_state(&self, state: &mut SyntaxRenderState, token: &Token, token_text: &str, content: &str, next_token: Option<&Token>) {
     match token.token_type.as_str() {
       "TOKEN_HTML_TAG_START" => {
         state.in_tag = true;
@@ -174,6 +203,8 @@ impl SyntaxRenderer {
       "TOKEN_HTML_COMMENT_START" => state.in_comment = true,
       "TOKEN_HTML_COMMENT_END" => state.in_comment = false,
 
+      "TOKEN_ERB_START" => state.in_erb_comment = state.in_erb_comment || self.is_erb_comment_tag(token_text, content, next_token),
+
       _ => {}
     }
   }
@@ -188,6 +219,10 @@ impl SyntaxRenderer {
       && token_type != "TOKEN_ERB_CONTENT"
       && token_type != "TOKEN_ERB_END"
     {
+      return Some(self.colors.token_html_comment_start);
+    }
+
+    if state.in_erb_comment && token_type != "TOKEN_ERB_CONTENT" {
       return Some(self.colors.token_html_comment_start);
     }
 

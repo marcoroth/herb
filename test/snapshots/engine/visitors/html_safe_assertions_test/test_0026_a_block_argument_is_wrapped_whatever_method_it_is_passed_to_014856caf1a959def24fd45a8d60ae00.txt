@@ -1,0 +1,6 @@
+---
+source: "Engine::Visitors::HTMLSafeAssertionsTest#test_0026_a block argument is wrapped whatever method it is passed to"
+input: "{source: \"<%= items.select(&:html_safe) %>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::HTMLSafeAssertionsVisitor mode=:raise ignore=[] file_path=\"app/views/test.html.erb\">]}}"
+---
+_buf = ::String.new; _buf << (items.select(&->(value, *rest) { ::Herb::Engine::Runtime::HTMLSafeAssertions.check(value, file: "app/views/test.html.erb".freeze, line: 1, column: 1, source: "<%= items.select(&:html_safe) %>".freeze, mode: :raise).html_safe(*rest) })).to_s;
+_buf.to_s

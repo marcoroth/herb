@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0074_records what a block whose value is not output contains"
+input: "<div><% @user.tap do |u| %><b><%= u.name %></b><% end %></div>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 762b313e
+
+slots:
+  index=0  type=child  node_path=[0, 0, 0, 0]  expression="u.name"

@@ -1,6 +1,8 @@
 import dedent from "dedent"
 
 import { Herb } from "../src"
+
+import type { ERBCommentNode } from "../src"
 import { describe, test, expect, beforeAll } from "vitest"
 
 describe("@herb-tools/node-wasm - ERB Comments", () => {
@@ -23,9 +25,9 @@ describe("@herb-tools/node-wasm - ERB Comments", () => {
     expect(result.errors).toHaveLength(0)
     expect(result.value).toBeDefined()
     expect(result.value.children).toHaveLength(1)
-    expect(result.value.children[0].type).toBe("AST_ERB_CONTENT_NODE")
-    expect(result.value.children[0].parsed).toBe(false)
-    expect(result.value.children[0].valid).toBe(true)
+    const erbNode = result.value.children[0] as ERBCommentNode
+
+    expect(erbNode.type).toBe("AST_ERB_COMMENT_NODE")
   })
 
   test("handles long ERB comments (1000 chars)", () => {
@@ -127,14 +129,11 @@ describe("@herb-tools/node-wasm - ERB Comments", () => {
     expect(result.value).toBeDefined()
 
     const erbComment = result.value.children.find((child: any) =>
-      child.type === "AST_ERB_CONTENT_NODE" &&
-      child.tag_opening?.value === "<%#"
-    )
+      child.type === "AST_ERB_COMMENT_NODE"
+    ) as ERBCommentNode
 
     expect(erbComment).toBeDefined()
-    expect(erbComment.content.value).toBe(" ERB comment ")
-    expect(erbComment.parsed).toBe(false)
-    expect(erbComment.valid).toBe(true)
+    expect(erbComment.content?.value).toBe(" ERB comment ")
   })
 
   test("parses AST correctly for long ERB comments", () => {
@@ -146,11 +145,11 @@ describe("@herb-tools/node-wasm - ERB Comments", () => {
     expect(result.value).toBeDefined()
     expect(result.value.children).toHaveLength(1)
 
-    const erbNode = result.value.children[0]
-    expect(erbNode.type).toBe("AST_ERB_CONTENT_NODE")
-    expect(erbNode.tag_opening.value).toBe("<%#")
-    expect(erbNode.tag_closing.value).toBe("%>")
-    expect(erbNode.content.value).toContain("test".repeat(250))
+    const erbNode = result.value.children[0] as ERBCommentNode
+    expect(erbNode.type).toBe("AST_ERB_COMMENT_NODE")
+    expect(erbNode.tag_opening?.value).toBe("<%#")
+    expect(erbNode.tag_closing?.value).toBe("%>")
+    expect(erbNode.content?.value).toContain("test".repeat(250))
   })
 
   test("handles very large comment length (50000 chars)", () => {
@@ -180,9 +179,9 @@ describe("@herb-tools/node-wasm - ERB Comments", () => {
     expect(result.errors).toHaveLength(0)
     expect(result.value).toBeDefined()
 
-    const erbNode = result.value.children[0]
-    expect(erbNode.type).toBe("AST_ERB_CONTENT_NODE")
-    expect(erbNode.content.value).toContain("Line 999 with some content")
+    const erbNode = result.value.children[0] as ERBCommentNode
+    expect(erbNode.type).toBe("AST_ERB_COMMENT_NODE")
+    expect(erbNode.content?.value).toContain("Line 999 with some content")
   })
 
   test("handles ERB comments that were previously causing formatter issues", () => {
@@ -207,10 +206,8 @@ describe("@herb-tools/node-wasm - ERB Comments", () => {
       expect(result.errors, `Test case ${index + 1} had errors`).toHaveLength(0)
       expect(result.value, `Test case ${index + 1} had no AST`).toBeDefined()
 
-      const erbNode = result.value.children[0]
-      expect(erbNode.type).toBe("AST_ERB_CONTENT_NODE")
-      expect(erbNode.parsed).toBe(false)
-      expect(erbNode.valid).toBe(true)
+      const erbNode = result.value.children[0] as ERBCommentNode
+      expect(erbNode.type).toBe("AST_ERB_COMMENT_NODE")
     })
   })
 

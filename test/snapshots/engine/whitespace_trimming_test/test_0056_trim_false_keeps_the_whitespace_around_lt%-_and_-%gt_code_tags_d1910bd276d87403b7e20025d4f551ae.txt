@@ -1,0 +1,9 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0056_trim: false keeps the whitespace around <%- and -%> code tags"
+input: "{source: \"<%- if true -%>\\n  <h1>Content</h1>\\n<%- end -%>\\n\", options: {trim: false}}"
+---
+_buf = ::String.new; if true; _buf << '
+  <h1>Content</h1>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

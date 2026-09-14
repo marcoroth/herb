@@ -1,0 +1,11 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0010_a conditional attribute inside a conditional element"
+input: "{source: \"<select>\\n<% if flag %>\\n<option <%= tag.attributes(selected: option == current) %>>One</option>\\n<% else %>\\n<option>None</option>\\n<% end %>\\n</select>\\n\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+if flag 
+if (option == current); "<select>\n<option selected>One</option>\n</select>\n".freeze; else "<select>\n<option >One</option>\n</select>\n".freeze;end;
+else 
+ "<select>\n<option>None</option>\n</select>\n".freeze;
+end 
+

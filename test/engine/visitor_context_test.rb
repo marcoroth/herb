@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 
 module Engine
   class VisitorContextTest < Minitest::Spec
+    include SnapshotUtils
+
     def context(**)
-      Herb::Engine::VisitorContext.new(**)
+      Herb::Visitor::Context.new(**)
     end
 
     test "a relative file path is kept as given" do
@@ -44,6 +47,27 @@ module Engine
       assert_equal "/abs/x.erb", context(file_path: "/abs/x.erb", project_path: "relative").relative_file_path
     end
 
+    test "the relative file path is derived lazily" do
+      context_class = Class.new(Herb::Visitor::Context) do
+        class << self
+          attr_accessor :derivations
+
+          def derive_relative_file_path(...)
+            self.derivations += 1
+            super
+          end
+        end
+      end
+      context_class.derivations = 0
+
+      subject = context_class.new(file_path: "app/x.erb", project_path: "/proj")
+
+      assert_equal 0, context_class.derivations
+      assert_equal "app/x.erb", subject.relative_file_path
+      assert_equal "app/x.erb", subject.relative_file_path
+      assert_equal 1, context_class.derivations
+    end
+
     test "the file path is not absolutized" do
       assert_equal "test.erb", context(file_path: "test.erb").file_path.to_s
     end
@@ -69,7 +93,7 @@ module Engine
 
       assert_equal "dark", subject[:theme]
       assert_equal 2, subject[:level]
-      assert_equal({ theme: "dark", level: 2 }, subject.data.except(:origin))
+      assert_equal({ theme: "dark", level: 2 }, subject.data.except(:origin, :replacements))
     end
 
     test "well known keys are readable through the bag" do
@@ -127,8 +151,9 @@ module Engine
     test "inspect omits the project path so it stays machine independent" do
       subject = context(file_path: "app/x.erb", project_path: "/proj")
 
-      assert_equal %(#<Herb::Engine::VisitorContext file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
-      refute_includes subject.inspect, "/proj"
+      assert_equal %(#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">), subject.inspect
+
+      assert_snapshot_matches(subject.inspect, "visitor_context_test-0")
     end
 
     test "to_hash exposes every part" do

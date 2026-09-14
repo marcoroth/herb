@@ -4,21 +4,79 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
-import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
+import { stringify, parse, parseDocument, isMap, isScalar, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
-import { promises as fs } from "fs"
+
+import type { ParseOptions } from "@herb-tools/core"
+import { promises as fs, accessSync, readFileSync, readdirSync, statSync } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
 import { HerbConfigSchema } from "./config-schema.js"
 
-import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { FrameworkSchema, EnvironmentSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
 const DEFAULT_VERSION = packageJson.version
 const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
+
+const GLOB_CHARACTERS = /[*?[\]{}]/
+
+/**
+ * The preferences an editor owns rather than the project. Whether the linter
+ * runs is a decision a team makes in `.herb.yml`, but whether fixes apply on
+ * save, or how far apart two tags have to be before a hint appears, is nobody's
+ * business but the person typing.
+ *
+ * They live here so that an editor integration can read them without depending
+ * on the language server, which would pull the whole server into its bundle.
+ */
+export interface PersonalHerbSettings {
+  trace?: {
+    server?: string
+  }
+  linter?: {
+    enabled?: boolean
+    fixOnSave?: boolean
+  }
+  formatter?: {
+    enabled?: boolean
+    indentWidth?: number
+    indentStyle?: "space" | "tab"
+    maxLineLength?: number
+  }
+  inlayHints?: {
+    enabled?: boolean
+    minimumLines?: number
+    maximumClasses?: number
+  }
+  runtimeReports?: {
+    inlayHints?: boolean
+  }
+}
+
+export const defaultPersonalSettings: PersonalHerbSettings = {
+  linter: {
+    enabled: PARSED_DEFAULTS.linter?.enabled ?? true,
+    fixOnSave: true
+  },
+  formatter: {
+    enabled: PARSED_DEFAULTS.formatter?.enabled ?? false,
+    indentWidth: PARSED_DEFAULTS.formatter?.indentWidth ?? 2,
+    indentStyle: PARSED_DEFAULTS.formatter?.indentStyle ?? "space",
+    maxLineLength: PARSED_DEFAULTS.formatter?.maxLineLength ?? 80
+  },
+  inlayHints: {
+    enabled: true,
+    minimumLines: 10,
+    maximumClasses: 2
+  },
+  runtimeReports: {
+    inlayHints: true
+  }
+}
 
 export interface ConfigValidationError {
   message: string
@@ -34,41 +92,27 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
-export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
-
-export type LinterMode = "editor" | "cli"
-
-export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
-  if (typeof severity === "string") {
-    return severity
-  }
-
-  return severity[mode]
+export type ParserConfig = {
+  erb_openers?: string[]
 }
 
-/**
- * Pseudo rule name used inside `linter.rules` to set the default `enabled`
- * state for every rule that isn't explicitly configured.
- *
- * ```yaml
- * linter:
- *   rules:
- *     all:
- *       enabled: false
- *
- *     html-no-event-handlers:
- *       enabled: true
- * ```
- */
-export const ALL_RULES_KEY = "all"
+import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
+
+import type { SeverityConfig, LinterMode } from "./config-schema.js"
+
+export { resolveSeverity, ALL_RULES_KEY }
+
+export type { SeverityConfig, LinterMode }
 
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
+  frameworks?: Framework[]
   autoCorrect?: boolean
   include?: string[]
   only?: string[]
   exclude?: string[]
+  environments?: Environment[]
 }
 
 export type LinterConfig = {
@@ -99,12 +143,14 @@ export type HerbConfigOptions = {
   framework?: Framework
   template_engine?: TemplateEngine
   files?: FilesConfig
+  parser?: ParserConfig
   engine?: EngineConfig
   linter?: LinterConfig
   formatter?: FormatterConfig
 }
 
 export type Framework = z.infer<typeof FrameworkSchema>
+export type Environment = z.infer<typeof EnvironmentSchema>
 export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
 
 export type HerbConfig = HerbConfigOptions & {
@@ -192,6 +238,7 @@ export class Config {
   get options(): HerbConfigOptions {
     return {
       files: this.config.files,
+      parser: this.config.parser,
       linter: this.config.linter,
       formatter: this.config.formatter
     }
@@ -199,6 +246,16 @@ export class Config {
 
   get framework() {
     return this.config.framework
+  }
+
+  get parser() {
+    return this.config.parser
+  }
+
+  get parserOptions(): ParseOptions {
+    const erbOpeners = this.config.parser?.erb_openers
+
+    return erbOpeners ? { erb_openers: erbOpeners } : {}
   }
 
   get linter() {
@@ -319,7 +376,8 @@ export class Config {
 
   /**
    * Find files for a specific tool based on its configuration.
-   * Uses include patterns from config, applies exclude patterns.
+   * Uses include patterns from config, applies exclude patterns. An include pattern that is
+   * more specific than an exclude pattern wins over it, see {@link isEnabledForPath}.
    * @param tool - The tool to find files for ('linter' or 'formatter')
    * @param cwd - The directory to search from (defaults to project path)
    * @returns Promise resolving to array of absolute file paths
@@ -336,10 +394,25 @@ export class Config {
 
     const { glob } = await import("tinyglobby")
 
-    return await glob(patterns, {
+    const excludePatterns = filesConfig.exclude || []
+    const prunable = excludePatterns.filter(excludePattern => (
+      !patterns.some(includePattern => Config.includeOverridesExclude(includePattern, excludePattern))
+    ))
+
+    const files = await glob(patterns, {
       cwd: searchDir,
       absolute: true,
-      ignore: filesConfig.exclude || []
+      ignore: prunable
+    })
+
+    if (prunable.length === excludePatterns.length) {
+      return files
+    }
+
+    return files.filter(file => {
+      const relative = path.relative(searchDir, file).split(path.sep).join("/")
+
+      return !Config.isRelativePathExcluded(relative, excludePatterns, patterns)
     })
   }
 
@@ -383,13 +456,82 @@ export class Config {
     return filePath.replace(/^(?:\.\/)+/, "")
   }
 
-  private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
+  private isPathExcluded(filePath: string, excludePatterns?: string[], includePatterns?: string[]): boolean {
     if (!excludePatterns || excludePatterns.length === 0) {
       return false
     }
 
-    const normalized = this.normalizeFilePath(filePath)
-    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
+    return Config.isRelativePathExcluded(this.normalizeFilePath(filePath), excludePatterns, includePatterns)
+  }
+
+  /**
+   * Decide whether a project-relative path is excluded, letting a sufficiently specific include
+   * pattern win over an exclude pattern it out-specifies.
+   * @param relativePath - The path to check, relative to the directory the patterns are anchored at
+   * @param excludePatterns - Array of exclude glob patterns
+   * @param includePatterns - Array of include glob patterns that may override them
+   * @returns true if the path stays excluded
+   */
+  private static isRelativePathExcluded(relativePath: string, excludePatterns: string[], includePatterns?: string[]): boolean {
+    const matchingExcludes = excludePatterns.filter(pattern => picomatch.isMatch(relativePath, pattern))
+
+    if (matchingExcludes.length === 0) {
+      return false
+    }
+
+    const matchingIncludes = (includePatterns || []).filter(pattern => picomatch.isMatch(relativePath, pattern))
+
+    if (matchingIncludes.length === 0) {
+      return true
+    }
+
+    return matchingExcludes.some(excludePattern => (
+      !matchingIncludes.some(includePattern => Config.includeOverridesExclude(includePattern, excludePattern))
+    ))
+  }
+
+  /**
+   * Check whether an include pattern is specific enough to override an exclude pattern.
+   *
+   * An include pattern wins only when it targets the same directory as the exclude pattern
+   * or one below it, comparing the literal (non-glob) leading path segments of each. This is
+   * what lets `vendor/keep/**\/*` opt a subdirectory back in past the default `vendor/**\/*`
+   * exclude, while a broad `**\/*.html.erb` include overrides nothing.
+   *
+   * Exclude patterns with no literal prefix (`**\/*.generated.html.erb`) are never overridable,
+   * because they select files by shape instead of by location.
+   *
+   * @param includePattern - The include pattern to test
+   * @param excludePattern - The exclude pattern it would override
+   * @returns true if the include pattern takes precedence over the exclude pattern
+   */
+  private static includeOverridesExclude(includePattern: string, excludePattern: string): boolean {
+    const excludePrefix = Config.literalPrefixSegments(excludePattern)
+
+    if (excludePrefix.length === 0) {
+      return false
+    }
+
+    const includePrefix = Config.literalPrefixSegments(includePattern)
+
+    return includePrefix.length >= excludePrefix.length && excludePrefix.every((segment, index) => includePrefix[index] === segment)
+  }
+
+  /**
+   * Return the leading path segments of a glob pattern that contain no glob metacharacters.
+   * @param pattern - The glob pattern to inspect
+   * @returns The literal leading segments, empty when the first segment is already a glob
+   */
+  private static literalPrefixSegments(pattern: string): string[] {
+    const segments: string[] = []
+
+    for (const segment of pattern.split("/")) {
+      if (GLOB_CHARACTERS.test(segment)) break
+
+      segments.push(segment)
+    }
+
+    return segments
   }
 
   /**
@@ -424,6 +566,10 @@ export class Config {
   /**
    * Check if a tool (linter or formatter) is enabled for a specific file path.
    * Respects the tool's enabled state and all exclude patterns (defaults + files.exclude + tool.exclude).
+   *
+   * An include pattern overrides an exclude pattern when it targets the same directory or one
+   * below it, so `files.include: ["vendor/keep/**\/*"]` opts that subdirectory back in past the
+   * default `vendor/**\/*` exclude. A broad include such as `**\/*.html.erb` overrides nothing.
    * @param filePath - The file path to check
    * @param tool - The tool to check ('linter' or 'formatter')
    * @returns true if the tool is enabled for this path
@@ -438,7 +584,7 @@ export class Config {
     const filesConfig = this.getFilesConfigForTool(tool)
     const excludePatterns = filesConfig.exclude || []
 
-    return !this.isPathExcluded(filePath, excludePatterns)
+    return !this.isPathExcluded(filePath, excludePatterns, filesConfig.include || [])
   }
 
   /**
@@ -574,7 +720,7 @@ export class Config {
         configPath = this.configPathFromProjectPath(pathOrFile)
       }
 
-      require('fs').statSync(configPath)
+      statSync(configPath)
 
       return true
     } catch {
@@ -643,11 +789,10 @@ export class Config {
    * @returns The project root directory path
    */
   static findProjectRootSync(startPath: string): string {
-    const fsSync = require('fs')
     let currentPath = path.resolve(startPath)
 
     try {
-      const stats = fsSync.statSync(currentPath)
+      const stats = statSync(currentPath)
 
       if (stats.isFile()) {
         currentPath = path.dirname(currentPath)
@@ -662,7 +807,7 @@ export class Config {
       const configPath = path.join(currentPath, this.configPath)
 
       try {
-        fsSync.accessSync(configPath)
+        accessSync(configPath)
 
         return currentPath
       } catch {
@@ -695,7 +840,7 @@ export class Config {
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
-    return require('fs').readFileSync(configPath, 'utf-8')
+    return readFileSync(configPath, 'utf-8')
   }
 
   /**
@@ -1143,12 +1288,11 @@ export class Config {
    * it to `access` would look for a file named `*.gemspec` literally.
    */
   private static isProjectRootSync(dirPath: string): boolean {
-    const fsSync = require('fs')
 
     for (const indicator of this.PROJECT_INDICATORS) {
       if (indicator.startsWith("*")) {
         try {
-          const entries: string[] = fsSync.readdirSync(dirPath)
+          const entries: string[] = readdirSync(dirPath)
 
           if (entries.some(entry => entry.endsWith(indicator.slice(1)))) return true
         } catch {
@@ -1159,7 +1303,7 @@ export class Config {
       }
 
       try {
-        fsSync.accessSync(path.join(dirPath, indicator))
+        accessSync(path.join(dirPath, indicator))
 
         return true
       } catch {

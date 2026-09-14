@@ -442,5 +442,76 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "trim: false keeps the whitespace around <%- and -%> code tags" do
+      template = <<~ERB
+        <%- if true -%>
+          <h1>Content</h1>
+        <%- end -%>
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "trim: false keeps the newline after the end of a block expression" do
+      template = <<~ERB
+        <%= wrapper do %>
+          <p>hi</p>
+        <% end %>
+        after
+      ERB
+
+      engine = assert_compiled_snapshot(template, trim: false)
+
+      assert_snapshot_matches(engine.src, "whitespace_trimming_test-0")
+    end
+
+    test "a multi-line control tag keeps the line its code starts on" do
+      template = "<%\n  if true %>\n<%= \"text\" %>\n<% end %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "a block tag closed on its own line keeps the blank line after it" do
+      template = "<% a = 1 %>\n\n<% provide :t do %><%= x %><% end %>\n\n<% b = 2 %>\n"
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "multi-line code block preserves line count parity with erubi" do
+      template = "<%\n  x = 1\n  y = 2\n%>\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_erubi_line_parity(template)
+    end
+
+    test "keeps the indentation of a tag on the first line that has trailing content" do
+      template = "  <% x = 1 %> b\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation of a comment on the first line that has trailing content" do
+      template = "  <%# note %> b\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation of a tag that ends the template without a newline" do
+      template = "  <% x = 1 %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "still trims a tag on the first line that stands alone" do
+      template = "  <% x = 1 %>\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

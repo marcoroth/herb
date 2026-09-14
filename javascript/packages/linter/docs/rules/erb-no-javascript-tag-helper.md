@@ -28,6 +28,14 @@ The `javascript_tag` helper renders its block as raw text, which means unsafe ER
 <% end %>
 ```
 
+## Configuration
+
+`javascript_tag` is an Action View helper, so this rule only applies to Action View projects and needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 - [Shopify/better-html — `NoJavascriptTagHelper`](https://github.com/Shopify/better-html/blob/main/lib/better_html/test_helper/safe_erb/no_javascript_tag_helper.rb)

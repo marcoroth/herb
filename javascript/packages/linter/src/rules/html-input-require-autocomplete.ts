@@ -1,5 +1,5 @@
 import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue, hasAttribute } from "@herb-tools/core"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -67,6 +67,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
   static ruleName = "html-input-require-autocomplete"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

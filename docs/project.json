@@ -5,6 +5,15 @@
   "projectType": "application",
   "targets": {
     "build": {
+      "outputs": [
+        "{projectRoot}/.vitepress/dist",
+        "{projectRoot}/.vitepress/data",
+        "{projectRoot}/docs/public/assets",
+        "{projectRoot}/docs/public/playground-embed.html",
+        "{projectRoot}/docs/public/playground-prism-embed.html",
+        "{projectRoot}/docs/public/c-reference",
+        "{projectRoot}/docs/linter"
+      ],
       "executor": "nx:run-script",
       "options": {
         "script": "build"

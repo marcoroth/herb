@@ -5,6 +5,7 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/src/html-entities.json"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"

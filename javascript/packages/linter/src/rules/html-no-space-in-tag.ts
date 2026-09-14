@@ -1,7 +1,7 @@
 import { Token, WhitespaceNode, createWhitespaceNode } from "@herb-tools/core"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 
-import { findParent, BaseRuleVisitor } from "./rule-utils.js"
+import { findParent, BaseRuleVisitor } from "../utils/rule-utils.js"
 import { filterWhitespaceNodes, isWhitespaceNode, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { ParseResult, Node, HTMLCloseTagNode, HTMLOpenTagNode } from "@herb-tools/core"
@@ -188,8 +188,8 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-no-space-in-tag"
-  // Initially introduced in 0.8.0 (#559)
-  static introducedIn = this.version("0.10.3")
+  static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.10.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

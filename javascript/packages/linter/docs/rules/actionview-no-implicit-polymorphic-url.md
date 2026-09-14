@@ -48,6 +48,12 @@ The same name check applies to local variables and to method calls, so `<%= link
 
 ## Configuration
 
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 This rule reports at the `info` severity, so it never fails a run under the default `failLevel` of `error`. That reflects what the rule can and cannot see: whether an instance variable holds a model or a String is not knowable from the template, so a small share of reports will be about a value that was already a URL. To raise or lower it, or to turn the rule off, add to your [`.herb.yml`](/configuration):
 
 ```yaml [.herb.yml]

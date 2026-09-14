@@ -1,0 +1,22 @@
+---
+source: "CLI::ActionViewTest#test_0014_signature reports a local that is declared but never passed"
+input: "unused: <%= render \"posts/row\", post: post %>"
+---
+exit: 0
+
+ Herb 🌿 vVERSION
+
+ app/views/posts/_row.html.erb
+
+ Inferred (from 1 call site)
+
+   <%# locals: (post: nil) %>
+
+ Declared
+
+   required post
+   optional unused
+   keyword rest false
+
+ Declared but never passed: unused
+

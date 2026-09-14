@@ -1,0 +1,5 @@
+---
+source: "DiagnosticTest::#to_ruby and .from_compiled#test_0003_leaves out what it does not carry"
+input: "diagnostic_test-0"
+---
+{ message: "m", severity: :error, code: nil, origin: "unknown", template: "a.html.erb" }

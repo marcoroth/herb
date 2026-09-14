@@ -73,6 +73,14 @@ Using `tag.attributes` alongside regular HTML attributes is allowed:
 <img <%= tag.attributes(src: image_path("logo.png"), alt: "Logo") %>>
 ```
 
+## Configuration
+
+This rule only applies to Action View projects, so it needs `framework` to be set:
+
+```yaml
+framework: actionview
+```
+
 ## References
 
 * [Rails `tag` API](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)

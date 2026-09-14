@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOmittedCloseTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -20,6 +20,7 @@ export class HTMLRequireClosingTagsRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-require-closing-tags"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

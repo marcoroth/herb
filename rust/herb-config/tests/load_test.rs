@@ -96,6 +96,21 @@ engine:
 }
 
 #[test]
+fn load_accepts_rule_options_it_does_not_know_about() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(
+    dir.path().join(".herb.yml"),
+    "version: 0.10.3\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: false\n      notARealRuleOption: true\n",
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+
+  assert_eq!(config.get_rule_config("html-tag-name-lowercase").unwrap().enabled, Some(false));
+}
+
+#[test]
 fn load_accepts_an_empty_engine_section() {
   let dir = tempfile::tempdir().unwrap();
 

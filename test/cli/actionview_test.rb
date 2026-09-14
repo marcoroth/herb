@@ -79,6 +79,21 @@ module CLI
       assert_cli_snapshot(["flow", entry, "@post"], "two renames: #{source}")
     end
 
+    test "flow keeps a multi-line render on one line" do
+      source = <<~ERB
+        <%= render partial: "posts/card",
+          locals: {
+            talk: talk,
+            ids: @ids
+          } %>
+      ERB
+
+      entry = write("show.html.erb", source)
+      write("_card.html.erb", "<p>card</p>")
+
+      assert_cli_snapshot(["flow", entry, "@ids"], "multiline render: #{source}")
+    end
+
     test "flow lists the available state when none is given" do
       source = "<h1><%= @post.title %></h1><p><%= @user.name %></p>"
       entry = write("show.html.erb", source)

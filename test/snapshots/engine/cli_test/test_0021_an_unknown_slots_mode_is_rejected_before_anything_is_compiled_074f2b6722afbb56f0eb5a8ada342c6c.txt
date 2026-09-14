@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0021_an unknown slots mode is rejected before anything is compiled"
+input: "test_0021_an unknown slots mode is rejected before anything is compiled"
+---
+Unknown --slots mode: nonsense
+Expected one of: server, client

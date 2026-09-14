@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedLiteralsTest::what it renders#test_0001_renders what the expressions would have rendered"
+input: "{source: \"<p><%= \\\"Total\\\" %>: <%= count %> <%= \\\"item\\\" %><%= \\\"s\\\" if count != 1 %></p>\", locals: {count: 2}, options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+<p>Total: 2 items</p>

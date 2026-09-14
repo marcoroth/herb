@@ -1,12 +1,16 @@
-import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isInlineElement, isBlockElement } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
+const SVG_HTML_INTEGRATION_POINTS = new Set(["foreignobject", "desc", "title"])
+
+// TODO: refactor using ElementStackVisitor
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private inlineStack: string[] = []
+  private insideSVG = false
 
   private getElementType(tagName: string): { isInline: boolean; isBlock: boolean; isUnknown: boolean } {
     const isInline = isInlineElement(tagName)
@@ -39,6 +43,17 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     this.inlineStack = savedStack
   }
 
+  private visitSVGElement(node: HTMLElementNode): void {
+    const savedStack = this.inlineStack
+    const wasInsideSVG = this.insideSVG
+
+    this.inlineStack = []
+    this.insideSVG = true
+    super.visitHTMLElementNode(node)
+    this.insideSVG = wasInsideSVG
+    this.inlineStack = savedStack
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (!isHTMLOpenTagNode(node.open_tag)) {
       super.visitHTMLElementNode(node)
@@ -49,6 +64,23 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
 
     if (!tagName) {
       super.visitHTMLElementNode(node)
+      return
+    }
+
+    if (this.insideSVG) {
+      if (SVG_HTML_INTEGRATION_POINTS.has(tagName)) {
+        this.insideSVG = false
+        super.visitHTMLElementNode(node)
+        this.insideSVG = true
+        return
+      }
+
+      super.visitHTMLElementNode(node)
+      return
+    }
+
+    if (tagName === "svg") {
+      this.visitSVGElement(node)
       return
     }
 

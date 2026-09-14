@@ -1,0 +1,17 @@
+---
+source: "Parser::XMLProcessingInstructionTest#test_0011_unterminated processing instruction"
+input: "<?marker"
+---
+@ DocumentNode (location: (1:0)-(1:8))
+└── children: (1 item)
+    └── @ XMLProcessingInstructionNode (location: (1:0)-(1:8))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenError (location: (1:8)-(1:8))
+        │       ├── message: "Found end of file when expecting `?>` at (1:8)."
+        │       ├── expected_type: "TOKEN_XML_DECLARATION_END"
+        │       └── found: "" (location: (1:8)-(1:8))
+        │
+        ├── tag_opening: "<?" (location: (1:0)-(1:2))
+        ├── target: "marker" (location: (1:2)-(1:8))
+        ├── children: []
+        └── tag_closing: "" (location: (1:8)-(1:8))

@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "../utils/rule-utils.js"
 import { filterLiteralNodes, getAttributeValueQuoteType, hasAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -46,6 +46,7 @@ export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuo
   static autocorrectable = true
   static ruleName = "html-attribute-double-quotes"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
 import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode, ERBIterationBlockNode, ERBBlockNode, ParserOptions } from "@herb-tools/core"
@@ -76,8 +76,12 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor<ERBNoOutputContr
       const tagClosing = controlBlock.tag_closing?.value ?? "%>"
       const suggestion = collapsedContent ? `<%${collapsedContent}${tagClosing}` : `<% ${keyword} ... ${tagClosing}`
 
+      const message = controlBlock.type === "AST_ERB_END_NODE"
+        ? `\`end\` should not be used with an output tag. Use \`${suggestion}\` instead.`
+        : `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`
+
       this.addOffense(
-        `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`,
+        message,
         openTag.location,
         { node: controlBlock as Mutable<OutputControlFlowNode> },
       )
@@ -88,6 +92,7 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor<ERBNoOutputContr
 export class ERBNoOutputControlFlowRule extends ParserRule<ERBNoOutputControlFlowAutofixContext> {
   static ruleName = "erb-no-output-control-flow"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

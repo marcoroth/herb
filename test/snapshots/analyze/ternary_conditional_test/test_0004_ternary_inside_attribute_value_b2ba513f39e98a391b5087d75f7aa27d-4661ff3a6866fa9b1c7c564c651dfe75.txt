@@ -32,12 +32,8 @@ options: {transform_conditionals: true}
     │   │       │               │       ├── tag_closing: "%>" (location: (1:35)-(1:35))
     │   │       │               │       ├── then_keyword: ∅
     │   │       │               │       ├── statements: (1 item)
-    │   │       │               │       │   └── @ ERBContentNode (location: (1:12)-(1:35))
-    │   │       │               │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
-    │   │       │               │       │       ├── content: " 'a' " (location: (1:22)-(1:27))
-    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:33)-(1:35))
-    │   │       │               │       │       ├── parsed: false
-    │   │       │               │       │       └── valid: true
+    │   │       │               │       │   └── @ LiteralNode (location: (1:23)-(1:26))
+    │   │       │               │       │       └── content: "a"
     │   │       │               │       │
     │   │       │               │       ├── subsequent:
     │   │       │               │       │   └── @ ERBElseNode (location: (1:35)-(1:35))
@@ -45,12 +41,8 @@ options: {transform_conditionals: true}
     │   │       │               │       │       ├── content: " else " (location: (1:35)-(1:35))
     │   │       │               │       │       ├── tag_closing: "%>" (location: (1:35)-(1:35))
     │   │       │               │       │       └── statements: (1 item)
-    │   │       │               │       │           └── @ ERBContentNode (location: (1:12)-(1:35))
-    │   │       │               │       │               ├── tag_opening: "<%=" (location: (1:12)-(1:15))
-    │   │       │               │       │               ├── content: " 'b' " (location: (1:28)-(1:33))
-    │   │       │               │       │               ├── tag_closing: "%>" (location: (1:33)-(1:35))
-    │   │       │               │       │               ├── parsed: false
-    │   │       │               │       │               └── valid: true
+    │   │       │               │       │           └── @ LiteralNode (location: (1:29)-(1:32))
+    │   │       │               │       │               └── content: "b"
     │   │       │               │       │
     │   │       │               │       │
     │   │       │               │       └── end_node:

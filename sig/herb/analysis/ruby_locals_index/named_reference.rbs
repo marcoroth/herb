@@ -1,0 +1,20 @@
+# Generated from lib/herb/analysis/ruby_locals_index/named_reference.rb with RBS::Inline
+
+module Herb
+  module Analysis
+    class RubyLocalsIndex
+      # A name, with where it appears in the source as a byte offset and length,
+      # which is how Prism reports it.
+      class NamedReference
+        attr_reader name: String
+
+        attr_reader start_offset: Integer
+
+        attr_reader length: Integer
+
+        # : (String, Integer, Integer) -> void
+        def initialize: (String, Integer, Integer) -> void
+      end
+    end
+  end
+end

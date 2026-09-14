@@ -1,0 +1,5 @@
+---
+source: "Engine::CLIStdinTest#test_0005_shell: html accepts piped stdin"
+input: "cli_stdin_test-4"
+---
+<div>                </div>

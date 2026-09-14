@@ -31,5 +31,25 @@
   "DIFF_REMOVED_LINE_BACKGROUND": "#FFEBE9",
   "DIFF_ADDED_LINE_BACKGROUND": "#E6FFEC",
   "DIFF_REMOVED_BACKGROUND": "#FFC9C7",
-  "DIFF_ADDED_BACKGROUND": "#ABF2BC"
+  "DIFF_ADDED_BACKGROUND": "#ABF2BC",
+  "BACKGROUND": "#FFFFFF",
+  "FOREGROUND": "#24292E",
+  "ANSI_PALETTE": {
+    "black": "#24292E",
+    "red": "#D73A49",
+    "green": "#22863A",
+    "yellow": "#B08800",
+    "blue": "#005CC5",
+    "magenta": "#6F42C1",
+    "cyan": "#1B7C83",
+    "white": "#6A737D",
+    "bright-black": "#959DA5",
+    "bright-red": "#CB2431",
+    "bright-green": "#176F2C",
+    "bright-yellow": "#7A4F01",
+    "bright-blue": "#0366D6",
+    "bright-magenta": "#5A32A3",
+    "bright-cyan": "#166B70",
+    "bright-white": "#24292E"
+  }
 }

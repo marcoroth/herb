@@ -1,0 +1,8 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0008_preserves a newline before the closing angle bracket of a void element"
+input: "{source: \"<br\\n>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<br
+>
+'.freeze;
+_buf.to_s

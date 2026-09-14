@@ -42,6 +42,7 @@
     "clean": "node-pre-gyp clean && rimraf dist/ && rimraf build/ && rimraf extension/libherb/ && rimraf extension/prism/",
     "test": "vitest run",
     "test:watch": "vitest --watch",
+    "typecheck": "tsc -p tsconfig.test.json",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "binary": {
@@ -54,7 +55,7 @@
   "dependencies": {
     "@herb-tools/core": "0.10.3",
     "@mapbox/node-pre-gyp": "^2.0.3",
-    "node-addon-api": "^8.9.1",
+    "node-addon-api": "^8.9.2",
     "node-pre-gyp-github": "^2.0.0"
   },
   "files": [

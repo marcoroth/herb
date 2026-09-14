@@ -12,6 +12,7 @@ const VARIANT_RANK = PARTIAL_EXTENSIONS.length
 export interface StrictLocal {
   name: string
   required: boolean
+  defaultSource?: string
 }
 
 export interface PartialDeclaration {
@@ -82,7 +83,11 @@ export function declarationFromDocument(document: DocumentNode, file: string): P
 
       const name = local.name?.value
 
-      if (name) declaration.locals.push({ name, required: local.required })
+      if (!name) continue
+
+      const defaultSource = local.default_value?.content
+
+      declaration.locals.push(defaultSource === undefined || defaultSource === null ? { name, required: local.required } : { name, required: local.required, defaultSource })
     }
   }
 

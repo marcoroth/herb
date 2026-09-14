@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, HEADING_TAGS } from "./rule-utils.js"
+import { BaseRuleVisitor, HEADING_TAGS } from "../utils/rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode, getStaticAttributeValue } from "@herb-tools/core"
 
@@ -107,11 +107,13 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
   static ruleName = "html-no-empty-headings"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

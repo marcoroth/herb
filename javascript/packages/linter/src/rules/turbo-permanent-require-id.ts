@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, isNilAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor, isNilAttributeValue } from "../utils/rule-utils.js"
 import { getAttribute } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -37,6 +37,7 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
 export class TurboPermanentRequireIdRule extends ParserRule {
   static ruleName = "turbo-permanent-require-id"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

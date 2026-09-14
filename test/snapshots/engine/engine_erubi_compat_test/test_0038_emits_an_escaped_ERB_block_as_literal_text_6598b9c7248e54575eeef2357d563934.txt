@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0038_emits an escaped ERB block as literal text"
+input: "{source: \"<%% foo do %>\\nx\\n<%% end %>\\n\", locals: {}, options: {}}"
+---
+<% foo do %>
+x
+<% end %>

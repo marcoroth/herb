@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0006_writes a block a scoped style narrowed, without reaching past the file"
+input: "{source: \"<style scoped>.title { color: #ff0000 }</style><h1 class=\\\"title\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::ScopedStyle::Visitor transform=LightningCSS::Transformer>, #<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<h1 class="title" data-herb-scope-2940ba8a="" style="color: red;">Hi</h1>

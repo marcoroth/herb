@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the collapse pass#test_0001_left off, an HTML-only template keeps the buffer"
+input: "{source: \"<div>Static</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor collapse=false>]}}"
+---
+_buf = ::String.new; _buf << '<div>Static</div>'.freeze;
+_buf.to_s

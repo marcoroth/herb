@@ -589,5 +589,93 @@ module Parser
     test "attribute value with ERB between angle brackets" do
       assert_parsed_snapshot(%(<div data-html="<<%= tag %>>"></div>))
     end
+
+    test "stray character after quoted double quote value" do
+      assert_parsed_snapshot(%[<div onclick="true")></div>])
+    end
+
+    test "stray character after quoted single quote value" do
+      assert_parsed_snapshot(%[<div onclick='true')></div>])
+    end
+
+    test "stray identifier after quoted value" do
+      assert_parsed_snapshot(%(<div title="foo"bar></div>))
+    end
+
+    test "stray character after quoted value followed by another attribute" do
+      assert_parsed_snapshot(%[<div onclick="true") class="box"></div>])
+    end
+
+    test "comma between quoted attributes" do
+      assert_parsed_snapshot(%(<div class="a", id="b"></div>))
+    end
+
+    test "mustache braces in attribute position" do
+      assert_parsed_snapshot(%(<div {{element_hidden}}></div>))
+    end
+
+    test "mustache braces around an attribute with a value" do
+      assert_parsed_snapshot(%(<div {{attr="x"}}></div>))
+    end
+
+    test "attribute with equals followed by a stray character" do
+      assert_parsed_snapshot(%[<div class=)></div>])
+    end
+
+    test "attribute with spaced equals followed by a stray character" do
+      assert_parsed_snapshot(%[<div class = )></div>])
+    end
+
+    test "attribute with equals followed by another attribute" do
+      assert_parsed_snapshot(%(<div class=@click="go"></div>))
+    end
+
+    test "unquoted attribute value with a dot" do
+      assert_parsed_snapshot(%(<img src=image.jpg>))
+    end
+
+    test "unquoted attribute value with slashes" do
+      assert_parsed_snapshot(%(<a href=/foo/bar></a>))
+    end
+
+    test "unquoted attribute value followed by ERB" do
+      assert_parsed_snapshot(%(<div class=foo<%= bar %>></div>))
+    end
+
+    test "unquoted attribute value with two ERB tags" do
+      assert_parsed_snapshot(%(<div class=<%= a %><%= b %>></div>))
+    end
+
+    test "unquoted attribute value with a quote" do
+      assert_parsed_snapshot(%(<div class=a"b></div>))
+    end
+
+    test "unquoted attribute value with an equals sign" do
+      assert_parsed_snapshot(%(<div a==b></div>))
+    end
+
+    test "quote inside quoted value splits the attribute" do
+      assert_parsed_snapshot(%(<div title="It"s fine"></div>))
+    end
+
+    test "equals sign before attribute name" do
+      assert_parsed_snapshot(%(<div =foo></div>))
+    end
+
+    test "quoted token in attribute name position" do
+      assert_parsed_snapshot(%(<div "quoted"></div>))
+    end
+
+    test "stray solidus in tag" do
+      assert_parsed_snapshot(%(<div / class="a"></div>))
+    end
+
+    test "solidus ends attribute name" do
+      assert_parsed_snapshot(%(<div a/b></div>))
+    end
+
+    test "brackets and parentheses in attribute names" do
+      assert_parsed_snapshot(%(<div {{x}} [y] (z)></div>))
+    end
   end
 end
