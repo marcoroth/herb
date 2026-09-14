@@ -1654,48 +1654,119 @@ describe("@herb-tools/formatter", () => {
     expectFormattedToMatch(`<%= array << item %>`)
   })
 
-  // The heredoc is not detected because it doesn't start with "<<".
-  // See: https://github.com/marcoroth/herb/issues/476
-  // TODO: revisit once we have access to Prism nodes
   test("ERB output with heredoc as method argument", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= foo(<<HEREDOC)
       example
       HEREDOC
       %>
-    `
-
-    const expected = dedent`
-      <%= foo(<<HEREDOC)
-      example
-      HEREDOC %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(expected)
+    `)
   })
 
-  // The heredoc is not detected because it doesn't start with "<<".
-  // See: https://github.com/marcoroth/herb/issues/476
-  // TODO: revisit once we have access to Prism nodes
   test("ERB output with heredoc after assignment", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= x = <<HEREDOC
       example
       HEREDOC
       %>
-    `
+    `)
+  })
 
-    const expected = dedent`
-      <%= x = <<HEREDOC
-      example
-      HEREDOC %>
+  test("ERB output with squiggly heredoc as method argument", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<~HEREDOC)
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with dash heredoc as method argument", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<-HEREDOC)
+        example
+        HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with a heredoc that is not the last argument", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<~HEREDOC, layout: false)
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with a chained call on a heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<~HEREDOC).upcase
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with two heredocs", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<~FIRST, <<~SECOND)
+        one
+      FIRST
+        two
+      SECOND
+      %>
+    `)
+  })
+
+  test("ERB output with a quoted heredoc identifier", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo(<<~'HEREDOC')
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB statement with a heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <% x = foo(<<~HEREDOC)
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("indents a heredoc closing tag to match its opening tag", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <%= foo(<<~HEREDOC)
+          example
+        HEREDOC
+        %>
+      </div>
+    `)
+  })
+
+  test("keeps a heredoc tag on its own line instead of fusing it into text flow", () => {
+    const input = dedent`
+      <p>hello <%= foo(<<~HEREDOC)
+        example
+      HEREDOC
+      %></p>
     `
 
     const result = formatter.format(input)
 
-    expect(result).toBe(expected)
+    expect(result).toBe(dedent`
+      <p>
+        hello
+        <%= foo(<<~HEREDOC)
+        example
+      HEREDOC
+        %>
+      </p>
+    `)
   })
 
   test("keeps hyphen-attached inline element together during line wrapping", () => {

@@ -47,6 +47,7 @@ import {
   hasMultilineTextContent,
   isContentPreserving,
   endsWithWhitespace,
+  endsWithHeredocTerminator,
   isFrontmatter,
   isInlineElement,
   isOwnLineERBTag,
@@ -541,14 +542,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Format ERB content with proper spacing around the inner content.
    * Returns a single space if content is empty, so that an empty tag stays `<% %>`
    * rather than collapsing into the `<%%` literal escape sequence. Otherwise adds a
-   * leading space and a trailing space (or newline for heredoc content starting with "<<").
+   * leading space and a trailing space, or a newline when the content ends on a heredoc
+   * terminator, which Ruby needs alone on its line.
    */
   private formatERBContent(content: string): string {
     const trimmedContent = content.trim();
 
-    // See: https://github.com/marcoroth/herb/issues/476
-    // TODO: revisit once we have access to Prism nodes
-    const suffix = trimmedContent.startsWith("<<") ? "\n" : " "
+    const suffix = endsWithHeredocTerminator(trimmedContent) ? `\n${this.inlineMode ? "" : this.indent}` : " "
 
     return trimmedContent ? ` ${trimmedContent}${suffix}` : " "
   }
