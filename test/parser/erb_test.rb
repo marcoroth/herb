@@ -401,5 +401,17 @@ module Parser
         %>
       HTML
     end
+
+    test "ERB delimiter inside a single quoted Ruby string" do
+      assert_parsed_snapshot(%(<% x = '<%' %><%= x %>))
+    end
+
+    test "ERB delimiter inside a double quoted Ruby string" do
+      assert_parsed_snapshot(%(<% x = "<%" %><%= x %>))
+    end
+
+    test "ERB delimiter inside a Ruby string in an output tag" do
+      assert_parsed_snapshot(%(<%= '<%' %>))
+    end
   end
 end

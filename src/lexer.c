@@ -321,6 +321,16 @@ static bool lexer_recover_erb_tag_end(
   return false;
 }
 
+static bool lexer_erb_content_spans_nested_start(lexer_T* lexer, uint32_t start_position) {
+  for (uint32_t position = lexer->current_position; position + 1 < lexer->source.length; position++) {
+    if (lexer->source.data[position] != '%' || lexer->source.data[position + 1] != '>') { continue; }
+
+    return herb_ruby_fragment_is_parseable(hb_string_range(lexer->source, start_position, position));
+  }
+
+  return false;
+}
+
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   uint32_t start_position = lexer->current_position;
 
@@ -328,9 +338,19 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   size_t candidate_count = 0;
 
   while (!lexer_peek_erb_end(lexer, 0)) {
-    if (lexer_eof(lexer) || (!lexer->in_erb_comment && lexer_peek_erb_start(lexer, 0))) {
-      if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count) && !lexer_eof(lexer)) {
-        lexer->state = STATE_DATA;
+    bool nested_start = !lexer->in_erb_comment && lexer_peek_erb_start(lexer, 0);
+
+    if (lexer_eof(lexer) || nested_start) {
+      if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count)) {
+        if (nested_start && lexer_erb_content_spans_nested_start(lexer, start_position)) {
+          lexer->current_position += 2;
+          lexer->current_column += 2;
+          lexer->current_character = lexer->source.data[lexer->current_position];
+
+          continue;
+        }
+
+        if (!lexer_eof(lexer)) { lexer->state = STATE_DATA; }
       }
 
       token_T* token =
