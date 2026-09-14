@@ -727,54 +727,6 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
 
-[error] Put the tag on one line as \`<% ... %>\`. It holds a single line of Ruby, so the newlines inside it make it read as a multi-line block. (erb-closing-tag-indent) [Correctable]
-
-test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:5:0
-
-      3 │ <%
-      4 │   if valid?
-  →   5 │ %>
-        │ ~~
-      6 │   Hello
-      7 │ <% end %>
-
-        Running --fix would correct this to:
-
-        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
-
-              2 │ 
-          -   3 │ <%
-          -   4 │   if valid?
-          -   5 │ %>
-          +     │ <% if valid? %>
-              6 │   Hello
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
-
-[error] Move \`%>\` up to the end of the last line of code. The opening \`<%=\` shares its line with code, so a closing tag alone on a line adds a line that carries nothing. (erb-closing-tag-indent) [Correctable]
-
-test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:11:0
-
-      9 │ <%=  render partial: "post",
-     10 │            as: :post
-  →  11 │ %>
-        │ ~~
-     12 │
-
-        Running --fix would correct this to:
-
-        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
-
-              9 │ <%=  render partial: "post",
-          -  10 │            as: :post
-          -  11 │ %>
-          +     │            as: :post %>
-             12 │
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
-
 [error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
@@ -793,7 +745,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace before \`%>\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -813,7 +765,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -836,7 +788,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
              10 │            as: :post
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
 
 [error] Avoid unused expressions in silent ERB tags. \`<% extra_whitespace %>\` is evaluated but its return value is discarded. Use \`<%= extra_whitespace %>\` to output the value or remove the expression. (erb-no-unused-expressions)
 
@@ -851,14 +803,13 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
  Rule offenses:
   erb-no-extra-whitespace-inside-tags (3 offenses in 1 file)
-  erb-closing-tag-indent (2 offenses in 1 file)
   erb-no-unused-expressions (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     6 errors (6 offenses across 1 file)
-  Fixable      6 offenses | 5 autocorrectable using \`--fix\`
+  Offenses     4 errors (4 offenses across 1 file)
+  Fixable      4 offenses | 3 autocorrectable using \`--fix\`
   Rules        144 enabled | 22 not enabled"
 `;
 
