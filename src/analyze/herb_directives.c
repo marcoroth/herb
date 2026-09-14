@@ -133,12 +133,14 @@ static size_t find_signature_close(const directive_content_T* content, const siz
   return content->length;
 }
 
-static hb_string_T directive_kind_for_prism_node(const pm_node_t* node) {
+hb_string_T herb_directive_kind_for_prism_node(const pm_node_t* node) {
   if (!node) { return hb_string("missing"); }
 
   const char* mapped = herb_directive_kind_for_prism_type(node->type);
 
   if (mapped) { return hb_string(mapped); }
+
+  if (node->type == PM_LOCAL_VARIABLE_READ_NODE) { return hb_string("bare"); }
 
   if (node->type == PM_CALL_NODE) {
     const pm_call_node_t* call = (const pm_call_node_t*) node;
@@ -234,7 +236,7 @@ static void append_state_declaration(
   AST_HERB_STATE_DECLARATION_NODE_T* declaration = ast_herb_state_declaration_node_init(
     name,
     default_value,
-    directive_kind_for_prism_node(value),
+    herb_directive_kind_for_prism_node(value),
     content_position(content, declaration_start),
     content_position(content, declaration_end),
     hb_array_init(0, allocator),
