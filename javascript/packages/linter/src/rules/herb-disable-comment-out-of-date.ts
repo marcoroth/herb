@@ -33,6 +33,7 @@ interface HerbDisableCommentOutOfDateAutofixContext extends BaseAutofixContext {
 export class HerbDisableCommentOutOfDateRule extends SourceRule<HerbDisableCommentOutOfDateAutofixContext> {
   static ruleName = "herb-disable-comment-out-of-date"
   static introducedIn = this.version("unreleased")
+  static defaultEnabledIn = this.version("unreleased")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
