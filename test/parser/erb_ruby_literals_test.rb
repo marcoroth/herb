@@ -37,5 +37,49 @@ module Parser
     test "nested erb tag without ruby string still errors" do
       assert_parsed_snapshot(%q(<%<% %>))
     end
+
+    test "percent-q literal containing erb-like content" do
+      assert_parsed_snapshot(%q(<% x = %q{<%} %>))
+    end
+
+    test "percent-Q literal containing erb-like content" do
+      assert_parsed_snapshot(%q(<% x = %Q(<%) %>))
+    end
+
+    test "percent-w literal containing erb-like content" do
+      assert_parsed_snapshot(%q(<% x = %w[<%] %>))
+    end
+
+    test "bare percent literal containing erb-like content" do
+      assert_parsed_snapshot(%q(<% x = %{<%} %>))
+    end
+
+    test "regex literal after assignment containing erb-like content" do
+      assert_parsed_snapshot(%q(<% x = /<%/ %>))
+    end
+
+    test "division not treated as regex" do
+      assert_parsed_snapshot(%q(<% x = a / b / c %>))
+    end
+
+    test "character literal for angle bracket" do
+      assert_parsed_snapshot(%q(<% x = ?< %>))
+    end
+
+    test "ternary not treated as character literal" do
+      assert_parsed_snapshot(%q(<% n = 1 ? a : b %>))
+    end
+
+    test "bareword heredoc containing erb-like content" do
+      assert_parsed_snapshot("<% x = <<EOT\n<%\nEOT\n%>")
+    end
+
+    test "squiggly heredoc with indented terminator" do
+      assert_parsed_snapshot("<% x = <<~EOT\n  <%\n  EOT\n%>")
+    end
+
+    test "single-quoted heredoc without interpolation" do
+      assert_parsed_snapshot("<% x = <<'EOT'\n<%\nEOT\n%>")
+    end
   end
 end

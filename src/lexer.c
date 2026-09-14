@@ -278,6 +278,16 @@ static bool lexer_recover_erb_tag_end(
   return false;
 }
 
+#define LEXER_HEREDOC_MAX_IDENT 63
+#define LEXER_HEREDOC_QUEUE_LIMIT 4
+
+typedef struct {
+  char terminator[LEXER_HEREDOC_MAX_IDENT + 1];
+  uint8_t terminator_length;
+  bool interpolate;
+  bool relaxed;
+} heredoc_pending_T;
+
 static void lexer_erb_content_advance_byte(lexer_T* lexer) {
   if (is_newline(lexer->current_character)) {
     lexer->current_line++;
@@ -292,6 +302,73 @@ static void lexer_erb_content_advance_byte(lexer_T* lexer) {
 }
 
 static bool lexer_try_skip_ruby_string(lexer_T* lexer);
+static bool lexer_skip_interpolation_body(lexer_T* lexer);
+
+// `/` starts a regex only after these positions (operator/keyword-like).
+// After a value (identifier, number, closing bracket), `/` means division.
+static bool is_regex_context(char last_significant) {
+  if (last_significant == '\0') { return true; }
+
+  switch (last_significant) {
+    case '=':
+    case '(':
+    case ',':
+    case '[':
+    case '{':
+    case ';':
+    case '&':
+    case '|':
+    case '!':
+    case '?':
+    case ':':
+    case '<':
+    case '>':
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '%':
+    case '^':
+    case '~':
+    case '\n':
+    case '\r': return true;
+    default: return false;
+  }
+}
+
+// `?` starts a character literal only when not preceded by a value.
+static bool is_char_literal_context(char last_significant) {
+  if (last_significant == '\0') { return true; }
+  if (isalnum((unsigned char) last_significant) || last_significant == '_' || last_significant == ')'
+      || last_significant == ']' || last_significant == '}') {
+    return false;
+  }
+  return true;
+}
+
+static bool lexer_skip_interpolation_body(lexer_T* lexer) {
+  // Assumes we've already consumed the opening `#{`. Advances until we consume
+  // the matching `}`. Returns false if unbalanced or EOF is hit first.
+  int depth = 1;
+
+  while (!lexer_eof(lexer) && depth > 0) {
+    char c = lexer->current_character;
+
+    if (c == '{') {
+      depth++;
+      lexer_erb_content_advance_byte(lexer);
+    } else if (c == '}') {
+      depth--;
+      lexer_erb_content_advance_byte(lexer);
+    } else if (c == '\'' || c == '"' || c == '`') {
+      if (!lexer_try_skip_ruby_string(lexer)) { return false; }
+    } else {
+      lexer_erb_content_advance_byte(lexer);
+    }
+  }
+
+  return depth == 0;
+}
 
 static bool lexer_try_skip_single_quoted(lexer_T* lexer) {
   lexer_state_snapshot_T snapshot = lexer_save_state(lexer);
@@ -338,28 +415,7 @@ static bool lexer_try_skip_interpolated_string(lexer_T* lexer, char terminator) 
       lexer_erb_content_advance_byte(lexer);
       lexer_erb_content_advance_byte(lexer);
 
-      int depth = 1;
-
-      while (!lexer_eof(lexer) && depth > 0) {
-        char c = lexer->current_character;
-
-        if (c == '{') {
-          depth++;
-          lexer_erb_content_advance_byte(lexer);
-        } else if (c == '}') {
-          depth--;
-          lexer_erb_content_advance_byte(lexer);
-        } else if (c == '\'' || c == '"' || c == '`') {
-          if (!lexer_try_skip_ruby_string(lexer)) {
-            lexer_restore_state(lexer, snapshot);
-            return false;
-          }
-        } else {
-          lexer_erb_content_advance_byte(lexer);
-        }
-      }
-
-      if (depth != 0) {
+      if (!lexer_skip_interpolation_body(lexer)) {
         lexer_restore_state(lexer, snapshot);
         return false;
       }
@@ -388,10 +444,344 @@ static bool lexer_try_skip_ruby_string(lexer_T* lexer) {
   return false;
 }
 
-static bool lexer_skip_ruby_literal_or_comment(lexer_T* lexer) {
+static bool lexer_try_skip_percent_literal(lexer_T* lexer, char last_significant) {
+  // Current char is '%'. Try to match %[qQwWiIsx]?<delim>...<matched>.
+  if (lexer->current_character != '%') { return false; }
+
+  char type_char = lexer_peek(lexer, 1);
+  uint32_t marker_len = 1;
+  bool has_type = false;
+  bool interpolate = true;
+
+  switch (type_char) {
+    case 'q':
+    case 'w':
+    case 'i':
+    case 's': interpolate = false; has_type = true; marker_len = 2; break;
+    case 'Q':
+    case 'W':
+    case 'I':
+    case 'x': interpolate = true; has_type = true; marker_len = 2; break;
+    default: break;
+  }
+
+  // Bare `%<delim>` is ambiguous with the modulo operator (e.g. `x % [1]`, `<%= x %</h1>`
+  // recovery). Only treat it as a %-literal when we're clearly in an expression-start
+  // position — reuse the regex-context heuristic.
+  if (!has_type && !is_regex_context(last_significant)) { return false; }
+
+  char open_delim = lexer_peek(lexer, marker_len);
+  char close_delim;
+  bool paired;
+
+  switch (open_delim) {
+    case '{': close_delim = '}'; paired = true; break;
+    case '[': close_delim = ']'; paired = true; break;
+    case '(': close_delim = ')'; paired = true; break;
+    case '<':
+      // Bare `%<...>` collides with the `-%>`, `=%>`, and `%%>` close-tag error-recovery
+      // variants (e.g. `<%= x -%<h1>`). Only accept `<>` with an explicit type letter.
+      if (!has_type) { return false; }
+      close_delim = '>';
+      paired = true;
+      break;
+    default:
+      // Bare `%<char>` without a type letter must be a paired delimiter — otherwise
+      // it could be the modulo operator (e.g. `%20`, `% 1`, `%d`).
+      if (!has_type) { return false; }
+      if (open_delim == '\0' || isalnum((unsigned char) open_delim) || isspace((unsigned char) open_delim)) {
+        return false;
+      }
+      close_delim = open_delim;
+      paired = false;
+  }
+
+  lexer_state_snapshot_T snapshot = lexer_save_state(lexer);
+
+  for (uint32_t i = 0; i <= marker_len; i++) {
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  int depth = 1;
+
+  while (!lexer_eof(lexer) && depth > 0) {
+    char c = lexer->current_character;
+
+    if (c == '\\') {
+      lexer_erb_content_advance_byte(lexer);
+      if (lexer_eof(lexer)) { break; }
+      lexer_erb_content_advance_byte(lexer);
+      continue;
+    }
+
+    if (interpolate && c == '#' && lexer_peek(lexer, 1) == '{') {
+      lexer_erb_content_advance_byte(lexer);
+      lexer_erb_content_advance_byte(lexer);
+
+      if (!lexer_skip_interpolation_body(lexer)) {
+        lexer_restore_state(lexer, snapshot);
+        return false;
+      }
+
+      continue;
+    }
+
+    if (paired && c == open_delim) {
+      depth++;
+      lexer_erb_content_advance_byte(lexer);
+      continue;
+    }
+
+    if (c == close_delim) {
+      depth--;
+      lexer_erb_content_advance_byte(lexer);
+      continue;
+    }
+
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  if (depth != 0) {
+    lexer_restore_state(lexer, snapshot);
+    return false;
+  }
+
+  return true;
+}
+
+static bool lexer_try_skip_regex(lexer_T* lexer, char last_significant) {
+  if (lexer->current_character != '/') { return false; }
+  if (!is_regex_context(last_significant)) { return false; }
+
+  lexer_state_snapshot_T snapshot = lexer_save_state(lexer);
+  lexer_erb_content_advance_byte(lexer);
+
+  while (!lexer_eof(lexer) && lexer->current_character != '/') {
+    if (lexer_peek_erb_end(lexer, 0)) {
+      // A regex probably doesn't span an ERB close; treat as ambiguous and bail.
+      lexer_restore_state(lexer, snapshot);
+      return false;
+    }
+
+    if (lexer->current_character == '\\') {
+      lexer_erb_content_advance_byte(lexer);
+      if (lexer_eof(lexer)) { break; }
+      lexer_erb_content_advance_byte(lexer);
+      continue;
+    }
+
+    if (lexer->current_character == '#' && lexer_peek(lexer, 1) == '{') {
+      lexer_erb_content_advance_byte(lexer);
+      lexer_erb_content_advance_byte(lexer);
+
+      if (!lexer_skip_interpolation_body(lexer)) {
+        lexer_restore_state(lexer, snapshot);
+        return false;
+      }
+
+      continue;
+    }
+
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  if (lexer_eof(lexer) || lexer->current_character != '/') {
+    lexer_restore_state(lexer, snapshot);
+    return false;
+  }
+
+  lexer_erb_content_advance_byte(lexer);
+
+  while (!lexer_eof(lexer)) {
+    char c = lexer->current_character;
+
+    if (c == 'i' || c == 'm' || c == 'x' || c == 'o' || c == 'e' || c == 's' || c == 'u' || c == 'n') {
+      lexer_erb_content_advance_byte(lexer);
+    } else {
+      break;
+    }
+  }
+
+  return true;
+}
+
+static bool lexer_try_skip_char_literal(lexer_T* lexer, char last_significant) {
+  if (lexer->current_character != '?') { return false; }
+  if (!is_char_literal_context(last_significant)) { return false; }
+
+  char next = lexer_peek(lexer, 1);
+
+  if (next == '\0' || isspace((unsigned char) next)) { return false; }
+
+  lexer_erb_content_advance_byte(lexer);
+
+  if (lexer->current_character != '\\') {
+    // Single (possibly multi-byte) character.
+    uint32_t seq =
+      utf8_sequence_length(hb_string_slice(lexer->source, lexer->current_position));
+    if (seq <= 1) {
+      lexer_erb_content_advance_byte(lexer);
+    } else {
+      for (uint32_t i = 0; i < seq && !lexer_eof(lexer); i++) {
+        lexer_erb_content_advance_byte(lexer);
+      }
+    }
+    return true;
+  }
+
+  lexer_erb_content_advance_byte(lexer);
+  if (lexer_eof(lexer)) { return true; }
+
+  char esc = lexer->current_character;
+  lexer_erb_content_advance_byte(lexer);
+
+  if (esc == 'u' && !lexer_eof(lexer) && lexer->current_character == '{') {
+    while (!lexer_eof(lexer) && lexer->current_character != '}') {
+      lexer_erb_content_advance_byte(lexer);
+    }
+    if (!lexer_eof(lexer)) { lexer_erb_content_advance_byte(lexer); }
+  } else if (esc == 'u') {
+    for (int i = 0; i < 4 && !lexer_eof(lexer) && isxdigit((unsigned char) lexer->current_character); i++) {
+      lexer_erb_content_advance_byte(lexer);
+    }
+  } else if (esc == 'x') {
+    for (int i = 0; i < 2 && !lexer_eof(lexer) && isxdigit((unsigned char) lexer->current_character); i++) {
+      lexer_erb_content_advance_byte(lexer);
+    }
+  } else if (esc == 'M' || esc == 'C') {
+    if (!lexer_eof(lexer) && lexer->current_character == '-') {
+      lexer_erb_content_advance_byte(lexer);
+      if (!lexer_eof(lexer)) {
+        if (lexer->current_character == '\\') {
+          lexer_erb_content_advance_byte(lexer);
+          if (!lexer_eof(lexer)) { lexer_erb_content_advance_byte(lexer); }
+        } else {
+          lexer_erb_content_advance_byte(lexer);
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+static bool lexer_try_match_heredoc_marker(lexer_T* lexer, heredoc_pending_T* out) {
+  // Expects `<<`; matches [~-]?(['"`]?)IDENT(['"`])?.
+  if (lexer->current_character != '<' || lexer_peek(lexer, 1) != '<') { return false; }
+
+  uint32_t offset = 2;
+  bool relaxed = false;
+  char c = lexer_peek(lexer, offset);
+
+  if (c == '~' || c == '-') {
+    relaxed = true;
+    offset++;
+    c = lexer_peek(lexer, offset);
+  }
+
+  bool interpolate = true;
+  char quote = 0;
+
+  if (c == '\'' || c == '"' || c == '`') {
+    quote = c;
+    if (c == '\'') { interpolate = false; }
+    offset++;
+    c = lexer_peek(lexer, offset);
+  }
+
+  if (!(isalpha((unsigned char) c) || c == '_')) { return false; }
+
+  uint8_t ident_len = 0;
+
+  while (ident_len < LEXER_HEREDOC_MAX_IDENT && (isalnum((unsigned char) c) || c == '_')) {
+    out->terminator[ident_len++] = c;
+    offset++;
+    c = lexer_peek(lexer, offset);
+  }
+
+  if (quote) {
+    if (c != quote) { return false; }
+    offset++;
+  }
+
+  out->terminator[ident_len] = '\0';
+  out->terminator_length = ident_len;
+  out->interpolate = interpolate;
+  out->relaxed = relaxed;
+
+  for (uint32_t i = 0; i < offset; i++) {
+    lexer_erb_content_advance_byte(lexer);
+  }
+
+  return true;
+}
+
+static bool lexer_line_matches_heredoc_terminator(const lexer_T* lexer, const heredoc_pending_T* hd) {
+  uint32_t p = lexer->current_position;
+
+  if (hd->relaxed) {
+    while (p < lexer->source.length && (lexer->source.data[p] == ' ' || lexer->source.data[p] == '\t')) {
+      p++;
+    }
+  }
+
+  if (p + hd->terminator_length > lexer->source.length) { return false; }
+  if (memcmp(lexer->source.data + p, hd->terminator, hd->terminator_length) != 0) { return false; }
+
+  uint32_t after = p + hd->terminator_length;
+  char c = (after < lexer->source.length) ? lexer->source.data[after] : '\0';
+
+  return c == '\0' || c == '\n' || c == '\r';
+}
+
+static bool lexer_scan_heredoc_body(lexer_T* lexer, const heredoc_pending_T* hd) {
+  while (!lexer_eof(lexer)) {
+    if (lexer_line_matches_heredoc_terminator(lexer, hd)) {
+      if (hd->relaxed) {
+        while (lexer->current_character == ' ' || lexer->current_character == '\t') {
+          lexer_erb_content_advance_byte(lexer);
+        }
+      }
+      for (uint8_t i = 0; i < hd->terminator_length && !lexer_eof(lexer); i++) {
+        lexer_erb_content_advance_byte(lexer);
+      }
+      return true;
+    }
+
+    while (!lexer_eof(lexer) && !is_newline(lexer->current_character)) {
+      if (lexer->current_character == '\\') {
+        lexer_erb_content_advance_byte(lexer);
+        if (lexer_eof(lexer) || is_newline(lexer->current_character)) { break; }
+        lexer_erb_content_advance_byte(lexer);
+        continue;
+      }
+
+      if (hd->interpolate && lexer->current_character == '#' && lexer_peek(lexer, 1) == '{') {
+        lexer_erb_content_advance_byte(lexer);
+        lexer_erb_content_advance_byte(lexer);
+        if (!lexer_skip_interpolation_body(lexer)) { return false; }
+        continue;
+      }
+
+      lexer_erb_content_advance_byte(lexer);
+    }
+
+    if (is_newline(lexer->current_character)) { lexer_erb_content_advance_byte(lexer); }
+  }
+
+  return false;
+}
+
+static bool lexer_skip_ruby_literal_or_comment(lexer_T* lexer, char last_significant) {
   char c = lexer->current_character;
 
   if (c == '\'' || c == '"' || c == '`') { return lexer_try_skip_ruby_string(lexer); }
+
+  if (c == '%') { return lexer_try_skip_percent_literal(lexer, last_significant); }
+
+  if (c == '/') { return lexer_try_skip_regex(lexer, last_significant); }
+
+  if (c == '?') { return lexer_try_skip_char_literal(lexer, last_significant); }
 
   if (c == '#') {
     while (!lexer_eof(lexer) && !is_newline(lexer->current_character) && !lexer_peek_erb_end(lexer, 0)) {
@@ -409,10 +799,47 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   erb_end_candidate_T candidates[LEXER_ERB_END_CANDIDATE_LIMIT];
   size_t candidate_count = 0;
 
+  char last_significant = '\0';
+
+  heredoc_pending_T heredoc_queue[LEXER_HEREDOC_QUEUE_LIMIT];
+  size_t heredoc_queue_count = 0;
+
   while (!lexer_peek_erb_end(lexer, 0)) {
-    if (lexer_skip_ruby_literal_or_comment(lexer)) {
+    // If we're sitting on a newline and have heredocs pending, drain them line by line.
+    if (heredoc_queue_count > 0 && is_newline(lexer->current_character)) {
+      lexer_erb_content_advance_byte(lexer);
+
+      bool drained = true;
+      for (size_t i = 0; i < heredoc_queue_count; i++) {
+        if (!lexer_scan_heredoc_body(lexer, &heredoc_queue[i])) {
+          drained = false;
+          break;
+        }
+      }
+
+      heredoc_queue_count = 0;
+      last_significant = '\n';
+
+      if (!drained) { continue; }
       if (lexer_peek_erb_end(lexer, 0)) { break; }
       continue;
+    }
+
+    if (lexer_skip_ruby_literal_or_comment(lexer, last_significant)) {
+      last_significant = 'x';
+      if (lexer_peek_erb_end(lexer, 0)) { break; }
+      continue;
+    }
+
+    if (lexer->current_character == '<' && lexer_peek(lexer, 1) == '<'
+        && heredoc_queue_count < LEXER_HEREDOC_QUEUE_LIMIT) {
+      heredoc_pending_T pending;
+      if (lexer_try_match_heredoc_marker(lexer, &pending)) {
+        heredoc_queue[heredoc_queue_count++] = pending;
+        last_significant = 'x';
+        if (lexer_peek_erb_end(lexer, 0)) { break; }
+        continue;
+      }
     }
 
     if (lexer_eof(lexer) || lexer_peek_erb_start(lexer, 0)) {
@@ -463,8 +890,10 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;
       lexer->current_column = 0;
+      last_significant = '\n';
     } else {
       lexer->current_column++;
+      if (!isspace((unsigned char) lexer->current_character)) { last_significant = lexer->current_character; }
     }
 
     lexer->current_position++;

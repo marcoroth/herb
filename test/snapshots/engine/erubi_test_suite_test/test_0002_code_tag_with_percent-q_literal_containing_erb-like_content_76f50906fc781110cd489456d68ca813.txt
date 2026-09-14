@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0002_code tag with percent-q literal containing erb-like content"
+input: "{source: \"<% x = %q{<%} %><%= x %>\", locals: {}, options: {}}"
+---
+<%

@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0003_code tag with percent-w literal containing erb-like content"
+input: "{source: \"<% x = %w[<% ok].first %><%= x %>\", locals: {}, options: {}}"
+---
+<%

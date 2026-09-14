@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0004_code tag with regex literal containing erb-like content"
+input: "{source: \"<% x = /<%/.source %><%= x %>\", locals: {}, options: {}}"
+---
+<%

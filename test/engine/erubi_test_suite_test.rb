@@ -19,5 +19,47 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
     end
+
+    test "code tag with percent-q literal containing erb-like content" do
+      template = "<% x = %q{<%} %><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with percent-w literal containing erb-like content" do
+      template = "<% x = %w[<% ok].first %><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with regex literal containing erb-like content" do
+      template = "<% x = /<%/.source %><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with character literal for angle bracket" do
+      template = "<% x = ?< %><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with bareword heredoc containing erb-like content" do
+      template = "<% x = <<EOT\n<%\nEOT\n%><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with squiggly heredoc with indented terminator" do
+      template = "<% x = <<~EOT\n  <%\n  EOT\n%><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
+
+    test "code tag with single-quoted heredoc without interpolation" do
+      template = "<% x = <<'EOT'\n<%\nEOT\n%><%= x %>"
+
+      assert_evaluated_snapshot(template, {}, **ERUBI_OPTS)
+    end
   end
 end

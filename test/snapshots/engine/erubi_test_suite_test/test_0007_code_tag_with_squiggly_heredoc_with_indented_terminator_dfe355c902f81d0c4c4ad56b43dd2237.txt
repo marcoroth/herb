@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0007_code tag with squiggly heredoc with indented terminator"
+input: "{source: \"<% x = <<~EOT\\n  <%\\n  EOT\\n%><%= x %>\", locals: {}, options: {}}"
+---
+<%

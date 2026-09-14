@@ -1,0 +1,19 @@
+---
+source: "Parser::ERBRubyLiteralsTest#test_0017_bareword heredoc containing erb-like content"
+input: |2-
+<% x = <<EOT
+<%
+EOT
+%>
+---
+@ DocumentNode (location: (1:0)-(4:2))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(4:2))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " x = <<EOT
+        <%
+        EOT
+        " (location: (1:2)-(4:0))
+        ├── tag_closing: "%>" (location: (4:0)-(4:2))
+        ├── parsed: true
+        └── valid: true

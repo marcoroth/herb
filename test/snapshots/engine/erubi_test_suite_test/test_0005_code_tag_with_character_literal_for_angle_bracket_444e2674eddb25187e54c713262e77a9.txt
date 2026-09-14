@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0005_code tag with character literal for angle bracket"
+input: "{source: \"<% x = ?< %><%= x %>\", locals: {}, options: {}}"
+---
+<

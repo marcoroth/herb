@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0008_code tag with single-quoted heredoc without interpolation"
+input: "{source: \"<% x = <<'EOT'\\n<%\\nEOT\\n%><%= x %>\", locals: {}, options: {}}"
+---
+<%

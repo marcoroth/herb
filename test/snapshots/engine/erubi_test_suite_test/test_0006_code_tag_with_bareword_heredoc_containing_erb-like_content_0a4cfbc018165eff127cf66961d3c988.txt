@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0006_code tag with bareword heredoc containing erb-like content"
+input: "{source: \"<% x = <<EOT\\n<%\\nEOT\\n%><%= x %>\", locals: {}, options: {}}"
+---
+<%
