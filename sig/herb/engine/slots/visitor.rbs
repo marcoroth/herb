@@ -540,6 +540,12 @@ module Herb
         # : (Herb::AST::DocumentNode) -> void
         def append_statics: (Herb::AST::DocumentNode) -> void
 
+        # : (Herb::AST::DocumentNode) -> void
+        def expose_fallbacks: (Herb::AST::DocumentNode) -> void
+
+        # : (Herb::AST::DocumentNode) -> void
+        def withdraw_fallbacks: (Herb::AST::DocumentNode) -> void
+
         # : () -> Array[[String, Array[untyped]]]
         def fallback_statics_entries: () -> Array[[ String, Array[untyped] ]]
 

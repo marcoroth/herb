@@ -206,6 +206,7 @@ module Herb
 
           @fragment_nodes = fragment_nodes.compare_by_identity
           @fragment_fallbacks = fragment_fallbacks.compare_by_identity
+          @exposed_fallbacks = [] #: Array[untyped]
           @deferred_nodes = deferred_nodes.compare_by_identity
           @assignment_nodes = assignment_nodes.compare_by_identity
         end
@@ -661,6 +662,7 @@ module Herb
           @states.apply_states
 
           wrap_bound_renders
+          expose_fallbacks(node)
         end
 
         #: () -> Hash[String, String]?
@@ -670,6 +672,7 @@ module Herb
 
         #: (untyped) -> void
         def finish(node)
+          withdraw_fallbacks(node)
           follow_replacements
 
           return unless @mark
@@ -1980,6 +1983,29 @@ module Herb
 
           document_node.children.unshift(erb_code_node("#{COVERED} ||= {}"))
           document_node.children.concat(nodes)
+        end
+
+        #: (Herb::AST::DocumentNode) -> void
+        def expose_fallbacks(document_node)
+          return if @fragment_fallbacks.empty?
+
+          @exposed_fallbacks = @fragment_fallbacks.each_value.flat_map { |body| body } #: Array[untyped]
+
+          document_node.children.concat(@exposed_fallbacks)
+
+          nil
+        end
+
+        #: (Herb::AST::DocumentNode) -> void
+        def withdraw_fallbacks(document_node)
+          exposed = @exposed_fallbacks
+
+          return if exposed.empty?
+
+          document_node.children.reject! { |child| exposed.any? { |node| node.equal?(child) } }
+          @exposed_fallbacks = [] #: Array[untyped]
+
+          nil
         end
 
         #: () -> Array[[String, Array[untyped]]]
