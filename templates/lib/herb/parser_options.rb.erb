@@ -26,14 +26,7 @@ module Herb
 
     #: () -> String
     def inspect
-      "#<#{self.class.name}\n  " \
-      <%- parser_options.fields_for(:ruby).each_with_index do |field, index| -%>
-      <%- if index == parser_options.fields_for(:ruby).length - 1 -%>
-        "<%= field.snake_case %>=#{<%= field.ruby_inspect_value %>}>"
-      <%- else -%>
-        "<%= field.snake_case %>=#{<%= field.ruby_inspect_value %>}\n  " \
-      <%- end -%>
-      <%- end -%>
+      "#<#{self.class.name} #{to_h.map { |key, value| "#{key}=#{value.inspect}" }.join(", ")}>"
     end
   end
 end

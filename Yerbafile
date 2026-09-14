@@ -103,6 +103,14 @@ rules:
             - type
             - default
 
+      - sort:
+          path: "parser_options.fields"
+          by: name
+
+      - sort:
+          path: "parser_options.internal_fields"
+          by: name
+
       - sort_keys:
           path: "nodes"
           order:

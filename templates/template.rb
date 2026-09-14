@@ -1258,10 +1258,6 @@ module Herb
         "()I"
       end
 
-      def ruby_inspect_value
-        string_array? ? "@#{snake_case}.inspect" : "@#{snake_case}"
-      end
-
       def ruby_constant?
         !string_array?
       end

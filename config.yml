@@ -687,55 +687,57 @@ warnings:
 
 parser_options:
   fields:
-    - name: "track_whitespace"
+    - name: "action_view_helpers"
       type: "boolean"
       default: false
-      description: "Whether whitespace tracking was enabled during parsing."
+      description: "Whether ActionView tag helper transformation was enabled during parsing."
 
     - name: "analyze"
       type: "boolean"
       default: true
       description: "Whether analysis was performed during parsing."
 
-    - name: "strict"
+    - name: "arena_stats"
       type: "boolean"
-      default: true
-      description: "Whether strict mode was enabled during parsing."
+      const_name: "CAPTURE_ARENA_STATS"
+      default: false
+      only: ["ruby"]
+      description: "Whether arena allocation statistics were captured during parsing."
 
-    - name: "action_view_helpers"
+    - name: "dot_notation_tags"
       type: "boolean"
       default: false
-      description: "Whether ActionView tag helper transformation was enabled during parsing."
+      description: "Whether dot-notation component tags (e.g. Dialog.Button) are parsed as HTML elements."
 
-    - name: "transform_conditionals"
-      type: "boolean"
-      default: false
-      description: "Whether postfix conditional transformation was enabled during parsing."
-
-    - name: "render_nodes"
-      type: "boolean"
-      default: false
-      description: "Whether ActionView render call detection was enabled during parsing."
-
-    - name: "strict_locals"
-      type: "boolean"
-      default: false
-      description: "Whether strict locals analysis was enabled during parsing."
+    - name: "erb_openers"
+      type: "string_array"
+      c_name: "erb_openers"
+      count_name: "erb_opener_count"
+      lex: true
+      skip: ["java"]
+      description: "ERB tag openers recognized in addition to the built-in ones, written without the leading `<%`."
 
     - name: "herb_directives"
       type: "boolean"
       default: false
       description: "Whether `<%# herb: %>` directive nodes were parsed during parsing."
 
+    - name: "html"
+      type: "boolean"
+      default: true
+      description: "Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text."
+
     - name: "iteration_nodes"
       type: "boolean"
       default: false
       description: "Whether iteration nodes were parsed during parsing."
 
-    - name: "prism_program"
-      type: "boolean"
-      default: false
-      description: "Whether the full Prism ProgramNode was serialized on the DocumentNode."
+    - name: "max_errors"
+      type: "uint32"
+      default: 25
+      nullable: true
+      null_sentinel: 0
+      description: "Maximum number of errors to report. nil/null means unlimited."
 
     - name: "prism_nodes"
       type: "boolean"
@@ -747,28 +749,25 @@ parser_options:
       default: false
       description: "Whether deep Prism node serialization was enabled during parsing."
 
-    - name: "dot_notation_tags"
+    - name: "prism_program"
       type: "boolean"
       default: false
-      description: "Whether dot-notation component tags (e.g. Dialog.Button) are parsed as HTML elements."
+      description: "Whether the full Prism ProgramNode was serialized on the DocumentNode."
 
-    - name: "html"
+    - name: "render_nodes"
+      type: "boolean"
+      default: false
+      description: "Whether ActionView render call detection was enabled during parsing."
+
+    - name: "strict"
       type: "boolean"
       default: true
-      description: "Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text."
+      description: "Whether strict mode was enabled during parsing."
 
-    - name: "track_locations"
+    - name: "strict_locals"
       type: "boolean"
-      default: true
-      description: "Whether `location` and `range` were materialized during parsing."
-
-    - name: "erb_openers"
-      type: "string_array"
-      c_name: "erb_openers"
-      count_name: "erb_opener_count"
-      lex: true
-      skip: ["java"]
-      description: "ERB tag openers recognized in addition to the built-in ones, written without the leading `<%`."
+      default: false
+      description: "Whether strict locals analysis was enabled during parsing."
 
     - name: "timeout"
       type: "uint32"
@@ -777,34 +776,35 @@ parser_options:
       ruby_unit: "seconds"
       description: "Parse timeout in milliseconds. 0 disables the timeout."
 
-    - name: "max_errors"
-      type: "uint32"
-      default: 25
-      nullable: true
-      null_sentinel: 0
-      description: "Maximum number of errors to report. nil/null means unlimited."
-
-    - name: "arena_stats"
+    - name: "track_locations"
       type: "boolean"
-      const_name: "CAPTURE_ARENA_STATS"
+      default: true
+      description: "Whether `location` and `range` were materialized during parsing."
+
+    - name: "track_whitespace"
+      type: "boolean"
       default: false
-      only: ["ruby"]
-      description: "Whether arena allocation statistics were captured during parsing."
+      description: "Whether whitespace tracking was enabled during parsing."
+
+    - name: "transform_conditionals"
+      type: "boolean"
+      default: false
+      description: "Whether postfix conditional transformation was enabled during parsing."
 
   internal_fields:
-    - name: "start_line"
-      type: "uint32"
-      default: 0
-
-    - name: "start_column"
-      type: "uint32"
+    - name: "deadline_ms"
+      type: "uint64"
       default: 0
 
     - name: "error_count"
       type: "pointer_uint32"
 
-    - name: "deadline_ms"
-      type: "uint64"
+    - name: "start_column"
+      type: "uint32"
+      default: 0
+
+    - name: "start_line"
+      type: "uint32"
       default: 0
 
 nodes:
