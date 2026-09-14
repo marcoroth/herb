@@ -1,4 +1,4 @@
-import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, HTML_WHITESPACE_PRESERVING_ELEMENTS } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, HTML_WHITESPACE_PRESERVING_ELEMENTS, isInlineElement } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -78,13 +78,6 @@ export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
   'img': ['srcset', 'sizes']
 }
-
-export const INLINE_ELEMENTS = new Set([
-  'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
-  'dfn', 'em', 'hr', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
-  'samp', 'small', 'span', 'strong', 'sub', 'sup',
-  'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
-])
 
 export const CONTENT_PRESERVING_ELEMENTS = HTML_WHITESPACE_PRESERVING_ELEMENTS
 
@@ -252,12 +245,7 @@ export function isInlineOrERBNode(node: Node): boolean {
   return isERBNode(node) || (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node)))
 }
 
-/**
- * Check if an element should be treated as inline based on its tag name
- */
-export function isInlineElement(tagName: string): boolean {
-  return INLINE_ELEMENTS.has(tagName.toLowerCase())
-}
+export { isInlineElement }
 
 /**
  * Check if the current inline element is adjacent to a previous inline element (no whitespace between)
@@ -590,7 +578,7 @@ export function isBlockLevelNode(node: Node): boolean {
 
   const tagName = getTagName(node)
 
-  if (INLINE_ELEMENTS.has(tagName)) {
+  if (isInlineElement(tagName)) {
     return false
   }
 

@@ -1,0 +1,53 @@
+{
+  "name": "@herb-tools/minifier",
+  "version": "0.10.3",
+  "description": "HTML+ERB template minification",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/minifier%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/minifier"
+  },
+  "bin": {
+    "herb-minify": "bin/herb-minify"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.esm.js",
+  "require": "./dist/index.cjs",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "prepublishOnly": "yarn clean && yarn build && yarn test",
+    "verify:corpus": "tsx scripts/verify-corpus.ts"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.esm.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/config": "0.10.3",
+    "@herb-tools/core": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.3",
+    "@herb-tools/printer": "0.10.3",
+    "tinyglobby": "^0.2.15"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "bin/",
+    "dist/",
+    "src/"
+  ]
+}

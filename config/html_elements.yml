@@ -38,13 +38,16 @@ foreign_content_elements:
 elements:
   - name: "a"
     description: "Hyperlink"
+    inline: true
 
   - name: "abbr"
     description: "Abbreviation"
+    inline: true
 
   - name: "acronym"
     description: "Acronym"
     deprecated: true
+    inline: true
 
   - name: "address"
     description: "Contact information"
@@ -68,6 +71,7 @@ elements:
 
   - name: "b"
     description: "Bold text"
+    inline: true
 
   - name: "base"
     description: "Document base URL"
@@ -83,6 +87,7 @@ elements:
 
   - name: "bdo"
     description: "Bidirectional override"
+    inline: true
 
   - name: "bgsound"
     description: "Background sound"
@@ -92,6 +97,7 @@ elements:
   - name: "big"
     description: "Larger text"
     deprecated: true
+    inline: true
 
   - name: "blink"
     description: "Blinking text"
@@ -106,9 +112,11 @@ elements:
   - name: "br"
     description: "Line break"
     void: true
+    inline: true
 
   - name: "button"
     description: "Clickable button"
+    inline: true
 
   - name: "canvas"
     description: "Drawing surface"
@@ -122,9 +130,11 @@ elements:
 
   - name: "cite"
     description: "Citation"
+    inline: true
 
   - name: "code"
     description: "Code fragment"
+    inline: true
 
   - name: "col"
     description: "Table column"
@@ -144,12 +154,14 @@ elements:
 
   - name: "del"
     description: "Deleted text"
+    inline: true
 
   - name: "details"
     description: "Disclosure widget"
 
   - name: "dfn"
     description: "Definition term"
+    inline: true
 
   - name: "dialog"
     description: "Dialog box"
@@ -169,6 +181,7 @@ elements:
 
   - name: "em"
     description: "Emphasis"
+    inline: true
 
   - name: "embed"
     description: "Embedded content"
@@ -232,12 +245,14 @@ elements:
   - name: "hr"
     description: "Horizontal rule"
     void: true
+    inline: true
 
   - name: "html"
     description: "Document root"
 
   - name: "i"
     description: "Italic text"
+    inline: true
 
   - name: "iframe"
     description: "Inline frame"
@@ -245,13 +260,16 @@ elements:
   - name: "img"
     description: "Image"
     void: true
+    inline: true
 
   - name: "input"
     description: "Input control"
     void: true
+    inline: true
 
   - name: "ins"
     description: "Inserted text"
+    inline: true
 
   - name: "isindex"
     description: "Single-line prompt"
@@ -259,6 +277,7 @@ elements:
 
   - name: "kbd"
     description: "Keyboard input"
+    inline: true
 
   - name: "keygen"
     description: "Key pair generator"
@@ -267,6 +286,7 @@ elements:
 
   - name: "label"
     description: "Form label"
+    inline: true
 
   - name: "legend"
     description: "Fieldset legend"
@@ -288,9 +308,11 @@ elements:
 
   - name: "map"
     description: "Image map"
+    inline: true
 
   - name: "mark"
     description: "Highlighted text"
+    inline: true
 
   - name: "marquee"
     description: "Scrolling text"
@@ -341,6 +363,7 @@ elements:
 
   - name: "object"
     description: "Embedded object"
+    inline: true
 
   - name: "ol"
     description: "Ordered list"
@@ -353,6 +376,7 @@ elements:
 
   - name: "output"
     description: "Output result"
+    inline: true
 
   - name: "p"
     description: "Paragraph"
@@ -378,6 +402,7 @@ elements:
 
   - name: "q"
     description: "Inline quotation"
+    inline: true
 
   - name: "rb"
     description: "Ruby base"
@@ -398,9 +423,11 @@ elements:
 
   - name: "s"
     description: "Strikethrough text"
+    inline: true
 
   - name: "samp"
     description: "Sample output"
+    inline: true
 
   - name: "script"
     description: "Script"
@@ -413,6 +440,7 @@ elements:
 
   - name: "select"
     description: "Select control"
+    inline: true
 
   - name: "selectedcontent"
     description: "Selected content placeholder"
@@ -422,6 +450,7 @@ elements:
 
   - name: "small"
     description: "Small text"
+    inline: true
 
   - name: "source"
     description: "Media source"
@@ -433,6 +462,7 @@ elements:
 
   - name: "span"
     description: "Inline container"
+    inline: true
 
   - name: "strike"
     description: "Struck text"
@@ -440,18 +470,21 @@ elements:
 
   - name: "strong"
     description: "Strong importance"
+    inline: true
 
   - name: "style"
     description: "Style information"
 
   - name: "sub"
     description: "Subscript"
+    inline: true
 
   - name: "summary"
     description: "Disclosure summary"
 
   - name: "sup"
     description: "Superscript"
+    inline: true
 
   - name: "svg"
     description: "SVG content"
@@ -471,6 +504,7 @@ elements:
   - name: "textarea"
     description: "Text area"
     whitespace_preserving: true
+    inline: true
 
   - name: "tfoot"
     description: "Table footer"
@@ -483,6 +517,7 @@ elements:
 
   - name: "time"
     description: "Date/time"
+    inline: true
 
   - name: "title"
     description: "Document title"
@@ -497,15 +532,18 @@ elements:
   - name: "tt"
     description: "Teletype text"
     deprecated: true
+    inline: true
 
   - name: "u"
     description: "Underline"
+    inline: true
 
   - name: "ul"
     description: "Unordered list"
 
   - name: "var"
     description: "Variable"
+    inline: true
 
   - name: "video"
     description: "Video content"
@@ -513,6 +551,7 @@ elements:
   - name: "wbr"
     description: "Word break opportunity"
     void: true
+    inline: true
 
   - name: "xmp"
     description: "Preformatted example text"
