@@ -75,9 +75,9 @@ Pass `trim: false` to keep every byte of whitespace around code and comment tags
 
 One thing that `Erubi::Engine` accepts is handled differently by `Herb::Engine` on its default settings, and it is deliberate.
 
-A `case` with its first `when` or `in` in the same ERB tag raises `ERB_CASE_WITH_CONDITIONS_ERROR` under [strict parsing](/parser-options). Without strict mode it compiles like any other `case`, because the parser splits the tag so the `case` and the condition each own the Ruby they introduce, which leaves the `case` without a `%>` and the condition without a `<%`. A `case` and its first `in` pattern on the same line raises `ERB_CASE_INLINE_PATTERN_MATCH_ERROR` in both modes, because Ruby reads that as a one-line pattern match and no split makes it compile. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the style separately.
+A `case` with its first `when` or `in` in the same ERB tag raises `ERBCaseWithConditionsError` under [strict parsing](/parser-options). Without strict mode it compiles like any other `case`, because the parser splits the tag so the `case` and the condition each own the Ruby they introduce, which leaves the `case` without a `%>` and the condition without a `<%`. A `case` and its first `in` pattern on the same line raises `ERBCaseInlinePatternMatchError` in both modes, because Ruby reads that as a one-line pattern match and no split makes it compile. The [`erb-no-inline-case-conditions`](/linter/rules/erb-no-inline-case-conditions.md) rule reports the style separately.
 
-One difference changes what a template renders. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
+Two differences change what a template renders. The first is escaping. Erubi calls `to_s` on every `<%= %>` wherever it sits, because it never looks at the markup around the tag. Herb parses the HTML, so it knows the tag's context and escapes for it:
 
 ```erb
 <input name="<%= field_name %>">
@@ -89,7 +89,13 @@ _buf << ::Herb::Engine.attr((field_name));
 
 Erubi compiles that same tag to `( field_name ).to_s`, so a value carrying `a" onload="alert(1)` escapes out of the attribute under Erubi and does not under Herb. A tag inside `<script>` gets `::Herb::Engine.js` and one inside `<style>` gets `::Herb::Engine.css` for the same reason. The three come from the `attrfunc`, `jsfunc`, and `cssfunc` options, which take the same shape as Erubi's `escapefunc`.
 
-The rest are formatting differences in output that renders identically. Herb writes `(title)` where Erubi writes `( title )`, escapes through `::Herb::Engine` instead of `::Erubi` and leaves that constant out when no tag in the template escapes, drops the blank line Erubi leaves where an ERB comment was, and inserts the `;` after a `preamble` that does not end in one, which Erubi leaves as a syntax error. Each of those is a test in the divergence suite.
+The second is a `<% %>` tag holding nothing but a Ruby comment. Herb drops the comment, so `a<% # c %>b` renders `ab`. Erubi emits it into the compiled Ruby, where it comments out the append that follows it on the same line, and the same template renders `a`. An `<%# %>` comment tag is unaffected and compiles the same under both.
+
+The rest are formatting differences in output that renders identically. Herb writes `(title)` where Erubi writes `( title )`, escapes through `::Herb::Engine` instead of `::Erubi` and leaves that constant out when no tag in the template escapes, folds the text on both sides of an ERB comment into one literal where Erubi leaves an empty statement and a second append in its place, and inserts the `;` after a `preamble` that does not end in one, which Erubi leaves as a syntax error. Each of those is a test in the divergence suite.
+
+An ERB delimiter written inside Ruby is read as Ruby by both engines, which they arrive at from opposite ends. Erubi's scanner never looks at the Ruby and takes everything up to the first `%>`, while Herb asks whether the text up to a `%>` parses as Ruby before it decides that a `<%` it passed was a nested tag. Strings, heredocs, `%q{}` and Ruby comments land on the same answer either way, so `<% label = "<%" %><%= label %>` renders `<%` under both.
+
+Text that is not Ruby is where they part. `<%= name <%= other %>` reports `NestedERBTagError` under Herb, where Erubi compiles `_buf << ( name <%= other ).to_s` and leaves the syntax error to Ruby. A closing `%>` inside a string is unsupported by both, and `<%= "%>" %>` reports `StrayERBClosingTagError` under Herb where Erubi again emits Ruby that does not parse. A template that has to write a delimiter can build it out of pieces, `"%" + ">"`, or use the HTML entities `&percnt;&gt;` when it goes straight to the output.
 
 The `case` guard is the one worth knowing about outside Rails, because writing the whole statement in one tag is a common way to sidestep the untrimmed-newline problem in engines that do not trim:
 
