@@ -150,5 +150,21 @@ module Lexer
     test "erb <%== %>" do
       assert_lexed_snapshot(%(<%== "hello world" %>))
     end
+
+    test "erb delimiter inside a single quoted Ruby string" do
+      assert_lexed_snapshot(%(<% x = '<%' %><%= x %>))
+    end
+
+    test "erb delimiter inside a double quoted Ruby string" do
+      assert_lexed_snapshot(%(<% x = "<%" %><%= x %>))
+    end
+
+    test "erb delimiter inside a Ruby string in an output tag" do
+      assert_lexed_snapshot(%(<%= '<%' %>))
+    end
+
+    test "erb tag missing its closing delimiter before another erb tag" do
+      assert_lexed_snapshot(%(<% users.each do |user| %\n  <p>x</p>\n<% end %>))
+    end
   end
 end

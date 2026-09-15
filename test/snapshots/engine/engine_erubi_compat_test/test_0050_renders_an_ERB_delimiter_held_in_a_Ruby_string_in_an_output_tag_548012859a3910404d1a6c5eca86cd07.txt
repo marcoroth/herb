@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0050_renders an ERB delimiter held in a Ruby string in an output tag"
+input: "{source: \"<%= '<%' %>\", locals: {}, options: {}}"
+---
+<%

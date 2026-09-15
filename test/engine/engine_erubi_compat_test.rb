@@ -405,5 +405,26 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "renders an ERB delimiter held in a single quoted Ruby string" do
+      template = %(<% x = '<%' %><%= x %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
+    end
+
+    test "renders an ERB delimiter held in a double quoted Ruby string" do
+      template = %(<% x = "<%" %><%= x %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
+    end
+
+    test "renders an ERB delimiter held in a Ruby string in an output tag" do
+      template = %(<%= '<%' %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
+    end
   end
 end
