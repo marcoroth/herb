@@ -1,18 +1,15 @@
 import { ParserRule } from "../types.js"
 import { HerbDisableCommentBaseVisitor } from "./herb-disable-comment-base.js"
 
-import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
+import { HERB_DISABLE_DIRECTIVE_KEY } from "../herb-disable-comment-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
+import type { HerbDirectiveNode, ParseResult } from "@herb-tools/core"
 
 class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisitor {
-  protected checkHerbDisableComment(node: ERBCommentNode, content: string): void {
-    const herbDisable = parseHerbDisableContent(content)
-    if (herbDisable) return
-
-    const emptyFormat = /^\s*herb:disable\s*$/
-    if (!emptyFormat.test(content)) return
+  protected checkHerbDisableComment(node: HerbDirectiveNode, _content: string): void {
+    if (node.key?.value !== HERB_DISABLE_DIRECTIVE_KEY) return
+    if (node.arguments) return
 
     this.addOffense(
       `\`herb:disable\` comment is missing rule names. Specify \`all\` or list specific rules to disable.`,
@@ -25,6 +22,12 @@ export class HerbDisableCommentMissingRulesRule extends ParserRule {
   static ruleName = "herb-disable-comment-missing-rules"
   static introducedIn = this.version("0.8.0")
   static defaultEnabledIn = this.version("0.8.0")
+
+  get parserOptions() {
+    return {
+      herb_directives: true,
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {

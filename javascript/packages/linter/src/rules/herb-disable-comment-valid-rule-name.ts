@@ -4,7 +4,7 @@ import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 import { didyoumean } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
+import type { HerbDirectiveNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVisitor {
@@ -18,17 +18,25 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
     this.validRuleNamesList = Array.from(this.validRuleNames)
   }
 
-  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
-    herbDisable.ruleNameDetails.forEach(ruleDetail => {
-      if (this.validRuleNames.has(ruleDetail.name)) return
+  protected checkParsedHerbDisable(node: HerbDirectiveNode, _content: string, herbDisable: HerbDisableComment): void {
+    const check = (name: string, offset: number, length: number) => {
+      if (this.validRuleNames.has(name)) return
 
-      const suggestion = didyoumean(ruleDetail.name, this.validRuleNamesList)
+      const suggestion = didyoumean(name, this.validRuleNamesList)
       const message = suggestion
-        ? `Unknown rule \`${ruleDetail.name}\`. Did you mean \`${suggestion}\`?`
-        : `Unknown rule \`${ruleDetail.name}\`.`
+        ? `Unknown rule \`${name}\`. Did you mean \`${suggestion}\`?`
+        : `Unknown rule \`${name}\`.`
 
-      const location = this.createRuleNameLocation(node, ruleDetail)
+      const location = this.createRuleNameLocation(node, { name, offset, length })
       this.addOffenseWithFallback(message, location, node)
+    }
+
+    herbDisable.ruleNameDetails.forEach(ruleDetail => {
+      check(ruleDetail.name, ruleDetail.offset, ruleDetail.length)
+    })
+
+    herbDisable.fileScopedEntries.forEach(entry => {
+      check(entry.name, entry.nameOffset, entry.nameLength)
     })
   }
 }
@@ -37,6 +45,12 @@ export class HerbDisableCommentValidRuleNameRule extends ParserRule {
   static ruleName = "herb-disable-comment-valid-rule-name"
   static introducedIn = this.version("0.8.0")
   static defaultEnabledIn = this.version("0.8.0")
+
+  get parserOptions() {
+    return {
+      herb_directives: true,
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {

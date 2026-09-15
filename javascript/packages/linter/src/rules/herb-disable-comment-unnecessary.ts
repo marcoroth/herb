@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
+import type { HerbDirectiveNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisitor {
@@ -16,7 +16,7 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
     this.validRuleNames = new Set([...validRuleNames, "all"])
   }
 
-  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
+  protected checkParsedHerbDisable(node: HerbDirectiveNode, _content: string, herbDisable: HerbDisableComment): void {
     const line = node.location.start.line
     const usedRuleNames = this.ignoredOffensesByLine.get(line) || new Set<string>()
 
@@ -75,6 +75,12 @@ export class HerbDisableCommentUnnecessaryRule extends ParserRule {
   static ruleName = "herb-disable-comment-unnecessary"
   static introducedIn = this.version("0.8.0")
   static defaultEnabledIn = this.version("0.8.0")
+
+  get parserOptions() {
+    return {
+      herb_directives: true,
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {

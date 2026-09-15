@@ -2,26 +2,30 @@ import { ParserRule } from "../types.js"
 import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
+import type { HerbDirectiveNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentNoDuplicateRulesVisitor extends HerbDisableCommentParsedVisitor {
-  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
-    const seenRules = new Map<string, number>()
+  protected checkParsedHerbDisable(node: HerbDirectiveNode, _content: string, herbDisable: HerbDisableComment): void {
+    const seenRules = new Set<string>()
 
-    herbDisable.ruleNameDetails.forEach((ruleDetail, index) => {
-      const firstIndex = seenRules.get(ruleDetail.name)
-
-      if (firstIndex !== undefined) {
-        const location = this.createRuleNameLocation(node, ruleDetail)
-        const message = `Duplicate rule \`${ruleDetail.name}\` in \`herb:disable\` comment. Remove the duplicate.`
-
+    const check = (name: string, offset: number, length: number) => {
+      if (seenRules.has(name)) {
+        const location = this.createRuleNameLocation(node, { name, offset, length })
+        const message = `Duplicate rule \`${name}\` in \`herb:disable\` comment. Remove the duplicate.`
         this.addOffenseWithFallback(message, location, node)
-
         return
       }
 
-      seenRules.set(ruleDetail.name, index)
+      seenRules.add(name)
+    }
+
+    herbDisable.ruleNameDetails.forEach(ruleDetail => {
+      check(ruleDetail.name, ruleDetail.offset, ruleDetail.length)
+    })
+
+    herbDisable.fileScopedEntries.forEach(entry => {
+      check(entry.name, entry.nameOffset, entry.nameLength)
     })
   }
 }
@@ -30,6 +34,12 @@ export class HerbDisableCommentNoDuplicateRulesRule extends ParserRule {
   static ruleName = "herb-disable-comment-no-duplicate-rules"
   static introducedIn = this.version("0.8.0")
   static defaultEnabledIn = this.version("0.8.0")
+
+  get parserOptions() {
+    return {
+      herb_directives: true,
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {
