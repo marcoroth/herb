@@ -25,6 +25,8 @@ describe("comment_ast_utils", () => {
   })
 
   function parseAndCollect(content: string) {
+    parserService.clearCache()
+
     const parseResult = parserService.parseContent(content, { track_whitespace: true })
     const collector = new LineContextCollector()
 
