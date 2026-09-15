@@ -12,8 +12,6 @@ module Herb
     include Colors
 
     attr_reader :value #: String
-    attr_reader :range #: Range
-    attr_reader :location #: Location
     attr_reader :type #: String
 
     #: (String | Symbol, String, ?location: Location, ?range: Range) -> Token
@@ -27,6 +25,29 @@ module Herb
       @range = range
       @location = location
       @type = type
+    end
+
+    # `@range` and `@location` may not be set yet when a token is constructed by the C
+    # extension: in that case the raw numeric components (`@range_from`, `@range_to`,
+    # `@loc_start_line`, `@loc_start_column`, `@loc_end_line`, `@loc_end_column`) are set
+    # directly on the ivars instead (or left unset entirely when `track_locations` is
+    # disabled), and the `Range`/`Location` (and, transitively, `Position`) objects are
+    # only materialized here on first access.
+
+    #: () -> Range?
+    def range
+      return @range if defined?(@range)
+      return nil unless defined?(@range_from)
+
+      @range = Range.new(@range_from, @range_to)
+    end
+
+    #: () -> Location?
+    def location
+      return @location if defined?(@location)
+      return nil unless defined?(@loc_start_line)
+
+      @location = Location.from(@loc_start_line, @loc_start_column, @loc_end_line, @loc_end_column)
     end
 
     #: () -> serialized_token
@@ -46,7 +67,8 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      location_inspect = location ? location.tree_inspect : "∅"
+      current_location = location
+      location_inspect = current_location ? current_location.tree_inspect : "∅"
 
       "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location_inspect})")}"
     end
@@ -62,9 +84,10 @@ module Herb
 
     #: () -> String
     def colorize_range
-      return "∅" unless range
+      current_range = range
+      return "∅" unless current_range
 
-      white("[") + cyan(range.from.to_s) + white(", ") + cyan(range.to.to_s) + white("]")
+      white("[") + cyan(current_range.from.to_s) + white(", ") + cyan(current_range.to.to_s) + white("]")
     end
 
     #: (Position?) -> String
