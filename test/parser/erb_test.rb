@@ -413,5 +413,41 @@ module Parser
     test "ERB delimiter inside a Ruby string in an output tag" do
       assert_parsed_snapshot(%(<%= '<%' %>))
     end
+
+    test "unterminated if tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% if admin?\n<%= name %>")
+    end
+
+    test "unterminated unless tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% unless admin?\n<%= name %>")
+    end
+
+    test "unterminated case tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% case status\n<%= name %>")
+    end
+
+    test "unterminated while tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% while pending?\n<%= name %>")
+    end
+
+    test "unterminated until tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% until done?\n<%= name %>")
+    end
+
+    test "unterminated for tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% for user in users\n<%= name %>")
+    end
+
+    test "unterminated begin tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% begin\n<%= name %>")
+    end
+
+    test "unterminated block tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% users.each do |user|\n<%= user %>")
+    end
+
+    test "unterminated nested if tag followed by a nested ERB tag" do
+      assert_parsed_snapshot("<% if a %><% if b\n<%= c %>")
+    end
   end
 end

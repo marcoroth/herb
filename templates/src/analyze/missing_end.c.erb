@@ -1,3 +1,4 @@
+#include "../include/analyze/builders.h"
 #include "../include/analyze/helpers.h"
 #include "../include/errors.h"
 #include "../include/parser/parser.h"
@@ -24,8 +25,13 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allo
         <%- else -%>
           hb_string("`<" "%" " <%= keyword %> " "%" ">`"),
         <%- end -%>
-          <%= node.human %>->tag_opening->location.start,
-          <%= node.human %>->tag_closing->location.end,
+          erb_tag_start_position(<%= node.human %>->tag_opening, <%= node.human %>->content, node->location),
+          erb_tag_end_position(
+            <%= node.human %>->tag_closing,
+            <%= node.human %>->content,
+            <%= node.human %>->tag_opening,
+            node->location
+          ),
           allocator,
           &((AST_NODE_T*) node)->errors,
           options

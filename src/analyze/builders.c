@@ -12,24 +12,32 @@
 #include <stddef.h>
 #include <string.h>
 
+position_T erb_tag_start_position(const token_T* tag_opening, const token_T* content, location_T location) {
+  if (tag_opening != NULL) { return tag_opening->location.start; }
+  if (content != NULL) { return content->location.start; }
+
+  return location.start;
+}
+
+position_T erb_tag_end_position(
+  const token_T* tag_closing,
+  const token_T* content,
+  const token_T* tag_opening,
+  location_T location
+) {
+  if (tag_closing != NULL) { return tag_closing->location.end; }
+  if (content != NULL) { return content->location.end; }
+  if (tag_opening != NULL) { return tag_opening->location.end; }
+
+  return location.end;
+}
+
 position_T erb_content_start_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (erb_node->tag_opening != NULL) {
-    return erb_node->tag_opening->location.start;
-  } else if (erb_node->content != NULL) {
-    return erb_node->content->location.start;
-  } else {
-    return erb_node->base.location.start;
-  }
+  return erb_tag_start_position(erb_node->tag_opening, erb_node->content, erb_node->base.location);
 }
 
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (erb_node->tag_closing != NULL) {
-    return erb_node->tag_closing->location.end;
-  } else if (erb_node->content != NULL) {
-    return erb_node->content->location.end;
-  } else {
-    return erb_node->tag_opening->location.end;
-  }
+  return erb_tag_end_position(erb_node->tag_closing, erb_node->content, erb_node->tag_opening, erb_node->base.location);
 }
 
 location_T* compute_then_keyword_for_content(
