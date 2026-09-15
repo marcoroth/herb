@@ -50,12 +50,12 @@ export class ParserService {
   private readonly backend: HerbBackend
   private config?: ProjectConfig
   private resolveConfig?: ProjectConfigResolver
-  private readonly cacheSize: number
-  private readonly cache = new Map<string, unknown>()
+  readonly #cacheSize: number
+  readonly #cache = new Map<string, unknown>()
 
   constructor(backend: HerbBackend, options: ParserServiceOptions = {}) {
     this.backend = backend
-    this.cacheSize = options.cacheSize ?? DEFAULT_PARSE_CACHE_SIZE
+    this.#cacheSize = options.cacheSize ?? DEFAULT_PARSE_CACHE_SIZE
   }
 
   setConfig(config?: ProjectConfig) {
@@ -69,27 +69,27 @@ export class ParserService {
   }
 
   clearCache() {
-    this.cache.clear()
+    this.#cache.clear()
   }
 
-  private remember<Value>(key: string, compute: () => Value): Value {
-    if (this.cacheSize <= 0) return compute()
+  #remember<Value>(key: string, compute: () => Value): Value {
+    if (this.#cacheSize <= 0) return compute()
 
-    if (this.cache.has(key)) {
-      const cached = this.cache.get(key) as Value
+    if (this.#cache.has(key)) {
+      const cached = this.#cache.get(key) as Value
 
-      this.cache.delete(key)
-      this.cache.set(key, cached)
+      this.#cache.delete(key)
+      this.#cache.set(key, cached)
 
       return cached
     }
 
     const value = compute()
 
-    this.cache.set(key, value)
+    this.#cache.set(key, value)
 
-    while (this.cache.size > this.cacheSize) {
-      this.cache.delete(this.cache.keys().next().value!)
+    while (this.#cache.size > this.#cacheSize) {
+      this.#cache.delete(this.#cache.keys().next().value!)
     }
 
     return value
@@ -109,7 +109,7 @@ export class ParserService {
     const content = textDocument.getText()
     const result = this.parseContent(content, undefined, textDocument.uri)
 
-    const diagnostics = this.remember(`diagnostics\u0000${this.cacheKey(content, undefined, textDocument.uri)}`, () => {
+    const diagnostics = this.#remember(`diagnostics\u0000${this.#cacheKey(content, undefined, textDocument.uri)}`, () => {
       const errorVisitor = new ErrorVisitor()
       result.visit(errorVisitor)
 
@@ -122,13 +122,13 @@ export class ParserService {
   parseContent(content: string, options?: ParseOptions, uri?: string): ParseResult {
     const effectiveOptions = { ...this.parserOptionsFor(uri), ...options }
 
-    return this.remember(
+    return this.#remember(
       `parse\u0000${JSON.stringify(effectiveOptions)}\u0000${content}`,
       () => this.backend.parse(content, effectiveOptions)
     )
   }
 
-  private cacheKey(content: string, options: ParseOptions | undefined, uri?: string): string {
+  #cacheKey(content: string, options: ParseOptions | undefined, uri?: string): string {
     return `${JSON.stringify({ ...this.parserOptionsFor(uri), ...options })}\u0000${content}`
   }
 
