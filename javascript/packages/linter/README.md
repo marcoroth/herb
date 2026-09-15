@@ -536,7 +536,7 @@ You can disable linting for an entire file by adding the `ignore` directive anyw
 The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
 :::
 
-### File-scoped counter suppression <Badge type="info" text="v0.10.4+" />
+### File-scoped counter suppression <Badge type="info" text="v0.11.0+" />
 
 For files with many pre-existing offenses that you plan to fix over time, `herb:disable` accepts an optional per-rule count (or `all`) that baselines the current number of offenses of a single rule without silencing new offenses of the same rule elsewhere in the file.
 

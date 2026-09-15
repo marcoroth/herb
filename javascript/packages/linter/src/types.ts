@@ -1,11 +1,11 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
-import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { rules } from "./rules.js"
+import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
 import type { DOMNodeLike } from "./browser/dom-to-ast.js"
-import type { Framework, Environment, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
+import type { Framework, Environment, RuleConfig } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
@@ -78,11 +78,6 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   hints: number
   ignored: number
   wouldBeIgnored?: number
-  /**
-   * Number of offenses suppressed by a matching file-scoped
-   * `<%# herb:disable RULE N %>` (or `all`) entry. Kept separate from
-   * `ignored` (which counts line-scoped `herb:disable` suppressions).
-   */
   counterSuppressed?: number
 }
 
@@ -286,6 +281,8 @@ export interface HerbCounterCacheEntry {
   line: number
   column: number
   raw: string
+  countOffset: number
+  countLength: number
 }
 
 /**
@@ -310,6 +307,11 @@ export interface HerbCounterDrift {
   countOffset: number
   /** Length of the count token as it appears in `raw`. */
   countLength: number
+  /**
+   * Whether the rule ran for this file. A rule that is not enabled produces no
+   * offenses to count, so its entry is reported but never autofixed.
+   */
+  measurable: boolean
 }
 
 /**
@@ -321,13 +323,8 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
-  /**
-   * Per-rule drift map built during the main rule loop and consumed by the
-   * `herb-disable-comment-out-of-date` meta-rule.
-   */
-  counterDriftByRule: Map<string, HerbCounterDrift> | undefined
-  /** Report offenses even when counter-suppressed (mirrors ignoreDisableComments). */
   ignoreCounterComments: boolean | undefined
+  counterDriftByRule: Map<string, HerbCounterDrift> | undefined  
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined

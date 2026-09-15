@@ -1,3 +1,5 @@
+import type { HerbDirectiveNode } from "@herb-tools/core"
+
 /**
  * Utilities for parsing herb:disable comments.
  *
@@ -69,6 +71,11 @@ export interface HerbDisableComment {
  */
 const HERB_DISABLE_PREFIX = "herb:disable"
 
+/**
+ * The directive key this module parses, as `HerbDirectiveNode#key` reports it.
+ */
+export const HERB_DISABLE_DIRECTIVE_KEY = "disable"
+
 interface ParsedEntry {
   name: string
   nameOffset: number
@@ -89,7 +96,6 @@ function parseEntries(rulesString: string, rulesStringOffset: number): ParsedEnt
     const entry = rawEntry.trim()
     if (entry.length === 0) return null
 
-    // Find where this entry sits inside rulesString.
     const entryStart = rulesString.indexOf(entry, searchCursor)
     if (entryStart === -1) return null
     searchCursor = entryStart + entry.length
@@ -153,6 +159,7 @@ function buildResult(match: string, rulesString: string, entries: ParsedEntry[])
   for (const entry of entries) {
     if (entry.count === undefined) {
       ruleNames.push(entry.name)
+
       ruleNameDetails.push({
         name: entry.name,
         offset: entry.nameOffset,
@@ -181,6 +188,30 @@ function buildResult(match: string, rulesString: string, entries: ParsedEntry[])
 }
 
 /**
+ * Parse a herb:disable comment from a `HerbDirectiveNode`.
+ * Use this when the parser ran with `herb_directives: true`, so the key and the
+ * argument list arrive already split and located.
+ *
+ * Offsets in the result are relative to the start of `node.arguments`.
+ *
+ * @param node - A directive node, of any key
+ * @returns Parsed comment data or null if this is not a herb:disable directive
+ */
+export function parseHerbDisableDirective(node: HerbDirectiveNode): HerbDisableComment | null {
+  if (node.key?.value !== HERB_DISABLE_DIRECTIVE_KEY) return null
+
+  const rulesString = node.arguments?.value
+  if (!rulesString) return null
+
+  const entries = parseEntries(rulesString, 0)
+  if (!entries) return null
+
+  const match = `${node.tag_opening?.value ?? ""}${node.content?.value ?? ""}${node.tag_closing?.value ?? ""}`
+
+  return buildResult(match, rulesString, entries)
+}
+
+/**
  * Parse a herb:disable comment from ERB comment content.
  * Use this when you have the content inside <%# ... %> (e.g., from ERBContentNode.content.value)
  *
@@ -189,14 +220,12 @@ function buildResult(match: string, rulesString: string, entries: ParsedEntry[])
  */
 export function parseHerbDisableContent(content: string): HerbDisableComment | null {
   const trimmed = content.trim()
-
   if (!trimmed.startsWith(HERB_DISABLE_PREFIX)) return null
 
   const afterPrefix = trimmed.substring(HERB_DISABLE_PREFIX.length).trimStart()
   if (afterPrefix.length === 0) return null
 
   const rulesString = afterPrefix.trimEnd()
-
   const herbDisablePrefix = content.indexOf(HERB_DISABLE_PREFIX)
   const searchStart = herbDisablePrefix + HERB_DISABLE_PREFIX.length
   const rulesStringOffset = content.indexOf(rulesString, searchStart)

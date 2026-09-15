@@ -4,7 +4,7 @@ import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 import { didyoumean } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ERBCommentNode, ParseResult } from "@herb-tools/core"
+import type { HerbDirectiveNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
 class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVisitor {
@@ -18,7 +18,7 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
     this.validRuleNamesList = Array.from(this.validRuleNames)
   }
 
-  protected checkParsedHerbDisable(node: ERBCommentNode, _content: string, herbDisable: HerbDisableComment): void {
+  protected checkParsedHerbDisable(node: HerbDirectiveNode, _content: string, herbDisable: HerbDisableComment): void {
     const check = (name: string, offset: number, length: number) => {
       if (this.validRuleNames.has(name)) return
 
@@ -36,7 +36,6 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
     })
 
     herbDisable.fileScopedEntries.forEach(entry => {
-      // `all` is not a valid rule name in the file-scoped form.
       check(entry.name, entry.nameOffset, entry.nameLength)
     })
   }
@@ -46,6 +45,12 @@ export class HerbDisableCommentValidRuleNameRule extends ParserRule {
   static ruleName = "herb-disable-comment-valid-rule-name"
   static introducedIn = this.version("0.8.0")
   static defaultEnabledIn = this.version("0.8.0")
+
+  get parserOptions() {
+    return {
+      herb_directives: true,
+    }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {

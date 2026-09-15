@@ -542,13 +542,7 @@ export class Linter {
    * Drift is recorded on `counterDriftByRule` for the file-scoped meta-rule
    * to consume after the main rule loop.
    */
-  private applyCounterSuppression(
-    offenses: LintOffense[],
-    ruleName: string,
-    herbCounterCache: Map<string, HerbCounterCacheEntry>,
-    counterDriftByRule: Map<string, HerbCounterDrift>,
-    ignoreCounterComments?: boolean,
-  ): { kept: LintOffense[], suppressed: LintOffense[] } {
+  private applyCounterSuppression(offenses: LintOffense[], ruleName: string, herbCounterCache: Map<string, HerbCounterCacheEntry>, counterDriftByRule: Map<string, HerbCounterDrift>, ignoreCounterComments?: boolean): { kept: LintOffense[], suppressed: LintOffense[] } {
     if (this.nonExcludableRules.includes(ruleName)) {
       return { kept: offenses, suppressed: [] }
     }
@@ -560,7 +554,6 @@ export class Linter {
 
     const actual = offenses.length
 
-    // `all` suppresses everything and never reports drift.
     if (entry.count === "all") {
       if (ignoreCounterComments) return { kept: offenses, suppressed: [] }
 
@@ -568,10 +561,6 @@ export class Linter {
     }
 
     const expected = entry.count
-    const countRaw = String(expected)
-    const countRelative = entry.raw.lastIndexOf(countRaw)
-    const countOffset = countRelative === -1 ? 0 : countRelative
-    const countLength = countRaw.length
 
     counterDriftByRule.set(ruleName, {
       ruleName,
@@ -580,8 +569,9 @@ export class Linter {
       line: entry.line,
       column: entry.column,
       raw: entry.raw,
-      countOffset,
-      countLength,
+      countOffset: entry.countOffset,
+      countLength: entry.countLength,
+      measurable: true,
     })
 
     if (ignoreCounterComments) {
@@ -592,16 +582,13 @@ export class Linter {
     if (expected === 0) return { kept: offenses, suppressed: [] }
 
     if (expected > actual) {
-      // N > E: report every underlying offense; drift meta-rule reports the mismatch.
       return { kept: offenses, suppressed: [] }
     }
 
     if (expected === actual) {
-      // N == E: suppress everything.
       return { kept: [], suppressed: offenses }
     }
 
-    // 0 < expected < actual: suppress the first N offenses, keep the rest.
     return {
       kept: offenses.slice(expected),
       suppressed: offenses.slice(0, expected),
@@ -670,18 +657,18 @@ export class Linter {
           herbDisableCache.set(lineNumber, herbDisable.ruleNames)
 
           for (const entry of herbDisable.fileScopedEntries) {
-            // First occurrence wins; duplicates are reported by
-            // `herb-disable-comment-no-duplicate-rules`.
             if (herbCounterCache.has(entry.name)) continue
 
-            const column = line.indexOf(herbDisable.match) + 1
+            const matchOffset = line.indexOf(herbDisable.match)
 
             herbCounterCache.set(entry.name, {
               ruleName: entry.name,
               count: entry.count,
               line: lineNumber,
-              column,
+              column: matchOffset + 1,
               raw: herbDisable.match,
+              countOffset: entry.countOffset - matchOffset,
+              countLength: entry.countLength,
             })
           }
         } else {
@@ -701,6 +688,27 @@ export class Linter {
       framework: context?.framework ?? this.config?.framework,
       environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
+    }
+
+    const configuredRuleNames = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
+    const availableRuleNames = new Set(this.getAvailableRules().map(ruleClass => ruleClass.ruleName))
+
+    for (const [ruleName, entry] of herbCounterCache) {
+      if (entry.count === "all") continue
+      if (configuredRuleNames.has(ruleName)) continue
+      if (!availableRuleNames.has(ruleName)) continue
+
+      counterDriftByRule.set(ruleName, {
+        ruleName,
+        expected: entry.count,
+        actual: 0,
+        line: entry.line,
+        column: entry.column,
+        raw: entry.raw,
+        countOffset: entry.countOffset,
+        countLength: entry.countLength,
+        measurable: false,
+      })
     }
 
     const deferredRuleNames = new Set([
@@ -1120,7 +1128,6 @@ export class Linter {
   updateCounters(source: string, context?: Partial<LintContext>): { source: string, inserted: number, rewritten: number, deleted: number } {
     const lines = source.split("\n")
 
-    // Locate existing file-scoped disable entries per rule.
     interface ExistingEntry {
       line: number
       raw: string
@@ -1129,12 +1136,6 @@ export class Linter {
     }
 
     const existing = new Map<string, ExistingEntry>()
-
-    // Only reconcile entries whose rule name is present in this linter's
-    // rule set. An unknown rule (typically a custom rule that wasn't loaded
-    // into this linter instance) means "we can't measure this" — leave the
-    // entry untouched rather than assuming zero offenses and deleting it.
-    // `herb-disable-comment-valid-rule-name` already flags unknown names.
     const knownRuleNames = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
 
     for (let i = 0; i < lines.length; i++) {
@@ -1160,13 +1161,17 @@ export class Linter {
     }
 
     const result = this.lint(source, { ...context, ignoreCounterComments: true })
-
     const actualByRule = new Map<string, number>()
 
-    for (const ruleName of existing.keys()) actualByRule.set(ruleName, 0)
+    for (const ruleName of existing.keys()) {
+      actualByRule.set(ruleName, 0)
+    }
 
     for (const offense of result.offenses) {
-      if (!existing.has(offense.rule)) continue
+      if (!existing.has(offense.rule)) {
+        continue
+      }
+
       actualByRule.set(offense.rule, (actualByRule.get(offense.rule) || 0) + 1)
     }
 
@@ -1182,12 +1187,12 @@ export class Linter {
       if (actual === 0) {
         deleteOps.push({ line: current.line, ruleName, oldRaw: current.raw })
         deleted++
+
         continue
       }
 
       if (actual === current.count) continue
 
-      // Rewrite `rule-name <count>` -> `rule-name <actual>` inside the raw comment.
       const pattern = new RegExp(`(\\b${ruleName}\\s+)${current.countRaw}\\b`)
       const newRaw = current.raw.replace(pattern, `$1${actual}`)
 
@@ -1202,15 +1207,12 @@ export class Linter {
       lines[idx] = lines[idx].replace(op.oldRaw, op.newRaw)
     }
 
-    // Process deletions bottom-up so line numbers stay valid.
     for (const op of [...deleteOps].sort((a, b) => b.line - a.line)) {
-      const idx = op.line - 1
-      const original = lines[idx]
+      const index = op.line - 1
+      const original = lines[index]
       const parsed = parseHerbDisableLine(original)
       if (!parsed) continue
 
-      // If the file-scoped entry is the only entry in the comment, remove the
-      // whole comment. Otherwise strip just this entry from the rules string.
       const remaining = parsed.ruleNameDetails.length +
         parsed.fileScopedEntries.filter(e => e.name !== op.ruleName).length
 
@@ -1218,26 +1220,32 @@ export class Linter {
         const stripped = original.replace(parsed.match, "").replace(/[ \t]+$/, "")
 
         if (stripped.trim().length === 0) {
-          lines.splice(idx, 1)
+          lines.splice(index, 1)
         } else {
-          lines[idx] = stripped
+          lines[index] = stripped
         }
       } else {
         const entry = parsed.fileScopedEntries.find(e => e.name === op.ruleName)
         if (!entry) continue
 
-        // Rebuild the rules string without this entry.
         const kept: string[] = []
 
-        for (const detail of parsed.ruleNameDetails) kept.push(detail.name)
+        for (const detail of parsed.ruleNameDetails) {
+          kept.push(detail.name)
+        }
+
         for (const fileEntry of parsed.fileScopedEntries) {
-          if (fileEntry.name === op.ruleName) continue
+          if (fileEntry.name === op.ruleName) {
+            continue
+          }
+
           kept.push(`${fileEntry.name} ${fileEntry.countRaw}`)
         }
 
         const newRulesString = kept.join(", ")
         const newRaw = parsed.match.replace(parsed.rulesString, newRulesString)
-        lines[idx] = original.replace(parsed.match, newRaw)
+
+        lines[index] = original.replace(parsed.match, newRaw)
       }
     }
 

@@ -1,6 +1,6 @@
-# herb-disable-comment-out-of-date
+# Linter Rule: Detect out-of-date `herb:disable` counts
 
-Detect file-scoped `<%# herb:disable rule N %>` entries whose declared count (N) does not match the actual number of offenses in the file.
+**Rule:** `herb-disable-comment-out-of-date`
 
 ## Description
 
@@ -15,6 +15,7 @@ This rule fires whenever the count in such an entry disagrees with the number of
 - `N > E` — the count over-promises. Every actual offense is still reported; this rule additionally flags the drift so you can lower the count.
 - `0 < N < E` — the count under-promises. The linter suppresses the first `N` offenses and lets the rest surface; this rule flags the drift so you can raise the count.
 - `N > 0` and `E == 0` — the rule no longer offends. This rule flags the entry so you can drop it (or run `--update-disable-counts`).
+- the rule is not enabled in your configuration, so its offenses cannot be counted at all. This rule flags the entry, and autofix leaves the count alone so the baseline survives re-enabling the rule.
 
 `herb:disable rule all` entries opt out of drift tracking and never emit this rule.
 

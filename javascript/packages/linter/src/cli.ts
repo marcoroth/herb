@@ -161,11 +161,6 @@ export class CLI {
     return supported
   }
 
-  /**
-   * Resolve the effective file set for a command. When `patterns` is empty,
-   * use every file the linter is configured to look at; otherwise scope to
-   * the explicit paths/patterns, mirroring the main lint pipeline.
-   */
   protected async resolveFiles(patterns: string[], config: Config, force: boolean, formatOption: FormatOption): Promise<string[]> {
     if (patterns.length === 0) {
       return await config.findFilesForTool('linter', this.projectPath)
