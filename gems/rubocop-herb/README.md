@@ -4,7 +4,13 @@
 in ERB templates. Herb parses the template and RuboCop reports and corrects
 offenses at their original template locations.
 
-Add the gem to your bundle and enable the plugin in `.rubocop.yml`:
+Add the gem to your bundle:
+
+```sh
+bundle add rubocop-herb
+```
+
+Then enable the plugin in `.rubocop.yml`:
 
 ```yaml
 plugins:
