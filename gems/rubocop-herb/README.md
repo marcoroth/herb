@@ -23,6 +23,4 @@ bundle exec rubocop -a app/views
 bundle exec rubocop -A app/views
 ```
 
-The plugin honors the project's RuboCop configuration, including custom cops, inherited configuration, target Ruby versions, and file exclusions. Cops that require a complete Ruby file or surrounding Ruby structure are excluded for ERB templates by default.
-
-The RuboCop extractor design builds on prior art from [`rubocop-erb`](https://github.com/r7kamura/rubocop-erb).
+The plugin honors the project's RuboCop configuration, including custom cops, inherited configuration, target Ruby versions, and file exclusions. Cops that require a complete Ruby file or surrounding Ruby structure are [excluded for ERB templates by default](config/default.yml).
