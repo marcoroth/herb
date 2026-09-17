@@ -35,6 +35,25 @@ module RuboCop
         assert_equal ["\"open\"", "\"closed\""], sources
       end
 
+      test "uses Ruby tokens when removing block syntax" do
+        fragments = extract(<<~ERB)
+          <%= users.each do |(user, index), *rest; local| %>
+            <%= "do" %>
+          <% end %>
+        ERB
+
+        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
+
+        assert_equal [" users.each", " \"do\" "], sources
+      end
+
+      test "does not treat keywords inside when expressions as syntax" do
+        fragments = extract("<% when \"then\", method(:do) then %>\n")
+        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
+
+        assert_equal ["\"then\"", "method(:do)"], sources
+      end
+
       test "skips comments, escaped ERB, and GraphQL tags" do
         fragments = extract(<<~ERB)
           <%# x=1 %>

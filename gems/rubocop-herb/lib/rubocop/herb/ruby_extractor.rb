@@ -47,11 +47,11 @@ module RuboCop
           offset: line_range.begin.begin_pos + start.column
         )
 
-        WhenDecomposer.call(@processed_source, clip)
+        WhenDecomposer.call(clip)
       end
 
       def blank?(clip)
-        clip.code.match?(/\A\s*\z/)
+        clip.code.strip.empty?
       end
 
       def nodes

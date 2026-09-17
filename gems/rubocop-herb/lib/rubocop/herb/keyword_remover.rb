@@ -1,32 +1,26 @@
 # frozen_string_literal: true
 
+require "prism"
+
 module RuboCop
   module Herb
     class KeywordRemover
-      PRECEDING_KEYWORD = /
-        \A
-        \s*
-        (?:
-          begin
-          | case
-          | else
-          | elsif
-          | end
-          | ensure
-          | if
-          | rescue
-          | unless
-          | until
-          | when
-          | while
-          | for[ \t]+\w+[ \t]+in
-        )
-        \b[ \t]*
-      /x
-      PRECEDING_BRACE = /\A\s*}/
-      TRAILING_BRACE = /{[ \t]*(?:\|[^|]*\|)?\s*\z/x
-      TRAILING_THEN = /[ \t]*\bthen\s*\z/x
-      TRAILING_DO = /(?:\b[ \t]*|[ \t])do[ \t]*(?:\|[^|]*\|)?\s*(?:\#.*)?\z/x
+      PRECEDING_KEYWORDS = [
+        :KEYWORD_BEGIN,
+        :KEYWORD_CASE,
+        :KEYWORD_ELSE,
+        :KEYWORD_ELSIF,
+        :KEYWORD_END,
+        :KEYWORD_ENSURE,
+        :KEYWORD_IF,
+        :KEYWORD_RESCUE,
+        :KEYWORD_UNLESS,
+        :KEYWORD_UNTIL,
+        :KEYWORD_WHEN,
+        :KEYWORD_WHILE
+      ].freeze
+      TRAILING_KEYWORDS = [:KEYWORD_DO, :BRACE_LEFT, :KEYWORD_THEN].freeze
+      TRIVIA = [:COMMENT, :EOF, :IGNORED_NEWLINE, :NEWLINE].freeze
 
       def self.call(ruby_clip)
         new(ruby_clip).call
@@ -37,22 +31,64 @@ module RuboCop
       end
 
       def call
-        code = @ruby_clip.code
-        offset = @ruby_clip.offset
+        remove_trailing_source(remove_preceding_source(@ruby_clip))
+      end
 
-        [PRECEDING_KEYWORD, PRECEDING_BRACE].each do |pattern|
-          match = code.match(pattern)
-          next unless match
+      private
 
-          code = code.byteslice(match[0].bytesize..)
-          offset += match[0].bytesize
+      def remove_preceding_source(clip)
+        tokens = significant_tokens(clip.code)
+        first = tokens.first
+        return clip unless preceding_token?(first)
+
+        next_token = token_after_preceding_keyword(tokens)
+        removed_bytes = next_token&.location&.start_offset || clip.code.bytesize
+        RubyClip.new(
+          code: clip.code.byteslice(removed_bytes..),
+          offset: clip.offset + removed_bytes
+        )
+      end
+
+      def preceding_token?(token)
+        return false unless token
+
+        PRECEDING_KEYWORDS.include?(token.type) ||
+          token.type == :BRACE_RIGHT ||
+          token.type == :KEYWORD_FOR
+      end
+
+      def token_after_preceding_keyword(tokens)
+        return tokens[1] unless tokens.first.type == :KEYWORD_FOR
+
+        in_index = tokens.index { |token| token.type == :KEYWORD_IN }
+        in_index ? tokens[in_index + 1] : nil
+      end
+
+      def remove_trailing_source(clip)
+        tokens = significant_tokens(clip.code)
+        trailing_index = tokens.rindex { |token| TRAILING_KEYWORDS.include?(token.type) }
+        return clip unless trailing_index
+        return clip unless removable_suffix?(tokens, trailing_index)
+
+        RubyClip.new(
+          code: clip.code.byteslice(0...tokens[trailing_index].location.start_offset).rstrip,
+          offset: clip.offset
+        )
+      end
+
+      def removable_suffix?(tokens, trailing_index)
+        trailing_token = tokens[trailing_index]
+        suffix = tokens[(trailing_index + 1)..]
+        return suffix.empty? if trailing_token.type == :KEYWORD_THEN
+        return true if suffix.empty?
+
+        suffix.first.type == :PIPE && suffix.last.type == :PIPE
+      end
+
+      def significant_tokens(source)
+        Prism.lex(source).value.filter_map do |token, _state|
+          token unless TRIVIA.include?(token.type)
         end
-
-        [TRAILING_BRACE, TRAILING_THEN, TRAILING_DO].each do |pattern|
-          code = code.sub(pattern, "")
-        end
-
-        RubyClip.new(code:, offset:)
       end
     end
   end
