@@ -126,8 +126,7 @@ Lint your HTML+ERB templates:
 npx @herb-tools/linter
 ```
 
-Run your project's configured RuboCop rules against Ruby in ERB templates with
-the `rubocop-herb` plugin:
+Run your project's configured RuboCop rules against Ruby in ERB templates with the `rubocop-herb` plugin:
 
 ```sh
 bundle add rubocop-herb
