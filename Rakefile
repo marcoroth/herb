@@ -38,6 +38,12 @@ Rake::TestTask.new("test:all") do |t|
   t.test_files = FileList["test/**/*_test.rb"]
 end
 
+Rake::TestTask.new("test:rubocop_herb") do |t|
+  t.libs << "gems/rubocop-herb/test"
+  t.libs << "gems/rubocop-herb/lib"
+  t.test_files = FileList["gems/rubocop-herb/test/**/*_test.rb"]
+end
+
 task "make" do
   puts "Running make..."
   IO.popen("make") do |output|

@@ -1,0 +1,119 @@
+inherit_mode:
+  merge:
+    - Exclude
+    - Include
+
+AllCops:
+  Include:
+    - '**/*.erb'
+
+# These cops require a complete Ruby file or surrounding Ruby structure that
+# is not present when an individual ERB fragment is inspected.
+Layout/ArgumentAlignment:
+  Exclude: ['**/*.erb']
+Layout/ArrayAlignment:
+  Exclude: ['**/*.erb']
+Layout/BlockAlignment:
+  Exclude: ['**/*.erb']
+Layout/ClosingParenthesisIndentation:
+  Exclude: ['**/*.erb']
+Layout/CommentIndentation:
+  Exclude: ['**/*.erb']
+Layout/InitialIndentation:
+  Exclude: ['**/*.erb']
+Layout/EmptyLineAfterGuardClause:
+  Exclude: ['**/*.erb']
+Layout/EndAlignment:
+  Exclude: ['**/*.erb']
+Layout/FirstArgumentIndentation:
+  Exclude: ['**/*.erb']
+Layout/FirstArrayElementIndentation:
+  Exclude: ['**/*.erb']
+Layout/FirstArrayElementLineBreak:
+  Exclude: ['**/*.erb']
+Layout/FirstHashElementIndentation:
+  Exclude: ['**/*.erb']
+Layout/FirstHashElementLineBreak:
+  Exclude: ['**/*.erb']
+Layout/FirstMethodArgumentLineBreak:
+  Exclude: ['**/*.erb']
+Layout/FirstParameterIndentation:
+  Exclude: ['**/*.erb']
+Layout/HashAlignment:
+  Exclude: ['**/*.erb']
+Layout/IndentationConsistency:
+  Exclude: ['**/*.erb']
+Layout/IndentationWidth:
+  Exclude: ['**/*.erb']
+Layout/LeadingEmptyLine:
+  Exclude: ['**/*.erb']
+Layout/LeadingEmptyLines:
+  Exclude: ['**/*.erb']
+Layout/LineEndStringConcatenationIndentation:
+  Exclude: ['**/*.erb']
+Layout/LineLength:
+  Exclude: ['**/*.erb']
+Layout/MultilineArrayBraceLayout:
+  Exclude: ['**/*.erb']
+Layout/MultilineAssignmentLayout:
+  Exclude: ['**/*.erb']
+Layout/MultilineHashBraceLayout:
+  Exclude: ['**/*.erb']
+Layout/MultilineMethodCallBraceLayout:
+  Exclude: ['**/*.erb']
+Layout/MultilineMethodCallIndentation:
+  Exclude: ['**/*.erb']
+Layout/MultilineMethodDefinitionBraceLayout:
+  Exclude: ['**/*.erb']
+Layout/MultilineOperationIndentation:
+  Exclude: ['**/*.erb']
+Layout/ParameterAlignment:
+  Exclude: ['**/*.erb']
+Layout/TrailingEmptyLines:
+  Exclude: ['**/*.erb']
+Layout/TrailingWhitespace:
+  Exclude: ['**/*.erb']
+Lint/EmptyFile:
+  Exclude: ['**/*.erb']
+Lint/OutOfRangeRegexpRef:
+  Exclude: ['**/*.erb']
+Lint/Syntax:
+  Exclude: ['**/*.erb']
+Lint/UselessAssignment:
+  Exclude: ['**/*.erb']
+Lint/Void:
+  Exclude: ['**/*.erb']
+Metrics/BlockLength:
+  Exclude: ['**/*.erb']
+Metrics/BlockNesting:
+  Exclude: ['**/*.erb']
+Naming/FileName:
+  Exclude: ['**/*.erb']
+Style/FrozenStringLiteralComment:
+  Exclude: ['**/*.erb']
+Style/IdenticalConditionalBranches:
+  Exclude: ['**/*.erb']
+Style/IfUnlessModifier:
+  Exclude: ['**/*.erb']
+Style/MultilineTernaryOperator:
+  Exclude: ['**/*.erb']
+Style/NestedTernaryOperator:
+  Exclude: ['**/*.erb']
+Style/Next:
+  Exclude: ['**/*.erb']
+Style/ParallelAssignment:
+  Exclude: ['**/*.erb']
+Style/RescueModifier:
+  Exclude: ['**/*.erb']
+Style/Semicolon:
+  Exclude: ['**/*.erb']
+Style/TrailingCommaInArguments:
+  Exclude: ['**/*.erb']
+Style/TrailingCommaInArrayLiteral:
+  Exclude: ['**/*.erb']
+Style/TrailingCommaInHashLiteral:
+  Exclude: ['**/*.erb']
+Style/WhileUntilDo:
+  Exclude: ['**/*.erb']
+Style/WhileUntilModifier:
+  Exclude: ['**/*.erb']

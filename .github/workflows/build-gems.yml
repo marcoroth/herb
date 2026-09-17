@@ -10,6 +10,7 @@ on:
     paths:
       - "src/**"
       - "lib/**"
+      - "gems/**"
       - "ext/**"
       - "Gemfile"
       - "Gemfile.lock"
@@ -22,6 +23,7 @@ on:
     paths:
       - "src/**"
       - "lib/**"
+      - "gems/**"
       - "ext/**"
       - "Gemfile"
       - "Gemfile.lock"
@@ -89,6 +91,9 @@ jobs:
         run: |
           if [ "${{ matrix.target }}" = "default" ]; then
             bundle exec rake build
+            mkdir -p pkg
+            cd gems/rubocop-herb
+            gem build rubocop-herb.gemspec --output ../../pkg/rubocop-herb.gem
           else
             bundle exec rake gem:${{ matrix.target }}
           fi

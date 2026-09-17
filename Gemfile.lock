@@ -32,6 +32,14 @@ PATH
   specs:
     herb (0.10.3)
 
+PATH
+  remote: gems/rubocop-herb
+  specs:
+    rubocop-herb (0.10.3)
+      herb (= 0.10.3)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.72.1, < 2)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -332,6 +340,7 @@ DEPENDENCIES
   reactionview (~> 0.3.0)
   reline (~> 0.7)
   rubocop (~> 1.71)
+  rubocop-herb!
   sorbet
   steep!
   turbo-rails (~> 2.0)
