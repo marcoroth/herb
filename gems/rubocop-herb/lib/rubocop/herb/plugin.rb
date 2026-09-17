@@ -18,6 +18,10 @@ module RuboCop
       def rules(_context)
         extractors = RuboCop::Runner.ruby_extractors
         extractors.unshift(RubyExtractor) unless extractors.include?(RubyExtractor)
+        team = RuboCop::Cop::Team
+        team.prepend(RangeRestrictedAutocorrect) unless team < RangeRestrictedAutocorrect
+        corrector = RuboCop::Cop::Corrector
+        corrector.prepend(RangeRestrictedCorrector) unless corrector < RangeRestrictedCorrector
 
         LintRoller::Rules.new(
           config_format: :rubocop,

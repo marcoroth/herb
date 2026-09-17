@@ -135,6 +135,7 @@ Metrics/ClassLength:
     - lib/herb/visitor.rb
     - templates/template.rb
     - test/**/*_test.rb
+    - gems/**/test/**/*_test.rb
 
 Metrics/ModuleLength:
   Exclude:

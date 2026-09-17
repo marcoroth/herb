@@ -92,6 +92,56 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
     refute_includes output, "Layout/SpaceAroundOperators"
   end
 
+  test "tracks variable usage across ERB tags" do
+    write_config(<<~YAML)
+      Lint/UselessAssignment:
+        Enabled: true
+    YAML
+    write("example.html.erb", "<% value = compute %>\n<p><%= value %></p>\n")
+
+    output, error, status = run_rubocop("example.html.erb", chdir: @directory)
+
+    assert status.success?, output
+    assert_empty error
+    refute_includes output, "Lint/UselessAssignment"
+  end
+
+  test "rejects autocorrections spanning non-Ruby template content" do
+    write("custom_cop.rb", <<~RUBY)
+      module RuboCop
+        module Cop
+          module HerbTest
+            class ReplaceConditional < Base
+              extend AutoCorrector
+
+              MSG = "Do not use conditionals."
+
+              def on_if(node)
+                add_offense(node) { |corrector| corrector.replace(node, "replacement") }
+              end
+            end
+          end
+        end
+      end
+    RUBY
+    write_config(<<~YAML)
+      require:
+        - ./custom_cop
+      HerbTest/ReplaceConditional:
+        Enabled: true
+    YAML
+    template = "<% if condition %><strong><%= value %></strong><% end %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-A", "example.html.erb", chdir: @directory)
+
+    refute status.success?
+    assert_empty error
+    assert_includes output, "HerbTest/ReplaceConditional"
+    refute_includes output, "[Corrected]"
+    assert_equal template, read("example.html.erb")
+  end
+
   test "leaves ordinary Ruby inspection unchanged" do
     write_config(<<~YAML)
       Layout/SpaceAroundOperators:
@@ -114,6 +164,7 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
         - rubocop-herb
       AllCops:
         DisabledByDefault: true
+        SuggestExtensions: false
       #{cops}
     YAML
   end

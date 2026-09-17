@@ -5,53 +5,42 @@ require_relative "test_helper"
 module RuboCop
   module Herb
     class RubyExtractorTest < Minitest::Spec
-      test "extracts Ruby fragments with template offsets" do
-        fragments = extract("<p>Café <%= x=1 %></p>\n")
+      test "builds one position-preserving Ruby source" do
+        template = "<p>Café <%= x=1 %></p>\n"
+        fragment = extract(template).first
+        source = fragment[:processed_source].raw_source
 
-        assert_equal 1, fragments.length
-        assert_equal " x=1 ", fragments.first[:processed_source].raw_source
-        assert_equal 11, fragments.first[:offset]
+        assert_equal 0, fragment[:offset]
+        assert_equal template.length, source.length
+        assert_equal "x=1", source[template.index("x=1"), 3]
+        assert fragment[:processed_source].valid_syntax?
       end
 
-      test "normalizes control-flow fragments" do
-        fragments = extract(<<~ERB)
-          <% if user.admin? %>
-            <%= users.each do |user| %>
-              <%= user.name %>
+      test "preserves Ruby control flow across ERB tags" do
+        fragment = extract(<<~ERB).first
+          <% case status %>
+          <% when "open", "closed" %>
+            <% if user.admin? %>
+              <%= users.each do |user| %>
+                <%= user.name %>
+              <% end %>
             <% end %>
           <% end %>
         ERB
 
-        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
+        source = fragment[:processed_source]
 
-        assert_equal ["user.admin? ", " users.each", " user.name "], sources
+        assert source.valid_syntax?
+        assert_equal :case, source.ast.type
+        assert_includes source.raw_source, "when \"open\", \"closed\""
+        assert_includes source.raw_source, "users.each do |user|"
       end
 
-      test "decomposes when conditions" do
-        fragments = extract("<% when \"open\", \"closed\" %>\n")
+      test "separates adjacent Ruby tags on the same line" do
+        source = extract("<%= first %><%= second %>\n").first[:processed_source]
 
-        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
-
-        assert_equal ["\"open\"", "\"closed\""], sources
-      end
-
-      test "uses Ruby tokens when removing block syntax" do
-        fragments = extract(<<~ERB)
-          <%= users.each do |(user, index), *rest; local| %>
-            <%= "do" %>
-          <% end %>
-        ERB
-
-        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
-
-        assert_equal [" users.each", " \"do\" "], sources
-      end
-
-      test "does not treat keywords inside when expressions as syntax" do
-        fragments = extract("<% when \"then\", method(:do) then %>\n")
-        sources = fragments.map { |fragment| fragment[:processed_source].raw_source }
-
-        assert_equal ["\"then\"", "method(:do)"], sources
+        assert source.valid_syntax?
+        assert_equal 2, source.ast.each_node(:send).count
       end
 
       test "skips comments, escaped ERB, and GraphQL tags" do

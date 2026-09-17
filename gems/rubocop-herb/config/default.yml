@@ -7,8 +7,8 @@ AllCops:
   Include:
     - '**/*.erb'
 
-# These cops require a complete Ruby file or surrounding Ruby structure that
-# is not present when an individual ERB fragment is inspected.
+# These cops depend on physical Ruby file contents or layout that is obscured
+# by the position-preserving template representation.
 Layout/ArgumentAlignment:
   Exclude: ['**/*.erb']
 Layout/ArrayAlignment:
@@ -69,6 +69,8 @@ Layout/MultilineOperationIndentation:
   Exclude: ['**/*.erb']
 Layout/ParameterAlignment:
   Exclude: ['**/*.erb']
+Layout/SpaceBeforeSemicolon:
+  Exclude: ['**/*.erb']
 Layout/TrailingEmptyLines:
   Exclude: ['**/*.erb']
 Layout/TrailingWhitespace:
@@ -79,19 +81,19 @@ Lint/OutOfRangeRegexpRef:
   Exclude: ['**/*.erb']
 Lint/Syntax:
   Exclude: ['**/*.erb']
-Lint/UselessAssignment:
-  Exclude: ['**/*.erb']
 Lint/Void:
   Exclude: ['**/*.erb']
 Metrics/BlockLength:
-  Exclude: ['**/*.erb']
-Metrics/BlockNesting:
   Exclude: ['**/*.erb']
 Naming/FileName:
   Exclude: ['**/*.erb']
 Style/FrozenStringLiteralComment:
   Exclude: ['**/*.erb']
+Style/EmptyElse:
+  Exclude: ['**/*.erb']
 Style/IdenticalConditionalBranches:
+  Exclude: ['**/*.erb']
+Style/IfWithSemicolon:
   Exclude: ['**/*.erb']
 Style/IfUnlessModifier:
   Exclude: ['**/*.erb']
@@ -101,17 +103,7 @@ Style/NestedTernaryOperator:
   Exclude: ['**/*.erb']
 Style/Next:
   Exclude: ['**/*.erb']
-Style/ParallelAssignment:
-  Exclude: ['**/*.erb']
-Style/RescueModifier:
-  Exclude: ['**/*.erb']
 Style/Semicolon:
-  Exclude: ['**/*.erb']
-Style/TrailingCommaInArguments:
-  Exclude: ['**/*.erb']
-Style/TrailingCommaInArrayLiteral:
-  Exclude: ['**/*.erb']
-Style/TrailingCommaInHashLiteral:
   Exclude: ['**/*.erb']
 Style/WhileUntilDo:
   Exclude: ['**/*.erb']
