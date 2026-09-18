@@ -649,6 +649,23 @@ module Engine
       assert_snapshot_matches(compiled, "debug_mode_test-0")
     end
 
+    test "erb expressions in elements that reject a span do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
+        <table>
+          <thead><%= header_row %></thead>
+          <tbody><%= rows %></tbody>
+        </table>
+        <ul><%= items %></ul>
+        <select><%= choices %></select>
+      ERB
+    end
+
+    test "erb expressions in a table cell still get debug spans" do
+      assert_compiled_snapshot(<<~ERB, visitors: [Herb::Engine::DebugVisitor.new])
+        <table><tbody><tr><td><%= cell %></td></tr></tbody></table>
+      ERB
+    end
+
     describe "marking which render a tag came from" do
       def visitors_for(node:, instrument: true)
         visitors = [Herb::Engine::DebugVisitor.new(node: node)]
