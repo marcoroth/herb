@@ -837,7 +837,9 @@ export class HerbOverlay {
   }
 
   private createOverlayLabel(element: HTMLElement, type: 'view' | 'partial' | 'component') {
-    if (element.querySelector('.herb-overlay-label')) {
+    // Scoped to direct children: an unscoped lookup finds a nested element's label instead, so
+    // removal takes the wrong one and the outer element keeps its own.
+    if (element.querySelector(':scope > .herb-overlay-label')) {
       return;
     }
 
@@ -946,7 +948,7 @@ export class HerbOverlay {
 
     if (shouldAttachToParent && element.parentElement) {
       const parent = element.parentElement;
-      const label = parent.querySelector('.herb-overlay-label');
+      const label = parent.querySelector(':scope > .herb-overlay-label');
 
       if (label) {
         label.remove();
@@ -959,7 +961,7 @@ export class HerbOverlay {
 
       this.releaseLabel(parent);
     } else {
-      const label = element.querySelector('.herb-overlay-label');
+      const label = element.querySelector(':scope > .herb-overlay-label');
 
       if (label) {
         label.remove();

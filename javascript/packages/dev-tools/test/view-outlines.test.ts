@@ -81,4 +81,21 @@ describe("view outlines", () => {
 
     expect([view.style.position, own.style.position]).toEqual(["", "absolute"])
   })
+
+  test("take every label away again, nested ones included", () => {
+    document.body.innerHTML = `<div id="outer"><div id="inner"></div></div>`
+
+    markAsView(document.documentElement)
+    markAsView(document.getElementById("outer") as HTMLElement)
+    markAsView(document.getElementById("inner") as HTMLElement)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+
+    expect(document.querySelectorAll(".herb-overlay-label").length).toBe(3)
+
+    overlayOf().toggleViewOutlines(false)
+
+    expect(document.querySelectorAll(".herb-overlay-label").length).toBe(0)
+  })
 })
