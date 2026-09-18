@@ -106,6 +106,38 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
     refute_includes output, "Lint/UselessAssignment"
   end
 
+  test "runs only on HTML ERB files" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    write("example.html.erb", "<%= html=1 %>\n")
+    write("example.rss.erb", "<%= rss=1 %>\n")
+    write("example.erb", "<%= generic=1 %>\n")
+
+    output, error, status = run_rubocop(".", chdir: @directory)
+
+    refute status.success?
+    assert_empty error
+    assert_includes output, "example.html.erb"
+    refute_includes output, "example.rss.erb"
+    refute_includes output, "example.erb"
+  end
+
+  test "does not inspect explicitly passed non-HTML ERB files" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    write("example.rss.erb", "<%= rss=1 %>\n")
+
+    output, error, status = run_rubocop("example.rss.erb", chdir: @directory)
+
+    assert status.success?, output
+    assert_empty error
+    refute_includes output, "Layout/SpaceAroundOperators"
+  end
+
   test "rejects autocorrections spanning non-Ruby template content" do
     write("custom_cop.rb", <<~RUBY)
       module RuboCop

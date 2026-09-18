@@ -57,6 +57,11 @@ module RuboCop
         assert_nil RubyExtractor.call(processed_source("x=1\n", "example.rb"))
       end
 
+      test "does not extract Ruby from non-HTML ERB files" do
+        assert_empty RubyExtractor.call(processed_source("<%= x=1 %>\n", "example.rss.erb"))
+        assert_empty RubyExtractor.call(processed_source("<%= x=1 %>\n", "example.erb"))
+      end
+
       private
 
       def extract(source)

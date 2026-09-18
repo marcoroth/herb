@@ -15,7 +15,8 @@ module RuboCop
       end
 
       def call
-        return unless supported_file?
+        return unless erb_file?
+        return [] unless html_erb_file?
 
         ruby_source = RubySourceBuilder.call(@processed_source.raw_source)
         return [] if ruby_source.ranges.empty?
@@ -32,8 +33,12 @@ module RuboCop
 
       private
 
-      def supported_file?
+      def erb_file?
         @processed_source.path&.end_with?(".erb")
+      end
+
+      def html_erb_file?
+        @processed_source.path&.end_with?(".html.erb")
       end
     end
   end

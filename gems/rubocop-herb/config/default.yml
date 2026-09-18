@@ -5,107 +5,111 @@ inherit_mode:
 
 AllCops:
   Include:
-    - '**/*.erb'
+    - '**/*.html.erb'
 
 # These cops depend on physical Ruby file contents or layout that is obscured
 # by the position-preserving template representation.
 Layout/ArgumentAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/ArrayAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/BlockAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/ClosingParenthesisIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/CommentIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/InitialIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/EmptyLineAfterGuardClause:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/EndAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstArgumentIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstArrayElementIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstArrayElementLineBreak:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstHashElementIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstHashElementLineBreak:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstMethodArgumentLineBreak:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/FirstParameterIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/HashAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/IndentationConsistency:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/IndentationWidth:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/LeadingEmptyLine:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/LeadingEmptyLines:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/LineEndStringConcatenationIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/LineLength:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineArrayBraceLayout:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineAssignmentLayout:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineHashBraceLayout:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineMethodCallBraceLayout:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineMethodCallIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineMethodDefinitionBraceLayout:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/MultilineOperationIndentation:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/ParameterAlignment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/SpaceBeforeSemicolon:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/TrailingEmptyLines:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Layout/TrailingWhitespace:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Lint/EmptyFile:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
+Lint/EmptyConditionalBody:
+  Exclude: ['**/*.html.erb']
 Lint/OutOfRangeRegexpRef:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Lint/Syntax:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Lint/Void:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Metrics/BlockLength:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Naming/FileName:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
+Rails/Presence:
+  Exclude: ['**/*.html.erb']
 Style/FrozenStringLiteralComment:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/EmptyElse:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/IdenticalConditionalBranches:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/IfWithSemicolon:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/IfUnlessModifier:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/MultilineTernaryOperator:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/NestedTernaryOperator:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/Next:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/Semicolon:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/WhileUntilDo:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
 Style/WhileUntilModifier:
-  Exclude: ['**/*.erb']
+  Exclude: ['**/*.html.erb']
