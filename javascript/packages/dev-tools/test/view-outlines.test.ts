@@ -65,4 +65,20 @@ describe("view outlines", () => {
 
     expect(view.style.position).toBe("relative")
   })
+
+  test("give the host its position back when the outlines go away", () => {
+    document.body.innerHTML = `<div id="view"></div><div id="own" style="position: absolute"></div>`
+
+    const view = document.getElementById("view") as HTMLElement
+    const own = document.getElementById("own") as HTMLElement
+
+    markAsView(view)
+    markAsView(own)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+    overlayOf().toggleViewOutlines(false)
+
+    expect([view.style.position, own.style.position]).toEqual(["", "absolute"])
+  })
 })

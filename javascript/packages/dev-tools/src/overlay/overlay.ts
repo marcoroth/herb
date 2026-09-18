@@ -930,6 +930,15 @@ export class HerbOverlay {
     if (window.getComputedStyle(host).position !== 'static') return;
 
     host.style.position = 'relative';
+    host.setAttribute('data-herb-debug-anchored', 'true');
+  }
+
+  // Only drop the position the overlay added.
+  private releaseLabel(host: HTMLElement) {
+    if (!host.hasAttribute('data-herb-debug-anchored')) return;
+
+    host.style.position = '';
+    host.removeAttribute('data-herb-debug-anchored');
   }
 
   private removeOverlayLabel(element: HTMLElement) {
@@ -947,12 +956,16 @@ export class HerbOverlay {
       parent.style.outlineOffset = '0';
       parent.classList.remove('show-outline');
       parent.removeAttribute('data-herb-debug-attached-outline-type');
+
+      this.releaseLabel(parent);
     } else {
       const label = element.querySelector('.herb-overlay-label');
 
       if (label) {
         label.remove();
       }
+
+      this.releaseLabel(element);
     }
   }
 
