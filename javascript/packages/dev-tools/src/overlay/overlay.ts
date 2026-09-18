@@ -905,9 +905,7 @@ export class HerbOverlay {
 
       parent.setAttribute('data-herb-debug-attached-outline-type', type);
 
-      if (window.getComputedStyle(parent).position === 'static') {
-        parent.style.position = 'relative';
-      }
+      this.anchorLabel(parent);
       label.style.position = 'absolute';
       label.style.top = '0';
       label.style.left = '0';
@@ -920,10 +918,18 @@ export class HerbOverlay {
       label.style.top = '0';
     }
 
-    if (window.getComputedStyle(element).position === 'static') {
-      element.style.position = 'relative';
-    }
+    this.anchorLabel(element);
     element.appendChild(label);
+  }
+
+  // The label is positioned inside its host, but `<html>` and `<body>` must stay unpositioned:
+  // making either a containing block collapses layouts that place elements against the initial
+  // containing block. Both share its origin, so the label lands in the same spot regardless.
+  private anchorLabel(host: HTMLElement) {
+    if (host === document.documentElement || host === document.body) return;
+    if (window.getComputedStyle(host).position !== 'static') return;
+
+    host.style.position = 'relative';
   }
 
   private removeOverlayLabel(element: HTMLElement) {
