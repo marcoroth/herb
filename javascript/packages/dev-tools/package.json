@@ -33,7 +33,7 @@
   "dependencies": {
     "@herb-tools/browser": "0.10.3",
     "@herb-tools/client": "0.10.3",
-    "@herb-tools/core": "0.10.3",
+    "@herb-tools/core": "0.10.4",
     "@herb-tools/highlighter": "0.10.3"
   },
   "files": [
