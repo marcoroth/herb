@@ -53,7 +53,7 @@
     "host": "https://github.com/marcoroth/herb/releases/download/"
   },
   "dependencies": {
-    "@herb-tools/core": "0.10.3",
+    "@herb-tools/core": "0.10.4",
     "@mapbox/node-pre-gyp": "^2.0.3",
     "node-addon-api": "^8.9.2",
     "node-pre-gyp-github": "^2.0.0"
