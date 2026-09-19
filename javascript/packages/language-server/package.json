@@ -52,7 +52,7 @@
     "@herb-tools/formatter": "0.10.3",
     "@herb-tools/language-service": "0.10.3",
     "@herb-tools/linter": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.4",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "vscode-html-languageservice": "^5.1.0",
