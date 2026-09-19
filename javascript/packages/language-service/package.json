@@ -34,7 +34,7 @@
     "@herb-tools/analysis": "0.10.3",
     "@herb-tools/client": "0.10.3",
     "@herb-tools/config": "0.10.3",
-    "@herb-tools/core": "0.10.3",
+    "@herb-tools/core": "0.10.4",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "vscode-html-languageservice": "^5.1.0",
@@ -47,7 +47,7 @@
     "vscode-languageserver-textdocument": "^1.0.14"
   },
   "peerDependencies": {
-    "@herb-tools/core": "0.10.3",
+    "@herb-tools/core": "0.10.4",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.14"
   },
