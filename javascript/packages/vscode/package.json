@@ -386,7 +386,7 @@
     "@herb-tools/language-server": "0.10.3",
     "@herb-tools/language-service": "0.10.3",
     "@herb-tools/linter": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "26.x",
     "@types/vscode": "^1.100.0",
