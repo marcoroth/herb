@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@herb-tools/core": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.4",
     "ansi_up": "^6.0.6"
   },
   "files": [
