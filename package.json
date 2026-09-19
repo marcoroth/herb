@@ -29,7 +29,7 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.2.0",
     "vitest": "^5.0.0",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "scripts": {
     "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server",
