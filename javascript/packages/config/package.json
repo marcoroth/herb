@@ -40,7 +40,7 @@
     "@herb-tools/core": "0.10.3",
     "picomatch": "^4.0.7",
     "tinyglobby": "^0.2.16",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/picomatch": "^4.0.3",
