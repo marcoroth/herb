@@ -10,7 +10,7 @@
     "url": "https://github.com/marcoroth/herb.git"
   },
   "devDependencies": {
-    "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.4.2",
+    "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.5.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/browser-playwright": "^5.0.0",
     "@vitest/ui": "^5.0.0",

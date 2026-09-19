@@ -382,9 +382,10 @@
   resolved "https://registry.yarnpkg.com/@jest/diff-sequences/-/diff-sequences-30.0.1.tgz#0ededeae4d071f5c8ffe3678d15f3a1be09156be"
   integrity sha512-n5H8QLDJ47QqbCNn5SuFjCRDrOLEZ0h8vAHCK5RL9Ls7Xa8AQLa/YxAc9UjFqoEDM48muwtBGjtMY5cr0PLDCw==
 
-"@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.4.2":
-  version "2.4.2"
-  resolved "https://github.com/jothepro/doxygen-awesome-css#d52eafe3e9303399fda15661f3d7bb8fe3d7eabc"
+"@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.5.0":
+  version "2.5.0"
+  uid "46483f1e5a70ffb9ecd3b82d0a1cd1b24edf13da"
+  resolved "https://github.com/jothepro/doxygen-awesome-css#46483f1e5a70ffb9ecd3b82d0a1cd1b24edf13da"
 
 "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.13"
