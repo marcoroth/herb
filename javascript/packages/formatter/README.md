@@ -179,6 +179,15 @@ herb-format
 cat template.html.erb | herb-format
 ```
 
+**Quiet Mode:**
+```bash
+# Suppress the experimental preview banner and the config file notice on stderr
+herb-format --quiet
+
+# Combine with other options
+herb-format --check --quiet
+```
+
 **Help and Version:**
 ```bash
 # Show help

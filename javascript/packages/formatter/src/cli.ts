@@ -61,6 +61,7 @@ export class CLI {
       --indent-width <number>         number of spaces per indentation level (default: 2)
       --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
+      -q, --quiet                     suppress the experimental preview banner and config file notice
 
     Examples:
       herb-format                                 # Format all configured files in current directory
@@ -78,6 +79,7 @@ export class CLI {
       herb-format --indent-width 4                # Format with 4-space indentation
       herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
+      herb-format --quiet                         # Format without the startup banner
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
 
@@ -89,6 +91,7 @@ export class CLI {
         force: { type: "boolean" },
         version: { type: "boolean", short: "v" },
         check: { type: "boolean", short: "c" },
+        quiet: { type: "boolean", short: "q" },
         init: { type: "boolean" },
         "config-file": { type: "string" },
         "indent-width": { type: "string" },
@@ -147,6 +150,7 @@ export class CLI {
       isVersionMode: values.version,
       isForceMode: values.force,
       isInitMode: values.init,
+      isQuietMode: values.quiet,
       configFile: values["config-file"],
       indentWidth,
       indentStyle,
@@ -155,7 +159,7 @@ export class CLI {
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, isQuietMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
 
     const startTime = Date.now()
     const startDate = new Date()
@@ -216,7 +220,7 @@ export class CLI {
         process.exit(0)
       }
 
-      const config = await Config.loadForCLI(configFile || this.projectPath, version)
+      const config = await Config.load(configFile || this.projectPath, { version, silent: isQuietMode })
       const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 
@@ -237,9 +241,11 @@ export class CLI {
         console.error()
       }
 
-      console.error()
-      console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
-      console.error()
+      if (!isQuietMode) {
+        console.error()
+        console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
+        console.error()
+      }
 
       if (indentWidth !== undefined) {
         formatterConfig.indentWidth = indentWidth
