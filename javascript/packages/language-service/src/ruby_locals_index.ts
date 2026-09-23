@@ -18,6 +18,7 @@ const PARSER_OPTIONS = { prism_program: true, strict_locals: true, action_view_h
 
 export interface RubyLocal {
   name: string
+  origin: "strict" | "block" | "state"
   declaration: Range
   usages: Range[]
   defaultValue?: Range
@@ -78,6 +79,7 @@ function strictLocals(document: DocumentNode, references: RubyReferenceCollector
 
   return collector.declarations.map(declaration => ({
     name: declaration.name,
+    origin: "strict",
     declaration: nameRange(declaration.location.start, declaration.name),
     usages: references.bareCalls.filter(call => call.name === declaration.name).map(toRange)
   }))
@@ -91,7 +93,7 @@ function blockLocals(document: DocumentNode, references: RubyReferenceCollector,
     const scope = innermostEnclosing(blocks, range)
     const usages = references.localReads.filter(read => read.name === binding.name).map(toRange).filter(usage => !scope || encloses(scope, usage))
 
-    return { name: binding.name, declaration: range, usages }
+    return { name: binding.name, origin: "block", declaration: range, usages }
   })
 }
 
@@ -99,6 +101,7 @@ function stateLocals(document: DocumentNode, references: RubyReferenceCollector,
   return collectStateDirectives(document).flatMap(({ node, signature }) =>
     signature.declarations.map(declaration => ({
       name: declaration.name,
+      origin: "state",
       declaration: contentRange(node, declaration.nameOffset, declaration.name.length),
       usages: [
         ...references.bareCalls
