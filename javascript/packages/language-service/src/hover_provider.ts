@@ -9,9 +9,13 @@ import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
 import { RubyLocalsIndex } from "./ruby_locals_index"
 import { collectStateDirectives } from "./herb_attribute_links"
+import { StateReadClassifier } from "./state_read_places"
 import { LITERAL_STATE_KINDS } from "@herb-tools/client/directives"
 
 import type { DocumentNode } from "@herb-tools/core"
+import type { StateDeclaration, DerivedDefault } from "@herb-tools/client/directives"
+import type { StateDirectiveEntry } from "./herb_attribute_links"
+import type { StateReadPlace } from "./state_read_places"
 
 import type { Node, HTMLElementNode, ERBOpenTagNode, ERBCommentNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
 import type { FrameworkOptions } from "./types.js"
@@ -136,8 +140,86 @@ function blockParameter(scope: Node): string | null {
   return match ? match[1] : null
 }
 
+const REFUSED_STATE_KINDS = new Set(["float", "array", "hash", "missing"])
+
 function declaredStateKind(kind: string): string {
-  return LITERAL_STATE_KINDS.has(kind) ? kind : "seeded"
+  return LITERAL_STATE_KINDS.has(kind) || REFUSED_STATE_KINDS.has(kind) ? kind : "seeded"
+}
+
+function code(values: string[]): string {
+  const spelled = values.map(value => `\`${value}\``)
+
+  return spelled.length <= 1 ? spelled.join("") : `${spelled.slice(0, -1).join(", ")} and ${spelled[spelled.length - 1]}`
+}
+
+function stateOriginLine(declaration: StateDeclaration, derived: DerivedDefault | null): string {
+  if (derived) {
+    return `**Derived on the client.** The client recomputes it from ${code(derived.sources)} whenever ${derived.sources.length === 1 ? "that changes" : "one of them changes"}. Nothing sets it directly.`
+  }
+
+  if (REFUSED_STATE_KINDS.has(declaration.kind)) {
+    return declaration.defaultSource === ""
+      ? "**Not a valid state.** Herb refuses a state with no default, so it never reaches the client."
+      : `**Not a valid state.** Herb refuses \`${declaration.defaultSource}\` as a state default, so it never reaches the client.`
+  }
+
+  if (LITERAL_STATE_KINDS.has(declaration.kind)) {
+    return "**Owned by the client.** The server renders the default, and the client updates every read in place from then on."
+  }
+
+  return `**Seeded by the server.** The server evaluates \`${declaration.defaultSource}\` on each render and hands the result to the client, which owns the value from then on.`
+}
+
+function readPlaceLine(place: StateReadPlace, name: string): string {
+  if (place.where === "client") {
+    const subject = place.expression === name || place.expression === `${name}?` ? "This read" : `\`${place.expression}\``
+
+    return `**Evaluated on the client.** ${subject} updates in place when \`${name}\` changes, with no request to the server.`
+  }
+
+  if (place.where === "server") {
+    return `**Computed on the server, depends on client state.** \`${place.expression}\` is server Ruby, so the client asks the server for a fresh value when \`${name}\` changes.`
+  }
+
+  if (place.context === "condition") {
+    return `**Not resolvable.** \`${place.expression}\` needs server Ruby to pick a branch, and the client picks branches on its own. Herb refuses this condition.`
+  }
+
+  return `**Not resolvable.** \`${place.expression}\` needs server Ruby, and \`${name}\` lives on an item. The server cannot be asked for an item's answer yet, so Herb refuses this read.`
+}
+
+function dependentsLines(serverReads: string[], dependents: string[]): string[] {
+  const lines: string[] = []
+
+  if (serverReads.length > 0) {
+    lines.push("", `The server recomputes ${code(serverReads)} when it changes.`)
+  }
+
+  if (dependents.length > 0) {
+    lines.push("", `The derived ${dependents.length === 1 ? "state" : "states"} ${code(dependents)} ${dependents.length === 1 ? "follows" : "follow"} it on the client.`)
+  }
+
+  return lines
+}
+
+function visibleStateKinds(entries: StateDirectiveEntry[], position: Position): Map<string, string> {
+  const declared = new Map<string, string>()
+
+  for (const entry of entries) {
+    if (entry.scope !== null && !isPositionInRange(position, nodeToRange(entry.scope))) continue
+
+    for (const declaration of entry.signature.declarations) {
+      const derived = typeof declaration.derived === "object" && declaration.derived !== null ? declaration.derived : null
+
+      declared.set(declaration.name, derived ? derived.kind : declaration.kind)
+    }
+  }
+
+  return declared
+}
+
+function byteOffsetAt(text: string, offset: number): number {
+  return new TextEncoder().encode(text.slice(0, offset)).length
 }
 
 function stateUsageLines(name: string, kind: string, defaultSource: string, derived = false): string[] {
@@ -343,7 +425,8 @@ export class HoverProvider {
     if (!local) return null
 
     const parsed = this.parserService.parseContent(textDocument.getText(), { prism_program: true, strict_locals: true }, textDocument.uri)
-    const entries = collectStateDirectives(parsed.value as DocumentNode).filter(entry =>
+    const directives = collectStateDirectives(parsed.value as DocumentNode)
+    const entries = directives.filter(entry =>
       entry.signature.declarations.some(declaration => declaration.name === local.name),
     )
 
@@ -366,18 +449,51 @@ export class HoverProvider {
       ? `derived from \`${declaration.defaultSource}\``
       : `default \`${declaration.defaultSource || "(none)"}\``
 
+    const range = [local.declaration, ...(local.defaultValue ? [local.defaultValue] : []), ...local.usages]
+      .find(candidate => isPositionInRange(position, candidate))
+
+    const text = textDocument.getText()
+    const declared = visibleStateKinds(directives, position)
+    const reads = new StateReadClassifier(this.parserService.parseContent(text, { prism_nodes: true }, textDocument.uri).value as DocumentNode, text, declared)
+    const itemScoped = entry.scope !== null
+
+    const placeAt = (at: Position): StateReadPlace | null => {
+      if (index.herbAttributes.stateUsages.some(usage => usage.name === declaration.name && isPositionInRange(at, usage.range))) return null
+
+      const place = reads.classify(at, byteOffsetAt(text, textDocument.offsetAt(at)))
+
+      return place?.where === "server" && itemScoped ? { where: "unresolvable", expression: place.expression, context: "value" } : place
+    }
+
+    const onUsage = range !== undefined && local.usages.includes(range)
+    const onAction = onUsage && index.herbAttributes.stateUsages.some(usage => usage.name === declaration.name && isPositionInRange(position, usage.range))
+    const here = onUsage && !onAction ? placeAt(position) : null
+
+    const serverReads = [...new Set(local.usages
+      .map(usage => placeAt(usage.start))
+      .filter((place): place is StateReadPlace => place?.where === "server")
+      .map(place => place.expression))]
+
+    const dependents = entry.signature.declarations
+      .filter(candidate => typeof candidate.derived === "object" && candidate.derived !== null && candidate.derived.sources.includes(declaration.name))
+      .map(candidate => candidate.name)
+
     const lines = [
       `**${declaration.name}** · Herb Client State`,
       "",
       `\`${kind}\` · ${source} · ${scope}`,
       "",
-      "Example usage:",
-      "",
-      ...stateUsageLines(declaration.name, kind, derived ? "" : declaration.defaultSource, derived !== null),
+      stateOriginLine(declaration, derived),
+      ...(here ? ["", readPlaceLine(here, declaration.name)] : []),
+      ...(onAction ? ["", "**Written by the client.** This action attribute sets the state in the browser, with no request to the server."] : []),
+      ...(onUsage ? [] : dependentsLines(serverReads, dependents)),
+      ...(REFUSED_STATE_KINDS.has(kind) ? [] : [
+        "",
+        "Example usage:",
+        "",
+        ...stateUsageLines(declaration.name, kind, derived ? "" : declaration.defaultSource, derived !== null),
+      ]),
     ]
-
-    const range = [local.declaration, ...(local.defaultValue ? [local.defaultValue] : []), ...local.usages]
-      .find(candidate => isPositionInRange(position, candidate))
 
     return {
       contents: { kind: MarkupKind.Markdown, value: lines.join("\n") },

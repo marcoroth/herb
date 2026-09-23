@@ -98,6 +98,108 @@ describe("herb state hover", () => {
     expect(hover(content, 1, 35)).toContain("**herb:key** · Herb directive")
   })
 
+  function hoverAt(content: string, needle: string, shift = 0): string {
+    const document = TextDocument.create("file:///test.html.erb", "erb", 1, content)
+    const result = service.getHover(document, document.positionAt(content.indexOf(needle) + shift))
+    const contents = result?.contents
+
+    return contents && typeof contents === "object" && "value" in contents ? contents.value : ""
+  }
+
+  it("says a literal state is owned by the client", () => {
+    const value = hoverAt('<%# herb:state (draft: "") %>\n<%= draft %>', "draft:")
+
+    expect(value).toContain("**Owned by the client.** The server renders the default, and the client updates every read in place from then on.")
+  })
+
+  it("says a state with a Ruby default is seeded by the server", () => {
+    const value = hoverAt("<%# herb:state (total: @items.size) %>\n<%= total %>", "total:")
+
+    expect(value).toContain("**Seeded by the server.** The server evaluates `@items.size` on each render and hands the result to the client, which owns the value from then on.")
+  })
+
+  it("says a derived state is recomputed on the client from its sources", () => {
+    const value = hoverAt('<%# herb:state (draft: "", empty: draft == "") %>\n<%= empty %>', "empty:")
+
+    expect(value).toContain("**Derived on the client.** The client recomputes it from `draft` whenever that changes. Nothing sets it directly.")
+  })
+
+  it("lists the derived states and server values that depend on a state", () => {
+    const content =
+      '<%# herb:state (q: "", empty: q == "") %>\n' +
+      "<p><%= User.search(q).count %></p>\n" +
+      "<% @messages.search(q).each do |message| %><%= message %><% end %>"
+
+    const value = hoverAt(content, "q:")
+
+    expect(value).toContain("The server recomputes `User.search(q).count` and `@messages.search(q).each` when it changes.")
+    expect(value).toContain("The derived state `empty` follows it on the client.")
+  })
+
+  it("says a plain read is evaluated on the client", () => {
+    const value = hoverAt('<%# herb:state (draft: "") %>\n<p><%= draft %></p>', "<%= draft", 4)
+
+    expect(value).toContain("**Evaluated on the client.** This read updates in place when `draft` changes, with no request to the server.")
+    expect(value).not.toContain("The server recomputes")
+  })
+
+  it("says a predicate read is evaluated on the client", () => {
+    const value = hoverAt('<%# herb:state (draft: "") %>\n<% if draft.blank? %>a<% end %>', "draft.blank")
+
+    expect(value).toContain("**Evaluated on the client.** `draft.blank?` updates in place when `draft` changes, with no request to the server.")
+  })
+
+  it("says the condition of a ternary is evaluated on the client", () => {
+    const value = hoverAt('<%# herb:state (open: false) %>\n<p><%= open ? "on" : "off" %></p>', "open ?")
+
+    expect(value).toContain("**Evaluated on the client.** This read updates in place when `open` changes, with no request to the server.")
+  })
+
+  it("says server Ruby reading a state is computed on the server", () => {
+    const value = hoverAt('<%# herb:state (q: "") %>\n<p><%= User.search(q).count %></p>', "(q)", 1)
+
+    expect(value).toContain("**Computed on the server, depends on client state.** `User.search(q).count` is server Ruby, so the client asks the server for a fresh value when `q` changes.")
+  })
+
+  it("says a collection reading a state is computed on the server", () => {
+    const value = hoverAt('<%# herb:state (q: "") %>\n<% @messages.search(q).each do |message| %><%= message %><% end %>', "(q)", 1)
+
+    expect(value).toContain("**Computed on the server, depends on client state.** `@messages.search(q).each` is server Ruby")
+  })
+
+  it("says a server read of an item state is not resolvable", () => {
+    const content =
+      "<% @items.each do |item| %>\n" +
+      "  <%# herb:key item.id %>\n" +
+      "  <%# herb:state (count: 0) %>\n" +
+      "  <li><%= item.price * count %></li>\n" +
+      "<% end %>"
+
+    const value = hoverAt(content, "* count", 2)
+
+    expect(value).toContain("**Not resolvable.** `item.price * count` needs server Ruby, and `count` lives on an item.")
+  })
+
+  it("says a condition that needs server Ruby is not resolvable", () => {
+    const value = hoverAt('<%# herb:state (q: "") %>\n<% if User.search(q).any? %>a<% end %>', "(q)", 1)
+
+    expect(value).toContain("**Not resolvable.** `User.search(q).any?` needs server Ruby to pick a branch, and the client picks branches on its own.")
+  })
+
+  it("says an action attribute writes the state on the client", () => {
+    const value = hoverAt('<%# herb:state (open: false) %>\n<button data-herb-toggle="open">Toggle</button>', '"open"', 1)
+
+    expect(value).toContain("**Written by the client.** This action attribute sets the state in the browser, with no request to the server.")
+  })
+
+  it("says a Float default is not a valid state", () => {
+    const value = hoverAt("<%# herb:state (ratio: 0.5) %>\n<%= ratio %>", "ratio:")
+
+    expect(value).toContain("`float` · default `0.5`")
+    expect(value).toContain("**Not a valid state.** Herb refuses `0.5` as a state default, so it never reaches the client.")
+    expect(value).not.toContain("Example usage")
+  })
+
   it("says nothing for a plain local", () => {
     const content = "<%# locals: (title:) %>\n<h1><%= title %></h1>"
 
