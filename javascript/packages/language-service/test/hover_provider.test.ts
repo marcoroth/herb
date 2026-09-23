@@ -200,6 +200,14 @@ describe("herb state hover", () => {
     expect(value).not.toContain("Example usage")
   })
 
+  it("says nothing for a block parameter named like a state", () => {
+    const content = "<%# herb:state (item: 0) %>\n<% @items.each do |item| %><%= item %><% end %>"
+
+    expect(hoverAt(content, "|item|", 1)).toBe("")
+    expect(hoverAt(content, "<%= item", 4)).toBe("")
+    expect(hoverAt(content, "item:")).toContain("**item** · Herb Client State")
+  })
+
   it("says nothing for a plain local", () => {
     const content = "<%# locals: (title:) %>\n<h1><%= title %></h1>"
 

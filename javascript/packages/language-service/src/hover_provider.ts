@@ -422,7 +422,7 @@ export class HoverProvider {
     const index = RubyLocalsIndex.build(this.parserService, textDocument)
     const local = index.at(position)
 
-    if (!local) return null
+    if (!local || local.origin !== "state") return null
 
     const parsed = this.parserService.parseContent(textDocument.getText(), { prism_program: true, strict_locals: true }, textDocument.uri)
     const directives = collectStateDirectives(parsed.value as DocumentNode)
