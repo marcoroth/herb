@@ -30,6 +30,10 @@ A transform compares against a literal or against another declared state, so `dr
 
 `count` is not supported. Unlike `Array#count`, `String#count` takes a character set (`"hello".count("a-z")`) and raises without one, so there is nothing to resolve on the client.
 
+A read inside a `<Fragment>` is exempt. The component exists for content the server derives from a state, and a write to a state that content reads shows the `<Fallback>` while the server renders the block again, so the read stays current without the client resolving it. The exemption covers the fragment's own content and stops at its `<Fallback>`, which renders once and stays static, so a computed read there is still flagged.
+
+The `state:` entries of a `render` call are exempt too. A bare name binds one of the partial's states to a state of the calling template, and anything else seeds the partial's state with a value the server computes once, so neither entry is a read the client resolves. The call's other locals are read as usual, so `tries: attempts + 1` is still flagged.
+
 ## Rationale
 
 The client resolves state reads itself, without the server. That works because every allowed shape is a lookup or a comparison both languages compute identically, and a `&&`/`||` combination of those shapes is resolved one condition at a time. A computed read (`attempts + 1`, `attempts * 2 > 3`) would need a Ruby evaluator in JavaScript, so the engine rejects it at compile time. A combination like `pending? && current_user.admin?` has the same problem on its server side, since the client holds no value for it. An `unless` reads like an `if` with its arms inverted, so every `if` shape works there too.
@@ -92,6 +96,27 @@ The engine raises all of these as compile errors when the template renders. This
 <button disabled="<%= draft == "" %>">Send</button>
 ```
 
+```erb
+<%# herb:slots client %>
+<%# herb:state (city: "Zurich") %>
+
+<input value="<%= city %>">
+
+<Fragment delay="100" hold="600">
+  <p><%= Geo.locate(city) %></p>
+  <Fallback><p>Looking it up</p></Fallback>
+</Fragment>
+```
+
+```erb
+<%# herb:slots client %>
+<%# herb:state (expanded: false) %>
+
+<button data-herb-toggle="expanded">Expand all</button>
+
+<%= render "shared/album_card", album: @album, state: { open: expanded } %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -113,6 +138,16 @@ The engine raises all of these as compile errors when the template renders. This
 <% if attempts.length > 3 %>Many<% end %>
 
 <% if sort.count("a") > 1 %>Twice<% end %>
+```
+
+```erb
+<%# herb:slots client %>
+<%# herb:state (city: "Zurich") %>
+
+<Fragment>
+  <p><%= Geo.locate(city) %></p>
+  <Fallback><p><%= Geo.locate(city) %></p></Fallback>
+</Fragment>
 ```
 
 ## Limits

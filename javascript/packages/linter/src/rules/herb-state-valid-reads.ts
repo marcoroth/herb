@@ -7,11 +7,11 @@ import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LIT
 import { declaredKind, defaultExample, kindWithArticle, predicateAdvice } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
-import { getAttributeName, getAttributeValueNodes, isERBContentNode } from "@herb-tools/core"
+import { getAttributeName, getAttributeValueNodes, getTagName, isERBContentNode } from "@herb-tools/core"
 
 import type { StateDeclaration } from "@herb-tools/client/directives"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, Location, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBUnlessNode, ERBCaseNode, HTMLAttributeNode, RubyLiteralNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, Location, Node, PrismNode, ERBBlockNode, ERBContentNode, ERBIfNode, ERBRenderNode, ERBUnlessNode, ERBCaseNode, HerbStateDeclarationNode, HerbStateDirectiveNode, HTMLAttributeNode, HTMLElementNode, RubyLiteralNode } from "@herb-tools/core"
 
 interface BareRead {
   name: string
@@ -112,6 +112,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private stack: (ERBBlockNode | null)[] = [null]
   private booleanAttribute = false
   private attributeName: string | null = null
+  private fragmentContent = false
+  private renderStates: ReadonlySet<Node> = new Set()
 
   constructor(ruleName: string, states: StateScopeMap, source: string, context?: Partial<LintContext>) {
     super(ruleName, context)
@@ -127,6 +129,36 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     this.stack.pop()
   }
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    const name = getTagName(node)
+    const previous = this.fragmentContent
+
+    if (name === "Fragment") this.fragmentContent = true
+    if (name === "Fallback") this.fragmentContent = false
+
+    super.visitHTMLElementNode(node)
+
+    this.fragmentContent = previous
+  }
+
+  visitERBRenderNode(node: ERBRenderNode): void {
+    const previous = this.renderStates
+
+    this.renderStates = new Set<Node>(node.keywords?.state ?? [])
+
+    super.visitERBRenderNode(node)
+
+    this.renderStates = previous
+  }
+
+  visitHerbStateDeclarationNode(node: HerbStateDeclarationNode): void {
+    if (this.renderStates.has(node)) return
+
+    super.visitHerbStateDeclarationNode(node)
+  }
+
+  visitHerbStateDirectiveNode(_node: HerbStateDirectiveNode): void {}
 
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     const name = getAttributeName(node)
@@ -190,6 +222,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (prism && this.classifyPredicate(prism, names, "value") !== "other") return
 
+    if (this.fragmentContent) return
+
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
     this.addOffense(this.computedValueOffense(expression, name), node.location)
@@ -215,6 +249,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
       if (classifyDerivedDefault(expression, declared) !== "mixed") return
     }
+
+    if (this.fragmentContent) return
 
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
@@ -579,6 +615,8 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     if (mentionsAnyState(this.sliceOf(predicate), names)) {
+      if (this.fragmentContent) return "state"
+
       const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
 
       this.addOffense(
@@ -746,6 +784,8 @@ export class HerbStateValidReadsRule extends ParserRule {
       strict_locals: true,
       prism_nodes: true,
       action_view_helpers: true,
+      herb_directives: true,
+      render_nodes: true,
     }
   }
 
