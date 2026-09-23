@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "delegate"
+
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 
@@ -12,6 +14,18 @@ module Engine
     HTML_ENV = { "HTTP_ACCEPT" => "text/html" }.freeze
 
     class Wrapper < StandardError; end
+
+    class Proxy < SimpleDelegator; end
+
+    class TemplateSyntaxError < StandardError
+      attr_reader :cause
+
+      def initialize(cause)
+        @cause = cause
+
+        super("Encountered a syntax error while rendering template")
+      end
+    end
 
     def diagnostic
       Herb::Diagnostic.new(
@@ -67,12 +81,20 @@ module Engine
       end
     end
 
+    def proxied_app(error)
+      ->(_env) { raise TemplateSyntaxError, Proxy.new(error) }
+    end
+
     def middleware(app, **)
       Herb::Engine::Runtime::ErrorPage.new(app, **)
     end
 
     def payload(body)
       JSON.parse(body[%r{data-herb-diagnostics[^>]*>(.+?)</script>}m, 1].gsub("\\u003c", "<"))
+    end
+
+    def without_version(body)
+      body.gsub(Herb::VERSION, "0.0.0")
     end
 
     describe "a request that succeeds" do
@@ -112,13 +134,33 @@ module Engine
 
         assert_equal 500, status
 
-        assert_snapshot_matches(body.first, "error_page_test-0")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-0")
       end
 
       test "sets a content length matching the body it serves" do
         _status, headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         assert_equal body.first.bytesize.to_s, headers["content-length"]
+      end
+
+      test "is found through the delegator Action View stands in front of a syntax error" do
+        status, _headers, body = middleware(proxied_app(parse_error)).call(HTML_ENV)
+
+        assert_equal 500, status
+
+        assert_snapshot_matches(without_version(body.first), "error_page_test-17")
+      end
+
+      test "names the error that delegator wraps, not the delegator itself" do
+        _status, _headers, body = middleware(proxied_app(parse_error)).call(HTML_ENV)
+
+        assert_equal "Herb::Engine::ParseError", payload(body.first)["meta"]["error_class"]
+      end
+
+      test "raises on when the delegator wraps an error that is not Herb's" do
+        assert_raises(TemplateSyntaxError) do
+          middleware(proxied_app(ArgumentError.new("boom"))).call(HTML_ENV)
+        end
       end
     end
 
@@ -198,7 +240,7 @@ module Engine
       test "says what is wrong without any JavaScript" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-1")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-1")
       end
 
       test "prints one row per source line, with no blank line between them" do
@@ -213,9 +255,9 @@ module Engine
       test "escapes the source it prints" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-2")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-2")
 
-        assert_snapshot_matches(body.first[%r{<pre>.+?</pre>}m], "error_page_test-3")
+        assert_snapshot_matches(without_version(body.first[%r{<pre>.+?</pre>}m]), "error_page_test-3")
       end
 
       test "keeps the provenance footer inside the container its rules are scoped to" do
@@ -223,7 +265,7 @@ module Engine
 
         main = body.first[%r{<main class="herb-error">.+?</main>}m]
 
-        assert_snapshot_matches(main, "error_page_test-4")
+        assert_snapshot_matches(without_version(main), "error_page_test-4")
         assert_equal 1, body.first.scan("herb-error-provenance\"").size
       end
 
@@ -260,7 +302,7 @@ module Engine
         assert_equal 2, body.first.scan("<section>").size
         assert_equal 2, payload(body.first)["diagnostics"].size
 
-        assert_snapshot_matches(body.first, "error_page_test-5")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-5")
       end
 
       test "shows a section with an excerpt for every diagnostic a compile error collected" do
@@ -269,43 +311,43 @@ module Engine
         assert_equal 2, body.first.scan("<section>").size
         assert_equal 2, body.first.scan("<pre>").size
 
-        assert_snapshot_matches(body.first, "error_page_test-6")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-6")
       end
 
       test "starts the dev tools when it is told where they are" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-7")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-7")
       end
 
       test "reloads itself once the dev server says the file compiles again" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-8")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-8")
       end
 
       test "hears that even when something else started the dev tools first" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: "/assets/herb.js").call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-9")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-9")
       end
 
       test "names the dev server port, so the tools reach a project that moved it" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: 9999).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-10")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-10")
       end
 
       test "asks for that port at the time it serves too" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_server_port: -> { 4321 }).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-11")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-11")
       end
 
       test "leaves the port out when nobody named one, so the default still applies" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-12")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-12")
       end
 
       test "asks for the path at the time it serves, for a pipeline that boots later" do
@@ -313,25 +355,25 @@ module Engine
 
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: resolved).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-13")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-13")
       end
 
       test "costs the overlay and not the page when it cannot answer" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> { raise "no pipeline" }).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-14")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-14")
       end
 
       test "leaves the script out when it names nothing yet" do
         _status, _headers, body = middleware(raising_app(parse_error), dev_tools: -> {}).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-15")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-15")
       end
 
       test "leaves the script out when it is not" do
         _status, _headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
-        assert_snapshot_matches(body.first, "error_page_test-16")
+        assert_snapshot_matches(without_version(body.first), "error_page_test-16")
       end
     end
 

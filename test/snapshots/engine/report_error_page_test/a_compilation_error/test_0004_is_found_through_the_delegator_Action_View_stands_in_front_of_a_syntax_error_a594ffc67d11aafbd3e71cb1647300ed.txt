@@ -1,6 +1,6 @@
 ---
-source: "Engine::ReportErrorPageTest::a compilation error#test_0002_is found through the error Action View wraps it in"
-input: "error_page_test-0"
+source: "Engine::ReportErrorPageTest::a compilation error#test_0004_is found through the delegator Action View stands in front of a syntax error"
+input: "error_page_test-17"
 ---
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="herb-debug-mode" content="true"><title>app/views/posts/_post.html.erb could not be compiled</title><style>body { margin: 0; background: #f3f4f6; color: #111827; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .herb-error { max-width: 1040px; margin: 0 auto; padding: 40px 28px; }
