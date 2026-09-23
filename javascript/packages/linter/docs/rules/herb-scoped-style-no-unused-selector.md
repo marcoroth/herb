@@ -47,4 +47,4 @@ An interpolated value is read for the part the rule can see and no more. In `cla
 
 ## References
 
-- [Herb Engine: scoped styles](https://herb-tools.dev/projects/engine)
+- [Language reference: Scoped styles](https://herb-tools.dev/language/scoped-styles)

@@ -123,4 +123,4 @@ A conditional whose first arm reads no state compiles as a server conditional, a
 
 ## References
 
-\-
+- [Language reference: State, Reading a state](https://herb-tools.dev/language/state#reading-a-state)

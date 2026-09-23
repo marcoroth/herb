@@ -36,4 +36,4 @@ A declared state is a Ruby local the template assigns at the top, so a block arg
 
 ## References
 
-\-
+- [Language reference: State, Scope](https://herb-tools.dev/language/state#scope)

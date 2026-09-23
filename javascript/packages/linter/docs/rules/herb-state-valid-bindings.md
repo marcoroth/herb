@@ -39,4 +39,4 @@ The type comes from the declaration's default, which is why declaring states wit
 
 ## References
 
-\-
+- [Language reference: State, Writing a state](https://herb-tools.dev/language/state#writing-a-state)

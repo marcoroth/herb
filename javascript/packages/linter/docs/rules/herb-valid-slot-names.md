@@ -41,4 +41,4 @@ The engine raises each of these as a compile error when the template renders. Th
 
 ## References
 
-\-
+- [Language reference: Keys and collections, `data-herb-name`](https://herb-tools.dev/language/keys#data-herb-name)

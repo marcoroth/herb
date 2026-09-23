@@ -7,7 +7,9 @@ Browser runtime for HTML+ERB templates compiled with slot markers. It reads the 
 
 ## What it is for
 
-A template compiled with `Herb::Engine::SlotVisitor` marks every expression, conditional, collection and dynamic attribute in its output. Those markers survive rendering, so the browser can still find each part afterwards and replace just that part when its data changes. Scroll position, focus, form state and playing media all survive an update that would otherwise have replaced the page.
+A template compiled with `Herb::Engine::Slots::Visitor` marks every expression, conditional, collection and dynamic attribute in its output. Those markers survive rendering, so the browser can still find each part afterwards and replace just that part when its data changes. Scroll position, focus, form state and playing media all survive an update that would otherwise have replaced the page.
+
+This page is the JavaScript reference. The template side is documented in [Language](https://herb-tools.dev/language/), including `herb:state`, `herb:key`, `herb:slots`, the `data-herb-*` action attributes and the components.
 
 This package is the browser half. The index at its core stays passive. It answers where a slot is and applies the markup it is given. On top of it sit a state layer, a send queue and an action layer, and those do talk to the server and do decide when to write, always through a transport you can replace.
 
@@ -181,14 +183,7 @@ Runtime.start({
 
 ## Declared state
 
-Server state answers to the server. A template can also declare state the client owns outright, with the same strict-locals signature `locals:` uses, placed where it should scope. At the top of a template it is one value per rendering, inside a keyed collection body it is one value per row:
-
-```erb
-<%# herb:state (pending: false, draft: "") %>
-
-<% if pending %>Sending…<% else %>Sent<% end %>
-<input value="<%= draft %>">
-```
+Server state answers to the server. A template can also declare state the client owns outright, with a `herb:state` directive at the top of a template or inside a keyed collection body. [State](https://herb-tools.dev/language/state) documents the declaration, the kinds and what a template may read.
 
 The server renders every state as its default, and the client owns it from there. A write never reaches the transport, every slot reading the state updates in place, and a conditional flips between parked branches with no request:
 
@@ -228,23 +223,17 @@ export default class extends Controller {
 
 ## Actions in markup
 
-A button that only writes a state does not need a controller. Four attributes cover the typed operations, and each accepts a comma-separated list so one interaction stays one write:
+A button that only writes a state does not need a controller. The `data-herb-set`, `data-herb-toggle`, `data-herb-increment`, `data-herb-decrement`, `data-herb-reset` and `data-herb-action` attributes cover the typed operations, and the runtime's action layer runs them.
 
 ```erb
 <button data-herb-toggle="expanded">Details</button>
-<button data-herb-set="pending=false,failed=true">Retry</button>
-<button data-herb-increment="attempts" data-herb-by="2">More</button>
-<button data-herb-reset="draft">Clear</button>
-```
-
-`data-herb-decrement` is the twin of increment. The event defaults to `click` and is otherwise named inline, Stimulus-style, with space-separated clauses for several events on one element:
-
-```erb
 <select data-herb-set="change->sort=$value">
-<div data-herb-set="mouseenter->menu=true mouseleave->menu=false">
+  <option value="name">Name</option>
+  <option value="date">Date</option>
+</select>
 ```
 
-`$value` stands for the event target's value and is the only interpolation. A value is read as whatever the state was declared to hold, so `pending=true` sets a boolean where `draft=true` sets a four-letter string.
+[Actions](https://herb-tools.dev/language/actions) documents the attributes, the default event for each element, the event clause grammar, key filters and timing.
 
 ## Behaviors
 
@@ -456,7 +445,7 @@ The client is sent the branches that did not render, parked in a `<template>`, a
 Every marker names the template it came from, and by default that name is the path. That is the useful answer while developing and the wrong one to serve, because the markers go out with the page and a view tree says more about an application than its pages do. The compiler can name a template by a digest of its path instead:
 
 ```ruby
-Herb::Engine::SlotVisitor.new(identifier: :digest)
+Herb::Engine::Slots::Visitor.new(identifier: :digest)
 ```
 
 Then the page carries `<!--herb-region:bf0ebc682928:fd3dfd36:0-->` and nothing else changes. The runtime treats the name as opaque, so `slots.slot(name, 0)` works the same either way. A callable decides for itself, and the visitor keeps the real path in `schema[:file]` for the server, which is the side that holds the mapping back.

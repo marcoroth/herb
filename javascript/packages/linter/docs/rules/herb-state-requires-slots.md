@@ -42,4 +42,5 @@ Either mode makes the states live. Client mode parks branch markup up front, so 
 
 ## References
 
+- [Language reference: State](https://herb-tools.dev/language/state)
 - [`herb-component-requires-slots`](./herb-component-requires-slots.md)

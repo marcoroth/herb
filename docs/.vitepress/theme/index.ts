@@ -7,6 +7,7 @@ import mediumZoom from 'medium-zoom'
 import TwoslashFloatingVue from "@shikijs/vitepress-twoslash/client"
 
 import GitHubContributors from "./components/GitHubContributors.vue"
+import HerbLanding from "./components/HerbLanding.vue"
 
 import "virtual:group-icons.css"
 import "./custom.css"
@@ -17,6 +18,7 @@ export default {
   enhanceApp({ app }: EnhanceAppContext) {
     app.use(TwoslashFloatingVue)
     app.component("GitHubContributors", GitHubContributors)
+    app.component("HerbLanding", HerbLanding)
   },
   setup() {
     const route = useRoute()

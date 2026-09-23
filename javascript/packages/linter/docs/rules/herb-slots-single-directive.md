@@ -34,5 +34,6 @@ The mode tokens themselves are validated by [`herb-slots-valid-mode`](./herb-slo
 
 ## References
 
+- [Language reference: Slots, `herb:slots`](https://herb-tools.dev/language/slots#herb-slots)
 - [`herb-slots-valid-mode`](./herb-slots-valid-mode.md)
 - [`herb-state-single-declaration`](./herb-state-single-declaration.md)
