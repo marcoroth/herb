@@ -652,6 +652,40 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a server-derived read inside an Async", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (city: "Zurich") %>
+      <Async>
+        <p><%= Geo.locate(city) %></p>
+        <Fallback><p>Looking it up</p></Fallback>
+      </Async>
+    `)
+  })
+
+  test("allows a server-derived read inside a Lazy", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (city: "Zurich") %>
+      <Lazy poll="30000">
+        <p><%= Geo.locate(city) %></p>
+        <Fallback><p>Looking it up</p></Fallback>
+      </Lazy>
+    `)
+  })
+
+  test("flags a server-derived read inside an Async's Fallback", () => {
+    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (city: "Zurich") %>
+      <Async>
+        <p>Located</p>
+        <Fallback><p><%= Geo.locate(city) %></p></Fallback>
+      </Async>
+    `)
+  })
+
   test("allows a server-derived read inside a Fragment", () => {
     expectNoOffenses(dedent`
       <%# herb:slots client %>

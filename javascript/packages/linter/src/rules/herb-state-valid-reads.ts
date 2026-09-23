@@ -7,7 +7,7 @@ import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LIT
 import { declaredKind, defaultExample, kindWithArticle, predicateAdvice } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
 import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
-import { getAttributeName, getAttributeValueNodes, getTagName, isERBContentNode } from "@herb-tools/core"
+import { COMPONENT_DEFINITIONS, getAttributeName, getAttributeValueNodes, getTagName, isERBContentNode } from "@herb-tools/core"
 
 import type { StateDeclaration } from "@herb-tools/client/directives"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -29,6 +29,9 @@ interface TransformCall {
 }
 
 type ReadContext = "branch" | "value"
+
+const FALLBACK = "Fallback"
+const STOOD_IN_COMPONENTS: ReadonlySet<string> = new Set(COMPONENT_DEFINITIONS[FALLBACK].parents ?? [])
 
 function prismNegation(node: PrismNode | null | undefined): PrismNode | null {
   if (prismType(node) !== "CallNode") return null
@@ -112,7 +115,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   private stack: (ERBBlockNode | null)[] = [null]
   private booleanAttribute = false
   private attributeName: string | null = null
-  private fragmentContent = false
+  private stoodInContent = false
   private renderStates: ReadonlySet<Node> = new Set()
 
   constructor(ruleName: string, states: StateScopeMap, source: string, context?: Partial<LintContext>) {
@@ -132,14 +135,14 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     const name = getTagName(node)
-    const previous = this.fragmentContent
+    const previous = this.stoodInContent
 
-    if (name === "Fragment") this.fragmentContent = true
-    if (name === "Fallback") this.fragmentContent = false
+    if (name !== null && STOOD_IN_COMPONENTS.has(name)) this.stoodInContent = true
+    if (name === FALLBACK) this.stoodInContent = false
 
     super.visitHTMLElementNode(node)
 
-    this.fragmentContent = previous
+    this.stoodInContent = previous
   }
 
   visitERBRenderNode(node: ERBRenderNode): void {
@@ -222,7 +225,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
 
     if (prism && this.classifyPredicate(prism, names, "value") !== "other") return
 
-    if (this.fragmentContent) return
+    if (this.stoodInContent) return
 
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
@@ -250,7 +253,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
       if (classifyDerivedDefault(expression, declared) !== "mixed") return
     }
 
-    if (this.fragmentContent) return
+    if (this.stoodInContent) return
 
     const name = names.find(candidate => mentionsAnyState(expression, [candidate])) ?? names[0]
 
@@ -615,7 +618,7 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
     }
 
     if (mentionsAnyState(this.sliceOf(predicate), names)) {
-      if (this.fragmentContent) return "state"
+      if (this.stoodInContent) return "state"
 
       const name = names.find(candidate => mentionsAnyState(this.sliceOf(predicate), [candidate])) ?? names[0]
 

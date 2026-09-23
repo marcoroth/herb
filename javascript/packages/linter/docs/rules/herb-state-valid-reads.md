@@ -30,7 +30,7 @@ A transform compares against a literal or against another declared state, so `dr
 
 `count` is not supported. Unlike `Array#count`, `String#count` takes a character set (`"hello".count("a-z")`) and raises without one, so there is nothing to resolve on the client.
 
-A read inside a `<Fragment>` is exempt. The component exists for content the server derives from a state, and a write to a state that content reads shows the `<Fallback>` while the server renders the block again, so the read stays current without the client resolving it. The exemption covers the fragment's own content and stops at its `<Fallback>`, which renders once and stays static, so a computed read there is still flagged.
+A read inside a `<Fragment>`, an `<Async>` or a `<Lazy>` is exempt. Each of those holds a `<Fallback>`, and a write to a state their content reads shows that fallback while the server renders the block again, so the read stays current without the client resolving it. The exemption covers the component's own content and stops at its `<Fallback>`. A fallback stands in for content that is stale or not there yet, and the server never renders it again, so a computed read inside one is still flagged.
 
 The `state:` entries of a `render` call are exempt too. A bare name binds one of the partial's states to a state of the calling template, and anything else seeds the partial's state with a value the server computes once, so neither entry is a read the client resolves. The call's other locals are read as usual, so `tries: attempts + 1` is still flagged.
 
@@ -106,6 +106,11 @@ The engine raises all of these as compile errors when the template renders. This
   <p><%= Geo.locate(city) %></p>
   <Fallback><p>Looking it up</p></Fallback>
 </Fragment>
+
+<Lazy poll="30000">
+  <p><%= Geo.forecast(city) %></p>
+  <Fallback><p>Loading the forecast</p></Fallback>
+</Lazy>
 ```
 
 ```erb
