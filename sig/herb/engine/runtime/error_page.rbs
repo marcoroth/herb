@@ -47,8 +47,8 @@ module Herb
         # : (Exception) -> Herb::Engine::CompilationError?
         def compilation_error: (Exception) -> Herb::Engine::CompilationError?
 
-        # : (Exception) -> Exception?
-        def delegated: (Exception) -> Exception?
+        # : (untyped) -> Exception?
+        def delegated: (untyped) -> Exception?
 
         # : (untyped) -> bool
         def wants_html?: (untyped) -> bool

@@ -92,7 +92,7 @@ module Herb
           nil
         end
 
-        #: (Exception) -> Exception?
+        #: (untyped) -> Exception?
         def delegated(error)
           return nil unless error.respond_to?(:__getobj__)
 
