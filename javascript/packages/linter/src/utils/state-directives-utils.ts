@@ -5,7 +5,7 @@ import { Visitor } from "@herb-tools/core"
 
 import { isStateDirectiveContent, mentionsAnyState, parseStateDirective, slotsDirectiveModeOf } from "@herb-tools/client/directives"
 
-import type { ERBBlockNode, ERBCommentNode, ERBContentNode, ERBIfNode, Node } from "@herb-tools/core"
+import type { ERBBlockNode, ERBCommentNode, ERBContentNode, ERBIfNode, HerbStateDirectiveNode, Node } from "@herb-tools/core"
 import type { ActionName, ActionSchema, Clause, StateDeclaration, StateSignature } from "@herb-tools/client/directives"
 
 export type ActionClause = Clause
@@ -21,7 +21,7 @@ export function isActionAttribute(name: string): name is ActionAttribute {
   return name in ACTION_ATTRIBUTE_SCHEMA
 }
 
-export function isERBComment(node: ERBContentNode | ERBCommentNode): boolean {
+export function isERBComment(node: ERBContentNode | ERBCommentNode | HerbStateDirectiveNode): boolean {
   return node.tag_opening?.value === "<%#"
 }
 
@@ -31,7 +31,7 @@ export function isStateDirective(node: ERBContentNode | ERBCommentNode): boolean
   return isStateDirectiveContent(node.content?.value ?? "")
 }
 
-export function stateSignatureOf(node: ERBContentNode | ERBCommentNode): StateSignature | null {
+export function stateSignatureOf(node: ERBContentNode | ERBCommentNode | HerbStateDirectiveNode): StateSignature | null {
   if (!isERBComment(node)) return null
 
   const content = node.content?.value
@@ -178,6 +178,14 @@ class StateScopeCollector extends Visitor {
   }
 
   visitERBCommentNode(node: ERBCommentNode): void {
+    this.#declare(node)
+  }
+
+  visitHerbStateDirectiveNode(node: HerbStateDirectiveNode): void {
+    this.#declare(node)
+  }
+
+  #declare(node: ERBCommentNode | HerbStateDirectiveNode): void {
     const parsed = stateSignatureOf(node)
 
     if (!parsed || parsed.malformed) return

@@ -652,6 +652,123 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
+  test("allows a server-derived read inside an Async", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (city: "Zurich") %>
+      <Async>
+        <p><%= Geo.locate(city) %></p>
+        <Fallback><p>Looking it up</p></Fallback>
+      </Async>
+    `)
+  })
+
+  test("allows a server-derived read inside a Lazy", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (city: "Zurich") %>
+      <Lazy poll="30000">
+        <p><%= Geo.locate(city) %></p>
+        <Fallback><p>Looking it up</p></Fallback>
+      </Lazy>
+    `)
+  })
+
+  test("flags a server-derived read inside an Async's Fallback", () => {
+    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (city: "Zurich") %>
+      <Async>
+        <p>Located</p>
+        <Fallback><p><%= Geo.locate(city) %></p></Fallback>
+      </Async>
+    `)
+  })
+
+  test("allows a server-derived read inside a Fragment", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (city: "Zurich") %>
+      <input value="<%= city %>">
+      <Fragment delay="100" hold="600">
+        <p><%= Geo.locate(city) %></p>
+        <Fallback><p>Looking it up</p></Fallback>
+      </Fragment>
+    `)
+  })
+
+  test("allows a server-derived condition inside a Fragment", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (city: "Zurich") %>
+      <Fragment>
+        <% if Geo.reachable?(city) %>Nearby<% end %>
+        <Fallback>Looking it up</Fallback>
+      </Fragment>
+    `)
+  })
+
+  test("flags a server-derived read inside a Fragment's Fallback", () => {
+    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (city: "Zurich") %>
+      <Fragment>
+        <p>Located</p>
+        <Fallback><p><%= Geo.locate(city) %></p></Fallback>
+      </Fragment>
+    `)
+  })
+
+  test("flags a server-derived read after a Fragment closes", () => {
+    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (city: "Zurich") %>
+      <Fragment>
+        <p>Located</p>
+        <Fallback>Looking it up</Fallback>
+      </Fragment>
+      <p><%= Geo.locate(city) %></p>
+    `)
+  })
+
+  test("still flags a predicate no kind answers inside a Fragment", () => {
+    expectError("`count.empty?` reads the Integer state `count` with `empty?`. Only a String or a Symbol state can be read with `empty?`. Compare `count` to a literal instead, or declare it as a String state.")
+
+    assertOffenses(dedent`
+      <%# herb:state (count: 0) %>
+      <Fragment>
+        <% if count.empty? %>None<% end %>
+        <Fallback>Counting</Fallback>
+      </Fragment>
+    `)
+  })
+
+  test("allows a state as a render call's state binding", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (expanded: false) %>
+      <%= render "shared/album_card", album: album, state: { open: expanded } %>
+    `)
+  })
+
+  test("allows a state seed computed on a render call", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (expanded: false) %>
+      <%= render "shared/album_card", state: { open: expanded && album.featured? } %>
+    `)
+  })
+
+  test("still flags a state computed into a render call's local", () => {
+    expectError("`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (attempts: 0) %>
+      <%= render "shared/album_card", tries: attempts + 1 %>
+    `)
+  })
+
   test("scopes item states to their loop", () => {
     expectNoOffenses(dedent`
       <% @rows.each do |row| %>
