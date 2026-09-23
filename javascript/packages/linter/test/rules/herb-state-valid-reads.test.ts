@@ -34,21 +34,71 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("still flags a state read beside an action attribute", () => {
-    expectError("`count + 1` computes with the state `count`. The client cannot run Ruby to keep the result current. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a state computed beside an action attribute", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (count: 0) %>
       <%= tag.button "More", data: { herb_increment: "count" }, title: count + 1 %>
     `)
   })
 
-  test("flags a computed value read", () => {
-    expectError("`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
+  test("allows a computed value read, which the server answers", () => {
+    expectNoOffenses(dedent`
+      <%# herb:slots client %>
+      <%# herb:state (q: "", attempts: 0) %>
+      <p><%= attempts + 1 %></p>
+      <p><%= User.search(q).count %></p>
+      <p><%= !User.search(q).any? %></p>
+      <p><%= q.upcase == "X" %></p>
+      <textarea><%= q.upcase %></textarea>
+      <div title="<%= q.upcase %>">x</div>
+    `)
+  })
+
+  test("allows a keyed collection computing with a region state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (q: "") %>
+      <ul>
+        <% @messages.search(q).each do |message| %>
+          <%# herb:key message.id %>
+          <li id="<%= message.id %>"><%= message.body %></li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("flags a computed value read of an item state", () => {
+    expectError("`count + 1` computes with the state `count`, which lives on an item. The server cannot be asked for an item's answer yet. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
 
     assertOffenses(dedent`
-      <%# herb:state (attempts: 0) %>
-      <p><%= attempts + 1 %></p>
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (count: 0) %>
+          <li id="r<%= row.id %>"><%= count + 1 %></li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("allows an item computation that also reads a region state", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (q: "") %>
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (count: 0) %>
+          <li id="r<%= row.id %>"><%= count + q.size %> <%= q.upcase %></li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("flags a combo mixing a state with a computed read in an output", () => {
+    expectError("`User.search(q).any?` is server Ruby inside a condition that also reads the state `pending`. The client resolves each side of `&&` itself and has no value for this one. Move `User.search(q).any?` into its own conditional around this one, or declare a state for it and set it from app code.")
+
+    assertOffenses(dedent`
+      <%# herb:state (pending: false, q: "") %>
+      <p><%= pending && User.search(q).any? %></p>
     `)
   })
 
@@ -336,12 +386,25 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a computed tag helper attribute", () => {
-    expectError("`draft.upcase` computes with the state `draft`. The client cannot run Ruby to keep the result current. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a computed tag helper attribute", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (draft: "") %>
       <%= tag.input value: draft.upcase %>
+      <%= tag.button "Send", disabled: draft.upcase %>
+    `)
+  })
+
+  test("flags a computed tag helper attribute on an item state", () => {
+    expectError("`draft.upcase` computes with the state `draft`, which lives on an item. The server cannot be asked for an item's answer yet. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (draft: "") %>
+          <li id="r<%= row.id %>"><%= tag.input value: draft.upcase %></li>
+        <% end %>
+      </ul>
     `)
   })
 
@@ -425,13 +488,25 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a computed read in a boolean attribute", () => {
-    expectError('`draft.upcase` computes with the state `draft`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `draft` bare, like `<% if draft %>`, or compare it to a literal, like `draft == ""`.')
-
-    assertOffenses(dedent`
+  test("allows a computed read in a boolean attribute", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (draft: "") %>
       <p><%= draft %></p>
       <button disabled="<%= draft.upcase %>">Send</button>
+    `)
+  })
+
+  test("flags a computed read of an item state in a boolean attribute", () => {
+    expectError("`draft.upcase` computes with the state `draft`, which lives on an item. The server cannot be asked for an item's answer yet. Show the value with `<%= draft %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (draft: "") %>
+          <li id="r<%= row.id %>"><button disabled="<%= draft.upcase %>">Send</button></li>
+        <% end %>
+      </ul>
     `)
   })
 
@@ -674,10 +749,8 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a server-derived read inside an Async's Fallback", () => {
-    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a server-derived read inside an Async's Fallback", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (city: "Zurich") %>
       <Async>
         <p>Located</p>
@@ -698,8 +771,10 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("allows a server-derived condition inside a Fragment", () => {
-    expectNoOffenses(dedent`
+  test("flags a server-derived condition inside a Fragment", () => {
+    expectError("`Geo.reachable?(city)` computes with the state `city`. The client resolves each condition itself and cannot run Ruby to pick a branch. Read `city` bare, like `<% if city %>`, or compare it to a literal, like `city == \"Zurich\"`.")
+
+    assertOffenses(dedent`
       <%# herb:state (city: "Zurich") %>
       <Fragment>
         <% if Geo.reachable?(city) %>Nearby<% end %>
@@ -708,10 +783,8 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a server-derived read inside a Fragment's Fallback", () => {
-    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a server-derived read inside a Fragment's Fallback", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (city: "Zurich") %>
       <Fragment>
         <p>Located</p>
@@ -720,10 +793,8 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("flags a server-derived read after a Fragment closes", () => {
-    expectError("`Geo.locate(city)` computes with the state `city`. The client cannot run Ruby to keep the result current. Show the value with `<%= city %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a server-derived read after a Fragment closes", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (city: "Zurich") %>
       <Fragment>
         <p>Located</p>
@@ -760,12 +831,43 @@ describe("HerbStateValidReadsRule", () => {
     `)
   })
 
-  test("still flags a state computed into a render call's local", () => {
-    expectError("`attempts + 1` computes with the state `attempts`. The client cannot run Ruby to keep the result current. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
-
-    assertOffenses(dedent`
+  test("allows a state computed into a render call's local", () => {
+    expectNoOffenses(dedent`
       <%# herb:state (attempts: 0) %>
       <%= render "shared/album_card", tries: attempts + 1 %>
+    `)
+  })
+
+  test("flags an item state computed into a render call's local", () => {
+    expectError("`attempts + 1` computes with the state `attempts`, which lives on an item. The server cannot be asked for an item's answer yet. Show the value with `<%= attempts %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (attempts: 0) %>
+          <li id="r<%= row.id %>"><%= render "shared/album_card", tries: attempts + 1 %></li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("flags an item state computed inside a Fragment", () => {
+    expectError("`count + 1` computes with the state `count`, which lives on an item. The server cannot be asked for an item's answer yet. Show the value with `<%= count %>`, or declare a second state for the computed answer and set it from app code.")
+
+    assertOffenses(dedent`
+      <ul>
+        <% @rows.each do |row| %>
+          <%# herb:key row.id %>
+          <%# herb:state (count: 0) %>
+          <li id="r<%= row.id %>">
+            <Fragment>
+              <p><%= count + 1 %></p>
+              <Fallback>Counting</Fallback>
+            </Fragment>
+          </li>
+        <% end %>
+      </ul>
     `)
   })
 

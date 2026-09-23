@@ -4,7 +4,7 @@
 
 ## Description
 
-Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`, `<% unless pending %>`), with a `?` on the end (`pending?`), compared to a literal of its own type (`sort == "name"`, `sort != "date"`), ordered against an Integer literal when it is an Integer (`attempts > 3`), or compared with another state of the same kind (`counter1 > counter2`), or switched over with literal `when` arms. Those conditions also combine with `&&` and `||` (`pending? || failed?`), as long as every side reads a state. A boolean attribute accepts the same read shapes, since its presence is a two-arm conditional (`disabled="<%= draft == "" %>"`). Anything else, a computed expression, a comparison against a non-literal or a mismatched literal, or a combination that mixes a state with server Ruby, is flagged.
+Validates every read of a declared state. A state is read bare (`<%= attempts %>`, `<% if pending %>`, `<% unless pending %>`), with a `?` on the end (`pending?`), compared to a literal of its own type (`sort == "name"`, `sort != "date"`), ordered against an Integer literal when it is an Integer (`attempts > 3`), or compared with another state of the same kind (`counter1 > counter2`), or switched over with literal `when` arms. Those conditions also combine with `&&` and `||` (`pending? || failed?`), as long as every side reads a state. A boolean attribute accepts the same read shapes, since its presence is a two-arm conditional (`disabled="<%= draft == "" %>"`). Anything else in a condition, a computed expression, a comparison against a non-literal or a mismatched literal, or a combination that mixes a state with server Ruby, is flagged.
 
 `!` negates any of these. It flips a comparison (`!(count > 3)` becomes `count <= 3`), swaps `blank?` and `present?`, and turns a plain read into a falsy check. Negating a whole `&&` or `||` distributes over its parts by De Morgan, so `!(a && b)` compiles as `!a || !b` and nests to any depth. `not` reads the same way.
 
@@ -30,13 +30,17 @@ A transform compares against a literal or against another declared state, so `dr
 
 `count` is not supported. Unlike `Array#count`, `String#count` takes a character set (`"hello".count("a-z")`) and raises without one, so there is nothing to resolve on the client.
 
-A read inside a `<Fragment>`, an `<Async>` or a `<Lazy>` is exempt. Each of those holds a `<Fallback>`, and a write to a state their content reads shows that fallback while the server renders the block again, so the read stays current without the client resolving it. The exemption covers the component's own content and stops at its `<Fallback>`. A fallback stands in for content that is stale or not there yet, and the server never renders it again, so a computed read inside one is still flagged.
+An output that computes with a state is a server read. `<%= User.search(q).count %>`, `<%= attempts + 1 %>`, a computed attribute value, a computed boolean attribute and a collection like `@messages.search(q).each` all print what the server rendered, and the client asks the server for a fresh answer whenever a state they read changes. Inside a `<Fragment>`, an `<Async>` or a `<Lazy>`, the component's `<Fallback>` shows while that answer is on its way.
 
-The `state:` entries of a `render` call are exempt too. A bare name binds one of the partial's states to a state of the calling template, and anything else seeds the partial's state with a value the server computes once, so neither entry is a read the client resolves. The call's other locals are read as usual, so `tries: attempts + 1` is still flagged.
+A server read works for states declared at the top of the template, and not yet for states declared on a collection item. The server cannot be asked for one item's answer, so a computed output that reads only item states is flagged. An output that also reads a top-level state is refetched as a whole and passes.
+
+A condition is different. The client picks each branch itself and never waits on the server for it, so a computed condition is flagged wherever it sits, inside a `<Fragment>` included. The same goes for a `&&` or `||` output that mixes a state with server Ruby (`<%= pending && User.search(q).any? %>`), since the client resolves each side of it on its own.
+
+The `state:` entries of a `render` call are exempt. A bare name binds one of the partial's states to a state of the calling template, and anything else seeds the partial's state with a value the server computes once, so neither entry is a read the client resolves. The call's other locals are read as usual.
 
 ## Rationale
 
-The client resolves state reads itself, without the server. That works because every allowed shape is a lookup or a comparison both languages compute identically, and a `&&`/`||` combination of those shapes is resolved one condition at a time. A computed read (`attempts + 1`, `attempts * 2 > 3`) would need a Ruby evaluator in JavaScript, so the engine rejects it at compile time. A combination like `pending? && current_user.admin?` has the same problem on its server side, since the client holds no value for it. An `unless` reads like an `if` with its arms inverted, so every `if` shape works there too.
+The client resolves state reads itself, without the server. That works because every allowed shape is a lookup or a comparison both languages compute identically, and a `&&`/`||` combination of those shapes is resolved one condition at a time. A computed condition (`attempts * 2 > 3`) would need a Ruby evaluator in JavaScript, so the engine rejects it at compile time. A computed output has no such problem, because the server renders it again and the client only swaps the result in. A combination like `pending? && current_user.admin?` has the same problem on its server side, since the client holds no value for it. An `unless` reads like an `if` with its arms inverted, so every `if` shape works there too.
 
 `length` on an Integer is flagged too, and `size` especially. `Integer#size` is the machine byte width, so `count.size` answers `8` rather than a length, which is the kind of quiet wrong answer worth refusing outright. On the client the count is taken by codepoint, matching Ruby, so an emoji counts as one character rather than the two UTF-16 units JavaScript's own `String#length` would report.
 
@@ -122,13 +126,29 @@ The engine raises all of these as compile errors when the template renders. This
 <%= render "shared/album_card", album: @album, state: { open: expanded } %>
 ```
 
+```erb
+<%# herb:slots client %>
+<%# herb:state (q: "") %>
+
+<input value="<%= q %>">
+
+<p><%= User.search(q).count %> results</p>
+
+<ul>
+  <% @messages.search(q).each do |message| %>
+    <%# herb:key message.id %>
+    <li id="<%= message.id %>"><%= message.body %></li>
+  <% end %>
+</ul>
+```
+
 ### 🚫 Bad
 
 ```erb
 <%# herb:slots client %>
 <%# herb:state (pending: false, attempts: 0, sort: "name") %>
 
-<p><%= attempts + 1 %></p>
+<% if attempts * 2 > 3 %>Retry soon<% end %>
 
 <% if pending? && current_user.admin? %>Retry as admin<% end %>
 
@@ -150,14 +170,28 @@ The engine raises all of these as compile errors when the template renders. This
 <%# herb:state (city: "Zurich") %>
 
 <Fragment>
-  <p><%= Geo.locate(city) %></p>
-  <Fallback><p><%= Geo.locate(city) %></p></Fallback>
+  <% if Geo.reachable?(city) %>Nearby<% end %>
+  <Fallback><p>Looking it up</p></Fallback>
 </Fragment>
+```
+
+```erb
+<%# herb:slots client %>
+
+<ul>
+  <% @rows.each do |row| %>
+    <%# herb:key row.id %>
+    <%# herb:state (count: 0) %>
+    <li id="r<%= row.id %>"><%= count + 1 %></li>
+  <% end %>
+</ul>
 ```
 
 ## Limits
 
-The rule matches state names by token, so an expression that merely contains a declared name is flagged as computing with it. With a state named `sort`, both `t("sort.by")` and `f.text_field :sort` draw the offense. The engine rejects the same expressions at compile time, so the linter mirrors it. Short generic state names collide easily; a more specific name avoids the whole class.
+The rule matches state names by token, so an expression that merely contains a declared name counts as computing with it. With a state named `sort`, both `t("sort.by")` and `f.text_field :sort` read `sort`. In an output that makes them server reads the client refetches for nothing, and in a condition it draws the offense. The engine treats the same expressions the same way, so the linter mirrors it. Short generic state names collide easily; a more specific name avoids the whole class.
+
+A tag helper attribute (`<%= tag.input value: pending && current_user.admin? %>`) reaches the rule as plain Ruby source without a parsed tree, so the rule cannot tell a whole computed value from a `&&` with a server side or a comparison against a non-literal. It lets all three pass as server reads. The engine still refuses the last two when the template compiles.
 
 A conditional whose first arm reads no state compiles as a server conditional, and a state read in a later arm is silently inert at runtime. The rule stays quiet on that shape today, matching the engine. Put the state arm first when the client should drive the branch.
 
