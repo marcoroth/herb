@@ -33,6 +33,14 @@ export class Capabilities {
     this.hasDiagnosticRelatedInformation = !!this.client.textDocument?.publishDiagnostics?.relatedInformation
   }
 
+  get supportsConfigurationRegistration(): boolean {
+    return this.client.workspace?.didChangeConfiguration?.dynamicRegistration === true
+  }
+
+  get supportsWatchedFilesRegistration(): boolean {
+    return this.client.workspace?.didChangeWatchedFiles?.dynamicRegistration === true
+  }
+
   get supportsInlayHintRefresh(): boolean {
     return this.client.workspace?.inlayHint?.refreshSupport === true
   }

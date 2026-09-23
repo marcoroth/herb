@@ -54,6 +54,45 @@ describe("Capabilities", () => {
     })
   })
 
+  describe("supportsConfigurationRegistration", () => {
+    test("is false when the client doesn't advertise dynamic registration", () => {
+      expect(new Capabilities(mockParams).supportsConfigurationRegistration).toBe(false)
+    })
+
+    test("is true when the client supports dynamic registration", () => {
+      const capabilities = new Capabilities({
+        ...mockParams,
+        capabilities: { workspace: { didChangeConfiguration: { dynamicRegistration: true } } }
+      })
+
+      expect(capabilities.supportsConfigurationRegistration).toBe(true)
+    })
+  })
+
+  describe("supportsWatchedFilesRegistration", () => {
+    test("is false when the client doesn't advertise dynamic registration", () => {
+      expect(new Capabilities(mockParams).supportsWatchedFilesRegistration).toBe(false)
+    })
+
+    test("is false when the client opts out of dynamic registration", () => {
+      const capabilities = new Capabilities({
+        ...mockParams,
+        capabilities: { workspace: { didChangeWatchedFiles: { dynamicRegistration: false } } }
+      })
+
+      expect(capabilities.supportsWatchedFilesRegistration).toBe(false)
+    })
+
+    test("is true when the client supports dynamic registration", () => {
+      const capabilities = new Capabilities({
+        ...mockParams,
+        capabilities: { workspace: { didChangeWatchedFiles: { dynamicRegistration: true } } }
+      })
+
+      expect(capabilities.supportsWatchedFilesRegistration).toBe(true)
+    })
+  })
+
   describe("supportsResourceCreation", () => {
     test("is false when the client doesn't advertise resource operations", () => {
       expect(new Capabilities(mockParams).supportsResourceCreation).toBe(false)

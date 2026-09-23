@@ -113,8 +113,10 @@ export class Server {
     })
 
     this.connection.onInitialized(() => {
-      if (this.session.capabilities.hasConfiguration) {
-        this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
+      if (this.session.capabilities.hasConfiguration && this.session.capabilities.supportsConfigurationRegistration) {
+        this.connection.client.register(DidChangeConfigurationNotification.type, undefined).catch(error => {
+          this.connection.console.warn(`[Registration] Client declined workspace/didChangeConfiguration: ${error.message}`)
+        })
       }
 
       if (this.session.capabilities.hasWorkspaceFolders) {
@@ -131,6 +133,8 @@ export class Server {
         })
       }
 
+      if (!this.session.capabilities.supportsWatchedFilesRegistration) return
+
       const patterns = Config.getDefaultFilePatterns().map(globPattern => ({
         globPattern
       }))
@@ -143,6 +147,8 @@ export class Server {
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
+      }).catch(error => {
+        this.connection.console.warn(`[Registration] Client declined workspace/didChangeWatchedFiles, file changes on disk will not be picked up: ${error.message}`)
       })
     })
 
