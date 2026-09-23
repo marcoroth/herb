@@ -15,6 +15,13 @@ module Engine
 
       def form_with(**) = "<form>#{yield(Field.new)}</form>"
 
+      def capturing_form_with(**)
+        captured = yield(Field.new)
+        captured = ERB::Util.h(captured) unless captured.html_safe?
+
+        "<form>#{captured}</form>"
+      end
+
       def render(*)
         source = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>", filename: "app/views/card.html.erb").src
 
@@ -29,6 +36,8 @@ module Engine
 
       class Field
         def label = "Name"
+
+        def input = %(<input name="body">).html_safe
       end
     end
 
@@ -262,6 +271,19 @@ module Engine
         source = %(<%= form_with(model: 1) do |f| %><%= f.label %><% end %><%= @after %>)
 
         assert_equal({ 0 => "<form>Name</form>", 1 => "Name", 2 => "A" }, dynamics(source, after: "A"))
+      end
+
+      test "hands the block back marked safe, so a helper that captures it keeps the markup" do
+        source = %(<%= capturing_form_with(model: 1) do |f| %><span class="field"><%= f.input %></span><% end %>)
+        expected = %(<form><span class="field"><input name="body"></span></form>)
+
+        assert_equal expected, dynamics(source)[0]
+      end
+
+      test "still reports the value inside a captured block on its own index" do
+        source = %(<%= capturing_form_with(model: 1) do |f| %><span class="field"><%= f.input %></span><% end %>)
+
+        assert_equal %(<input name="body">), dynamics(source)[1]
       end
     end
 
