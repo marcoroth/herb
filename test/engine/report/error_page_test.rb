@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "delegate"
+
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 
@@ -12,6 +14,18 @@ module Engine
     HTML_ENV = { "HTTP_ACCEPT" => "text/html" }.freeze
 
     class Wrapper < StandardError; end
+
+    class Proxy < SimpleDelegator; end
+
+    class TemplateSyntaxError < StandardError
+      attr_reader :cause
+
+      def initialize(cause)
+        @cause = cause
+
+        super("Encountered a syntax error while rendering template")
+      end
+    end
 
     def diagnostic
       Herb::Diagnostic.new(
@@ -67,6 +81,10 @@ module Engine
       end
     end
 
+    def proxied_app(error)
+      ->(_env) { raise TemplateSyntaxError, Proxy.new(error) }
+    end
+
     def middleware(app, **)
       Herb::Engine::Runtime::ErrorPage.new(app, **)
     end
@@ -119,6 +137,26 @@ module Engine
         _status, headers, body = middleware(raising_app(parse_error)).call(HTML_ENV)
 
         assert_equal body.first.bytesize.to_s, headers["content-length"]
+      end
+
+      test "is found through the delegator Action View stands in front of a syntax error" do
+        status, _headers, body = middleware(proxied_app(parse_error)).call(HTML_ENV)
+
+        assert_equal 500, status
+
+        assert_snapshot_matches(body.first, "error_page_test-17")
+      end
+
+      test "names the error that delegator wraps, not the delegator itself" do
+        _status, _headers, body = middleware(proxied_app(parse_error)).call(HTML_ENV)
+
+        assert_equal "Herb::Engine::ParseError", payload(body.first)["meta"]["error_class"]
+      end
+
+      test "raises on when the delegator wraps an error that is not Herb's" do
+        assert_raises(TemplateSyntaxError) do
+          middleware(proxied_app(ArgumentError.new("boom"))).call(HTML_ENV)
+        end
       end
     end
 

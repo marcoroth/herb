@@ -24,6 +24,11 @@ module Herb
       # `ActionView::Template::Error` whose `cause` is the Herb one. The chain is walked rather than
       # rescued by class for that reason.
       #
+      # A link in that chain can also be a delegator standing in for the real error. Action View
+      # hands a template syntax error to `ActiveSupport::SyntaxErrorProxy`, which answers `is_a?`
+      # for itself and `cause` for the error it wraps, so the walk steps through `__getobj__`
+      # whenever a link has one.
+      #
       # The page says what is wrong without any JavaScript at all. The dev tools are an enhancement
       # on top of that, so a missing or misconfigured bundle costs the overlay and not the message.
       #
@@ -77,13 +82,24 @@ module Herb
           seen = [] #: Array[Exception]
           current = error #: Exception?
 
-          while current && seen.size < MAX_CAUSES && !seen.include?(current)
+          while current && seen.size < MAX_CAUSES && seen.none? { |exception| exception.equal?(current) }
             return current if current.is_a?(Herb::Engine::CompilationError)
 
             seen << current
-            current = current.cause
+            current = delegated(current) || current.cause
           end
 
+          nil
+        end
+
+        #: (Exception) -> Exception?
+        def delegated(error)
+          return nil unless error.respond_to?(:__getobj__)
+
+          target = error.__getobj__
+
+          target.is_a?(Exception) && !target.equal?(error) ? target : nil
+        rescue StandardError
           nil
         end
 
