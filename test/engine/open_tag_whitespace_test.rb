@@ -190,7 +190,8 @@ module Engine
         </div>
       ERB
 
-      assert Herb::Engine.new(template, validate_ruby: true).src
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { first: true, second: true }, enforce_erubi_equality: true)
     end
   end
 end

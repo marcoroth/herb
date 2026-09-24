@@ -1,0 +1,9 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0017_consecutive conditional attributes compile to valid Ruby"
+input: "{source: \"<div\\n  <% if first %>\\n    class=\\\"first\\\"\\n  <% end %>\\n  <% if second %>hidden<% end %>\\n>\\n</div>\\n\", locals: {first: true, second: true}, options: {}}"
+---
+<div
+    class="first"
+  hidden
+>
+</div>

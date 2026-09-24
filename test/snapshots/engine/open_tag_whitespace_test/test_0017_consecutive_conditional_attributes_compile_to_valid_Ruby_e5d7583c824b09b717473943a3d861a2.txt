@@ -1,0 +1,13 @@
+---
+source: "Engine::OpenTagWhitespaceTest#test_0017_consecutive conditional attributes compile to valid Ruby"
+input: "{source: \"<div\\n  <% if first %>\\n    class=\\\"first\\\"\\n  <% end %>\\n  <% if second %>hidden<% end %>\\n>\\n</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div
+'.freeze;   if first 
+ _buf << '    class="first"
+'.freeze;   end 
+ _buf << '  '.freeze;   if second ; _buf << 'hidden'.freeze; end; _buf << '
+>
+</div>
+'.freeze;
+_buf.to_s
