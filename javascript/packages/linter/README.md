@@ -797,6 +797,8 @@ You can override the `defaultConfig` getter to customize these defaults, as show
 
 Custom rules are loaded automatically by default. Use `--no-custom-rules` to disable them.
 
+They are loaded from `.herb/rules/` in the project root. When you pass `--config-file`, they are loaded from the `.herb/rules/` folder next to that config file instead, so a config that lives in a subdirectory, such as a stricter setup for part of an app, keeps its own custom rules.
+
 When custom rules are loaded, the linter will display them:
 
 ```
