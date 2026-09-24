@@ -22,8 +22,8 @@ class ERBNoByteOrderMarkVisitor extends BaseSourceRuleVisitor {
 export class ERBNoByteOrderMarkRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "erb-no-byte-order-mark"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

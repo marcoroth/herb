@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/dev-tools",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "Development tools for visual debugging of HTML+ERB templates",
   "type": "module",
   "license": "MIT",
@@ -31,10 +31,10 @@
     }
   },
   "dependencies": {
-    "@herb-tools/browser": "0.10.3",
-    "@herb-tools/client": "0.10.3",
-    "@herb-tools/core": "0.10.3",
-    "@herb-tools/highlighter": "0.10.3"
+    "@herb-tools/browser": "0.11.0",
+    "@herb-tools/client": "0.11.0",
+    "@herb-tools/core": "0.11.0",
+    "@herb-tools/highlighter": "0.11.0"
   },
   "files": [
     "package.json",

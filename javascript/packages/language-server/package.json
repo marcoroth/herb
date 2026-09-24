@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/language-server",
   "description": "Herb HTML+ERB Language Tools and Language Server Protocol integration.",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -46,15 +46,15 @@
     "dist/"
   ],
   "dependencies": {
-    "@herb-tools/analysis": "0.10.3",
-    "@herb-tools/config": "0.10.3",
-    "@herb-tools/core": "0.10.3",
-    "@herb-tools/formatter": "0.10.3",
-    "@herb-tools/language-service": "0.10.3",
-    "@herb-tools/linter": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3",
-    "@herb-tools/printer": "0.10.3",
-    "@herb-tools/rewriter": "0.10.3",
+    "@herb-tools/analysis": "0.11.0",
+    "@herb-tools/config": "0.11.0",
+    "@herb-tools/core": "0.11.0",
+    "@herb-tools/formatter": "0.11.0",
+    "@herb-tools/language-service": "0.11.0",
+    "@herb-tools/linter": "0.11.0",
+    "@herb-tools/node-wasm": "0.11.0",
+    "@herb-tools/printer": "0.11.0",
+    "@herb-tools/rewriter": "0.11.0",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver": "^10.1.1",
     "vscode-languageserver-textdocument": "^1.0.14"

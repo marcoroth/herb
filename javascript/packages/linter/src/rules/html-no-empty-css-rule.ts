@@ -85,8 +85,8 @@ class NoEmptyCSSRuleVisitor extends BaseRuleVisitor {
 
 export class HTMLNoEmptyCSSRuleRule extends ParserRule {
   static ruleName = "html-no-empty-css-rule"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

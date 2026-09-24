@@ -39,4 +39,4 @@ pub use herb::{
   version, DiffOperation, DiffOptions, DiffResult, ExtractRubyOptions, ParserOptions, RubyParseResult,
 };
 
-pub const VERSION: &str = "0.10.3";
+pub const VERSION: &str = "0.11.0";

@@ -13,8 +13,8 @@ const DESCRIPTOR: UJSAttributeDescriptor = {
 
 export class UJSPreferTurboSubmitsWithRule extends ParserRule {
   static ruleName = "ujs-prefer-turbo-submits-with"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

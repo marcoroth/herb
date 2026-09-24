@@ -70,8 +70,8 @@ class SVGNoDeprecatedTagsVisitor extends ElementStackVisitor {
 
 export class SVGNoDeprecatedTagsRule extends ParserRule {
   static ruleName = "svg-no-deprecated-tags"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

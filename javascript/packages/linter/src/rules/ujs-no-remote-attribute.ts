@@ -18,8 +18,8 @@ const DESCRIPTOR: UJSAttributeDescriptor = {
 
 export class UJSNoRemoteAttributeRule extends ParserRule {
   static ruleName = "ujs-no-remote-attribute"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

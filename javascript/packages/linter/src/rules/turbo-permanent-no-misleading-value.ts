@@ -45,8 +45,8 @@ class TurboPermanentNoMisleadingValueVisitor extends AttributeVisitorMixin<Turbo
 export class TurboPermanentNoMisleadingValueRule extends ParserRule<TurboPermanentAutofixContext> {
   static autocorrectable = true
   static ruleName = "turbo-permanent-no-misleading-value"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

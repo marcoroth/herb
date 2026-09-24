@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/minifier",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "HTML+ERB template minification",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -37,10 +37,10 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.10.3",
-    "@herb-tools/core": "0.10.3",
-    "@herb-tools/node-wasm": "0.10.3",
-    "@herb-tools/printer": "0.10.3",
+    "@herb-tools/config": "0.11.0",
+    "@herb-tools/core": "0.11.0",
+    "@herb-tools/node-wasm": "0.11.0",
+    "@herb-tools/printer": "0.11.0",
     "tinyglobby": "^0.2.15"
   },
   "files": [

@@ -106,7 +106,7 @@ describe('AutofixService', () => {
             'html-tag-name-lowercase': { enabled: false }
           }
         }
-      }, { projectPath: '/test', version: '0.10.3' })
+      }, { projectPath: '/test', version: '0.11.0' })
 
       autofixService.setConfig(config)
 
@@ -121,7 +121,7 @@ describe('AutofixService', () => {
       const config = Config.fromObject({
         framework: 'actionview',
         linter: { enabled: true }
-      }, { projectPath: '/test', version: '0.10.3' })
+      }, { projectPath: '/test', version: '0.11.0' })
 
       autofixService.setConfig(config)
 
@@ -136,7 +136,7 @@ describe('AutofixService', () => {
       const config = Config.fromObject({
         framework: 'sinatra',
         linter: { enabled: true }
-      }, { projectPath: '/test', version: '0.10.3' })
+      }, { projectPath: '/test', version: '0.11.0' })
 
       autofixService.setConfig(config)
 
@@ -150,7 +150,7 @@ describe('AutofixService', () => {
     it('should rebuild linter when config changes', async () => {
       const config1 = Config.fromObject({
         linter: { enabled: true }
-      }, { projectPath: '/test', version: '0.10.3' })
+      }, { projectPath: '/test', version: '0.11.0' })
 
       autofixService.setConfig(config1)
 
@@ -167,7 +167,7 @@ describe('AutofixService', () => {
             'html-tag-name-lowercase': { enabled: false }
           }
         }
-      }, { projectPath: '/test', version: '0.10.3' })
+      }, { projectPath: '/test', version: '0.11.0' })
 
       autofixService.setConfig(config2)
 

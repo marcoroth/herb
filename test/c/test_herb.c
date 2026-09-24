@@ -3,7 +3,7 @@
 #include "../../src/include/lib/hb_allocator.h"
 
 TEST(test_herb_version)
-  ck_assert_str_eq(herb_version(), "0.10.3");
+  ck_assert_str_eq(herb_version(), "0.11.0");
 END
 
 TEST(test_herb_frees_an_error_with_an_empty_string_field)

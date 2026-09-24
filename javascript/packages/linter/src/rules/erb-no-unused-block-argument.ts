@@ -234,8 +234,8 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnusedBlockArgumentRule extends ParserRule {
   static ruleName = "erb-no-unused-block-argument"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

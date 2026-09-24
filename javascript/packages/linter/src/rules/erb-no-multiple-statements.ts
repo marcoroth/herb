@@ -274,8 +274,8 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
 
 export class ERBNoMultipleStatementsRule extends ParserRule<MultipleStatementsAutofixContext> {
   static ruleName = "erb-no-multiple-statements"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
   static autocorrectable = true
   static autofixRequiresContext = true
 
