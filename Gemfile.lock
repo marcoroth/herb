@@ -1,4 +1,15 @@
 GIT
+  remote: https://github.com/marcoroth/reactionview.git
+  revision: f73fbf865251fda93f0f536941437c2fa625754b
+  branch: herb-v0.11
+  specs:
+    reactionview (0.4.0)
+      actionview (>= 7.0)
+      cruise (>= 0.3.0)
+      herb (>= 0.11.0)
+      websocket (~> 1.2)
+
+GIT
   remote: https://github.com/ruby/prism.git
   revision: c0e37816e97e23e92524a4070e1b99a4025bc63f
   tag: v1.9.0
@@ -244,10 +255,6 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    reactionview (0.4.0)
-      actionview (>= 7.0)
-      cruise
-      herb (>= 0.10.0, < 0.11.0)
     regexp_parser (2.11.3)
     reline (0.7.0)
       io-console (~> 0.5)
@@ -357,7 +364,7 @@ DEPENDENCIES
   rake-compiler-dock (~> 1.12)
   rbs (~> 4.2)
   rbs-inline (~> 0.14)
-  reactionview (~> 0.4.0)
+  reactionview!
   reline (~> 0.7)
   rolldown (~> 1.2)
   rubocop (~> 1.72)

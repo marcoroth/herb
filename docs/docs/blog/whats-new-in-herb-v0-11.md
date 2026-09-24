@@ -75,4 +75,4 @@ For the latest news about Herb, follow [Marco Roth](https://marcoroth.dev) on an
 
 ## What's New in Herb v0.11
 
-TODO
+Coming soon
