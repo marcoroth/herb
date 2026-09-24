@@ -49,4 +49,4 @@ A directive inside a collection body declares item states and is its own scope, 
 
 ## References
 
-\-
+- [Language reference: State, `herb:state`](https://herb-tools.dev/language/state#herb-state)

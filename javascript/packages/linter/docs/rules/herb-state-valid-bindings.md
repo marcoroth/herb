@@ -51,4 +51,4 @@ A `<select>` is the one control where the binding itself is wrong, and it is wro
 
 ## References
 
-\-
+- [Language reference: State, Writing a state](https://herb-tools.dev/language/state#writing-a-state)

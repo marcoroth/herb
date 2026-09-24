@@ -10,6 +10,7 @@ Herb provides official Rust bindings through FFI (Foreign Function Interface) to
 > Herb also has bindings for:
 > - [Ruby](/bindings/ruby/)
 > - [JavaScript/Node.js](/bindings/javascript/)
+> - [Java](/bindings/java/)
 
 ## Installation
 
@@ -32,19 +33,7 @@ cargo add herb
 
 ## Getting Started
 
-Import the `herb` crate in your project:
-
-:::code-group
-```rust
-use herb::{parse, lex};
-```
-:::
-
-You are now ready to parse HTML+ERB in Rust.
-
-### Basic Example
-
-Here's a simple example of parsing HTML+ERB:
+Import the crate and parse:
 
 :::code-group
 ```rust
@@ -54,40 +43,25 @@ fn main() {
   let source = "<h1><%= user.name %></h1>";
 
   match parse(source) {
-    Ok(result) => {
-      println!("{}", result.tree_inspect());
-    }
-    Err(e) => {
-      eprintln!("Parse error: {}", e);
-    }
+    Ok(result) => println!("{}", result.tree_inspect()),
+    Err(e) => eprintln!("Parse error: {}", e),
   }
 }
 ```
 :::
 
-### Lexing Example
+Every entry point returns a `Result`, so a failure in the C library surfaces as an `Err` with a message instead of a panic.
 
-You can also tokenize HTML+ERB source:
+## The API
 
-:::code-group
-```rust
-use herb::lex;
+The API pages document each call once, with a Rust tab alongside the other bindings.
 
-fn main() {
-  let source = "<h1><%= user.name %></h1>";
+| Page | Rust functions |
+| --- | --- |
+| [Parsing](/bindings/parsing) | `herb::parse`, `herb::parse_with_options` |
+| [Lexing](/bindings/lexing) | `herb::lex` |
+| [Extracting Ruby and HTML](/bindings/extracting) | `herb::extract_ruby`, `herb::extract_ruby_with_options`, `herb::extract_html` |
+| [Working with the tree](/bindings/tree) | `herb::Visitor`, `herb::locate` |
+| [Versions](/bindings/versions) | `herb::version`, `herb::herb_version`, `herb::prism_version` |
 
-  match lex(source) {
-    Ok(result) => {
-      println!("{}", result);
-
-      for token in result.tokens() {
-        // do something with each token
-      }
-    }
-    Err(e) => {
-      eprintln!("Lex error: {}", e);
-    }
-  }
-}
-```
-:::
+Reading a file is up to you, so there is no `parse_file`. Pass the contents to `parse`.

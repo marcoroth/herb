@@ -41,5 +41,6 @@ Templates without a `herb:slots` directive are left to `herb-component-requires-
 
 ## References
 
+- [Language reference: Components](https://herb-tools.dev/language/components)
 - [`herb-component-requires-slots`](./herb-component-requires-slots.md)
 - [`herb-state-valid-actions`](./herb-state-valid-actions.md)

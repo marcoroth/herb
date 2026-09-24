@@ -51,4 +51,4 @@ The scope check follows the runtime's resolution. A name resolves through the sc
 
 ## References
 
-\-
+- [Language reference: Actions](https://herb-tools.dev/language/actions)

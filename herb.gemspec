@@ -12,8 +12,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
-  spec.summary = "The modern HTML+ERB Toolchain"
-  spec.description = "A collection of powerful and seamless developer tools for HTML+ERB templates."
+  spec.summary = "A modern templating language for the HTML+ERB you already have."
+  spec.description = "One language and toolchain that understands your HTML and Ruby together."
   spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"
 
