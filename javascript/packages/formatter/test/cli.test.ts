@@ -192,6 +192,81 @@ describe("CLI Binary", () => {
     expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
   })
 
+  it("should suppress the experimental preview message with --quiet", async () => {
+    const input = '<div class="test"><p>Hello</p></div>'
+    const result = await execBinary(["--quiet"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stderr).not.toContain("Experimental Preview")
+    expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
+  })
+
+  it("should suppress the experimental preview message with -q", async () => {
+    const input = '<div class="test"><p>Hello</p></div>'
+    const result = await execBinary(["-q"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stderr).not.toContain("Experimental Preview")
+    expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
+  })
+
+  it("should suppress the config file notice with --quiet", async () => {
+    const directory = "test-quiet-config"
+    const configFile = join(directory, ".herb.yml")
+    const input = '<div class="test"><p>Hello</p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(configFile, dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+    `)
+
+    try {
+      const result = await execBinary(["--quiet", "--config-file", configFile], input)
+
+      expectExitCode(result, 0)
+      expect(result.stderr).not.toContain("Using Herb config file")
+      expect(result.stderr).not.toContain("Experimental Preview")
+      expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should keep the forcing warning with --quiet", async () => {
+    const directory = "test-quiet-force"
+    const configFile = join(directory, ".herb.yml")
+    const input = '<div class="test"><p>Hello</p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(configFile, dedent`
+      version: 0.10.3
+      formatter:
+        enabled: false
+    `)
+
+    try {
+      const result = await execBinary(["--quiet", "--force", "--config-file", configFile], input)
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("⚠️  Forcing formatter run (disabled in .herb.yml)")
+      expect(result.stderr).not.toContain("Experimental Preview")
+      expect(result.stderr).not.toContain("Using Herb config file")
+      expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should show --quiet option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("-q, --quiet")
+    expect(result.stdout).toContain("herb-format --quiet")
+  })
+
   it("should format empty input from stdin when no args provided", async () => {
     const result = await execBinary([], "")
 
