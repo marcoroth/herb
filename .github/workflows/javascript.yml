@@ -105,6 +105,19 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+      - name: Package VS Code extension
+        run: |
+          cd javascript/packages/vscode
+          npx @vscode/vsce package --no-dependencies --out herb-lsp.vsix
+
+      - name: Upload VS Code extension artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-extension
+          path: javascript/packages/vscode/herb-lsp.vsix
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Upload docs artifact
         if: github.event_name == 'pull_request' && github.event.pull_request.auto_merge == null
         uses: actions/upload-artifact@v7
@@ -290,25 +303,20 @@ jobs:
         with:
           node-version-file: ".node-version"
 
-      - name: Download package artifacts
+      - name: Download VS Code extension artifact
         uses: actions/download-artifact@v8
         with:
-          name: npm-packages
-          path: javascript/packages/
+          name: vscode-extension
 
       - name: Publish to VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: |
-          cd javascript/packages/vscode
-          npx @vscode/vsce publish --no-dependencies
+        run: npx @vscode/vsce publish --packagePath herb-lsp.vsix
 
       - name: Publish to Open VSX Registry
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: |
-          cd javascript/packages/vscode
-          npx ovsx publish --no-dependencies -p $OVSX_PAT
+        run: npx ovsx publish herb-lsp.vsix -p $OVSX_PAT
 
   deploy-preview:
     name: Deploy docs preview to Cloudflare Pages
