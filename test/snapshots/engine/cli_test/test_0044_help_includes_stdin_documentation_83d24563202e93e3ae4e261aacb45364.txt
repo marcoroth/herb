@@ -2,7 +2,7 @@
 source: "Engine::CLITest#test_0044_help includes stdin documentation"
 input: "test_0044_help includes stdin documentation"
 ---
-Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
+Herb 🌿 A modern templating language for the HTML+ERB you already have.
 
 Usage:
   bundle exec herb [command] [options]

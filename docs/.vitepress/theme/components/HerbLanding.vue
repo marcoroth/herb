@@ -233,7 +233,7 @@ const total = companies.length + people.length
       <section>
         <div class="sec-head">
           <h2>Supported by {{ total }} people and companies.</h2>
-          <p>Herb has no company behind it. The time that goes into it is paid for by the people and companies below.</p>
+          <p>Herb is an independent open source project, and it relies on the companies that use it to keep going. If your team depends on Herb, consider sponsoring the project.</p>
         </div>
 
         <p class="sponsor-label">Companies</p>
