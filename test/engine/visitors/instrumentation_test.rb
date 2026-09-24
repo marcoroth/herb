@@ -69,6 +69,27 @@ module Engine
       test "wraps an output tag in a template that ends with a blank line" do
         instrumented("<div><%= title %></div>\n\n")
       end
+
+      test "keeps an instrumented block after an elsif condition on a new line" do
+        source = <<~ERB
+          <div>
+            <% if condition %>
+              <%= render(menu) do %>
+              <% end %>
+            <% elsif !metered? && active? %>
+              <%= render(other) do %>
+              <% end %>
+            <% end %>
+          </div>
+        ERB
+
+        assert Herb::Engine.new(
+          source,
+          filename: FILENAME,
+          visitors: [Herb::Engine::InstrumentationVisitor.new],
+          validate_ruby: true
+        )
+      end
     end
 
     describe "what it must not change" do
