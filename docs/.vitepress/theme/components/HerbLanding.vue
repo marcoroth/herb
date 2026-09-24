@@ -322,7 +322,7 @@ const total = companies.length + people.length
 
 
 .herb-landing .hero { padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(2.5rem, 5vw, 4rem); }
-.herb-landing .hero-grid { display: grid; gap: 2rem; grid-template-columns: 1fr; align-items: center; }
+.herb-landing .hero-grid { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1fr); align-items: center; }
 @media (min-width: 58rem) {
   .herb-landing .hero-grid { grid-template-columns: minmax(0, 46rem) 17rem; gap: 3rem; justify-content: space-between; }
 }
@@ -398,11 +398,12 @@ const total = companies.length + people.length
 .herb-landing .sec-head h2 { font-size: clamp(1.65rem, 3.4vw, 2.4rem); font-weight: 500; letter-spacing: -0.028em; max-width: 24ch; }
 .herb-landing .sec-head p { color: var(--ink-soft); max-width: var(--measure); margin: 1rem 0 0; }
 
-.herb-landing .split { display: grid; gap: 2rem; grid-template-columns: 1fr; align-items: start; }
-@media (min-width: 58rem) { .herb-landing .split { grid-template-columns: 1fr 1fr; gap: 3.25rem; } }
+.herb-landing .split { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 58rem) { .herb-landing .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3.25rem; } }
 
 .herb-landing .caps { display: grid; gap: 2.5rem; }
-.herb-landing .cap { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: center; }
+.herb-landing .cap { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: center; }
+.herb-landing :is(.hero-grid, .split, .caps, .cap, .eco, .grid3, .orgs) > * { min-width: 0; }
 @media (min-width: 58rem) {
   .herb-landing .cap { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.75rem; }
   .herb-landing .cap:nth-child(even) > .cap-text { order: 2; }
@@ -413,8 +414,8 @@ const total = companies.length + people.length
 .herb-landing .punch { font-weight: 500; font-size: clamp(1.4rem, 2.9vw, 1.95rem); letter-spacing: -0.022em; margin: 1.75rem 0 0; line-height: 1.2; }
 .herb-landing .punch span { color: var(--accent); }
 
-.herb-landing .eco { display: grid; gap: 2rem; grid-template-columns: 1fr; }
-@media (min-width: 52rem) { .herb-landing .eco { grid-template-columns: repeat(3, 1fr); gap: 2.5rem; } }
+.herb-landing .eco { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 52rem) { .herb-landing .eco { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem; } }
 .herb-landing .eco-group h3 {
   font-family: var(--mono); font-size: 0.8125rem; font-weight: 500;
   letter-spacing: 0.01em; color: var(--ink-soft);
@@ -431,8 +432,8 @@ const total = companies.length + people.length
 .herb-landing .eco-group a:hover { color: var(--accent); }
 .herb-landing .eco-group em { font-style: normal; font-family: var(--mono); font-size: 0.6875rem; color: var(--ink-faint); letter-spacing: 0.04em; }
 
-.herb-landing .grid3 { display: grid; gap: 1rem; grid-template-columns: 1fr; }
-@media (min-width: 46rem) { .herb-landing .grid3 { grid-template-columns: repeat(3, 1fr); } }
+.herb-landing .grid3 { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 46rem) { .herb-landing .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .herb-landing .tile { border: 1px solid var(--rule); border-radius: 4px; padding: 1.25rem 1.35rem; background: var(--surface); }
 .herb-landing .tile h3 { font-size: 0.9688rem; font-weight: 600; margin-bottom: 0.35rem; }
 .herb-landing .tile p { font-size: 0.875rem; color: var(--ink-soft); margin: 0; }
