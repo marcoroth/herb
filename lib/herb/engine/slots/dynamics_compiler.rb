@@ -619,7 +619,7 @@ module Herb
 
         #: (String, ?escaped: bool) -> void
         def add_expression_block_end(code, escaped: false)
-          @src << "; " << @bufvar
+          @src << "; ::Herb::Engine.raw(" << @bufvar << ")"
 
           close_block
 

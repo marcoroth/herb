@@ -134,6 +134,14 @@ module Parser
       test "lambda block" do
         assert_parsed_snapshot(%(<%= -> { "hello" }.call %>), prism_nodes: true)
       end
+
+      test "Prism structural locations use one-based lines" do
+        assert_parsed_snapshot("<% if true %>\n<%= User %>\n<% end %>", prism_nodes: true)
+      end
+
+      test "Prism expression locations use one-based lines" do
+        assert_parsed_snapshot("<p>Hello</p>\n<%= User %>\n", prism_nodes: true)
+      end
     end
   end
 end

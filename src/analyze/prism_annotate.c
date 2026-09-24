@@ -310,6 +310,7 @@ void herb_annotate_prism_nodes(
   }
 
   memset(&context->pm_opts, 0, sizeof(pm_options_t));
+  pm_options_line_set(&context->pm_opts, 1);
   pm_options_partial_script_set(&context->pm_opts, true);
   pm_parser_init(
     &context->parser,
@@ -370,6 +371,7 @@ void herb_annotate_prism_nodes(
         }
 
         memset(&context->structural_pm_opts, 0, sizeof(pm_options_t));
+        pm_options_line_set(&context->structural_pm_opts, 1);
         pm_options_partial_script_set(&context->structural_pm_opts, true);
 
         pm_parser_init(

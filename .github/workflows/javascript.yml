@@ -333,19 +333,18 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         id: deploy
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: herb-tools
-          directory: dist
+          command: pages deploy dist --project-name=herb-tools --branch=${{ github.head_ref }} --commit-hash=${{ github.event.pull_request.head.sha }} --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add comment with preview URL
         uses: actions/github-script@v9
         with:
           script: |
-            const previewUrl = '${{ steps.deploy.outputs.url }}';
+            const previewUrl = '${{ steps.deploy.outputs.deployment-url }}';
             const comment = `### 🌿 Interactive Playground and Documentation Preview
 
             A preview deployment has been built for this pull request. Try out the changes live in the interactive playground:
