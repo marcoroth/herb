@@ -220,8 +220,6 @@ module Herb
         @src << "\n" << code
         @src << "\n" unless code.end_with?("\n")
       else
-        @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
-
         @src << " " unless code.match?(/\A\n+\z/)
         @src << code
 
