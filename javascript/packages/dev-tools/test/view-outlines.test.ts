@@ -1,0 +1,100 @@
+import { describe, test, expect, afterEach } from "vitest"
+
+import { HerbDevTools } from "../src/herb-dev-tools.js"
+
+afterEach(() => {
+  localStorage.clear()
+  HerbDevTools.instance?.stop()
+  delete (window as any).HerbDevTools
+  document.querySelector(".herb-floating-menu")?.remove()
+  document.querySelectorAll(".herb-overlay-label").forEach(label => label.remove())
+  document.getElementById("root-without-height")?.remove()
+  document.documentElement.removeAttribute("data-herb-debug-outline-type")
+  document.documentElement.removeAttribute("data-herb-debug-file-name")
+  document.documentElement.removeAttribute("style")
+  document.body.innerHTML = ""
+})
+
+const overlayOf = () => (HerbDevTools.instance as any).overlay
+
+const markAsView = (element: HTMLElement) => {
+  element.setAttribute("data-herb-debug-outline-type", "view")
+  element.setAttribute("data-herb-debug-file-name", "show.html.erb")
+}
+
+describe("view outlines", () => {
+  test("keep a layout that positions against the initial containing block", () => {
+    const style = document.createElement("style")
+
+    style.id = "root-without-height"
+    style.textContent = "html { height: 0 }"
+
+    document.head.appendChild(style)
+    document.body.innerHTML = `<div id="content" style="position: absolute; top: 40px; bottom: 20px; left: 0; right: 0"></div>`
+
+    const content = document.getElementById("content") as HTMLElement
+
+    markAsView(document.documentElement)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+
+    expect(content.getBoundingClientRect().height).toBe(window.innerHeight - 60)
+  })
+
+  test("label the root element without positioning it", () => {
+    markAsView(document.documentElement)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+
+    expect(document.documentElement.querySelector(".herb-overlay-label")).not.toBeNull()
+    expect(document.documentElement.style.position).toBe("")
+  })
+
+  test("still anchor a regular host", () => {
+    document.body.innerHTML = `<div id="view"></div>`
+
+    const view = document.getElementById("view") as HTMLElement
+
+    markAsView(view)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+
+    expect(view.style.position).toBe("relative")
+  })
+
+  test("give the host its position back when the outlines go away", () => {
+    document.body.innerHTML = `<div id="view"></div><div id="own" style="position: absolute"></div>`
+
+    const view = document.getElementById("view") as HTMLElement
+    const own = document.getElementById("own") as HTMLElement
+
+    markAsView(view)
+    markAsView(own)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+    overlayOf().toggleViewOutlines(false)
+
+    expect([view.style.position, own.style.position]).toEqual(["", "absolute"])
+  })
+
+  test("take every label away again, nested ones included", () => {
+    document.body.innerHTML = `<div id="outer"><div id="inner"></div></div>`
+
+    markAsView(document.documentElement)
+    markAsView(document.getElementById("outer") as HTMLElement)
+    markAsView(document.getElementById("inner") as HTMLElement)
+
+    HerbDevTools.start()
+    overlayOf().toggleViewOutlines(true)
+
+    expect(document.querySelectorAll(".herb-overlay-label").length).toBe(3)
+
+    overlayOf().toggleViewOutlines(false)
+
+    expect(document.querySelectorAll(".herb-overlay-label").length).toBe(0)
+  })
+})

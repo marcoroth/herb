@@ -38,7 +38,6 @@ spec.add_dependency "herb", "~> 0.1"
 ```
 :::
 
-
 ## Getting Started
 
 In your project `require` the gem:
@@ -46,7 +45,21 @@ In your project `require` the gem:
 :::code-group
 ```ruby
 require "herb"
+
+Herb.parse("<h1><%= title %></h1>")
 ```
 :::
 
-You are now ready to parse HTML+ERB in Ruby.
+The gem ships the `herb` command as well, which runs the same parser from the terminal. `bundle exec herb --help` lists what it can do.
+
+## The API
+
+The API pages document each call once, with a Ruby tab alongside the other bindings.
+
+| Page | Ruby methods |
+| --- | --- |
+| [Parsing](/bindings/parsing) | `Herb.parse`, `Herb.parse_file` |
+| [Lexing](/bindings/lexing) | `Herb.lex`, `Herb.lex_file` |
+| [Extracting Ruby and HTML](/bindings/extracting) | `Herb.extract_ruby`, `Herb.extract_html` |
+| [Working with the tree](/bindings/tree) | `Herb::Visitor`, `locate` |
+| [Versions](/bindings/versions) | `Herb.version` |

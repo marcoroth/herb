@@ -40,4 +40,5 @@ The rule flags any tag written in component case, an uppercase start on a name t
 
 ## References
 
+- [Language reference: Components](https://herb-tools.dev/language/components)
 - [`herb-state-requires-slots`](./herb-state-requires-slots.md)

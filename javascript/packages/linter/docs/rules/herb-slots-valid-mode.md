@@ -42,4 +42,4 @@ The engine reads the directive's option with a permissive match and falls back t
 
 ## References
 
-\-
+- [Language reference: Slots, `herb:slots`](https://herb-tools.dev/language/slots#herb-slots)

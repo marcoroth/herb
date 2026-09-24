@@ -45,4 +45,4 @@ A nested block is counted too, so a second block hidden inside the markup is rep
 
 ## References
 
-- [Herb Engine: scoped styles](https://herb-tools.dev/projects/engine)
+- [Language reference: Scoped styles](https://herb-tools.dev/language/scoped-styles)

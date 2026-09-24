@@ -837,7 +837,7 @@ export class HerbOverlay {
   }
 
   private createOverlayLabel(element: HTMLElement, type: 'view' | 'partial' | 'component') {
-    if (element.querySelector('.herb-overlay-label')) {
+    if (element.querySelector(':scope > .herb-overlay-label')) {
       return;
     }
 
@@ -905,9 +905,7 @@ export class HerbOverlay {
 
       parent.setAttribute('data-herb-debug-attached-outline-type', type);
 
-      if (window.getComputedStyle(parent).position === 'static') {
-        parent.style.position = 'relative';
-      }
+      this.anchorLabel(parent);
       label.style.position = 'absolute';
       label.style.top = '0';
       label.style.left = '0';
@@ -920,10 +918,23 @@ export class HerbOverlay {
       label.style.top = '0';
     }
 
-    if (window.getComputedStyle(element).position === 'static') {
-      element.style.position = 'relative';
-    }
+    this.anchorLabel(element);
     element.appendChild(label);
+  }
+
+  private anchorLabel(host: HTMLElement) {
+    if (host === document.documentElement || host === document.body) return;
+    if (window.getComputedStyle(host).position !== 'static') return;
+
+    host.style.position = 'relative';
+    host.setAttribute('data-herb-debug-anchored', 'true');
+  }
+
+  private releaseLabel(host: HTMLElement) {
+    if (!host.hasAttribute('data-herb-debug-anchored')) return;
+
+    host.style.position = '';
+    host.removeAttribute('data-herb-debug-anchored');
   }
 
   private removeOverlayLabel(element: HTMLElement) {
@@ -931,7 +942,7 @@ export class HerbOverlay {
 
     if (shouldAttachToParent && element.parentElement) {
       const parent = element.parentElement;
-      const label = parent.querySelector('.herb-overlay-label');
+      const label = parent.querySelector(':scope > .herb-overlay-label');
 
       if (label) {
         label.remove();
@@ -941,12 +952,16 @@ export class HerbOverlay {
       parent.style.outlineOffset = '0';
       parent.classList.remove('show-outline');
       parent.removeAttribute('data-herb-debug-attached-outline-type');
+
+      this.releaseLabel(parent);
     } else {
-      const label = element.querySelector('.herb-overlay-label');
+      const label = element.querySelector(':scope > .herb-overlay-label');
 
       if (label) {
         label.remove();
       }
+
+      this.releaseLabel(element);
     }
   }
 

@@ -5,44 +5,63 @@ const defaultSidebar = [
     text: "Getting Started",
     collapsed: false,
     items: [
-      { text: "Overview", link: "/overview" },
+      { text: "Welcome", link: "/overview" },
+      { text: "Installation", link: "/installation" },
       { text: "Configuration", link: "/configuration" },
-      { text: "Parser Options", link: "/parser-options" },
-      { text: "Projects", link: "/projects" },
     ],
   },
   {
-    text: "Developer Tools",
+    text: "Language",
     collapsed: false,
     items: [
-      { text: "Language Server", link: "/projects/language-server" },
-      { text: "Formatter", link: "/projects/formatter" },
+      { text: "Overview", link: "/language/" },
+      { text: "Templates", link: "/language/templates" },
+      { text: "ERB Syntax", link: "/language/erb" },
+      { text: "State", link: "/language/state" },
+      { text: "Actions", link: "/language/actions" },
+      { text: "Keys and Collections", link: "/language/keys" },
+      { text: "Slots", link: "/language/slots" },
+      { text: "Components", link: "/language/components" },
+      { text: "Scoped Styles", link: "/language/scoped-styles" },
+      { text: "Strict Locals", link: "/language/strict-locals" },
+    ],
+  },
+  {
+    text: "Tools",
+    collapsed: false,
+    items: [
       { text: "Linter", link: "/projects/linter" },
-      { text: "CLI", link: "/projects/cli" },
+      { text: "Formatter", link: "/projects/formatter" },
+      { text: "Language Server", link: "/projects/language-server" },
       { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
-      { text: "Client Runtime", link: "/projects/client" },
+      { text: "CLI", link: "/projects/cli" },
     ],
   },
   {
-    text: "Utility Libraries",
-    collapsed: false,
-    items: [
-      { text: "Language Service", link: "/projects/language-service" },
-      { text: "Highlighter", link: "/projects/highlighter" },
-      { text: "Syntax Tree Printer", link: "/projects/printer" },
-      { text: "Minifier", link: "/projects/minifier" },
-      { text: "Config", link: "/projects/config" },
-      { text: "Rewriter", link: "/projects/rewriter" },
-      { text: "Core", link: "/projects/core" },
-    ],
-  },
-  {
-    text: "HTML+ERB Rendering",
+    text: "Rendering",
     collapsed: false,
     items: [
       { text: "Engine", link: "/projects/engine" },
-      { text: "Compiler", link: "/projects/compiler" },
+      {
+        text: "Engine Visitors",
+        collapsed: true,
+        items: [
+          { text: "AutoCloseOmittedTags", link: "/projects/engine/visitors/auto-close-omitted-tags" },
+          { text: "RemoveComments", link: "/projects/engine/visitors/remove-comments" },
+          { text: "ContentFor", link: "/projects/engine/visitors/content-for" },
+          { text: "HTMLSafeAssertions", link: "/projects/engine/visitors/html-safe-assertions" },
+          { text: "ComponentTags", link: "/projects/engine/visitors/component-tags" },
+          { text: "Debug", link: "/projects/engine/visitors/debug" },
+          { text: "SourceAttribution", link: "/projects/engine/visitors/source-attribution" },
+          { text: "Optimize", link: "/projects/engine/visitors/optimize" },
+          { text: "InlineRender", link: "/projects/engine/visitors/inline-render" },
+          { text: "ScopedStyle", link: "/projects/engine/visitors/scoped-style" },
+          { text: "CSSInliner", link: "/projects/engine/visitors/css-inliner" },
+        ],
+      },
+      { text: "Client Runtime", link: "/projects/client" },
+      { text: "ReActionView", link: "https://reactionview.dev" },
     ],
   },
   {
@@ -74,68 +93,87 @@ const defaultSidebar = [
     ],
   },
   {
-    text: "Language Bindings",
-    collapsed: false,
+    text: "Building on Herb",
+    collapsed: true,
     items: [
+      { text: "Projects", link: "/projects" },
+      { text: "Parser Options", link: "/parser-options" },
       {
-        text: "C Library (libherb)",
+        text: "Language Bindings",
         collapsed: true,
         items: [
-          { text: "Overview", link: "/projects/parser" },
-          { text: "API Reference", link: "/c-reference/" },
-          { text: "Structs", link: "/c-reference/structs" },
-          { text: "Tokens", link: "/c-reference/tokens" },
-          { text: "AST Nodes", link: "/c-reference/nodes" },
-          { text: "Enums", link: "/c-reference/enums" },
-          { text: "Enum Values", link: "/c-reference/enum-values" },
+          { text: "Installing a Binding", link: "/bindings/installation" },
+          { text: "Parsing", link: "/bindings/parsing" },
+          { text: "Lexing", link: "/bindings/lexing" },
+          { text: "Extracting Ruby and HTML", link: "/bindings/extracting" },
+          { text: "Working with the Tree", link: "/bindings/tree" },
+          { text: "Versions", link: "/bindings/versions" },
+          {
+            text: "Languages",
+            collapsed: true,
+            items: [
+              { text: "Ruby", link: "/bindings/ruby/" },
+              { text: "JavaScript", link: "/bindings/javascript/" },
+              { text: "Java", link: "/bindings/java/" },
+              { text: "Rust", link: "/bindings/rust/" },
+              { text: "WebAssembly", link: "/projects/webassembly" },
+            ],
+          },
+          {
+            text: "C Library (libherb)",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/projects/parser" },
+              { text: "API Reference", link: "/c-reference/" },
+              { text: "Structs", link: "/c-reference/structs" },
+              { text: "Tokens", link: "/c-reference/tokens" },
+              { text: "AST Nodes", link: "/c-reference/nodes" },
+              { text: "Enums", link: "/c-reference/enums" },
+              { text: "Enum Values", link: "/c-reference/enum-values" },
+            ],
+          },
         ],
       },
-      {
-        text: "Ruby",
-        collapsed: false,
-        items: [
-          { text: "Installation", link: "/bindings/ruby/" },
-          { text: "Reference", link: "/bindings/ruby/reference" },
-        ],
-      },
-      {
-        text: "JavaScript",
-        collapsed: false,
-        items: [
-          { text: "Installation", link: "/bindings/javascript/" },
-          { text: "Reference", link: "/bindings/javascript/reference" },
-        ],
-      },
-      {
-        text: "Java",
-        collapsed: false,
-        items: [
-          { text: "Installation", link: "/bindings/java/" },
-          { text: "Reference", link: "/bindings/java/reference" },
-        ],
-      },
-      {
-        text: "Rust",
-        collapsed: false,
-        items: [
-          { text: "Installation", link: "/bindings/rust/" },
-          { text: "Reference", link: "/bindings/rust/reference" },
-        ],
-      },
-      { text: "WebAssembly", link: "/projects/webassembly" },
+      { text: "Analysis", link: "/projects/analysis" },
+      { text: "Language Service", link: "/projects/language-service" },
+      { text: "Highlighter", link: "/projects/highlighter" },
+      { text: "Syntax Tree Printer", link: "/projects/printer" },
+      { text: "Minifier", link: "/projects/minifier" },
+      { text: "Rewriter", link: "/projects/rewriter" },
+      { text: "Config", link: "/projects/config" },
+      { text: "Core", link: "/projects/core" },
     ],
   },
   {
-    text: "About",
-    link: "/about",
+    text: "Appendices",
+    collapsed: false,
+    items: [
+      { text: "Glossary", link: "/glossary" },
+      { text: "Blog", link: "/blog" },
+      { text: "About", link: "/about" },
+    ],
   },
 ]
+
+function findItem(sidebar, link) {
+  for (const group of sidebar) {
+    const index = (group.items ?? []).findIndex((item) => item.link === link)
+
+    if (index !== -1) {
+      return { items: group.items, index }
+    }
+  }
+
+  throw new Error(`No sidebar item links to ${link}`)
+}
 
 export function createThemeConfig() {
   const ruleItems = generateRuleWrappers()
 
   const linterSidebar = structuredClone(defaultSidebar)
-  linterSidebar[1].items[2] = {
+  const linter = findItem(linterSidebar, "/projects/linter")
+
+  linter.items[linter.index] = {
     text: "Linter",
     collapsed: false,
     items: [
@@ -170,7 +208,7 @@ export function createThemeConfig() {
     },
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2024-2025 Marco Roth and the Herb Contributors.",
+      copyright: "Copyright © 2024-2026 Marco Roth and the Herb Contributors.",
     },
     editLink: {
       pattern: ({ filePath }) => {
@@ -197,7 +235,7 @@ export function createThemeConfig() {
         {
           text: "Linter",
           items: [
-            { text: "Overview", link: "/projects/linter/" },
+            { text: "Overview", link: "/projects/linter" },
             {
               text: "Rules",
               collapsed: false,
