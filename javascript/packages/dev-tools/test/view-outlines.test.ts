@@ -23,7 +23,6 @@ const markAsView = (element: HTMLElement) => {
 }
 
 describe("view outlines", () => {
-  // A layout whose root box is shorter than the viewport because everything in it is out of flow.
   test("keep a layout that positions against the initial containing block", () => {
     const style = document.createElement("style")
 

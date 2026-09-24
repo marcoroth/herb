@@ -837,8 +837,6 @@ export class HerbOverlay {
   }
 
   private createOverlayLabel(element: HTMLElement, type: 'view' | 'partial' | 'component') {
-    // Scoped to direct children: an unscoped lookup finds a nested element's label instead, so
-    // removal takes the wrong one and the outer element keeps its own.
     if (element.querySelector(':scope > .herb-overlay-label')) {
       return;
     }
@@ -924,9 +922,6 @@ export class HerbOverlay {
     element.appendChild(label);
   }
 
-  // The label is positioned inside its host, but `<html>` and `<body>` must stay unpositioned:
-  // making either a containing block collapses layouts that place elements against the initial
-  // containing block. Both share its origin, so the label lands in the same spot regardless.
   private anchorLabel(host: HTMLElement) {
     if (host === document.documentElement || host === document.body) return;
     if (window.getComputedStyle(host).position !== 'static') return;
@@ -935,7 +930,6 @@ export class HerbOverlay {
     host.setAttribute('data-herb-debug-anchored', 'true');
   }
 
-  // Only drop the position the overlay added.
   private releaseLabel(host: HTMLElement) {
     if (!host.hasAttribute('data-herb-debug-anchored')) return;
 
