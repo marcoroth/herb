@@ -129,7 +129,7 @@ class HTMLNoEventHandlerAttributesVisitor extends BaseRuleVisitor {
 
 export class HTMLNoEventHandlerAttributesRule extends ParserRule {
   static ruleName = "html-no-event-handler-attributes"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

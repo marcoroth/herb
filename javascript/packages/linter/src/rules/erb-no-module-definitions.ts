@@ -43,8 +43,8 @@ class ModuleDefinitionCollector extends PrismVisitor {
 
 export class ERBNoModuleDefinitionsRule extends ParserRule {
   static ruleName = "erb-no-module-definitions"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -19,7 +19,7 @@ Add the dependency to your `Cargo.toml`:
 :::code-group
 ```toml [Cargo.toml]
 [dependencies]
-herb = "0.10.3"
+herb = "0.11.0"
 ```
 :::
 

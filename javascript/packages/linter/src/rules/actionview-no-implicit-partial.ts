@@ -49,8 +49,8 @@ class ActionViewNoImplicitPartialVisitor extends BaseRuleVisitor {
 
 export class ActionViewNoImplicitPartialRule extends ParserRule {
   static ruleName = "actionview-no-implicit-partial"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

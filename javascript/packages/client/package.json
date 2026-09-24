@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/client",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "Browser runtime for indexing and updating the slots an HTML+ERB template renders",
   "type": "module",
   "license": "MIT",

@@ -9,22 +9,22 @@ Every binding reports the version of itself, of the C library it wraps and of th
 ::: code-group
 ```ruby [Ruby]
 Herb.version
-# => "herb gem v0.10.3, libprism v1.9.0, libherb v0.10.3 (Ruby C native extension)"
+# => "herb gem v0.11.0, libprism v1.9.0, libherb v0.11.0 (Ruby C native extension)"
 ```
 
 ```js [JavaScript]
 Herb.version
-// => "@herb-tools/node@0.10.3, @herb-tools/core@0.10.3, libherb@0.10.3 (Node.js C++ native extension)"
+// => "@herb-tools/node@0.11.0, @herb-tools/core@0.11.0, libherb@0.11.0 (Node.js C++ native extension)"
 ```
 
 ```java [Java]
 Herb.version();
-// => "herb java v0.10.3, libprism v1.9.0, libherb v0.10.3 (Java JNI)"
+// => "herb java v0.11.0, libprism v1.9.0, libherb v0.11.0 (Java JNI)"
 ```
 
 ```rust [Rust]
 herb::version();
-// => "herb rust v0.10.3, libprism v1.9.0, libherb v0.10.3 (Rust FFI)"
+// => "herb rust v0.11.0, libprism v1.9.0, libherb v0.11.0 (Rust FFI)"
 ```
 :::
 
@@ -32,12 +32,12 @@ Java and Rust also report the two versions on their own, which is the form to co
 
 ::: code-group
 ```java [Java]
-Herb.herbVersion();   // => "0.10.3"
+Herb.herbVersion();   // => "0.11.0"
 Herb.prismVersion();  // => "1.9.0"
 ```
 
 ```rust [Rust]
-herb::herb_version();   // => "0.10.3"
+herb::herb_version();   // => "0.11.0"
 herb::prism_version();  // => "1.9.0"
 ```
 :::

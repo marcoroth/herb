@@ -1,6 +1,6 @@
 [package]
 name = "herb-analysis"
-version = "0.10.3"
+version = "0.11.0"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Cross-file static analysis of Ruby and Action View sources for Herb"

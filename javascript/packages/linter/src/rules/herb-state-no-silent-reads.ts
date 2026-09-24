@@ -48,8 +48,8 @@ class StateNoSilentReadsVisitor extends BaseRuleVisitor {
 
 export class HerbStateNoSilentReadsRule extends ParserRule {
   static ruleName = "herb-state-no-silent-reads"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

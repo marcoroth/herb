@@ -36,7 +36,7 @@ class ConfigurationTest < Minitest::Spec
 
   test "loads configuration from .herb.yml" do
     write_config(<<~YAML)
-      version: "0.10.3"
+      version: "0.11.0"
       files:
         include:
           - "**/*.custom.erb"
@@ -45,7 +45,7 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(@temp_dir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_equal "0.10.3", config.version
+    assert_equal "0.11.0", config.version
 
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], config.file_include_patterns
   end
@@ -72,7 +72,7 @@ class ConfigurationTest < Minitest::Spec
     FileUtils.mkdir_p(subdir)
 
     write_config(<<~YAML)
-      version: "0.10.3"
+      version: "0.11.0"
       files:
         include:
           - "**/*.custom.erb"
