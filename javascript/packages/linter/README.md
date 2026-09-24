@@ -247,7 +247,7 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
-**Running Specific Rules:** <Badge type="info" text="^0.11.0" />
+**Running Specific Rules:** <Badge type="info" text="^0.10.3" />
 
 Only run a single rule:
 ```bash
@@ -282,7 +282,7 @@ Everything else still applies: which files get linted is unchanged, severity ove
 
 Passing an unknown rule name exits with an error, so typos won't silently lint nothing.
 
-**Running Every Rule:** <Badge type="info" text="^0.11.0" />
+**Running Every Rule:** <Badge type="info" text="^0.10.3" />
 
 Run every available rule, regardless of how it is configured:
 ```bash

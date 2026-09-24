@@ -10,9 +10,9 @@ fn disable(rule_name: &str) -> HerbConfigOptions {
 
 #[test]
 fn create_config_yaml_string_substitutes_the_version() {
-  let yaml = create_config_yaml_string(&HerbConfigOptions::default(), Some("0.11.0")).unwrap();
+  let yaml = create_config_yaml_string(&HerbConfigOptions::default(), Some("0.12.0")).unwrap();
 
-  assert!(yaml.contains("version: 0.11.0"));
+  assert!(yaml.contains("version: 0.12.0"));
   assert!(!yaml.contains("version: 0.11.0"));
 }
 
