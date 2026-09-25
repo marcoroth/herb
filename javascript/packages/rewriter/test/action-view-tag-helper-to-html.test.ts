@@ -829,9 +829,9 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("image_tag with ruby expression source wraps in image_path", () => {
+    test("image_tag with ruby expression source dispatches on the value", () => {
       expect(transform('<%= image_tag user.avatar %>')).toBe(
-        '<img src="<%= image_path(user.avatar) %>" />'
+        '<img src="<%= (user.avatar).then { |value| value.is_a?(String) || value.is_a?(Symbol) ? image_path(value) : polymorphic_url(value) } %>" />'
       )
     })
 
@@ -859,9 +859,9 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("image_tag with instance variable method wraps in image_path", () => {
+    test("image_tag with instance variable method dispatches on the value", () => {
       expect(transform('<%= image_tag @post.cover_image %>')).toBe(
-        '<img src="<%= image_path(@post.cover_image) %>" />'
+        '<img src="<%= (@post.cover_image).then { |value| value.is_a?(String) || value.is_a?(Symbol) ? image_path(value) : polymorphic_url(value) } %>" />'
       )
     })
 

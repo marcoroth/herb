@@ -34,6 +34,33 @@ bool image_tag_source_is_url(const char* source, size_t length) {
   return false;
 }
 
+char* wrap_in_image_source_dispatch(
+  const char* source,
+  size_t source_length,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, source_length + 160, allocator);
+
+  hb_buffer_append(&buffer, "(");
+  hb_buffer_append_with_length(&buffer, source, source_length);
+  hb_buffer_append(&buffer, ").then { |value| value.is_a?(String) || value.is_a?(Symbol)");
+  hb_buffer_append(&buffer, " ? image_path(value");
+
+  if (path_options && strlen(path_options) > 0) {
+    hb_buffer_append(&buffer, ", ");
+    hb_buffer_append(&buffer, path_options);
+  }
+
+  hb_buffer_append(&buffer, ") : polymorphic_url(value) }");
+
+  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
+  hb_buffer_free(&buffer);
+
+  return result;
+}
+
 char* wrap_in_image_path(
   const char* source,
   size_t source_length,
