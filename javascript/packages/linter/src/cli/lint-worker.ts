@@ -6,7 +6,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
 import { Linter } from "../linter.js"
-import { loadCustomRules } from "../loader.js"
+import { loadCustomRules, customRulesBaseDir } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
 import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { renderGraphFrom } from "@herb-tools/analysis/node"
@@ -70,7 +70,7 @@ async function run() {
 
   if (data.loadCustomRules) {
     try {
-      const result = await loadCustomRules({ baseDir: data.projectPath, silent: true })
+      const result = await loadCustomRules({ baseDir: customRulesBaseDir(data.projectPath, data.configPath), silent: true })
       customRules = result.rules
     } catch {
       // Silently ignore custom rule loading failures in workers

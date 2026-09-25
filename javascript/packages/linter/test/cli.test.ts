@@ -2317,6 +2317,157 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    function writeRule(directory: string, ruleName: string, word: string) {
+      mkdirSync(join(directory, ".herb/rules"), { recursive: true })
+
+      writeFileSync(join(directory, `.herb/rules/${ruleName}.mjs`), dedent`
+        export default class Rule {
+          static ruleName = "${ruleName}"
+
+          check(document, context) {
+            const source = document.source || ""
+
+            if (!source.includes("${word}")) return []
+
+            return [{
+              message: "Text contains '${word}'",
+              location: {
+                start: { line: 1, column: 1 },
+                end: { line: 1, column: 22 }
+              }
+            }]
+          }
+        }
+      `)
+    }
+
+    function writeProjectWithSubdirectoryConfig() {
+      mkdirSync(join(tempDir, "lint/strict"), { recursive: true })
+      mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
+
+      const config = dedent`
+        version: 0.11.0
+        linter:
+          enabled: true
+      `
+
+      writeFileSync(join(tempDir, ".herb.yml"), config)
+      writeFileSync(join(tempDir, "lint/strict/.herb.yml"), config)
+      writeRule(tempDir, "no-hello", "hello")
+      writeRule(join(tempDir, "lint/strict"), "no-world", "world")
+      writeFileSync(join(tempDir, "app/views/widgets/test.html.erb"), `<div>hello world</div>\n`)
+    }
+
+    test("loads custom rules next to the config file given with --config-file", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+
+        const { output, exitCode } = runLinterFromPath(
+          join(tempDir, "app/views/widgets/test.html.erb"),
+          "--simple",
+          "--config-file",
+          join(tempDir, "lint/strict/.herb.yml")
+        )
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("Text contains 'world'")
+        expect(output).not.toContain("Text contains 'hello'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("loads custom rules next to the config file in parallel workers too", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+
+        for (let index = 1; index <= 10; index++) {
+          writeFileSync(join(tempDir, `app/views/widgets/test-${index}.html.erb`), `<div>hello world</div>\n`)
+        }
+
+        const { output, exitCode } = runLinterFromPath(
+          join(tempDir, "app/views/widgets"),
+          "--simple",
+          "--jobs",
+          "2",
+          "--config-file",
+          join(tempDir, "lint/strict/.herb.yml")
+        )
+
+        expect(output.match(/Text contains 'world'/g)?.length).toBe(11)
+        expect(output).not.toContain("Text contains 'hello'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("loads custom rules from the project root without --config-file", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views/widgets/test.html.erb"), "--simple")
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("Text contains 'hello'")
+        expect(output).not.toContain("Text contains 'world'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("loads custom rules from the project root when the --config-file folder has none", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+        rmSync(join(tempDir, "lint/strict/.herb"), { recursive: true, force: true })
+
+        const { output, exitCode } = runLinterFromPath(
+          join(tempDir, "app/views/widgets/test.html.erb"),
+          "--simple",
+          "--config-file",
+          join(tempDir, "lint/strict/.herb.yml")
+        )
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("Text contains 'hello'")
+        expect(output).not.toContain("Text contains 'world'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("loads custom rules from the project root when --config-file names the root config", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+
+        const { output, exitCode } = runLinterFromPath(
+          join(tempDir, "app/views/widgets/test.html.erb"),
+          "--simple",
+          "--config-file",
+          join(tempDir, ".herb.yml")
+        )
+
+        expect(output).toContain("Text contains 'hello'")
+        expect(output).not.toContain("Text contains 'world'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
     test("suggests a custom rule name for an unknown --only rule", () => {
       try {
         mkdirSync(join(tempDir, ".herb/rules"), { recursive: true })

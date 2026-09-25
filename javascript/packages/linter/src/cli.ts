@@ -9,7 +9,7 @@ import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
-import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
+import { loadCustomRules as loadCustomRulesFromDisk, customRulesBaseDir } from "./loader.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
@@ -435,7 +435,7 @@ export class CLI {
       let customRules: RuleClass[] | undefined = undefined
       if (loadCustomRules) {
         try {
-          const result = await loadCustomRulesFromDisk({ baseDir: this.projectPath, silent: true })
+          const result = await loadCustomRulesFromDisk({ baseDir: customRulesBaseDir(this.projectPath, configFile), silent: true })
           customRules = result.rules
         } catch {
           // Ignore custom rule loading failures — updateCounters skips unknown rules.
