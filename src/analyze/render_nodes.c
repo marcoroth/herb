@@ -614,9 +614,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (keyword_hash) {
     if (has_positional_partial) {
-      keyword_result_T partial_kw = find_keyword_value(keyword_hash, "partial", allocator);
-      if (partial_kw.value) { has_keyword_partial = true; }
-
       pm_hash_node_t* locals_hash = find_locals_hash(keyword_hash, allocator);
 
       if (locals_hash) {
@@ -794,22 +791,6 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       &errors,
       options
     );
-  }
-
-  if (has_positional_partial && has_keyword_partial && keyword_hash) {
-    keyword_result_T keyword_partial = find_keyword_value(keyword_hash, "partial", allocator);
-
-    append_render_conflicting_partial_error(
-      partial->value,
-      keyword_partial.value ? hb_string_from_c_string(keyword_partial.value) : hb_string(""),
-      erb_node->base.location.start,
-      erb_node->base.location.end,
-      allocator,
-      &errors,
-      options
-    );
-
-    if (keyword_partial.value) { hb_allocator_dealloc(allocator, keyword_partial.value); }
   }
 
   if (as_name) {

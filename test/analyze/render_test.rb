@@ -162,7 +162,7 @@ module Analyze
       HTML
     end
 
-    test "render with conflicting partial error" do
+    test "render with a positional partial and a partial local" do
       assert_parsed_snapshot(<<~HTML, render_nodes: true)
         <%= render "card", partial: "other" %>
       HTML
