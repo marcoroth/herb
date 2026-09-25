@@ -839,10 +839,12 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const child = body[index]
 
       if (shouldPreserveUserSpacing(child, body, index)) {
-        const blankLines = isNode(child, HTMLTextNode) ? normalizeBlankLineCount(countBlankLines(child.content)) : 1
+        if (!hasHandledSpacing) {
+          const blankLines = isNode(child, HTMLTextNode) ? normalizeBlankLineCount(countBlankLines(child.content)) : 1
 
-        for (let blankLine = 0; blankLine < blankLines; blankLine++) {
-          this.push("")
+          for (let blankLine = 0; blankLine < blankLines; blankLine++) {
+            this.push("")
+          }
         }
 
         hasHandledSpacing = true
