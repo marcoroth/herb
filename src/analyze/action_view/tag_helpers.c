@@ -36,6 +36,7 @@ extern bool javascript_include_tag_source_is_url(const char*, size_t);
 extern bool detect_image_tag(pm_call_node_t*, pm_parser_t*);
 extern char* extract_image_tag_src(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 extern char* wrap_in_image_path(const char*, size_t, const char*, hb_allocator_T*);
+extern char* wrap_in_image_source_dispatch(const char*, size_t, const char*, hb_allocator_T*);
 extern bool image_tag_source_is_url(const char*, size_t);
 extern bool detect_stylesheet_link_tag(pm_call_node_t*, pm_parser_t*);
 extern char* wrap_in_stylesheet_path(const char*, size_t, const char*, hb_allocator_T*);
@@ -794,7 +795,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         source_attribute_value = wrap_in_image_path(quoted_source, quoted_length, path_options, allocator);
         hb_allocator_dealloc(allocator, quoted_source);
       } else if (!source_is_string && !is_url && !source_is_path_helper) {
-        source_attribute_value = wrap_in_image_path(source_value, source_length, path_options, allocator);
+        source_attribute_value = wrap_in_image_source_dispatch(source_value, source_length, path_options, allocator);
       }
 
       AST_HTML_ATTRIBUTE_NODE_T* source_attribute =
