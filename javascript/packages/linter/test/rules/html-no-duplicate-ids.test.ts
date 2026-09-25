@@ -319,6 +319,36 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
+  test("passes for an ID built from a local assigned inside the loop", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = group.primary_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for an ID built from a local assigned through another local", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = group.primary_record %>
+        <% identifier = record.id %>
+        <div id="row-<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for an ID built from a local that does not read the loop variable", () => {
+    expectError('Duplicate ID `<%= dom_id(fallback) %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% fallback = @default_record %>
+        <div id="<%= dom_id(fallback) %>"></div>
+      <% end %>
+    `)
+  })
+
   test("passes for dynamic attribute in a ERBBlockNode each context", () => {
     expectNoOffenses(dedent`
       <% @users.each do |user| %>
