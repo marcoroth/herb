@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0009_turbo_frame_tag with a string id held in a local"
+input: "{source: \"<%= turbo_frame_tag frame_id do %>Content<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {frame_id: \"post_1\"}}}"
+---
+_buf = ::String.new; _buf << '<turbo-frame id="'.freeze; _buf << ::Herb::Engine.attr(((frame_id).then { |value| value.respond_to?(:to_key) || value.is_a?(Class) ? dom_id(value) : value.to_s })); _buf << '">Content</turbo-frame>'.freeze;
+_buf.to_s

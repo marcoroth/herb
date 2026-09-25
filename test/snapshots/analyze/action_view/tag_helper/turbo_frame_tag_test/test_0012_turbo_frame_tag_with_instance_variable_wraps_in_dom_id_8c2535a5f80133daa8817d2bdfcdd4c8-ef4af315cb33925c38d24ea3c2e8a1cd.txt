@@ -28,7 +28,7 @@ options: {action_view_helpers: true}
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ RubyLiteralNode (location: (1:20)-(1:25))
-    │   │                       │       └── content: "dom_id(@post)"
+    │   │                       │       └── content: "(@post).then { |value| value.respond_to?(:to_key) || value.is_a?(Class) ? dom_id(value) : value.to_s }"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true
