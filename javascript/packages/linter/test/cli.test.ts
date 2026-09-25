@@ -2424,6 +2424,29 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    test("loads custom rules from the project root when the --config-file folder has none", () => {
+      try {
+        writeProjectWithSubdirectoryConfig()
+        rmSync(join(tempDir, "lint/strict/.herb"), { recursive: true, force: true })
+
+        const { output, exitCode } = runLinterFromPath(
+          join(tempDir, "app/views/widgets/test.html.erb"),
+          "--simple",
+          "--config-file",
+          join(tempDir, "lint/strict/.herb.yml")
+        )
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("Text contains 'hello'")
+        expect(output).not.toContain("Text contains 'world'")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
     test("loads custom rules from the project root when --config-file names the root config", () => {
       try {
         writeProjectWithSubdirectoryConfig()
