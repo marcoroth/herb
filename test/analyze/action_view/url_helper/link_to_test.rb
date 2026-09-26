@@ -323,5 +323,11 @@ module Analyze::ActionView::UrlHelper
         <%= link_to "Click here", "/path", data: { controller: "hello", :hello => "value" } %>
       HTML
     end
+
+    test "link_to with interpolated class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", class: "base \#{extra}" %>
+      HTML
+    end
   end
 end
