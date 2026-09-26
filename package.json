@@ -19,7 +19,7 @@
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "23.2.0",
     "oxlint": "^1.83.0",
-    "playwright": "^1.62.1",
+    "playwright": "^1.63.0",
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
     "rimraf": "^6.1.3",
