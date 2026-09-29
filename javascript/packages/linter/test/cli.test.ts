@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, expect, beforeAll, afterEach } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import dedent from "dedent"
 
@@ -2524,6 +2524,158 @@ describe("CLI Output Formatting", () => {
           rmSync(tempDir, { recursive: true, force: true })
         }
       }
+    })
+  })
+
+  describe("--generate-todo", () => {
+    const { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/generate-todo-test"
+    const todoPath = join(tempDir, ".herb_todo.yml")
+
+    function run(...args: string[]): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${tempDir} ${args.join(" ")} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    function setupProject(files: Record<string, string>) {
+      mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+      writeFileSync(join(tempDir, ".herb.yml"), dedent`
+        version: 0.11.0
+        framework: actionview
+        linter:
+          enabled: true
+      `)
+
+      for (const [relativePath, content] of Object.entries(files)) {
+        writeFileSync(join(tempDir, relativePath), content)
+      }
+    }
+
+    afterEach(() => {
+      if (existsSync(tempDir)) {
+        rmSync(tempDir, { recursive: true, force: true })
+      }
+    })
+
+    test("lists each failing file under its rule and leaves .herb.yml untouched", () => {
+      setupProject({
+        "app/views/legacy.html.erb": `<DIV>legacy</DIV>\n`,
+        "app/views/clean.html.erb": `<div>clean</div>\n`,
+      })
+
+      const configBefore = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+      const { output, exitCode } = run("--generate-todo")
+
+      expect(exitCode).toBe(0)
+      expect(output).toContain("html-tag-name-lowercase")
+      expect(output).toContain(".herb_todo.yml")
+
+      const todo = readFileSync(todoPath, "utf-8")
+      expect(todo).toMatch(/html-tag-name-lowercase:\s+exclude:\s+- app\/views\/legacy\.html\.erb/)
+      expect(todo).not.toContain("clean.html.erb")
+      expect(readFileSync(join(tempDir, ".herb.yml"), "utf-8")).toBe(configBefore)
+    })
+
+    test("passes the next lint, and still fails on a new offense in another file", () => {
+      setupProject({ "app/views/legacy.html.erb": `<DIV>legacy</DIV>\n` })
+
+      run("--generate-todo")
+
+      expect(run().exitCode).toBe(0)
+
+      writeFileSync(join(tempDir, "app/views/new.html.erb"), `<SPAN>new</SPAN>\n`)
+      const { output, exitCode } = run()
+
+      expect(exitCode).toBe(1)
+      expect(output).toContain("new.html.erb")
+      expect(output).not.toContain("legacy.html.erb")
+    })
+
+    test("regenerates from scratch, dropping files that were fixed", () => {
+      setupProject({
+        "app/views/legacy.html.erb": `<DIV>legacy</DIV>\n`,
+        "app/views/other.html.erb": `<SPAN>other</SPAN>\n`,
+      })
+
+      run("--generate-todo")
+      writeFileSync(join(tempDir, "app/views/other.html.erb"), `<span>other</span>\n`)
+      run("--generate-todo")
+
+      const todo = readFileSync(todoPath, "utf-8")
+      expect(todo).toContain("legacy.html.erb")
+      expect(todo).not.toContain("other.html.erb")
+    })
+
+    test("always lints the whole project, so a path does not drop the other files", () => {
+      mkdirSync(join(tempDir, "app/views/admin"), { recursive: true })
+
+      setupProject({
+        "app/views/legacy.html.erb": `<DIV>legacy</DIV>\n`,
+        "app/views/admin/panel.html.erb": `<SPAN>admin</SPAN>\n`,
+      })
+
+      const { execSync } = require("child_process")
+      execSync(`bin/herb-lint ${join(tempDir, "app/views/admin")} --generate-todo 2>&1`, {
+        encoding: "utf-8",
+        env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+      })
+
+      const todo = readFileSync(todoPath, "utf-8")
+      expect(todo).toContain("app/views/legacy.html.erb")
+      expect(todo).toContain("app/views/admin/panel.html.erb")
+    })
+
+    test("removes the todo file once every offense is fixed", () => {
+      setupProject({ "app/views/legacy.html.erb": `<DIV>legacy</DIV>\n` })
+
+      run("--generate-todo")
+      writeFileSync(join(tempDir, "app/views/legacy.html.erb"), `<div>legacy</div>\n`)
+      const { output, exitCode } = run("--generate-todo")
+
+      expect(exitCode).toBe(0)
+      expect(output).toContain("No offenses found")
+      expect(existsSync(todoPath)).toBe(false)
+    })
+
+    test("never lists parser-no-errors", () => {
+      setupProject({ "app/views/broken.html.erb": `<div>\n` })
+
+      run("--generate-todo")
+
+      const todo = existsSync(todoPath) ? readFileSync(todoPath, "utf-8") : ""
+      expect(todo).not.toContain("parser-no-errors")
+    })
+
+    test("keeps a rule's built-in excludes once the rule is in the todo file", () => {
+      mkdirSync(join(tempDir, "app/views/user_mailer"), { recursive: true })
+
+      setupProject({
+        "app/views/legacy.html.erb": `<br />\n`,
+        "app/views/user_mailer/welcome.html.erb": `<br />\n`,
+      })
+
+      run("--generate-todo")
+
+      const todo = readFileSync(todoPath, "utf-8")
+      expect(todo).toMatch(/html-no-self-closing:\s+exclude:\s+- app\/views\/legacy\.html\.erb/)
+      expect(todo).not.toContain("welcome.html.erb")
+      expect(run().exitCode).toBe(0)
     })
   })
 

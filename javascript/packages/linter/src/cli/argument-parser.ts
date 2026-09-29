@@ -32,6 +32,7 @@ export interface ParsedArguments {
   init: boolean
   upgrade: boolean
   disableFailing: boolean
+  generateTodo: boolean
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
   logLevel?: DiagnosticSeverity
@@ -54,6 +55,8 @@ export class ArgumentParser {
       --init                        create a .herb.yml configuration file in the current directory
       --upgrade                     update .herb.yml version and disable all newly introduced rules
       --disable-failing             lint the codebase and disable all rules that have offenses in .herb.yml
+      --generate-todo               lint the codebase and list, per rule, the files with offenses in .herb_todo.yml
+                                    so every rule stays enabled for the other files (analogue of rubocop --auto-gen-config)
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
       --only <rules>                only run the given rules, ignoring the rule configuration in .herb.yml
@@ -100,6 +103,7 @@ export class ArgumentParser {
         init: { type: "boolean" },
         upgrade: { type: "boolean" },
         "disable-failing": { type: "boolean" },
+        "generate-todo": { type: "boolean" },
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
         only: { type: "string", multiple: true },
@@ -192,6 +196,7 @@ export class ArgumentParser {
     const init = values.init || false
     const upgrade = values.upgrade || false
     const disableFailing = values["disable-failing"] || false
+    const generateTodo = values["generate-todo"] || false
     const loadCustomRules = !values["no-custom-rules"]
 
     const allRules = values["all-rules"] || false
@@ -228,7 +233,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, generateTodo, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
   }
 
   private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {

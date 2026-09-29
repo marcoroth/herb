@@ -13,6 +13,7 @@ import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
+import { collectTodoExcludes } from "./cli/todo.js"
 import { version } from "../package.json"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
@@ -219,7 +220,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, generateTodo, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -413,6 +414,54 @@ export class CLI {
       }
 
       console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
+      process.exit(0)
+    }
+
+    if (generateTodo) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true, todo: false })
+
+      console.log(`\n${colorize("↻", "cyan")} Linting codebase to list the files with offenses...`)
+
+      await Herb.load()
+
+      // The todo file is rewritten from scratch, so lint every file: a narrower scan would drop the rest.
+      const files = await config.findFilesForTool('linter', config.projectPath)
+
+      const generateTodoContext: ProcessingContext = {
+        projectPath: config.projectPath,
+        config,
+        jobs,
+      }
+
+      const results = await this.fileProcessor.processFiles(files, 'json', generateTodoContext)
+      const todoExcludes = collectTodoExcludes(results.allOffenses, config.projectPath)
+
+      await Config.writeTodoFile(config.projectPath, todoExcludes)
+
+      const ruleNames = Object.keys(todoExcludes).sort()
+
+      if (ruleNames.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No offenses found. Removed ${colorize(Config.todoPath, "cyan")} if it existed.\n`)
+        process.exit(0)
+      }
+
+      const totalFiles = new Set(Object.values(todoExcludes).flat()).size
+
+      console.log(`\n${colorize("!", "yellow")} Found offenses in ${colorize(String(totalFiles), "bold")} ${totalFiles === 1 ? "file" : "files"} across ${colorize(String(ruleNames.length), "bold")} ${ruleNames.length === 1 ? "rule" : "rules"}. Listed in ${colorize(Config.todoPath, "cyan")}:\n`)
+
+      for (const ruleName of ruleNames) {
+        const count = todoExcludes[ruleName].length
+        console.log(`  ${colorize("✗", "red")} ${colorize(ruleName, "white")} ${colorize(`(${count} ${count === 1 ? "file" : "files"})`, "gray")}`)
+      }
+
+      console.log(`\n  These rules stay enabled for every other file. Fix a file, then run ${colorize("herb-lint --generate-todo", "cyan")} again to shrink the list.\n`)
       process.exit(0)
     }
 
