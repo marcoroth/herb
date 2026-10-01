@@ -178,5 +178,20 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, { active: true }, enforce_erubi_equality: true)
     end
+
+    test "consecutive conditional attributes compile to valid Ruby" do
+      template = <<~ERB
+        <div
+          <% if first %>
+            class="first"
+          <% end %>
+          <% if second %>hidden<% end %>
+        >
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { first: true, second: true }, enforce_erubi_equality: true)
+    end
   end
 end
