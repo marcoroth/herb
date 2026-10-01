@@ -27,27 +27,30 @@ module Herb
       @type = type
     end
 
-    # `@range` and `@location` may not be set yet when a token is constructed by the C
-    # extension: in that case the raw numeric components (`@range_from`, `@range_to`,
-    # `@loc_start_line`, `@loc_start_column`, `@loc_end_line`, `@loc_end_column`) are set
-    # directly on the ivars instead (or left unset entirely when `track_locations` is
-    # disabled), and the `Range`/`Location` (and, transitively, `Position`) objects are
-    # only materialized here on first access.
+    # Tokens constructed by the C extension keep their numeric range/location values in
+    # one GC-owned payload because the parser arena is released before the token reaches
+    # Ruby. `@range` and `@location` remain unset until first access.
 
     #: () -> Range?
     def range
       return @range if defined?(@range)
-      return nil unless defined?(@range_from)
+      return nil unless defined?(@location_data)
 
-      @range = Range.new(@range_from, @range_to)
+      data = @location_data #: Array[Integer]
+      @range = Range.new(data.fetch(0), data.fetch(1))
+      @location_data = nil if defined?(@location)
+      @range
     end
 
     #: () -> Location?
     def location
       return @location if defined?(@location)
-      return nil unless defined?(@loc_start_line)
+      return nil unless defined?(@location_data)
 
-      @location = Location.from(@loc_start_line, @loc_start_column, @loc_end_line, @loc_end_column)
+      data = @location_data #: Array[Integer]
+      @location = Location.from(data.fetch(2), data.fetch(3), data.fetch(4), data.fetch(5))
+      @location_data = nil if defined?(@range)
+      @location
     end
 
     #: () -> serialized_token
