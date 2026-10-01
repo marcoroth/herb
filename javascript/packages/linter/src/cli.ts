@@ -10,7 +10,7 @@ import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
 import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
-import { ArgumentParser } from "./cli/argument-parser.js"
+import { ArgumentParser, isStructuredFormat } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 import { version } from "../package.json"
@@ -134,8 +134,8 @@ export class CLI {
         console.error(`   Use --force to lint it anyway.\n`)
         process.exit(0)
       } else {
-        console.log(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
-        console.log()
+        console.error(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
+        console.error()
         files = [adjustedPattern]
       }
     }
@@ -151,7 +151,7 @@ export class CLI {
     const supported = files.filter(file => config.isPathIncludedForTool(file, 'linter'))
     const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'linter'))
 
-    if (unsupported.length > 0 && formatOption !== 'json') {
+    if (unsupported.length > 0 && !isStructuredFormat(formatOption)) {
       console.error(`⚠️  Skipped ${unsupported.length} ${unsupported.length === 1 ? 'file' : 'files'} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
 
       for (const file of unsupported) {
@@ -485,12 +485,12 @@ export class CLI {
       process.exit(0)
     }
 
-    const silent = formatOption === 'json'
+    const silent = isStructuredFormat(formatOption)
     const writesReport = silent || outputs.some(output => output.path !== undefined)
     let config: Config
 
     try {
-      // JSON reports a broken config as an error in its own output instead of exiting
+      // Structured formats report a broken config as an error in their own output instead of exiting
       config = await Config.load(configFile || this.projectPath, { version, exitOnError: !writesReport, createIfMissing: false, silent })
     } catch (error) {
       this.exitWithError(`✗ ${error instanceof Error ? error.message : error}`, formatOption)
@@ -525,8 +525,8 @@ export class CLI {
       }
 
       if (force && linterConfig.enabled === false) {
-        console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
-        console.log()
+        console.error("⚠️  Forcing linter run (disabled in .herb.yml)")
+        console.error()
       }
 
       if (only) {
@@ -571,7 +571,7 @@ export class CLI {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
-      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+      if (files.length > 1 && !isStructuredFormat(formatOption) && !useGitHubActions) {
         console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
       }
 
@@ -629,7 +629,7 @@ export class CLI {
         logLevelLoweredBy: lowered?.flag
       })
 
-      const showTips = formatOption !== 'json' && !useGitHubActions
+      const showTips = !isStructuredFormat(formatOption) && !useGitHubActions
 
       if (!Config.exists(this.projectPath) && showTips) {
         console.log("")

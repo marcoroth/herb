@@ -270,6 +270,88 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  describe("JUnit output", () => {
+    test("formats JUnit output with a testcase per rule, failing only at the fail level", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(1)
+    })
+
+    test("formats JUnit output with a passing testcase for a clean file", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit")
+
+      expect(output).toContain(`<testsuites name="herb-lint" tests="1" failures="0" errors="0">`)
+      expect(output).toContain(`<testcase classname="test/fixtures/clean-file.html.erb" name="test/fixtures/clean-file.html.erb" file="test/fixtures/clean-file.html.erb" time="0"/>`)
+      expect(output).not.toContain("Using Herb config file")
+      expect(exitCode).toBe(0)
+    })
+
+    test("rejects --github with --format junit on stdout", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", "--github")
+
+      expect(output).toBe("Error: --github cannot be used with --format junit on stdout. Use --output-file to write the JUnit report to a file.")
+      expect(exitCode).toBe(1)
+    })
+
+    test("leaves out GitHub Actions annotations detected from the environment", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", { GITHUB_ACTIONS: "true" })
+
+      expect(output).toMatch(/^<\?xml/)
+      expect(output).not.toContain("::error")
+      expect(exitCode).toBe(1)
+    })
+
+    test("fails offenses that fail the run even when --log-level hides them", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error")
+
+      expect(output).toContain(`<testsuites name="herb-lint" tests="1" failures="1" errors="0">`)
+      expect(output).toContain(`name="html-img-require-alt"`)
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a pattern without matching files as an error", () => {
+      const { output, exitCode } = runLinter("does-not-exist-*.html.erb", "--format", "junit")
+
+      expect(output).toContain(`<error message="✗ No files found matching pattern: test/fixtures/does-not-exist-*.html.erb">`)
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a missing config file as an error", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", "does-not-exist/.herb.yml")
+
+      expect(output).toMatch(/<error message="✗ Config file not found: .*does-not-exist\/\.herb\.yml">/)
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a disabled linter as a skipped testcase", () => {
+      const { mkdtempSync, writeFileSync } = require("fs")
+      const { join } = require("path")
+      const { tmpdir } = require("os")
+
+      const configFile = join(mkdtempSync(join(tmpdir(), "herb-lint-")), ".herb.yml")
+      writeFileSync(configFile, "linter:\n  enabled: false\n")
+
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", configFile)
+
+      expect(output).toContain(`<skipped message="Linter is disabled in .herb.yml configuration. Use --force to lint anyway."/>`)
+      expect(exitCode).toBe(0)
+    })
+
+    test("writes a JUnit report to a file next to the human output", () => {
+      const { mkdtempSync, readFileSync } = require("fs")
+      const { join } = require("path")
+      const { tmpdir } = require("os")
+
+      const junitPath = join(mkdtempSync(join(tmpdir(), "herb-lint-")), "herb-lint.xml")
+      const combined = runLinter("test-file-with-errors.html.erb", "--format", "simple", "--format", "junit", "-o", junitPath)
+
+      expect(combined.output).toBe(runLinter("test-file-with-errors.html.erb", "--simple").output)
+      expect(readFileSync(junitPath, "utf-8")).toBe(`${runLinter("test-file-with-errors.html.erb", "--format", "junit").output}\n`)
+      expect(combined.exitCode).toBe(1)
+    })
+  })
+
   describe("Multiple outputs", () => {
     const { mkdtempSync, readFileSync, existsSync } = require("fs")
     const { join } = require("path")
@@ -325,8 +407,8 @@ describe("CLI Output Formatting", () => {
 
     test.each([
       [["-o", "herb-lint.json"], "Error: --output-file must come after the --format it applies to (e.g., --format json --output-file herb-lint.json)."],
-      [["--format", "detailed", "-o", "herb-lint.txt"], "Error: --output-file only supports the json format, but it follows --format detailed."],
-      [["--format", "jsonn", "-o", "herb-lint.json"], "Error: --output-file only supports the json format, but it follows --format jsonn."],
+      [["--format", "detailed", "-o", "herb-lint.txt"], "Error: --output-file only supports the json and junit formats, but it follows --format detailed."],
+      [["--format", "jsonn", "-o", "herb-lint.json"], "Error: --output-file only supports the json and junit formats, but it follows --format jsonn."],
       [["--format", "json", "-o", "a.json", "-o", "b.json"], "Error: --format json can only be written to one --output-file. Pass --format json again for another file."],
       [["--format", "json", "-o", "herb-lint.json", "--json", "-o", "./herb-lint.json"], "Error: --output-file ./herb-lint.json is used for more than one format."],
       [["--format", "json", "-o", '""'], `Error: --output-file needs a file path, but got "". Leave out --output-file to write to stdout.`],

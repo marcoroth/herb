@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path"
 import { meetsSeverityThreshold } from "@herb-tools/core"
 
 import { SummaryReporter } from "./summary-reporter.js"
-import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, type JSONOutput } from "./formatters/index.js"
+import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, JUnitFormatter, type JSONOutput } from "./formatters/index.js"
 import { isStructuredFormat } from "./argument-parser.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
@@ -57,7 +57,7 @@ export class OutputManager {
     if (!stdoutFormat) {
       // Every format goes to a file
     } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(this.renderJSON(results, reportedOffenses, options))
+      console.log(this.renderResults(stdoutFormat, results, reportedOffenses, options))
     } else {
       const formatter = stdoutFormat === "simple"
         ? new SimpleFormatter()
@@ -69,10 +69,26 @@ export class OutputManager {
       this.summaryReporter.displaySummary(this.summaryData(results, options))
     }
 
-    this.writeOutputFiles(options, () => this.renderJSON(results, reportedOffenses, options))
+    this.writeOutputFiles(options, format => this.renderResults(format, results, reportedOffenses, options))
   }
 
-  private renderJSON(results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): string {
+  private renderResults(format: "json" | "junit", results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): string {
+    if (format === "junit") {
+      const failLevel = options.failLevel ?? "error"
+      const logLevel = options.logLevel ?? "hint"
+
+      // Offenses that fail the run are always included, even below --log-level, so the report agrees with the exit code
+      const offenses = results.allOffenses.filter(({ offense }) =>
+        meetsSeverityThreshold(offense.severity, logLevel) || meetsSeverityThreshold(offense.severity, failLevel)
+      )
+
+      return new JUnitFormatter().render(offenses, {
+        files: results.files,
+        failLevel,
+        duration: options.showTiming ? Date.now() - options.startTime : undefined
+      })
+    }
+
     return JSON.stringify(this.jsonResults(results, reportedOffenses, options), null, 2)
   }
 
@@ -178,7 +194,11 @@ export class OutputManager {
    * Output informational message (like "no files found")
    */
   outputInfo(message: string, options: OutputOptions): void {
-    const render = (): string => {
+    const render = (format: "json" | "junit"): string => {
+      if (format === "junit") {
+        return new JUnitFormatter().renderSkipped(message)
+      }
+
       const output: JSONOutput = {
         offenses: [],
         summary: {
@@ -209,7 +229,7 @@ export class OutputManager {
     } else if (!stdoutFormat) {
       console.error(message)
     } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(render())
+      console.log(render(stdoutFormat))
     } else {
       console.log(message)
     }
@@ -221,7 +241,11 @@ export class OutputManager {
    * Output error message
    */
   outputError(message: string, options: OutputOptions): void {
-    const render = (): string => {
+    const render = (format: "json" | "junit"): string => {
+      if (format === "junit") {
+        return new JUnitFormatter().renderError(message)
+      }
+
       const output: JSONOutput = {
         offenses: [],
         summary: null,
@@ -239,7 +263,7 @@ export class OutputManager {
     if (options.useGitHubActions) {
       console.log(`::error::${message}`)
     } else if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
-      console.log(render())
+      console.log(render(stdoutFormat))
     } else {
       console.error(message)
     }
@@ -257,7 +281,7 @@ export class OutputManager {
    * Writes every structured output that targets a file. A file that can't be written is
    * reported on stderr and fails the run, without affecting the other outputs.
    */
-  private writeOutputFiles(options: OutputOptions, render: () => string): void {
+  private writeOutputFiles(options: OutputOptions, render: (format: "json" | "junit") => string): void {
     for (const { format, path } of options.outputs ?? []) {
       if (path === undefined || !isStructuredFormat(format)) continue
 
@@ -265,7 +289,7 @@ export class OutputManager {
         const filePath = resolve(path)
 
         mkdirSync(dirname(filePath), { recursive: true })
-        writeFileSync(filePath, `${render()}\n`, "utf-8")
+        writeFileSync(filePath, `${render(format)}\n`, "utf-8")
       } catch (error) {
         console.error(`✗ Could not write --output-file ${path}: ${error instanceof Error ? error.message : error}`)
         process.exitCode = 1

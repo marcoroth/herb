@@ -13,16 +13,16 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json"
+export type FormatOption = "simple" | "detailed" | "json" | "junit"
 
-const FORMAT_OPTIONS: FormatOption[] = ["simple", "detailed", "json"]
+const FORMAT_OPTIONS: FormatOption[] = ["simple", "detailed", "json", "junit"]
 
 /**
  * Structured formats are meant for programs rather than humans, so they can
  * be written to a file and keep stdout free of any other output.
  */
-export function isStructuredFormat(format: FormatOption): format is "json" {
-  return format === "json"
+export function isStructuredFormat(format: FormatOption): format is "json" | "junit" {
+  return format === "json" || format === "junit"
 }
 
 export interface OutputTarget {
@@ -93,12 +93,12 @@ export class ArgumentParser {
                                     lower-severity offenses are still counted in the summary, but aren't
                                     printed or annotated in CI
                                     --only and --all-rules lower this level unless it's passed explicitly
-      --format <format>             output format (simple|detailed|json) [default: detailed]
+      --format <format>             output format (simple|detailed|json|junit) [default: detailed]
                                     can be passed multiple times to produce several outputs in one run
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
-      -o, --output-file <path>      write the preceding --format json to a file instead of stdout
-                                    (e.g., herb-lint --format detailed --format json -o herb-lint.json)
+      -o, --output-file <path>      write the preceding structured --format (json|junit) to a file instead of stdout
+                                    (e.g., herb-lint --format detailed --format junit -o herb-lint.xml)
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
@@ -169,11 +169,21 @@ export class ArgumentParser {
     const stdoutOutput = outputs.find(output => output.path === undefined)
     const formatOption = (stdoutOutput ?? outputs[0]).format
 
-    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+    let useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
 
     if (useGitHubActions && stdoutOutput && isStructuredFormat(stdoutOutput.format)) {
-      console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
-      process.exit(1)
+      if (values.github) {
+        if (stdoutOutput.format === "json") {
+          console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+        } else {
+          console.error("Error: --github cannot be used with --format junit on stdout. Use --output-file to write the JUnit report to a file.")
+        }
+
+        process.exit(1)
+      }
+
+      // Annotations detected from GITHUB_ACTIONS would end up in the middle of the structured output
+      useGitHubActions = false
     }
 
     if (values["no-color"]) {
@@ -276,7 +286,7 @@ export class ArgumentParser {
         }
 
         if (!isStructuredFormat(output.format)) {
-          console.error(`Error: --output-file only supports the json format, but it follows ${output.flag}.`)
+          console.error(`Error: --output-file only supports the json and junit formats, but it follows ${output.flag}.`)
           process.exit(1)
         }
 
