@@ -237,6 +237,7 @@ export class Config {
 
   get options(): HerbConfigOptions {
     return {
+      framework: this.config.framework,
       files: this.config.files,
       parser: this.config.parser,
       linter: this.config.linter,

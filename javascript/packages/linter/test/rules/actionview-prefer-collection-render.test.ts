@@ -103,6 +103,18 @@ describe("actionview-prefer-collection-render", () => {
     assertOffenses(html)
   })
 
+  it("flags a loop whose body also holds an ERB comment", () => {
+    const html = dedent`
+      <% @users.each do |user| %> <%# one card per user %>
+        <%= render "user", user: user %>
+      <% end %>
+    `
+
+    expectError('Prefer `<%= render partial: "user", collection: @users %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
+
+    assertOffenses(html)
+  })
+
   it("does not flag a loop that already uses collection rendering", () => {
     expectNoOffenses(dedent`
       <%= render partial: "user", collection: @users %>
