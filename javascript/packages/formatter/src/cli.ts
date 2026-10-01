@@ -61,7 +61,7 @@ export class CLI {
       --indent-width <number>         number of spaces per indentation level (default: 2)
       --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
-      -q, --quiet                     suppress the experimental preview banner and config file notice
+      -q, --quiet                     suppress log output
 
     Examples:
       herb-format                                 # Format all configured files in current directory
@@ -79,7 +79,6 @@ export class CLI {
       herb-format --indent-width 4                # Format with 4-space indentation
       herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
-      herb-format --quiet                         # Format without the startup banner
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
 
