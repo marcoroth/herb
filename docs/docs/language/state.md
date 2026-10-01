@@ -28,7 +28,7 @@ Each scope declares all of its states in one directive, written on one line. Put
 
 ## Kinds
 
-The default decides what kind of value a state holds. The client checks every write against it, so `pending=true` sets a Boolean where `draft=true` sets the four-character String `"true"`.
+The default decides what kind of value a state holds. The client checks every write against it, so `pending=true` sets a Boolean where `draft="true"` sets the four-character String `"true"`.
 
 | Kind | Default | Example |
 | --- | --- | --- |
