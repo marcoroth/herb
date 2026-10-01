@@ -69,4 +69,18 @@ describe("Blank line normalization", () => {
 
     expect(twice).toEqual(once)
   })
+
+  test("keeps a blank run after a comment that follows a text flow run", () => {
+    const source = `<% if a %>\n  <%= x %> /\n  <%# note %>\n\n\n  <%= y %>\n<% end %>`
+
+    expect(formatter.format(source)).toEqual(`<% if a %>\n  <%= x %> / <%# note %>\n\n\n  <%= y %>\n<% end %>`)
+  })
+
+  test("a blank run after a comment that follows a text flow run is idempotent", () => {
+    const source = `<% if a %>\n  <%= x %> /\n  <%# note %>\n\n\n  <%= y %>\n<% end %>`
+    const once = formatter.format(source)
+    const twice = formatter.format(once)
+
+    expect(twice).toEqual(once)
+  })
 })
