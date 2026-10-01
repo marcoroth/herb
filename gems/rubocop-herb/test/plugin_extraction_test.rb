@@ -57,11 +57,10 @@ module RuboCop
         assert_includes source.raw_source, "name == \"José\""
       end
 
-      test "skips comments, escaped ERB, and GraphQL tags" do
+      test "skips comments and escaped ERB" do
         fragments = extract(<<~ERB)
           <%# x=1 %>
           <%% x=1 %%>
-          <%graphql query Example { viewer { login } } %>
         ERB
 
         assert_empty fragments

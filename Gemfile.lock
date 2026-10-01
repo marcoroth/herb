@@ -24,8 +24,8 @@ PATH
 PATH
   remote: gems/rubocop-herb
   specs:
-    rubocop-herb (0.10.3)
-      herb (= 0.10.3)
+    rubocop-herb (0.11.0)
+      herb (= 0.11.0)
       lint_roller (~> 1.1)
       rubocop (>= 1.72.1, < 2)
 
@@ -376,8 +376,8 @@ DEPENDENCIES
   reline (~> 0.7)
   rolldown (~> 1.2)
   rubocop (~> 1.72)
-  rubocop-performance (~> 1.26.0)
   rubocop-herb!
+  rubocop-performance (~> 1.26.0)
   sorbet
   steep (~> 2.1)
   turbo-rails (~> 2.0)
