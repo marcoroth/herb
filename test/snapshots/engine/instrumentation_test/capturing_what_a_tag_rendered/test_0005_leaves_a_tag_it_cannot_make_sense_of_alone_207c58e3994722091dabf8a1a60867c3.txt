@@ -1,0 +1,6 @@
+---
+source: "Engine::InstrumentationTest::capturing what a tag rendered#test_0005_leaves a tag it cannot make sense of alone"
+input: "instrumentation_test-5"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 0, nil, end_line: 1, end_column: 16) { post.body }).to_s; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
+_buf.to_s

@@ -370,6 +370,7 @@ engine:
     security: true       # Enable/disable security validation (default: true)
     nesting: true        # Enable/disable HTML nesting validation (default: true)
     accessibility: true  # Enable/disable accessibility validation (default: true)
+    generator_template: true # Enable/disable the generator template check (default: true)
 ```
 
 The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
@@ -381,6 +382,7 @@ The engine runs validators on templates during compilation. Each validator can b
 - **`security`**: Detects ERB output tags (`<%= %>`) in unsafe positions like attribute names or attribute positions. Prevents potential XSS vulnerabilities. _(default: `true`)_
 - **`nesting`**: Validates HTML nesting rules, such as block elements inside `<p>`, nested anchors, or interactive elements inside `<button>`. _(default: `true`)_
 - **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
+- **`generator_template`**: Reports a template that writes literal ERB through `<%% %>`, which makes it a generator template instead of a page to render. Turning it off compiles such a file to its literal ERB output. _(default: `true`)_
 
 A validator that is disabled (`false`) is not built into the stack that `Herb::Engine::Validators.all` returns, so it never runs.
 
@@ -502,8 +504,29 @@ Result for linter:
 - Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
 - Excludes: All defaults + `public/**/*` + `legacy/**/*`
 
+### Include Precedence <Badge type="tip" text="^0.11.0" />
+
+When a file matches both an `include` and an `exclude` pattern, the more specific pattern wins. Herb compares the leading path segments of each pattern that contain no glob characters, and the `include` pattern takes precedence when it points at the same directory as the `exclude` pattern or at one below it.
+
+| `exclude` pattern | `include` pattern | Winner |
+| --- | --- | --- |
+| `vendor/**/*` | `vendor/keep/**/*.html.erb` | `include`, it names a directory below `vendor/` |
+| `vendor/**/*` | `**/*.html.erb` | `exclude`, the include names no directory |
+| `app/views/legacy/**/*` | `app/views/**/*.html.erb` | `exclude`, it is the more specific of the two |
+| `**/*.generated.html.erb` | `app/views/**/*.html.erb` | `exclude`, it selects files by name and not by location |
+
+The comparison is the same at every level, so this works with `files.include`, `linter.include`, and `formatter.include`. A file has to out-specify every `exclude` pattern it matches to be kept.
+
 ::: tip Including Previously Excluded Files
-If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+To lint files inside a default-excluded directory such as `vendor/**/*` or `coverage/**/*`, add a pattern naming the subdirectory you want back:
+
+```yaml [.herb.yml]
+files:
+  include:
+    - 'vendor/keep/**/*.html.erb'
+```
+
+Everything under `vendor/keep/` is now linted, and the rest of `vendor/` stays excluded. Widening the pattern to `**/*.html.erb` would not work, because a pattern that names no directory never overrides an `exclude`.
 :::
 
 ## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />

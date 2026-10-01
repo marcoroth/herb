@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/analysis",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "Project analysis for Herb: template indexes, render call sites and partial resolution",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -37,15 +37,15 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.10.3",
+    "@herb-tools/core": "0.11.0",
     "picomatch": "^4.0.7",
     "tinyglobby": "^0.2.15"
   },
   "devDependencies": {
-    "@herb-tools/node-wasm": "0.10.3"
+    "@herb-tools/node-wasm": "0.11.0"
   },
   "peerDependencies": {
-    "@herb-tools/core": "0.10.3"
+    "@herb-tools/core": "0.11.0"
   },
   "files": [
     "package.json",

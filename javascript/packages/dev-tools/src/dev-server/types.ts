@@ -54,15 +54,29 @@ export interface ErrorMessage {
   source?: string
 }
 
+export interface BrokenFile {
+  file: string
+  source?: string
+  errors?: ParseError[]
+  diagnostics?: RuntimeDiagnostic[]
+}
+
 export interface WelcomeMessage {
   type: "welcome"
   project: string
   compiler?: boolean
+  broken_files?: BrokenFile[]
 }
 
 export const DEV_SERVER_COMMAND = "bundle exec herb dev"
 
-export type HerbMessage = WelcomeMessage | SchemaMessage | InvalidateMessage | ErrorMessage
+export interface AssetMessage {
+  type: "asset"
+  kind: "stylesheet" | "script"
+  file: string
+}
+
+export type HerbMessage = WelcomeMessage | SchemaMessage | InvalidateMessage | ErrorMessage | AssetMessage
 export type ConnectionState = "connected" | "disconnected" | "given-up"
 export type MessageHandler = (message: HerbMessage) => void
 
@@ -87,6 +101,7 @@ export interface HotReloadHandler {
   onSchema(message: SchemaMessage): void
   onInvalidate(message: InvalidateMessage): void
   onError(message: ErrorMessage): void
+  onAsset(message: AssetMessage): void
 }
 
 export interface HerbClientOptions {
@@ -97,6 +112,7 @@ export interface HerbClientOptions {
   onSchema?: (message: SchemaMessage) => void
   onInvalidate?: (message: InvalidateMessage) => void
   onError?: (message: ErrorMessage) => void
+  onAsset?: (message: AssetMessage) => void
   onConnect?: () => void
   onDisconnect?: () => void
 }

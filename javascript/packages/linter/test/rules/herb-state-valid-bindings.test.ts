@@ -60,6 +60,46 @@ describe("HerbStateValidBindingsRule", () => {
     `)
   })
 
+  test("flags a value binding on a select", () => {
+    expectError("`value` on `<select>` binds the state `order`, and HTML has no `value` attribute on a `<select>`. The browser ignores it, so a server-rendered page shows the first option and not the current one. Write the choice with an action, like `data-herb-set=\"order=$value\"`, and mark the rendered option with `selected` so a value other than the first option renders selected.")
+
+    assertOffenses(dedent`
+      <%# herb:state (order: "oldest") %>
+      <select value="<%= order %>">
+        <option value="oldest">Oldest first</option>
+        <option value="newest">Newest first</option>
+      </select>
+    `)
+  })
+
+  test("flags a value binding on a select ahead of the kind mismatch", () => {
+    expectError("`value` on `<select>` binds the state `agreed`, and HTML has no `value` attribute on a `<select>`. The browser ignores it, so a server-rendered page shows the first option and not the current one. Write the choice with an action, like `data-herb-set=\"agreed=$value\"`, and mark the rendered option with `selected` so a value other than the first option renders selected.")
+
+    assertOffenses(dedent`
+      <%# herb:state (agreed: false) %>
+      <select value="<%= agreed %>"><option value="yes">Yes</option></select>
+    `)
+  })
+
+  test("allows a select written with an action and selected options", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (order: "oldest") %>
+      <select data-herb-set="order=$value">
+        <option value="oldest" selected="<%= order == "oldest" %>">Oldest first</option>
+        <option value="newest" selected="<%= order == "newest" %>">Newest first</option>
+      </select>
+    `)
+  })
+
+  test("allows a value binding on a select's options", () => {
+    expectNoOffenses(dedent`
+      <%# herb:state (order: "oldest") %>
+      <select data-herb-set="order=$value">
+        <option value="<%= order %>">Current</option>
+      </select>
+    `)
+  })
+
   test("checks nothing in a template with no declarations", () => {
     expectNoOffenses(dedent`
       <input value="<%= draft %>">

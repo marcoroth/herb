@@ -6,7 +6,7 @@ input: |2-
 <html><body>Content</body></html>
 ---
 @ DocumentNode (location: (1:0)-(3:33))
-└── children: (3 items)
+└── children: (5 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))
     │   ├── tag_opening: "<!DOCTYPE" (location: (1:0)-(1:9))
     │   ├── children: (1 item)
@@ -15,8 +15,19 @@ input: |2-
     │   │
     │   └── tag_closing: ">" (location: (1:14)-(1:15))
     │
-    ├── @ HTMLTextNode (location: (1:15)-(3:0))
-    │   └── content: "\n<?xml version=\"1.0\"?>\n"
+    ├── @ HTMLTextNode (location: (1:15)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ XMLDeclarationNode (location: (2:0)-(2:21))
+    │   ├── tag_opening: "<?xml" (location: (2:0)-(2:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (2:5)-(2:19))
+    │   │       └── content: " version=\"1.0\""
+    │   │
+    │   └── tag_closing: "?>" (location: (2:19)-(2:21))
+    │
+    ├── @ HTMLTextNode (location: (2:21)-(3:0))
+    │   └── content: "\n"
     │
     └── @ HTMLElementNode (location: (3:0)-(3:33))
         ├── open_tag:

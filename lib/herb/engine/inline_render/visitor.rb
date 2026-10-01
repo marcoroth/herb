@@ -3,6 +3,7 @@
 
 require_relative "../../visitor"
 require_relative "../../visitor/context_aware"
+require_relative "../../visitor/experimental"
 
 module Herb
   class Engine
@@ -32,6 +33,7 @@ module Herb
       # alone when it finds any of it. Anything left alone stays the `render` call it was written as.
       #
       class Visitor < Herb::Visitor
+        extend Herb::Visitor::Experimental
         include Herb::Visitor::ContextAware
 
         ARRAY_PROPERTIES = [:children, :body, :statements].freeze #: Array[Symbol]
@@ -46,6 +48,7 @@ module Herb
 
         required_parser_option track_locations: true
         recommended_parser_option render_nodes: true
+        experimental "Inlining renders is experimental. What a partial is inlined into and when it is left alone may change."
 
         #: () -> bool
         def self.inlines_renders?
@@ -255,7 +258,7 @@ module Herb
           @inliner ||= begin
             require_relative "inliner"
 
-            Inliner.new(project_path: context.project_path, filename: context.relative_file_path)
+            Inliner.new(project_path: context.project_path, filename: context.relative_file_path, resolver: context.resolver)
           end
         end
       end

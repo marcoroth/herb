@@ -46,6 +46,7 @@ export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuo
   static autocorrectable = true
   static ruleName = "html-attribute-double-quotes"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

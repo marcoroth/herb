@@ -312,6 +312,7 @@ impl TemplateDependencies {
       strict_locals: true,
       prism_nodes: true,
       track_whitespace: true,
+      herb_directives: true,
       ..Default::default()
     };
 

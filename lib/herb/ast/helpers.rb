@@ -12,7 +12,7 @@ module Herb
       #: (Herb::AST::Node?) -> String
       def erb_opening(node)
         token = case node
-                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
+                when Herb::AST::ERBContentNode, Herb::AST::ERBCommentNode, Herb::AST::ERBRenderNode, Herb::AST::ERBBlockNode, Herb::AST::ERBIterationBlockNode
                   node.tag_opening
                 end
 
@@ -42,6 +42,7 @@ module Herb
 
       #: (Herb::AST::Node?) -> bool
       def erb_comment_node?(node)
+        return true if node.is_a?(Herb::AST::ERBCommentNode)
         return false unless node.is_a?(Herb::AST::ERBContentNode)
 
         erb_comment?(erb_opening(node)) || inline_ruby_comment?(node)
@@ -55,6 +56,11 @@ module Herb
       #: (String) -> bool
       def erb_omitted?(opening)
         erb_comment?(opening) || erb_custom_opening?(opening)
+      end
+
+      #: (String) -> bool
+      def erb_escaped?(opening)
+        opening.start_with?("<%%")
       end
 
       #: (String) -> bool
@@ -78,15 +84,38 @@ module Herb
         !omitted_close_tag(node).nil?
       end
 
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def open_tags_for(open_tag)
+        case open_tag
+        when Herb::AST::HTMLConditionalOpenTagNode
+          branch_open_tags(open_tag.conditional)
+        when Herb::AST::HTMLOpenTagNode, Herb::AST::ERBOpenTagNode
+          [open_tag]
+        else
+          []
+        end
+      end
+
+      #: (Herb::AST::Node?) -> Array[untyped]
+      def branch_open_tags(node)
+        return [] unless node
+        return [] if node.is_a?(Herb::AST::HTMLElementNode)
+        return [node] if node.is_a?(Herb::AST::HTMLOpenTagNode)
+
+        node.compact_child_nodes.flat_map { |child| branch_open_tags(child) }
+      end
+
       #: (Herb::AST::ERBContentNode) -> bool
       def inline_ruby_comment?(node)
         return false unless node.is_a?(Herb::AST::ERBContentNode)
-        return false if erb_comment?(node.tag_opening&.value || "")
 
-        content = node.content&.value || ""
-        stripped = content.lstrip
+        opening = node.tag_opening&.value.to_s
 
-        stripped.start_with?("#") && !content.include?("\n")
+        return false if erb_comment?(opening) || erb_escaped?(opening)
+
+        content = node.content&.value.to_s
+
+        content.lstrip.start_with?("#") && !content.include?("\n")
       end
     end
   end

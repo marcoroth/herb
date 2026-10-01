@@ -38,4 +38,4 @@ A `<style scoped>` block styles the whole file it was written in, wherever it si
 
 ## References
 
-- [Herb Engine: scoped styles](https://herb-tools.dev/projects/engine)
+- [Language reference: Scoped styles](https://herb-tools.dev/language/scoped-styles)

@@ -1,0 +1,7 @@
+---
+source: "Engine::CLITest#test_0042_compile stdin with options"
+input: "test_0042_compile stdin with options"
+---
+# frozen_string_literal: true
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (user_input).to_s; _buf << '</div>'.freeze;
+_buf.to_s

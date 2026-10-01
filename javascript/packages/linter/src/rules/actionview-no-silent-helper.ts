@@ -98,6 +98,7 @@ export class ActionViewNoSilentHelperRule extends ParserRule<ActionViewNoSilentH
   static autofixRequiresContext = true
   static ruleName = "actionview-no-silent-helper"
   static introducedIn = this.version("0.9.0")
+  static defaultEnabledIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

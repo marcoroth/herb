@@ -70,13 +70,17 @@ module Herb
       bundler_gems_dir = File.expand_path("..", ROOT_PATH)
       candidates = Dir.glob(File.join(bundler_gems_dir, "prism-*"))
 
-      candidates.find { |path| File.directory?(File.join(path, "src")) }
+      candidates.find { |path| prism_source?(path) }
+    end
+
+    def self.prism_source?(path)
+      File.directory?(File.join(path, "src")) && File.exist?(File.join(path, "config.yml"))
     end
 
     def self.find_prism_from_gem_spec
       Gem::Specification.find_all_by_name("prism")
                         .map(&:full_gem_path)
-                        .find { |path| File.directory?(File.join(path, "src")) }
+                        .find { |path| prism_source?(path) }
     end
   end
 end

@@ -464,7 +464,7 @@ module Engine
 
       engine = assert_compiled_snapshot(template, trim: false)
 
-      assert_includes engine.src, "'\nafter\n'"
+      assert_snapshot_matches(engine.src, "whitespace_trimming_test-0")
     end
 
     test "a multi-line control tag keeps the line its code starts on" do
@@ -484,6 +484,34 @@ module Engine
 
       assert_compiled_snapshot(template)
       assert_erubi_line_parity(template)
+    end
+
+    test "keeps the indentation of a tag on the first line that has trailing content" do
+      template = "  <% x = 1 %> b\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation of a comment on the first line that has trailing content" do
+      template = "  <%# note %> b\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation of a tag that ends the template without a newline" do
+      template = "  <% x = 1 %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "still trims a tag on the first line that stands alone" do
+      template = "  <% x = 1 %>\n<%= x %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
   end
 end

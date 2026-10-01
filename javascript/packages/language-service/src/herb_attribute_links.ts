@@ -6,7 +6,7 @@ import { HERB_ATTRIBUTES, ACTION_NAMES, splitOutsideQuotes, parseStateDirective 
 import { lspPosition } from "./range_utils"
 
 import type { ActionName, StateSignature } from "@herb-tools/client/directives"
-import type { DocumentNode, Node, HTMLAttributeNode, LiteralNode, ERBContentNode } from "@herb-tools/core"
+import type { DocumentNode, Node, HTMLAttributeNode, LiteralNode, ERBCommentNode } from "@herb-tools/core"
 
 export interface AttributeStateUsage {
   name: string
@@ -167,7 +167,7 @@ function literalRange(literal: LiteralNode, offset: number, length: number): Ran
 }
 
 export interface StateDirectiveEntry {
-  node: ERBContentNode
+  node: ERBCommentNode
   signature: StateSignature
   scope: Node | null
 }
@@ -186,15 +186,12 @@ class StateDirectiveCollector extends Visitor {
   private stack: Node[] = []
 
   visitChildNodes(node: Node): void {
-    if (node.type === "AST_ERB_CONTENT_NODE") {
-      const content = node as ERBContentNode
+    if (node.type === "AST_ERB_COMMENT_NODE") {
+      const content = node as ERBCommentNode
+      const signature = parseStateDirective(content.content?.value ?? "")
 
-      if (content.tag_opening?.value === "<%#") {
-        const signature = parseStateDirective(content.content?.value ?? "")
-
-        if (signature && !signature.malformed) {
-          this.entries.push({ node: content, signature, scope: this.stack[this.stack.length - 1] ?? null })
-        }
+      if (signature && !signature.malformed) {
+        this.entries.push({ node: content, signature, scope: this.stack[this.stack.length - 1] ?? null })
       }
     }
 

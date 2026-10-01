@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0049_renders an ERB delimiter held in a double quoted Ruby string"
+input: "{source: \"<% x = \\\"<%\\\" %><%= x %>\", locals: {}, options: {}}"
+---
+<%

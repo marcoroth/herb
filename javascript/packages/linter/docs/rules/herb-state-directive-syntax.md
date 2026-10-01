@@ -45,4 +45,5 @@ This rule is autocorrectable. The fix rewrites the directive into its canonical 
 
 ## References
 
+- [Language reference: State, `herb:state`](https://herb-tools.dev/language/state#herb-state)
 - [`herb-state-valid-declaration`](./herb-state-valid-declaration.md) validates what the signature declares, while this rule validates how the directive is spelled.

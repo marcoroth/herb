@@ -1,0 +1,74 @@
+---
+source: "Parser::TitleTest#test_0008_html title after an svg is text again"
+input: "<svg><title>Icon</title></svg><title>a <b>bold</b></title>"
+---
+@ DocumentNode (location: (1:0)-(1:58))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:30))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "svg" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "svg" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLElementNode (location: (1:5)-(1:24))
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:12))
+    │   │       │       ├── tag_opening: "<" (location: (1:5)-(1:6))
+    │   │       │       ├── tag_name: "title" (location: (1:6)-(1:11))
+    │   │       │       ├── tag_closing: ">" (location: (1:11)-(1:12))
+    │   │       │       ├── children: []
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "title" (location: (1:6)-(1:11))
+    │   │       ├── body: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (1:12)-(1:16))
+    │   │       │       └── content: "Icon"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLCloseTagNode (location: (1:16)-(1:24))
+    │   │       │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+    │   │       │       ├── tag_name: "title" (location: (1:18)-(1:23))
+    │   │       │       ├── children: []
+    │   │       │       └── tag_closing: ">" (location: (1:23)-(1:24))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── element_source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:24)-(1:30))
+    │   │       ├── tag_opening: "</" (location: (1:24)-(1:26))
+    │   │       ├── tag_name: "svg" (location: (1:26)-(1:29))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:29)-(1:30))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLElementNode (location: (1:30)-(1:58))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:30)-(1:37))
+        │       ├── tag_opening: "<" (location: (1:30)-(1:31))
+        │       ├── tag_name: "title" (location: (1:31)-(1:36))
+        │       ├── tag_closing: ">" (location: (1:36)-(1:37))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "title" (location: (1:31)-(1:36))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:37)-(1:50))
+        │       └── content: "a <b>bold</b>"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:50)-(1:58))
+        │       ├── tag_opening: "</" (location: (1:50)-(1:52))
+        │       ├── tag_name: "title" (location: (1:52)-(1:57))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:57)-(1:58))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

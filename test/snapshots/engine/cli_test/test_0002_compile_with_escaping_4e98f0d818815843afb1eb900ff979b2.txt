@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0002_compile with escaping"
+input: "test_0002_compile with escaping"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((user_input)); _buf << '</div>'.freeze;
+_buf.to_s

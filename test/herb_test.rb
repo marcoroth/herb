@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class HerbTest < Minitest::Spec
   test "version" do
-    assert_equal "herb gem v0.10.3, libprism v1.9.0, libherb v0.10.3 (Ruby C native extension)", Herb.version
+    assert_equal "herb gem v0.11.0, libprism v1.9.0, libherb v0.11.0 (Ruby C native extension)", Herb.version
   end
 
   test "ensure_installed requires available gems without loading bundler/inline" do

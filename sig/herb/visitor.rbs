@@ -166,5 +166,8 @@ module Herb
 
     # : (Herb::AST::HerbStateDirectiveNode) -> void
     def visit_herb_state_directive_node: (Herb::AST::HerbStateDirectiveNode) -> void
+
+    # : (Herb::AST::ERBCommentNode) -> void
+    def visit_erb_comment_node: (Herb::AST::ERBCommentNode) -> void
   end
 end

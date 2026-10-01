@@ -1,0 +1,6 @@
+---
+source: "Engine::DynamicsCompilerTest::state overrides#test_0001_the values program initializes states through the override channel"
+input: "dynamics_compiler_test-6"
+---
+__herb_dynamics = ::Hash.new;; __herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1; ; _herb_state_overrides = ::Herb::Engine::Slots::StateOverrides.resolve((__herb_state_overrides if defined?(__herb_state_overrides)), "app/views/test.html.erb"); editing = ::Herb::Engine::Slots::StateOverrides.fetch(_herb_state_overrides, "editing", :boolean) { !!(false) }; q = ::Herb::Engine::Slots::StateOverrides.fetch(_herb_state_overrides, "q", :string) { "" } ;; __herb_slot0 = nil; if editing;; __herb_slot0 = { branch: 0, slots: (__herb_scope0 = ::Hash.new) }; else;; __herb_slot0 = { branch: 1, slots: (__herb_scope0 = ::Hash.new) }; end;; __herb_dynamics[0] = (__herb_slot0 || { branch: nil });; __herb_dynamics[1] = (q.length + 1).to_s;
+{ template: "app/views/test.html.erb", version: "51e3e543", occurrence: __herb_occurrence, slots: __herb_dynamics }

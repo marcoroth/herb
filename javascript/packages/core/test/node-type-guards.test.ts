@@ -6,6 +6,7 @@ import {
   LiteralNode,
   HTMLTextNode,
   ERBContentNode,
+  HerbDirectiveNode,
 
 } from '../src/nodes.js'
 
@@ -18,6 +19,7 @@ import {
   isERBContentNode,
   isHTMLNode,
   isERBNode,
+  isHerbDirectiveNode,
   isAnyOf,
   isNoneOf,
   isNode,
@@ -49,6 +51,17 @@ describe('Node Type Guards', () => {
     location: Location.zero,
     errors: [],
     content: 'text'
+  })
+
+  const herbDirectiveNode = new HerbDirectiveNode({
+    type: 'AST_HERB_DIRECTIVE_NODE',
+    location: Location.zero,
+    errors: [],
+    tag_opening: null,
+    content: null,
+    tag_closing: null,
+    key: null,
+    arguments: null,
   })
 
   const erbContentNode = new ERBContentNode({
@@ -112,6 +125,25 @@ describe('Node Type Guards', () => {
       expect(isERBNode(erbContentNode)).toBe(true)
       expect(isERBNode(documentNode)).toBe(false)
       expect(isERBNode(literalNode)).toBe(false)
+      expect(isERBNode(htmlTextNode)).toBe(false)
+    })
+
+    it('narrows to HTMLNode so a caller can reach a shared field', () => {
+      const node: Node = htmlTextNode
+
+      expect(isHTMLNode(node)).toBe(true)
+
+      if (isHTMLNode(node)) {
+        expect(node.type).toBe('AST_HTML_TEXT_NODE')
+      }
+    })
+
+    it('counts a directive as an ERB node, since it is written as an ERB tag', () => {
+      expect(isHerbDirectiveNode(herbDirectiveNode)).toBe(true)
+      expect(isERBNode(herbDirectiveNode)).toBe(true)
+    })
+
+    it('leaves a node without ERB tag tokens out of the group', () => {
       expect(isERBNode(htmlTextNode)).toBe(false)
     })
   })

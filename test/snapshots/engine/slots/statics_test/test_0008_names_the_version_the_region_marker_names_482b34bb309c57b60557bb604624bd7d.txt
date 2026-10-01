@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0008_names the version the region marker names"
+input: "statics_test-0"
+---
+<!--herb-region:app/views/test.html.erb:5c690a9b:0--><div><!--herb-slot:0:conditional--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:5c690a9b"><!--herb-branch:0:0-->x</template>

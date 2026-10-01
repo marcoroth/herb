@@ -1,0 +1,6 @@
+---
+source: "Engine::SecureCompilerTest#test_0018_token optimization basic"
+input: "secure_compiler_test-10"
+---
+_buf = ::String.new; _buf << '<div>Hello</div><span>World</span><p>'.freeze; _buf << (@name).to_s; _buf << '</p>'.freeze;
+_buf.to_s

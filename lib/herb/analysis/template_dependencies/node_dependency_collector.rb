@@ -2,6 +2,8 @@
 
 require "prism"
 
+require_relative "../ruby_reference"
+
 module Herb
   module Analysis
     class TemplateDependencies
@@ -299,14 +301,7 @@ module Herb
         end
 
         def references_name?(code, name)
-          if name.start_with?("@")
-            code.match?(/#{Regexp.escape(name)}\b/)
-          elsif name.include?(".")
-            constant = name.split(".").first
-            code.include?(constant.to_s)
-          else
-            code.match?(/\b#{Regexp.escape(name)}\b/)
-          end
+          RubyReference.references?(code, name)
         end
       end
     end

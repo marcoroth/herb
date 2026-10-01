@@ -539,7 +539,7 @@ impl Node for <%= node.name %> {
   }
 }
 
-<%- if node.name.start_with?("ERB") -%>
+<%- if node.erb_tag? -%>
 impl ERBNode for <%= node.name %> {
   fn tag_opening(&self) -> &Option<Token> {
     &self.tag_opening

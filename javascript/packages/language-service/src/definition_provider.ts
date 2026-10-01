@@ -180,7 +180,7 @@ export class DefinitionProvider {
   }
 
   partialReferences(document: TextDocument): PartialReference[] {
-    const result = this.parserService.parseContent(document.getText(), { render_nodes: true })
+    const result = this.parserService.parseContent(document.getText(), { render_nodes: true }, document.uri)
     const collector = new RenderCollector()
 
     collector.visit(result.value as DocumentNode)
@@ -269,8 +269,9 @@ export class DefinitionProvider {
 
     if (!source) return []
 
-    const declaration = this.strictLocalsDeclaration(source)
-    const body = this.outline(source)
+    const uri = uriFromPath(filePath)
+    const declaration = this.strictLocalsDeclaration(source, uri)
+    const body = this.outline(source, uri)
     const parts: string[] = []
 
     if (declaration) parts.push(declaration)
@@ -281,8 +282,8 @@ export class DefinitionProvider {
     return ["", "```erb", parts.join("\n\n"), "```"]
   }
 
-  private strictLocalsDeclaration(source: string): string | null {
-    const result = this.parserService.parseContent(source, { strict_locals: true })
+  private strictLocalsDeclaration(source: string, uri: string): string | null {
+    const result = this.parserService.parseContent(source, { strict_locals: true }, uri)
     const node = result.value.compactChildNodes().find(child => isERBStrictLocalsNode(child))
 
     if (!node) return null
@@ -292,8 +293,8 @@ export class DefinitionProvider {
     return lines.join("\n").trim()
   }
 
-  private outline(source: string): string[] {
-    const result = this.parserService.parseContent(source, { strict_locals: true, track_whitespace: true })
+  private outline(source: string, uri: string): string[] {
+    const result = this.parserService.parseContent(source, { strict_locals: true, track_whitespace: true }, uri)
 
     const nodes = result.value.compactChildNodes()
       .filter(child => !isERBStrictLocalsNode(child))

@@ -1,0 +1,5 @@
+---
+source: "Parser::ParserOptionsTest#test_0002_html false reaches the parse result"
+input: "Herb::ParserOptions.new(html: false)"
+---
+#<Herb::ParserOptions action_view_helpers=false, analyze=true, arena_stats=false, dot_notation_tags=false, erb_openers=[], herb_directives=false, html=false, iteration_nodes=false, max_errors=25, prism_nodes=false, prism_nodes_deep=false, prism_program=false, render_nodes=false, strict=true, strict_locals=false, timeout=1, track_locations=true, track_whitespace=false, transform_conditionals=false>

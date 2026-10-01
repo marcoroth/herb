@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::VisitorTest#test_0063_names a template by a digest of its path when asked"
+input: "visitor_test-2"
+---
+19aa24b9908e

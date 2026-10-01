@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0039_emits escaped ERB tags as literal text inside parsed HTML"
+input: "{source: \"<div class=\\\"card\\\"><%%= name %></div>\\n\", locals: {}, options: {}}"
+---
+<div class="card"><%= name %></div>

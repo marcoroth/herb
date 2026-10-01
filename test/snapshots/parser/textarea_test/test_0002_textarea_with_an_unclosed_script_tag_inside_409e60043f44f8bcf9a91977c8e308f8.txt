@@ -1,0 +1,86 @@
+---
+source: "Parser::TextareaTest#test_0002_textarea with an unclosed script tag inside"
+input: |2-
+<textarea class="form-control" onfocus="$(this).select()" readonly>
+  <script src='....' type='module' ...>
+</textarea>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:11))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:67))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "textarea" (location: (1:1)-(1:9))
+    │   │       ├── tag_closing: ">" (location: (1:66)-(1:67))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:10)-(1:30))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:10)-(1:15))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:10)-(1:15))
+    │   │       │   │   │               └── content: "class"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:15)-(1:16))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:16)-(1:30))
+    │   │       │   │           ├── open_quote: """ (location: (1:16)-(1:17))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:17)-(1:29))
+    │   │       │   │           │       └── content: "form-control"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:29)-(1:30))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:31)-(1:57))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:38))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:31)-(1:38))
+    │   │       │   │   │               └── content: "onfocus"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:38)-(1:39))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:39)-(1:57))
+    │   │       │   │           ├── open_quote: """ (location: (1:39)-(1:40))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:40)-(1:56))
+    │   │       │   │           │       └── content: "$(this).select()"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:56)-(1:57))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:58)-(1:66))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:58)-(1:66))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:58)-(1:66))
+    │   │       │       │               └── content: "readonly"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: ∅
+    │   │       │       └── value: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "textarea" (location: (1:1)-(1:9))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:67)-(3:0))
+    │   │       └── content: "\n  <script src='....' type='module' ...>\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:11))
+    │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
+    │   │       ├── tag_name: "textarea" (location: (3:2)-(3:10))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:10)-(3:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (3:11)-(4:0))
+        └── content: "\n"

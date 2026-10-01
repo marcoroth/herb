@@ -29,7 +29,9 @@ options: {render_nodes: true}
     │   │       ├── variants: ∅
     │   │       ├── handlers: ∅
     │   │       ├── content_type: "text/html" (location: (1:42)-(1:53))
-    │   │       └── locals: []
+    │   │       ├── locals: []
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

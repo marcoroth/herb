@@ -47,7 +47,7 @@ export class Visitor implements IVisitor {
   <%- nodes.each do |node| -%>
   visit<%= node.name %>(node: <%= node.name %>): void {
     this.visitNode(node)
-    <%- if node.name.start_with?("ERB") -%>
+    <%- if node.erb_tag? -%>
     this.visitERBNode(node)
     <%- end -%>
     this.visitChildNodes(node)

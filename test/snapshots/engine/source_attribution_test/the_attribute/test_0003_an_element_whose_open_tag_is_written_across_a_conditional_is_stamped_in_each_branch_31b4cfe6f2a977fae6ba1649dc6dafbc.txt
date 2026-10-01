@@ -1,0 +1,7 @@
+---
+source: "Engine::SourceAttributionTest::the attribute#test_0003_an element whose open tag is written across a conditional is stamped in each branch"
+input: "{source: \"<% if condition %>\\n  <div class=\\\"a\\\">\\n<% else %>\\n  <div class=\\\"b\\\">\\n<% end %>\\n  Content\\n</div>\\n\", locals: {condition: true}, options: {escape: false, visitors: [#<Herb::Engine::SourceAttributionVisitor>], filename: \"app/views/posts/_card.html.erb\"}}"
+---
+  <div class="a" data-herb-source="app/views/posts/_card.html.erb:2:3">
+  Content
+</div>

@@ -7,7 +7,7 @@ import { LineContextCollector } from "./line_context_collector"
 import { lspLine } from "./range_utils"
 import { determineStrategy, commentLineContent, uncommentLineContent, carriesCommentedTagPrefix } from "./comment_ast_utils"
 
-import { isERBCommentNode } from "@herb-tools/core"
+import { isERBCommentNode, isInlineRubyCommentNode } from "@herb-tools/core"
 
 import type { LineInfo } from "./line_context_collector"
 import type { ERBContentNode, HTMLCommentNode } from "@herb-tools/core"
@@ -72,7 +72,7 @@ export class CommentProvider {
     if (allCommented) {
       for (const info of lineInfos) {
         const lineText = this.getLineText(document, info.line)
-        const edit = this.uncommentLine(info, lineText, collector)
+        const edit = this.uncommentLine(info, lineText, collector, document.uri)
 
         if (edit) edits.push(edit)
       }
@@ -82,7 +82,7 @@ export class CommentProvider {
 
         const lineText = this.getLineText(document, info.line)
         const erbNodes = collector.erbNodesPerLine.get(info.line) || []
-        const edit = this.commentLine(info, lineText, erbNodes, collector)
+        const edit = this.commentLine(info, lineText, erbNodes, collector, document.uri)
 
         if (edit) edits.push(edit)
       }
@@ -122,7 +122,7 @@ export class CommentProvider {
     }
   }
 
-  private commentLine(info: LineInfo, lineText: string, erbNodes: ERBContentNode[], collector: LineContextCollector): TextEdit | null {
+  private commentLine(info: LineInfo, lineText: string, erbNodes: ERBContentNode[], collector: LineContextCollector, uri: string): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
     const indent = this.getIndentation(lineText)
     const content = lineText.trimStart()
@@ -145,7 +145,7 @@ export class CommentProvider {
       return TextEdit.insert(Position.create(info.line, insertColumn), "#")
     }
 
-    const result = commentLineContent(content, erbNodes, strategy, this.parserService)
+    const result = commentLineContent(content, erbNodes, strategy, this.parserService, uri)
 
     return TextEdit.replace(lineRange, indent + result)
   }
@@ -220,7 +220,7 @@ export class CommentProvider {
     return edits
   }
 
-  private uncommentLine(info: LineInfo, lineText: string, collector: LineContextCollector): TextEdit | null {
+  private uncommentLine(info: LineInfo, lineText: string, collector: LineContextCollector, uri: string): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
     const indent = this.getIndentation(lineText)
     const ifFalseContent = this.lineIsIfFalseWrapped(lineText)
@@ -233,7 +233,7 @@ export class CommentProvider {
       const node = info.node as ERBContentNode | null
       if (!node?.tag_opening || !node?.tag_closing) return null
 
-      if (!isERBCommentNode(node) || lspLine(node.tag_opening.location.start) !== info.line) {
+      if (!(isERBCommentNode(node) || isInlineRubyCommentNode(node)) || lspLine(node.tag_opening.location.start) !== info.line) {
         return this.uncommentRubyLine(lineText, info.line)
       }
 
@@ -248,14 +248,14 @@ export class CommentProvider {
 
       if (erbNodes.length > 1) {
         const content = lineText.trimStart()
-        const result = uncommentLineContent(content, this.parserService)
+        const result = uncommentLineContent(content, this.parserService, uri)
 
         return TextEdit.replace(lineRange, indent + result)
       }
 
       const hashColumn = node.tag_opening.location.start.column + 2
 
-      if (carriesCommentedTagPrefix(contentValue ?? "", this.parserService.commentedERBTagPrefixes())) {
+      if (carriesCommentedTagPrefix(contentValue ?? "", this.parserService.commentedERBTagPrefixes(undefined, uri))) {
         return TextEdit.del(Range.create(info.line, hashColumn, info.line, hashColumn + 2))
       }
 
@@ -270,7 +270,7 @@ export class CommentProvider {
         const contentEnd = commentNode.comment_end.location.start.column
         const innerContent = lineText.substring(contentStart, contentEnd).trim()
 
-        const result = uncommentLineContent(innerContent, this.parserService)
+        const result = uncommentLineContent(innerContent, this.parserService, uri)
 
         return TextEdit.replace(lineRange, `${indent}${result}`)
       }

@@ -5,6 +5,7 @@
 #include "../include/lib/hb_string.h"
 #include "../include/location/position.h"
 #include "../include/location/range.h"
+#include "../include/util/utf8.h"
 #include "../include/util/util.h"
 
 #include <stdarg.h>
@@ -226,6 +227,81 @@ token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
   new_token->location = token->location;
 
   return new_token;
+}
+
+static position_T token_position_after(position_T position, hb_string_T value, uint32_t offset) {
+  uint32_t index = 0;
+
+  while (index < offset && index < value.length) {
+    if (is_newline(value.data[index])) {
+      position.line++;
+      position.column = 0;
+      index++;
+
+      continue;
+    }
+
+    position.column++;
+    index += utf8_sequence_length(hb_string_slice(value, index));
+  }
+
+  return position;
+}
+
+static token_T* token_from_slice(
+  const token_T* token,
+  hb_string_T value,
+  uint32_t offset,
+  position_T start,
+  position_T end,
+  hb_allocator_T* allocator
+) {
+  token_T* slice = hb_allocator_alloc(allocator, sizeof(token_T));
+
+  if (!slice) { return NULL; }
+
+  slice->value = token->owns_value ? hb_string_copy(value, allocator) : value;
+  slice->owns_value = token->owns_value;
+
+  slice->type = token->type;
+  slice->range = (range_T) { .from = token->range.from + offset, .to = token->range.from + offset + value.length };
+
+  location_from_positions(&slice->location, start, end);
+
+  return slice;
+}
+
+bool token_split(
+  const token_T* token,
+  const uint32_t offset,
+  hb_allocator_T* allocator,
+  token_T** head,
+  token_T** tail
+) {
+  if (!token || !head || !tail) { return false; }
+  if (offset == 0 || offset >= token->value.length) { return false; }
+  if (utf8_is_valid_continuation_byte((unsigned char) token->value.data[offset])) { return false; }
+
+  const position_T split = token_position_after(token->location.start, token->value, offset);
+
+  token_T* head_token =
+    token_from_slice(token, hb_string_range(token->value, 0, offset), 0, token->location.start, split, allocator);
+
+  if (!head_token) { return false; }
+
+  token_T* tail_token =
+    token_from_slice(token, hb_string_slice(token->value, offset), offset, split, token->location.end, allocator);
+
+  if (!tail_token) {
+    token_free(head_token, allocator);
+
+    return false;
+  }
+
+  *head = head_token;
+  *tail = tail_token;
+
+  return true;
 }
 
 bool token_value_empty(const token_T* token) {

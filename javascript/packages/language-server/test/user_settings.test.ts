@@ -87,7 +87,8 @@ describe("UserSettings", () => {
           indentStyle: "space",
           maxLineLength: 80
         },
-        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 }
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        runtimeReports: { inlayHints: true }
       })
 
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
@@ -110,7 +111,8 @@ describe("UserSettings", () => {
           indentStyle: "space",
           maxLineLength: 80
         },
-        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 }
+        inlayHints: { enabled: true, minimumLines: 10, maximumClasses: 2 },
+        runtimeReports: { inlayHints: true }
       })
     })
 
@@ -145,6 +147,27 @@ describe("UserSettings", () => {
       const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
 
       expect(result.inlayHints).toEqual({ enabled: true, minimumLines: 5, maximumClasses: 2 })
+    })
+
+    test("stops offering the runtime hints once the user turns them off", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        runtimeReports: { inlayHints: false }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.runtimeReports?.inlayHints).toBe(false)
+      expect(result.inlayHints?.enabled).toBe(true)
+    })
+
+    test("leaves the runtime hints on for a user who only turned the closing tag hints off", async () => {
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue({
+        inlayHints: { enabled: false }
+      })
+
+      const result = await settingsFor(withConfiguration).getDocumentSettings("file:///test.erb")
+
+      expect(result.runtimeReports?.inlayHints).toBe(true)
     })
 
     test("keeps fixOnSave when the user turns it off", async () => {

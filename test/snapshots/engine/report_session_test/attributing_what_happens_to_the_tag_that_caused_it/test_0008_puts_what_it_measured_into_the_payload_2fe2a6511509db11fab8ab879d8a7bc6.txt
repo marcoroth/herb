@@ -1,0 +1,5 @@
+---
+source: "Engine::ReportSessionTest::attributing what happens to the tag that caused it#test_0008_puts what it measured into the payload"
+input: "session_test-0"
+---
+{"version":1,"diagnostics":[{"template":"a.html.erb","message":"1 SQL query","code":"sql-queries","kind":"metric","origin":"Herb Engine","location":{"start":{"line":1,"column":1},"end":{"line":1,"column":1}},"value":"1 SQL query","phase":"runtime","data":{"queries":["SELECT 1"]}}],"renderTree":[],"nodes":{},"sources":{}}

@@ -59,6 +59,15 @@ class StateValidBindingsVisitor extends BaseRuleVisitor {
 
       const [name, declaration] = read
 
+      if (tag === "select" && attributeName === "value") {
+        this.addOffense(
+          `\`value\` on \`<select>\` binds the state \`${name}\`, and HTML has no \`value\` attribute on a \`<select>\`. The browser ignores it, so a server-rendered page shows the first option and not the current one. Write the choice with an action, like \`data-herb-set="${name}=$value"\`, and mark the rendered option with \`selected\` so a value other than the first option renders selected.`,
+          attribute.location,
+        )
+
+        return
+      }
+
       if (isDerived(declaration)) {
         this.addOffense(
           `\`${attributeName}\` binds the derived state \`${name}\`, and a binding writes back what the user changes. A derived state cannot be written, so bind one of its sources, or show the value outside a form control.`,
@@ -169,7 +178,8 @@ function capitalize(word: string): string {
 
 export class HerbStateValidBindingsRule extends ParserRule {
   static ruleName = "herb-state-valid-bindings"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get parserOptions(): Partial<ParserOptions> {
     return {

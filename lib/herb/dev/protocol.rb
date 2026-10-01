@@ -39,6 +39,15 @@ module Herb
         }
       end
 
+      #: (project: String?, ?broken_files: Array[String]) -> Hash[Symbol, untyped]
+      def self.welcome(project:, broken_files: [])
+        {
+          type: "welcome",
+          project: project,
+          broken_files: broken_files,
+        }
+      end
+
       #: (file: String, version: String?, node_path: Array[Integer], scope: Symbol) -> Hash[Symbol, untyped]
       def self.invalidate(file:, version:, node_path:, scope:)
         {
@@ -50,9 +59,23 @@ module Herb
         }
       end
 
+      #: (kind: Symbol, file: String) -> Hash[Symbol, untyped]
+      def self.asset(kind:, file:)
+        {
+          type: "asset",
+          kind: kind.to_s,
+          file: file,
+        }
+      end
+
       #: (file: String, source: String, errors: Array[untyped]) -> Hash[Symbol, untyped]
       def self.error(file:, source:, errors:)
-        entries = errors.map { |parse_error|
+        { type: "error", file: file, source: source, errors: error_entries(file, errors) }
+      end
+
+      #: (String, Array[untyped]) -> Array[Hash[Symbol, untyped]]
+      def self.error_entries(file, errors)
+        errors.map { |parse_error|
           diagnostic = parse_error.to_diagnostic(template: file)
 
           {
@@ -65,8 +88,17 @@ module Herb
             column: parse_error.location.start.column,
           }
         }
+      end
 
-        { type: "error", file: file, source: source, errors: entries }
+      #: (file: String, ?source: String?, ?errors: Array[untyped]?, ?diagnostics: Array[untyped]?) -> Hash[Symbol, untyped]
+      def self.broken(file:, source: nil, errors: nil, diagnostics: nil)
+        entry = { file: file } #: Hash[Symbol, untyped]
+
+        entry[:source] = source if source
+        entry[:errors] = error_entries(file, errors) if errors
+        entry[:diagnostics] = diagnostics if diagnostics
+
+        entry
       end
 
       #: (Array[Hash[Symbol, untyped]], Array[Hash[Symbol, untyped]], Array[Herb::Diff::Operation]) -> Hash[String, untyped]?

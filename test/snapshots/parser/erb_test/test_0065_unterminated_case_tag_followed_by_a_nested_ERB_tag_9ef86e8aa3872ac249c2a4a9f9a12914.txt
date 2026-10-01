@@ -1,0 +1,54 @@
+---
+source: "Parser::ERBTest#test_0065_unterminated case tag followed by a nested ERB tag"
+input: |2-
+<% case status
+<%= name %>
+---
+@ DocumentNode (location: (1:0)-(2:11))
+├── errors: (3 errors)
+│   ├── @ RubyParseError (location: (1:3)-(1:7))
+│   │   ├── message: "case_missing_conditions: expected a `when` or `in` clause after `case`"
+│   │   ├── error_message: "expected a `when` or `in` clause after `case`"
+│   │   ├── diagnostic_id: "case_missing_conditions"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:3)-(1:7))
+│   │   ├── message: "case_term: expected an `end` to close the `case` statement"
+│   │   ├── error_message: "expected an `end` to close the `case` statement"
+│   │   ├── diagnostic_id: "case_term"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (2:4)-(2:8))
+│       ├── message: "expect_eol_after_statement: unexpected local variable or method, expecting end-of-input"
+│       ├── error_message: "unexpected local variable or method, expecting end-of-input"
+│       ├── diagnostic_id: "expect_eol_after_statement"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBCaseNode (location: (1:0)-(2:0))
+        ├── errors: (2 errors)
+        │   ├── @ NestedERBTagError (location: (2:0)-(2:3))
+        │   │   ├── message: "ERB tag `<%` at (1:0) was terminated by nested `<%` tag at (2:0). Nesting `<%` tags is not supported."
+        │   │   ├── opening_tag: "<%" (location: (1:0)-(1:2))
+        │   │   ├── nested_tag_line: 2
+        │   │   └── nested_tag_column: 0
+        │   │
+        │   └── @ MissingERBEndTagError (location: (1:0)-(2:0))
+        │       ├── message: "`<% case %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% case %>`"
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " case status
+        " (location: (1:2)-(2:0))
+        ├── tag_closing: ∅
+        ├── children: (1 item)
+        │   └── @ ERBContentNode (location: (2:0)-(2:11))
+        │       ├── tag_opening: "<%=" (location: (2:0)-(2:3))
+        │       ├── content: " name " (location: (2:3)-(2:9))
+        │       ├── tag_closing: "%>" (location: (2:9)-(2:11))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        ├── conditions: []
+        ├── else_clause: ∅
+        └── end_node: ∅

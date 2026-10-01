@@ -4,17 +4,20 @@
 require "json"
 
 require_relative "../../diagnostic"
+require_relative "observations"
 
 module Herb
   class Engine
     module Runtime
       class Report
         VERSION = 1 #: Integer
+        MAX_TAG_LENGTH = 120 #: Integer
         MAX_DIAGNOSTICS = 200 #: Integer
         ATTRIBUTE = "data-herb-diagnostics" #: String
 
         attr_reader :meta #: Hash[Symbol, untyped]
         attr_reader :sources #: Hash[String, String]
+        attr_reader :digests #: Hash[String, String]
         attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
         attr_reader :render_tree #: Array[Hash[Symbol, untyped]]
 
@@ -24,14 +27,15 @@ module Herb
           @diagnostics = {} #: Hash[Array[untyped], Herb::Diagnostic]
           @meta = {} #: Hash[Symbol, untyped]
           @sources = {} #: Hash[String, String]
+          @digests = {} #: Hash[String, String]
           @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
           @render_tree = [] #: Array[Hash[Symbol, untyped]]
           @channels = {} #: Hash[Symbol, untyped]
         end
 
         #: (Symbol) { () -> untyped } -> untyped
-        def channel(name, &build)
-          @channels[name] ||= build.call
+        def channel(name)
+          @channels[name] ||= yield
         end
 
         #: () -> Array[untyped]
@@ -67,8 +71,15 @@ module Herb
           @sources[template] = source if source
         end
 
-        #: (String, String?, String?, ?called_from: Array[untyped]?) -> void
-        def render(id, template, parent, called_from: nil)
+        #: (String?) -> String?
+        def digest_for(template)
+          @digests[template]
+        end
+
+        #: (String, String?, String?, ?called_from: Array[untyped]?, ?digest: String?) -> void
+        def render(id, template, parent, called_from: nil, digest: nil)
+          @digests[template] ||= digest if template && digest
+
           node = { id: id, template: template, parent: parent } #: Hash[Symbol, untyped]
 
           if called_from
@@ -117,7 +128,7 @@ module Herb
         def to_h
           {
             version: VERSION,
-            diagnostics: diagnostics.map(&:to_h),
+            diagnostics: diagnostics.map { |diagnostic| serialized(diagnostic) },
             renderTree: @render_tree,
             nodes: @nodes,
             sources: sources,
@@ -137,6 +148,51 @@ module Herb
         end
 
         private
+
+        #: (Herb::Diagnostic) -> Hash[Symbol, untyped]
+        def serialized(diagnostic)
+          observed = Observations.trim(Observations.jsonable(diagnostic.data))
+          tag = tag_source(diagnostic)
+
+          diagnostic.to_h.merge(observed.empty? ? {} : { data: observed }).merge(tag ? { tag: tag } : {})
+        end
+
+        #: (Herb::Diagnostic) -> String?
+        def tag_source(diagnostic)
+          location = diagnostic.location
+          finish = location&.end
+
+          return nil unless location && finish
+          return nil unless location.start.line == finish.line
+
+          line = template_line(diagnostic.template, location.start.line)
+
+          return nil unless line
+
+          text = line[(location.start.column)...(finish.column)].to_s.strip
+
+          text.empty? ? nil : Observations.truncate(text, MAX_TAG_LENGTH)
+        end
+
+        #: (String, Integer) -> String?
+        def template_line(template, line)
+          source = @sources[template] || read_template(template)
+
+          return nil unless source
+
+          source.lines[line - 1]&.chomp
+        end
+
+        #: (String) -> String?
+        def read_template(template)
+          @read ||= {} #: Hash[String, String?]
+
+          @read.fetch(template) do
+            @read[template] = File.exist?(template) ? File.read(template) : nil
+          end
+        rescue SystemCallError, IOError
+          nil
+        end
 
         #: () -> String
         def escaped_json

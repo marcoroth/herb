@@ -1,7 +1,8 @@
 import { ITEM_STATICS } from "../markup/markers"
 
+import { buildSubtree } from "./build"
 import { connected, markers, outerRange } from "../markup/anchors"
-import { attributeNames, blankSeeds, blankSlots, fillSlots } from "../markup/fragments"
+import { attributeNames, blankSeeds, blankSlots } from "../markup/fragments"
 import { itemMarker, itemStaticsKey, parseMarker } from "../markup/markers"
 
 import type { Journal } from "./journal"
@@ -18,6 +19,8 @@ export interface CollectionsDelegate {
   announceItemAdded(slot: Slot, key: string, item: Item | null): void
   announceItemRemoved(slot: Slot, key: string, item: Item | null): void
   announceItemRekeyed(slot: Slot, key: string, previousKey: string, item: Item | null): void
+  announceItemsMoving(slot: Slot, items: Item[]): void
+  announceItemsMoved(slot: Slot, items: Item[]): void
 }
 
 export class Collections {
@@ -102,12 +105,24 @@ export class Collections {
     }
 
     for (const key of plan.added) {
-      this.buildItem(slot, key, template)
+      this.buildItem(slot, key, template, this.anchorFor(slot, wanted, key))
     }
 
     this.order(slot, wanted)
 
     return []
+  }
+
+  private anchorFor(slot: Slot, wanted: string[], key: string): Node | null {
+    for (const following of wanted.slice(wanted.indexOf(key) + 1)) {
+      const item = slot.items.get(following)
+
+      if (item) {
+        return item.start
+      }
+    }
+
+    return this.itemsEnd(slot)
   }
 
   private rowTemplate(slot: Slot): DocumentFragment | null {
@@ -146,8 +161,41 @@ export class Collections {
   }
 
   private buildItem(slot: Slot, key: string, template: DocumentFragment, anchor?: Node | null, values: SlotValues = {}, text = false): void {
-    const copy = template.cloneNode(true) as DocumentFragment
+    const target = this.insertionPoint(slot, anchor)
 
+    if (!target) {
+      return
+    }
+
+    const added = buildSubtree({
+      template,
+      target,
+      values,
+      text,
+      resolve: this.partsResolver(slot),
+      prepare: (copy) => this.prepareItem(copy, slot, key),
+    })
+
+    this.delegate.scan(added, { region: slot.region, slot, item: slot.item })
+
+    this.journal.record(slot, () => (live) => {
+      const made = live.items.get(key)
+
+      if (made) {
+        this.dropItem(live, made)
+      }
+    })
+
+    const item = slot.items.get(key) ?? null
+
+    if (item) {
+      this.delegate.recordBuilt(slot, item)
+    }
+
+    this.delegate.announceItemAdded(slot, key, item)
+  }
+
+  private prepareItem(copy: DocumentFragment, slot: Slot, key: string): void {
     for (const marker of markers(copy)) {
       if (marker.nodeType !== Node.COMMENT_NODE) {
         continue
@@ -174,35 +222,6 @@ export class Collections {
         node.remove()
       }
     }
-
-    fillSlots(copy, values, text, this.partsResolver(slot))
-
-    const added = [...copy.childNodes]
-    const target = this.insertionPoint(slot, anchor)
-
-    if (!target) {
-      return
-    }
-
-    target.parentNode?.insertBefore(copy, target)
-
-    this.delegate.scan(added, { region: slot.region, slot, item: slot.item })
-
-    this.journal.record(slot, () => (live) => {
-      const made = live.items.get(key)
-
-      if (made) {
-        this.dropItem(live, made)
-      }
-    })
-
-    const item = slot.items.get(key) ?? null
-
-    if (item) {
-      this.delegate.recordBuilt(slot, item)
-    }
-
-    this.delegate.announceItemAdded(slot, key, item)
   }
 
   private insertionPoint(slot: Slot, anchor?: Node | null): Node | null {
@@ -274,25 +293,29 @@ export class Collections {
       return
     }
 
+    const present = this.itemsInDocumentOrder(slot)
+    const items = keys.map((key) => slot.items.get(key)).filter((item): item is Item => item !== undefined)
+
+    if (items.length === present.length && items.every((item, position) => item === present[position])) {
+      return
+    }
+
     this.journal.record(slot, () => {
-      const before = this.itemsInDocumentOrder(slot).map((item) => item.key)
+      const before = present.map((item) => item.key)
 
       return (live) => {
         this.order(live, before)
       }
     })
 
-    for (const key of keys) {
-      const item = slot.items.get(key)
+    this.delegate.announceItemsMoving(slot, items)
 
-      if (!item) {
-        continue
-      }
-
+    for (const item of items) {
       end.parentNode?.insertBefore(outerRange(item).extractContents(), end)
     }
 
     this.pruneItems(slot)
+    this.delegate.announceItemsMoved(slot, items)
   }
 
   addItem(slot: Slot, key: string, options: AddItemOptions = {}): Item | null {
@@ -408,7 +431,7 @@ export class Collections {
     }
   }
 
-  private itemsInDocumentOrder(slot: Slot): Item[] {
+  itemsInDocumentOrder(slot: Slot): Item[] {
     return [...slot.items.values()]
       .filter((item) => item.start.isConnected)
       .sort((left, right) => {

@@ -45,6 +45,12 @@ module Herb
         def seeds_open_suffix: () -> String
 
         # : (Integer) -> String
+        def keyed_open_prefix: (Integer) -> String
+
+        # : () -> String
+        def keyed_open_suffix: () -> String
+
+        # : (Integer) -> String
         def item_open_prefix: (Integer) -> String
 
         # : () -> String

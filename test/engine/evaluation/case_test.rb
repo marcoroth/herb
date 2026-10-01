@@ -41,11 +41,13 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template, parser_options: { strict: true })
-      end
+      [true, false].each do |strict|
+        error = assert_raises(Herb::Engine::CompilationError) do
+          Herb::Engine.new(template, parser_options: { strict: strict })
+        end
 
-      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+        assert_equal ["ERBCaseInlinePatternMatchError"], error.diagnostics.map(&:code)
+      end
     end
 
     test "case when on newline in same ERB tag" do

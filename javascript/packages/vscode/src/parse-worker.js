@@ -56,7 +56,9 @@ const { Config } = require('@herb-tools/config');
 
     const content = fs.readFileSync(file, 'utf8');
     const parseResult = Herb.parse(content, parserOptions);
-    const parseErrors = parseResult.recursiveErrors().length;
+    const errors = parseResult.recursiveErrors();
+    const parseErrors = errors.length;
+    const timedOut = errors.some(error => error.type === 'TIMEOUT_ERROR');
 
     let lintOffenses = [];
     let lintErrors = 0;
@@ -137,6 +139,7 @@ const { Config } = require('@herb-tools/config');
       linterDisabled: !linterEnabled,
       formatterIssues,
       formatterDisabled: !formatterEnabled,
+      timedOut,
       version: Herb.version
     };
 

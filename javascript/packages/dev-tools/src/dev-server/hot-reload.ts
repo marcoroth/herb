@@ -6,11 +6,12 @@ import { diffStateManifests } from "./manifest-diff"
 import { rebuildRegion, stateOwnedIndices } from "./rebuild"
 import { heldRuntime } from "./runtime-handle"
 import { diagnosticFromRefreshFailure } from "./diagnostics"
+import { refreshStylesheets } from "./stylesheets"
 
 import { SlotsRequestError, parseStaticsKey } from "@herb-tools/client"
 
 import type { Region, Runtime } from "@herb-tools/client"
-import type { DiagnosticSink, ErrorMessage, HotReloadHandler, InvalidateMessage, SchemaMessage } from "./types"
+import type { AssetMessage, DiagnosticSink, ErrorMessage, HotReloadHandler, InvalidateMessage, SchemaMessage } from "./types"
 
 export interface HotReloadOptions {
   runtime?: () => Runtime | null
@@ -168,6 +169,24 @@ export class HotReload implements HotReloadHandler {
     }
 
     entry.timer = setTimeout(() => this.settle(message.file), this.options.graceMs ?? DEFAULT_GRACE_MS)
+  }
+
+  onAsset(message: AssetMessage): void {
+    if (!this.enabled) {
+      return
+    }
+
+    if (message.kind === "script") {
+      this.reload(message.file, "a JavaScript build output changed")
+
+      return
+    }
+
+    void refreshStylesheets().then((swapped) => {
+      if (swapped > 0) {
+        console.debug(`[Herb Dev Tools] refreshed ${swapped} stylesheet${swapped === 1 ? "" : "s"} for ${message.file}`)
+      }
+    })
   }
 
   onError(message: ErrorMessage): void {

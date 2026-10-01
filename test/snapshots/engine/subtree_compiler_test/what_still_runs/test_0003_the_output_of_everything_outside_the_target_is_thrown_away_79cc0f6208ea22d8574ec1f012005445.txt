@@ -1,0 +1,5 @@
+---
+source: "Engine::SubtreeCompilerTest::what still runs#test_0003_the output of everything outside the target is thrown away"
+input: "subtree_compiler_test-0"
+---
+<ul><li>assigned</li></ul>

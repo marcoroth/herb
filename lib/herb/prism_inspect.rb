@@ -110,10 +110,7 @@ module Herb
 
       #: (Prism::Location) -> String
       def format_location(location)
-        start_line = location.start_line + 1
-        end_line = location.end_line + 1
-
-        "(#{start_line}:#{location.start_column})-(#{end_line}:#{location.end_column})"
+        "(#{location.start_line}:#{location.start_column})-(#{location.end_line}:#{location.end_column})"
       end
     end
   end

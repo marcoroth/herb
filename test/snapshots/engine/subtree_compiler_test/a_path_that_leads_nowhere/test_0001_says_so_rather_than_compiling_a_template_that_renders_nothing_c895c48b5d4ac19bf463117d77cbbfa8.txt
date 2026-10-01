@@ -1,0 +1,5 @@
+---
+source: "Engine::SubtreeCompilerTest::a path that leads nowhere#test_0001_says so rather than compiling a template that renders nothing"
+input: "subtree_compiler_test-1"
+---
+No node at node_path [9]

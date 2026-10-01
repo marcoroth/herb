@@ -21,25 +21,7 @@ input: |2-
         │   │   └── content: "\n  for (let i = 0; i"
         │   │
         │   └── @ HTMLOpenTagNode (location: (2:19)-(4:0))
-        │       ├── errors: (4 errors)
-        │       │   ├── @ UnexpectedError (location: (2:25)-(2:26))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
-        │       │   ├── @ UnexpectedError (location: (2:39)-(2:40))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
-        │       │   ├── @ UnexpectedError (location: (2:63)-(2:64))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
+        │       ├── errors: (1 error)
         │       │   └── @ UnclosedOpenTagError (location: (2:20)-(4:0))
         │       │       ├── message: "Opening tag `<items>` at (2:20) is missing closing `>`."
         │       │       └── tag_name: "items" (location: (2:20)-(2:25))
@@ -47,13 +29,13 @@ input: |2-
         │       ├── tag_opening: "<" (location: (2:19)-(2:20))
         │       ├── tag_name: "items" (location: (2:20)-(2:25))
         │       ├── tag_closing: ∅
-        │       ├── children: (4 items)
-        │       │   ├── @ HTMLAttributeNode (location: (2:26)-(2:33))
+        │       ├── children: (6 items)
+        │       │   ├── @ HTMLAttributeNode (location: (2:25)-(2:33))
         │       │   │   ├── name:
-        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:26)-(2:33))
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:25)-(2:33))
         │       │   │   │       └── children: (1 item)
-        │       │   │   │           └── @ LiteralNode (location: (2:26)-(2:33))
-        │       │   │   │               └── content: "length;"
+        │       │   │   │           └── @ LiteralNode (location: (2:25)-(2:33))
+        │       │   │   │               └── content: ".length;"
         │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: ∅
@@ -70,12 +52,34 @@ input: |2-
         │       │   │   ├── equals: ∅
         │       │   │   └── value: ∅
         │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (2:39)-(2:40))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:39)-(2:40))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (2:39)-(2:40))
+        │       │   │   │               └── content: "{"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
         │       │   ├── @ HTMLAttributeNode (location: (2:41)-(2:62))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:41)-(2:62))
         │       │   │   │       └── children: (1 item)
         │       │   │   │           └── @ LiteralNode (location: (2:41)-(2:62))
         │       │   │   │               └── content: "console.log(items[i])"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (2:63)-(2:64))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:63)-(2:64))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (2:63)-(2:64))
+        │       │   │   │               └── content: "}"
         │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: ∅

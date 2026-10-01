@@ -415,5 +415,79 @@ module Parser
       assert_parsed_snapshot(template, strict: true)
       assert_parsed_snapshot(template, strict: false)
     end
+
+    test "case and when with a then keyword in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case variable when "a" then %>
+          A
+        <% end %>
+      ERB
+    end
+
+    test "case and when in separate ERB tags" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case variable %>
+        <% when "a" %>
+          A
+        <% end %>
+      ERB
+    end
+    test "else and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <%
+        else
+          y
+        end
+        %>
+      ERB
+    end
+
+    test "elsif and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% if a %>
+          x
+        <% elsif b
+          y
+        end %>
+      ERB
+    end
+
+    test "when and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% case t %>
+        <% when 1
+          a
+        end %>
+      ERB
+    end
+
+    test "rescue and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% rescue
+          y
+        end %>
+      ERB
+    end
+
+    test "ensure and end in same ERB tag" do
+      assert_parsed_snapshot(<<~ERB)
+        <% begin %>
+          x
+        <% ensure
+          y
+        end %>
+      ERB
+    end
+    test "escaped ERB tag with a continuation and an end" do
+      assert_parsed_snapshot(<<~ERB)
+        <%% if a %>x<%% else
+          y
+        end %>
+      ERB
+    end
   end
 end

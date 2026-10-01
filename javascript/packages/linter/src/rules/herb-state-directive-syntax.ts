@@ -2,14 +2,14 @@ import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { BaseAutofixContext, Mutable, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, HerbStateDirectiveNode, HerbStateNonCanonicalDirectiveError, HerbError } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, HerbStateDirectiveNode, HerbStateNonCanonicalDirectiveError, HerbError } from "@herb-tools/core"
 
 const NON_CANONICAL_ERROR = "HERB_STATE_NON_CANONICAL_DIRECTIVE_ERROR"
 
 const CANONICAL_TAG_OPENING = "<%#"
 const CANONICAL_TAG_CLOSING = "%>"
 
-type StateDirectiveNode = ERBContentNode | HerbStateDirectiveNode
+type StateDirectiveNode = ERBCommentNode | HerbStateDirectiveNode
 
 interface HerbStateDirectiveSyntaxAutofixContext extends BaseAutofixContext {
   node: Mutable<StateDirectiveNode>
@@ -64,7 +64,7 @@ class HerbStateDirectiveSyntaxVisitor extends BaseRuleVisitor<HerbStateDirective
       error.location,
       {
         node: node as Mutable<StateDirectiveNode>,
-        nodeType: "AST_ERB_CONTENT_NODE",
+        nodeType: "AST_ERB_COMMENT_NODE",
         expected: error.expected,
       },
     )
@@ -76,7 +76,8 @@ export class HerbStateDirectiveSyntaxRule extends ParserRule<HerbStateDirectiveS
   static autofixRequiresContext = true
   static consumesParserErrors = true
   static ruleName = "herb-state-directive-syntax"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get parserOptions() {
     return {

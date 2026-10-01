@@ -128,12 +128,12 @@ function getLineSegments(lineText: string, erbNodes: ERBContentNode[]): LineSegm
  * Comment a line using AST mutation for strategies where the parser produces flat children,
  * and text-segment manipulation for per-segment (where the parser nests nodes).
  */
-export function commentLineContent(content: string, erbNodes: ERBContentNode[], strategy: CommentStrategy, parserService: ParserService): string {
+export function commentLineContent(content: string, erbNodes: ERBContentNode[], strategy: CommentStrategy, parserService: ParserService, uri?: string): string {
   if (strategy === "per-segment") {
     return commentPerSegment(content, erbNodes)
   }
 
-  const parseResult = parserService.parseContent(content, { track_whitespace: true })
+  const parseResult = parserService.parseContent(content, { track_whitespace: true }, uri)
   const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
 
@@ -199,9 +199,9 @@ function commentPerSegment(content: string, erbNodes: ERBContentNode[]): string 
   }).join("")
 }
 
-export function uncommentLineContent(content: string, parserService: ParserService): string {
-  const parseResult = parserService.parseContent(content, { track_whitespace: true })
-  const prefixes = parserService.commentedERBTagPrefixes(parseResult.options.erb_openers)
+export function uncommentLineContent(content: string, parserService: ParserService, uri?: string): string {
+  const parseResult = parserService.parseContent(content, { track_whitespace: true }, uri)
+  const prefixes = parserService.commentedERBTagPrefixes(parseResult.options.erb_openers, uri)
   const document = cloneNode(parseResult.value)
   const lineCollector = new LineContextCollector()
 

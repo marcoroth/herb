@@ -1,0 +1,46 @@
+---
+source: "Parser::AttributesTest#test_0159_quoted token in attribute name position"
+input: "<div \"quoted\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:20))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:20))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:14))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:13)-(1:14))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:13))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:13))
+        │       │       │       ├── errors: (2 errors)
+        │       │       │       │   ├── @ UnexpectedCharacterInAttributeNameError (location: (1:5)-(1:6))
+        │       │       │       │   │   ├── message: "Unexpected `\"` in attribute name at (1:5)."
+        │       │       │       │   │   └── character: """ (location: (1:5)-(1:6))
+        │       │       │       │   │
+        │       │       │       │   └── @ UnexpectedCharacterInAttributeNameError (location: (1:12)-(1:13))
+        │       │       │       │       ├── message: "Unexpected `\"` in attribute name at (1:12)."
+        │       │       │       │       └── character: """ (location: (1:12)-(1:13))
+        │       │       │       │
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:13))
+        │       │       │               └── content: "\"quoted\""
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:14)-(1:20))
+        │       ├── tag_opening: "</" (location: (1:14)-(1:16))
+        │       ├── tag_name: "div" (location: (1:16)-(1:19))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:19)-(1:20))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

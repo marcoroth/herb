@@ -2,7 +2,7 @@ import { IdentityPrinter } from "./identity-printer.js"
 import { PrintOptions, DEFAULT_PRINT_OPTIONS } from "./printer.js"
 import { isERBOutputNode, filterNodes, ERBContentNode, isERBIfNode, isERBUnlessNode, isERBElseNode, isHTMLTextNode } from "@herb-tools/core"
 
-import { HTMLTextNode, ERBIfNode, ERBUnlessNode, Node, HTMLAttributeValueNode } from "@herb-tools/core"
+import { HTMLTextNode, ERBIfNode, ERBUnlessNode, ERBCommentNode, Node, HTMLAttributeValueNode } from "@herb-tools/core"
 
 export interface ERBToRubyStringOptions extends PrintOptions {
   /**
@@ -86,6 +86,10 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
       const escapedContent = node.content.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
       this.context.write(escapedContent)
     }
+  }
+
+  visitERBCommentNode(_node: ERBCommentNode) {
+    // a comment contributes nothing to the Ruby string
   }
 
   visitERBContentNode(node: ERBContentNode) {

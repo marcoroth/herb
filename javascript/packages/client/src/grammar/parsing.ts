@@ -18,7 +18,9 @@ export function clauses(value: string): Clause[] {
 }
 
 export function names(rest: string): string[] {
-  return splitOutsideQuotes(rest, ",").map((name) => name.trim()).filter((name) => name.length > 0)
+  const name = rest.trim()
+
+  return name.length > 0 ? [name] : []
 }
 
 export function balancedQuotes(source: string): boolean {

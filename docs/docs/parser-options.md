@@ -66,7 +66,7 @@ With `strict: true`, the parser additionally reports:
 
 - **`OmittedClosingTagError`** for elements whose closing tag was omitted (`<li>`, `<p>`, `<td>`, and friends). The element is still built with an `HTMLOmittedCloseTagNode` either way, strict mode just adds the diagnostic.
 - **`StrayERBClosingTagError`** for a `%>` that is not part of an ERB tag and will therefore be rendered as plain text.
-- **`ERBCaseWithConditionsError`** for a `case` statement that carries its `when`/`in` conditions inside a single ERB tag, which cannot be reliably compiled or formatted.
+- **`ERBCaseWithConditionsError`** for a `case` statement that carries its first `when`/`in` condition inside a single ERB tag. The parser splits such a tag either way, so the template still compiles without strict mode. Strict mode adds the diagnostic because the first branch reads differently from every later one, and `herb format` rewrites the tag into two.
 
 ```erb
 <ul>

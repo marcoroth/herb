@@ -136,7 +136,7 @@ mod config_exists {
   fn returns_true_when_config_file_exists() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.11.0\n").unwrap();
 
     assert!(Config::exists(dir.path()));
   }
@@ -146,7 +146,7 @@ mod config_exists {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.3\n").unwrap();
+    fs::write(&config_path, "version: 0.11.0\n").unwrap();
 
     assert!(Config::exists(&config_path));
   }
@@ -159,7 +159,7 @@ mod config_read_raw_yaml {
   fn reads_raw_yaml_content_from_config_file() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n# a comment\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.11.0\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(dir.path()).unwrap().contains("# a comment"));
   }
@@ -169,7 +169,7 @@ mod config_read_raw_yaml {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.3\n# a comment\n").unwrap();
+    fs::write(&config_path, "version: 0.11.0\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(&config_path).unwrap().contains("# a comment"));
   }
@@ -266,11 +266,11 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn applies_mutation_to_existing_yaml() {
-    let original = "version: 0.10.3\nlinter:\n  enabled: true\n";
+    let original = "version: 0.11.0\nlinter:\n  enabled: true\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
-    assert!(updated.contains("version: 0.10.3"));
+    assert!(updated.contains("version: 0.11.0"));
     assert!(updated.contains("enabled: true"));
     assert!(updated.contains("html-tag-name-lowercase:"));
     assert!(updated.contains("enabled: false"));
@@ -278,7 +278,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn merges_rules_without_overwriting_existing_rules() {
-    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
+    let original = "version: 0.11.0\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -288,7 +288,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_existing_rule_configuration() {
-    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
+    let original = "version: 0.11.0\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -299,7 +299,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_boolean_from_true_to_false_without_quoting() {
-    let original = "version: 0.10.3\nlinter:\n  enabled: true\n";
+    let original = "version: 0.11.0\nlinter:\n  enabled: true\n";
     let mutation: HerbConfigOptions = serde_yaml::from_str("linter:\n  enabled: false\n").unwrap();
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
@@ -310,7 +310,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_boolean_from_false_to_true_without_quoting() {
-    let original = "version: 0.10.3\nlinter:\n  enabled: false\n";
+    let original = "version: 0.11.0\nlinter:\n  enabled: false\n";
     let mutation: HerbConfigOptions = serde_yaml::from_str("linter:\n  enabled: true\n").unwrap();
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
@@ -321,7 +321,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_number_value_without_quoting() {
-    let original = "version: 0.10.3\nformatter:\n  enabled: true\n  indentWidth: 2\n";
+    let original = "version: 0.11.0\nformatter:\n  enabled: true\n  indentWidth: 2\n";
     let mutation: HerbConfigOptions = serde_yaml::from_str("formatter:\n  indentWidth: 4\n").unwrap();
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &mutation).unwrap();
@@ -858,6 +858,64 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn a_more_specific_files_include_overrides_a_default_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/skip/skipped.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_naming_a_default_excluded_directory_opts_the_whole_tree_back_in() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("vendor/gems/primer/button.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_broad_files_include_does_not_override_excludes() {
+    let config = config_from_yaml("files:\n  include:\n    - '**/*.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/gem.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("node_modules/pkg/dep.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_a_more_specific_exclude() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - 'app/views/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_does_not_override_an_exclude_that_is_not_directory_scoped() {
+    let config = config_from_yaml("files:\n  include:\n    - 'app/views/**/*.html.erb'\n  exclude:\n    - '**/*.generated.html.erb'\n");
+
+    assert!(config.is_enabled_for_path("app/views/index.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("app/views/index.generated.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn files_include_must_override_every_matching_exclude_to_win() {
+    let config = config_from_yaml("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\nlinter:\n  exclude:\n    - 'vendor/keep/legacy/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/keep/kept.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/keep/legacy/old.html.erb", Tool::Linter));
+  }
+
+  #[test]
+  fn a_more_specific_tool_include_overrides_a_files_exclude() {
+    let config = config_from_yaml("files:\n  exclude:\n    - 'vendor/**/*'\nlinter:\n  include:\n    - 'vendor/special/**/*'\n");
+
+    assert!(config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/bundle/file.html.erb", Tool::Linter));
+    assert!(!config.is_enabled_for_path("vendor/special/file.html.erb", Tool::Formatter));
+  }
+
+  #[test]
   fn is_enabled_for_path_works_for_formatter_tool() {
     let config = config_from_yaml("formatter:\n  enabled: true\n  exclude:\n    - 'test/**/*'\n");
 
@@ -1031,6 +1089,32 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn find_files_for_tool_walks_into_a_directory_a_specific_include_opts_back_in() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "vendor/keep/kept.html.erb");
+    create_test_file(dir.path(), "vendor/skip/skipped.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - 'vendor/keep/**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
+  }
+
+  #[test]
+  fn find_files_for_tool_keeps_pruning_defaults_for_a_broad_include() {
+    let dir = tempfile::tempdir().unwrap();
+
+    let kept = create_test_file(dir.path(), "app/views/index.html.erb");
+    create_test_file(dir.path(), "vendor/bundle/gem.html.erb");
+    create_test_file(dir.path(), "node_modules/pkg/dep.html.erb");
+
+    let config = config_from_yaml_in("files:\n  include:\n    - '**/*.html.erb'\n", dir.path());
+
+    assert_eq!(config.find_files_for_tool(Tool::Linter, Some(dir.path())), vec![kept]);
+  }
+
+  #[test]
   fn find_files_for_tool_combines_all_include_patterns() {
     let dir = tempfile::tempdir().unwrap();
 
@@ -1171,9 +1255,9 @@ mod config_upgrade_workflow {
 
     fs::write(&config_path, "version: 0.8.0\n\nlinter:\n  enabled: true\n").unwrap();
 
-    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.10.3");
+    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.11.0");
     fs::write(&config_path, contents).unwrap();
 
-    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.10.3".to_string()));
+    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.11.0".to_string()));
   }
 }

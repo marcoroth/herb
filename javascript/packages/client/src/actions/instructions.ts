@@ -1,7 +1,7 @@
 import { ACTION_NAMES, ACTION_SCHEMA, HERB_ATTRIBUTES } from "../grammar/attributes"
 
 import { report } from "../shared/report"
-import { defaultEventFor } from "./events"
+import { defaultEventFor, eventSpecProblem } from "./events"
 import { balancedQuotes, clauses, names, splitOutsideQuotes, unquote } from "../grammar/parsing"
 
 import type { Clause } from "../grammar/parsing"
@@ -108,10 +108,41 @@ export class Instructions {
       return
     }
 
+    const problem = clause.event === null ? null : eventSpecProblem(clause.event)
+
+    if (problem !== null) {
+      report({
+        template: this.delegate.templateOf(element),
+        element,
+        message: `\`${clause.event}\` in \`${attribute}\` ${problem}`,
+        code: "herb-invalid-action",
+        severity: "error",
+      })
+
+      return
+    }
+
+    if (splitOutsideQuotes(clause.rest, ",").length > 1) {
+      const what = schema.operation === "set" ? "assignment" : "name"
+
+      report({
+        template: this.delegate.templateOf(element),
+        element,
+        message: `\`${attribute}\` lists several ${what}s in one clause. A clause takes one ${what}, and each clause carries its own event or the element's default.`,
+        code: "herb-invalid-action",
+        severity: "error",
+        suggestion: `separate the clauses with spaces, like \`${attribute}="a b"\``,
+      })
+
+      return
+    }
+
+    if (schema.operation === "action") {
+      return
+    }
+
     if (schema.operation === "set") {
-      for (const assignment of splitOutsideQuotes(clause.rest, ",")) {
-        this.validateAssignment(element, assignment)
-      }
+      this.validateAssignment(element, clause.rest)
 
       return
     }

@@ -46,7 +46,7 @@ int main(const int argc, char* argv[]) {
   if (argc < 2) {
     puts("./herb [command] [options]\n");
 
-    puts("Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.\n");
+    puts("Herb 🌿 A modern templating language for the HTML+ERB you already have.\n");
 
     puts("./herb lex [file]      -  Lex a file");
     puts("./herb parse [file]    -  Parse a file");

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0070_a predicate read in an interpolated attribute rewrites for the server"
+input: "states_test-23"
+---
+<!--herb-region:app/views/test.html.erb:558d1478:0--><div class="row-false" data-herb-slot="0:attribute_interpolation:class">x</div><!--/herb-region:app/views/test.html.erb-->

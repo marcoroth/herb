@@ -4,11 +4,14 @@ require "action_view"
 require "reactionview/template/handlers/herb/herb"
 
 require_relative "../test_helper"
+require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
 require_relative "../action_view_renderer"
 
 module Engine
   class RailsCompatibilityTest < Minitest::Spec
+    include SnapshotUtils
+
     ReActionViewHerb = ReActionView::Template::Handlers::Herb::Herb
 
     private
@@ -72,7 +75,7 @@ module Engine
 
       engine = ReActionViewHerb.new(template, escape: true)
 
-      refute_includes engine.src, " << "
+      assert_snapshot_matches(engine.src, template)
 
       result = Prism.parse(engine.src)
       syntax_errors = result.errors.reject { |e| e.type == :invalid_yield }

@@ -1,0 +1,172 @@
+# Generated from lib/herb/engine/runtime/journal/summary.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Runtime
+      class Journal
+        # What a journal says once its records are folded together.
+        #
+        # Read raw, a journal shows the same finding two hundred times. Folding on position turns
+        # that into one finding per place, which is both what an editor can show and the only form
+        # in which the history says something the requests do not.
+        #
+        # Everything here carries the number of times it was seen, because what this holds is
+        # evidence and not proof. A rewrite proposed from it is only as good as the renders that
+        # happened to run, so a reader gets counts and phrases them itself. Nothing here says
+        # "always".
+        class Summary
+          class Finding < Data
+            attr_reader line(): untyped
+
+            attr_reader column(): untyped
+
+            attr_reader end_line(): untyped
+
+            attr_reader end_column(): untyped
+
+            attr_reader code(): untyped
+
+            attr_reader origin(): untyped
+
+            attr_reader kind(): untyped
+
+            attr_reader severity(): untyped
+
+            attr_reader message(): untyped
+
+            attr_reader value(): untyped
+
+            attr_reader peak_message(): untyped
+
+            attr_reader description(): untyped
+
+            attr_reader observations(): untyped
+
+            attr_reader values(): untyped
+
+            attr_reader range(): untyped
+
+            attr_reader observed(): untyped
+
+            attr_reader observed_trimmed(): untyped
+
+            attr_reader recent(): untyped
+
+            attr_reader first_seen(): untyped
+
+            attr_reader last_seen(): untyped
+
+            attr_reader paths(): untyped
+
+            attr_reader runs(): untyped
+
+            def self.new: (untyped line, untyped column, untyped end_line, untyped end_column, untyped code, untyped origin, untyped kind, untyped severity, untyped message, untyped value, untyped peak_message, untyped description, untyped observations, untyped values, untyped range, untyped observed, untyped observed_trimmed, untyped recent, untyped first_seen, untyped last_seen, untyped paths, untyped runs) -> instance
+                        | (line: untyped, column: untyped, end_line: untyped, end_column: untyped, code: untyped, origin: untyped, kind: untyped, severity: untyped, message: untyped, value: untyped, peak_message: untyped, description: untyped, observations: untyped, values: untyped, range: untyped, observed: untyped, observed_trimmed: untyped, recent: untyped, first_seen: untyped, last_seen: untyped, paths: untyped, runs: untyped) -> instance
+
+            def self.members: () -> [ :line, :column, :end_line, :end_column, :code, :origin, :kind, :severity, :message, :value, :peak_message, :description, :observations, :values, :range, :observed, :observed_trimmed, :recent, :first_seen, :last_seen, :paths, :runs ]
+
+            def members: () -> [ :line, :column, :end_line, :end_column, :code, :origin, :kind, :severity, :message, :value, :peak_message, :description, :observations, :values, :range, :observed, :observed_trimmed, :recent, :first_seen, :last_seen, :paths, :runs ]
+          end
+
+          class Call < Data
+            attr_reader line(): untyped
+
+            attr_reader column(): untyped
+
+            attr_reader via(): untyped
+
+            attr_reader targets(): untyped
+
+            attr_reader per_parent(): untyped
+
+            attr_reader parents(): untyped
+
+            attr_reader renders(): untyped
+
+            attr_reader observations(): untyped
+
+            attr_reader first_seen(): untyped
+
+            attr_reader last_seen(): untyped
+
+            attr_reader paths(): untyped
+
+            def self.new: (untyped line, untyped column, untyped via, untyped targets, untyped per_parent, untyped parents, untyped renders, untyped observations, untyped first_seen, untyped last_seen, untyped paths) -> instance
+                        | (line: untyped, column: untyped, via: untyped, targets: untyped, per_parent: untyped, parents: untyped, renders: untyped, observations: untyped, first_seen: untyped, last_seen: untyped, paths: untyped) -> instance
+
+            def self.members: () -> [ :line, :column, :via, :targets, :per_parent, :parents, :renders, :observations, :first_seen, :last_seen, :paths ]
+
+            def members: () -> [ :line, :column, :via, :targets, :per_parent, :parents, :renders, :observations, :first_seen, :last_seen, :paths ]
+          end
+
+          class Call
+            # : () -> Integer
+            def peak: () -> Integer
+
+            # : () -> String?
+            def only_target: () -> String?
+          end
+
+          MAX_RECENT: Integer
+
+          attr_reader template: String
+
+          attr_reader digest: String
+
+          attr_reader findings: Array[Finding]
+
+          attr_reader calls: Array[Call]
+
+          attr_reader dropped: Integer
+
+          attr_reader first_seen: String?
+
+          # : (String, String, Array[Hash[String, untyped]]) -> Summary
+          def self.build: (String, String, Array[Hash[String, untyped]]) -> Summary
+
+          # : (Array[Hash[String, untyped]]) -> Array[Finding]
+          def self.fold_findings: (Array[Hash[String, untyped]]) -> Array[Finding]
+
+          # : (Array[Hash[String, untyped]]) -> Array[Call]
+          def self.fold_calls: (Array[Hash[String, untyped]]) -> Array[Call]
+
+          # : (Array[Hash[String, untyped]]) -> Finding
+          def self.finding_for: (Array[Hash[String, untyped]]) -> Finding
+
+          # : (Array[Hash[String, untyped]]) -> Call
+          def self.call_for: (Array[Hash[String, untyped]]) -> Call
+
+          # : (Array[Hash[String, untyped]]) -> Hash[String, untyped]
+          def self.newest: (Array[Hash[String, untyped]]) -> Hash[String, untyped]
+
+          # : (Array[Hash[String, untyped]]) -> Hash[String, untyped]
+          def self.worst: (Array[Hash[String, untyped]]) -> Hash[String, untyped]
+
+          # : (Array[Hash[String, untyped]]) -> Array[Hash[Symbol, untyped]]
+          def self.recent: (Array[Hash[String, untyped]]) -> Array[Hash[Symbol, untyped]]
+
+          # : (Hash[String, untyped]) -> Array[untyped]
+          def self.values_in: (Hash[String, untyped]) -> Array[untyped]
+
+          # : (Array[Hash[String, untyped]?]) -> Hash[untyped, Integer]
+          def self.merge_counts: (Array[Hash[String, untyped]?]) -> Hash[untyped, Integer]
+
+          # : (Array[String]) -> Hash[Symbol, untyped]?
+          def self.range: (Array[String]) -> Hash[Symbol, untyped]?
+
+          # : (untyped) -> Float?
+          def self.leading_number: (untyped) -> Float?
+
+          # : (template: String, digest: String, findings: Array[Finding], calls: Array[Call], dropped: Integer, first_seen: String?) -> void
+          def initialize: (template: String, digest: String, findings: Array[Finding], calls: Array[Call], dropped: Integer, first_seen: String?) -> void
+
+          # : () -> bool
+          def truncated?: () -> bool
+
+          # : () -> bool
+          def empty?: () -> bool
+        end
+      end
+    end
+  end
+end

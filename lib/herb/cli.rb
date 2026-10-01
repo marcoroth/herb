@@ -89,7 +89,7 @@ class Herb::CLI
 
   def help(exit_code = 0)
     message = <<~HELP
-      Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
+      Herb 🌿 A modern templating language for the HTML+ERB you already have.
 
       Usage:
         bundle exec herb [command] [options]

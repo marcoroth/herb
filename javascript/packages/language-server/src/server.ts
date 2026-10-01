@@ -16,6 +16,7 @@ import {
   FoldingRangeParams,
   DocumentHighlightParams,
   SelectionRangeParams,
+  InlayHint,
   InlayHintParams,
   DocumentSymbolParams,
   HoverParams,
@@ -112,8 +113,10 @@ export class Server {
     })
 
     this.connection.onInitialized(() => {
-      if (this.session.capabilities.hasConfiguration) {
-        this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
+      if (this.session.capabilities.hasConfiguration && this.session.capabilities.supportsConfigurationRegistration) {
+        this.connection.client.register(DidChangeConfigurationNotification.type, undefined).catch(error => {
+          this.connection.console.warn(`[Registration] Client declined workspace/didChangeConfiguration: ${error.message}`)
+        })
       }
 
       if (this.session.capabilities.hasWorkspaceFolders) {
@@ -130,6 +133,8 @@ export class Server {
         })
       }
 
+      if (!this.session.capabilities.supportsWatchedFilesRegistration) return
+
       const patterns = Config.getDefaultFilePatterns().map(globPattern => ({
         globPattern
       }))
@@ -142,6 +147,8 @@ export class Server {
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
+      }).catch(error => {
+        this.connection.console.warn(`[Registration] Client declined workspace/didChangeWatchedFiles, file changes on disk will not be picked up: ${error.message}`)
       })
     })
 
@@ -371,12 +378,24 @@ export class Server {
 
       const settings = await this.session.userSettings.getDocumentSettings(params.textDocument.uri)
 
-      if (!settings.inlayHints?.enabled) return []
+      const hints: InlayHint[] = []
 
-      return this.session.inlayHintProvider.getInlayHints(document, {
-        minimumLines: settings.inlayHints.minimumLines,
-        maximumClasses: settings.inlayHints.maximumClasses
-      })
+      if (settings.inlayHints?.enabled) {
+        hints.push(...this.session.inlayHintProvider.getInlayHints(document, {
+          minimumLines: settings.inlayHints.minimumLines,
+          maximumClasses: settings.inlayHints.maximumClasses
+        }))
+      }
+
+      if (settings.runtimeReports?.inlayHints) {
+        hints.push(...this.runtimeHints(params.textDocument.uri, document))
+      }
+
+      return hints
+    })
+
+    this.connection.onRequest("herb/runtimeOverlays", (params: { textDocument: TextDocumentIdentifier }) => {
+      return this.runtimeOverlays(params.textDocument.uri)
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
@@ -394,6 +413,57 @@ export class Server {
 
       return this.session.commentProvider.toggleBlockComment(document, params.range)
     })
+  }
+
+  private runtimeHints(uri: string, document: { getText: () => string }): InlayHint[] {
+    const project = this.session.projects.get(uri)
+
+    if (!project) return []
+
+    try {
+      this.watchRuntimeReports(uri)
+
+      return project.runtimeReports.inlayHintsFor(
+        project.index.relativePathFor(uri),
+        document.getText(),
+        !this.session.capabilities.supportsRuntimeOverlays,
+      )
+    } catch {
+      return []
+    }
+  }
+
+  private runtimeOverlays(uri: string) {
+    const document = this.session.documents.get(uri)
+    const project = this.session.projects.get(uri)
+
+    if (!document || !project) return []
+
+    try {
+      this.watchRuntimeReports(uri)
+
+      return project.runtimeReports.overlaysFor(project.index.relativePathFor(uri), document.getText())
+    } catch {
+      return []
+    }
+  }
+
+  private watchRuntimeReports(uri: string) {
+    this.session.projects.get(uri)?.runtimeReports.watch(() => {
+      this.refreshInlayHints()
+
+      this.connection.sendNotification("herb/runtimeReportsChanged", { uri })
+    })
+  }
+
+  private async refreshInlayHints(): Promise<void> {
+    if (!this.session.capabilities.supportsInlayHintRefresh) return
+
+    try {
+      await this.connection.languages.inlayHint.refresh()
+    } catch {
+      // the client went away, and there is nothing to refresh for
+    }
   }
 
   private async updatePartialIndex(event: FileEvent): Promise<boolean> {

@@ -115,6 +115,7 @@ export default class extends Controller {
     "autofixError",
     "autofixVerification",
     "autofixIncludeUnsafe",
+    "minifyViewer",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -517,6 +518,9 @@ export default class extends Controller {
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
+      case 'minify':
+        content = this.minifyViewerTarget.textContent
+        break
       case 'printer':
         content = this.printerOutputTarget.textContent
         break
@@ -717,7 +721,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'minify', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
     return validTabs.includes(tab)
   }
 
@@ -1462,6 +1466,19 @@ export default class extends Controller {
       this.lexViewerTarget.textContent = result.lex
 
       Prism.highlightElement(this.lexViewerTarget)
+    }
+
+    if (this.hasMinifyViewerTarget && result.minified !== undefined) {
+      const minifiedContent = result.minified
+
+      if (typeof minifiedContent === 'string' && minifiedContent.startsWith('Error:')) {
+        this.minifyViewerTarget.classList.remove("language-html")
+        this.minifyViewerTarget.textContent = minifiedContent
+      } else {
+        this.minifyViewerTarget.classList.add("language-html")
+        this.minifyViewerTarget.textContent = minifiedContent
+        Prism.highlightElement(this.minifyViewerTarget)
+      }
     }
 
     if (this.hasPrinterViewerTarget && result.printed !== undefined) {

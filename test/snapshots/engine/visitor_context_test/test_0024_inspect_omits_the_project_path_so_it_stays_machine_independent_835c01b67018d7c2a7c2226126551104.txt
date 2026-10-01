@@ -1,0 +1,5 @@
+---
+source: "Engine::VisitorContextTest#test_0024_inspect omits the project path so it stays machine independent"
+input: "visitor_context_test-0"
+---
+#<Herb::Visitor::Context file_path="app/x.erb" relative_file_path="app/x.erb">

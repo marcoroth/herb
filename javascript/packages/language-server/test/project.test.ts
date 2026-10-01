@@ -66,50 +66,32 @@ describe("Project", () => {
   }
 
   describe("parser options", () => {
-    const GRAPHQL_TEMPLATE = `<%graphql query Products($first: Int!) { products(first: $first) { id } } %>`
-
-    function projectWithParserService(): { project: Project, parserService: ParserService } {
-      const parserService = new ParserService(Herb)
-      const capabilities = new Capabilities(params)
-
-      const shared: SharedServices = {
-        documents: { documents: {}, get: () => undefined } as unknown as Documents,
-        parserService,
-        definitionProvider: new DefinitionProvider(parserService, existsSync, readFile),
-        userSettings: new UserSettings(connection, capabilities),
-        capabilities,
-        readFile,
-      }
-
-      return { project: new Project(connection, root, shared), parserService }
-    }
-
-    test("gives the parser service the openers a checked-in config names", async () => {
+    test("exposes the openers a checked-in config names", async () => {
       writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
 
-      const { project, parserService } = projectWithParserService()
+      const project = projectFor()
       await project.loadConfig()
 
-      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors()).toEqual([])
+      expect(project.config?.parserOptions?.erb_openers).toEqual(["graphql"])
     })
 
-    test("leaves the parser service on the default openers without a config", async () => {
-      const { project, parserService } = projectWithParserService()
+    test("names no openers without a config", async () => {
+      const project = projectFor()
       await project.loadConfig()
 
-      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors().length).toBeGreaterThan(0)
+      expect(project.config?.parserOptions?.erb_openers).toBeUndefined()
     })
 
     test("picks up openers that are added to the config while the server runs", async () => {
-      const { project, parserService } = projectWithParserService()
+      const project = projectFor()
       await project.loadConfig()
 
-      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors().length).toBeGreaterThan(0)
+      expect(project.config?.parserOptions?.erb_openers).toBeUndefined()
 
       writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
       await project.refreshConfig()
 
-      expect(parserService.parseContent(GRAPHQL_TEMPLATE).recursiveErrors()).toEqual([])
+      expect(project.config?.parserOptions?.erb_openers).toEqual(["graphql"])
     })
   })
 

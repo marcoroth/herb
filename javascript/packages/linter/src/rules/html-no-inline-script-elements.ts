@@ -46,7 +46,7 @@ class HTMLNoInlineScriptElementsVisitor extends BaseRuleVisitor {
 
 export class HTMLNoInlineScriptElementsRule extends ParserRule {
   static ruleName = "html-no-inline-script-elements"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

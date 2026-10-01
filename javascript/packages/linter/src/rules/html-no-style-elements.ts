@@ -28,7 +28,7 @@ class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
 
 export class HTMLNoStyleElementsRule extends ParserRule {
   static ruleName = "html-no-style-elements"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

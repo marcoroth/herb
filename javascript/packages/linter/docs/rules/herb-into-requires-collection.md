@@ -55,4 +55,4 @@ A form with `data-herb-into` is an optimistic send: the runtime intercepts the s
 
 ## References
 
-\-
+- [Language reference: Keys and collections, `data-herb-into`](https://herb-tools.dev/language/keys#data-herb-into)

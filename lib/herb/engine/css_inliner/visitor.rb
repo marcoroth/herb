@@ -2,6 +2,7 @@
 
 require_relative "../../visitor/context_aware"
 require_relative "../../visitor/diagnostics"
+require_relative "../../visitor/experimental"
 require_relative "inliner"
 
 module Herb
@@ -33,11 +34,14 @@ module Herb
       # happens is reading a block that will not be there to inline.
       #
       class Visitor < Herb::Visitor
+        extend Herb::Visitor::Experimental
         include Herb::Visitor::ContextAware
         include Herb::Visitor::Diagnostics
 
         AT_RULES = /@(?:media|supports|keyframes|font-face|container|layer)\b/ #: Regexp
         STATEFUL = /::?(?:hover|focus|active|visited|target|before|after|placeholder|marker|selection)\b/ #: Regexp
+
+        experimental "Inlining CSS is experimental. Which declarations reach a `style` attribute and which are left in the block may change."
 
         #: () -> bool
         def self.reads_style_blocks?

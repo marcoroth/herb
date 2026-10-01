@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, isInlineElement, isBlockElement } from "../utils/rule-utils.js"
+import { BaseRuleVisitor, isInlineElement, isBlockElement, isKnownHTMLElement } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { isHTMLOpenTagNode } from "@herb-tools/core"
 
@@ -15,7 +15,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private getElementType(tagName: string): { isInline: boolean; isBlock: boolean; isUnknown: boolean } {
     const isInline = isInlineElement(tagName)
     const isBlock = isBlockElement(tagName)
-    const isUnknown = !isInline && !isBlock
+    const isUnknown = !isKnownHTMLElement(tagName)
 
     return { isInline, isBlock, isUnknown }
   }

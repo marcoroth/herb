@@ -4,6 +4,7 @@ require "prism"
 require "set"
 
 require_relative "partial_index"
+require_relative "ruby_reference"
 require_relative "ruby_locals_index"
 require_relative "template_dependencies/dependency_collector"
 require_relative "template_dependencies/node_dependency_collector"
@@ -518,11 +519,7 @@ module Herb
       def expression_references?(expression, name)
         return false unless expression && name
 
-        if name.start_with?("@")
-          expression.include?(name)
-        else
-          expression.match?(/\b#{Regexp.escape(name)}\b/)
-        end
+        RubyReference.references?(expression, name)
       end
 
       def extract_helper_methods(file)

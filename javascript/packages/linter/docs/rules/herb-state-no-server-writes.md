@@ -55,4 +55,4 @@ The engine restricts a fold's condition to pure state reads, since the client re
 
 ## References
 
-\-
+- [Language reference: State, Writing a state](https://herb-tools.dev/language/state#writing-a-state)

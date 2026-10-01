@@ -45,6 +45,7 @@ export interface WorkerResult {
   totalHints: number
   totalIgnored: number
   totalWouldBeIgnored: number
+  totalCounterSuppressed: number
   filesWithOffenses: number
   filesFixed: number
   ruleCount: number
@@ -86,6 +87,7 @@ async function run() {
   let totalHints = 0
   let totalIgnored = 0
   let totalWouldBeIgnored = 0
+  let totalCounterSuppressed = 0
   let filesWithOffenses = 0
   let filesFixed = 0
 
@@ -175,6 +177,10 @@ async function run() {
 
     totalIgnored += lintResult.ignored
 
+    if (lintResult.counterSuppressed) {
+      totalCounterSuppressed += lintResult.counterSuppressed
+    }
+
     if (lintResult.wouldBeIgnored) {
       totalWouldBeIgnored += lintResult.wouldBeIgnored
     }
@@ -192,6 +198,7 @@ async function run() {
     totalHints,
     totalIgnored,
     totalWouldBeIgnored,
+    totalCounterSuppressed,
     filesWithOffenses,
     filesFixed,
     ruleCount,
@@ -211,6 +218,7 @@ run().catch(error => {
     totalHints: 0,
     totalIgnored: 0,
     totalWouldBeIgnored: 0,
+    totalCounterSuppressed: 0,
     filesWithOffenses: 0,
     filesFixed: 0,
     ruleCount: 0,

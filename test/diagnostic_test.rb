@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "snapshot_utils"
 
 class DiagnosticTest < Minitest::Spec
+  include SnapshotUtils
+
   test "serializes columns counting from one" do
     diagnostic = Herb::Diagnostic.new(
       template: "app/views/posts/show.html.erb",
@@ -145,8 +148,7 @@ class DiagnosticTest < Minitest::Spec
     test "leaves out what it does not carry" do
       literal = Herb::Diagnostic.new(template: "a.html.erb", message: "m").to_ruby
 
-      refute_includes literal, "suggestion:"
-      refute_includes literal, "line:"
+      assert_snapshot_matches(literal, "diagnostic_test-0")
     end
   end
 

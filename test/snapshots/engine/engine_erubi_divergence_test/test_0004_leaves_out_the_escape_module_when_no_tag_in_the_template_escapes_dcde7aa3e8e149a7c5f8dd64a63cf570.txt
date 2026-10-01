@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0004_leaves out the escape module when no tag in the template escapes"
+input: "engine_erubi_divergence_test-4"
+---
+_buf = ::String.new; _buf << (content).to_s;
+_buf.to_s

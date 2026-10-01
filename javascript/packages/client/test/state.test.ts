@@ -272,6 +272,49 @@ describe("two flushes racing", () => {
     expect(text(0, slots)).toBe("new-a")
     expect(state.get("a")).toBe("new-a")
   })
+
+  test("a debounced write made during a request waits for its own reply", async () => {
+    const slots = mounted(RACE_PAGE + `<template data-herb-dependencies>${JSON.stringify(RACE_MAP)}</template>`)
+
+    let release: (() => void) | null = null
+    const seen: string[][] = []
+
+    const transport = async (request: StateRequest): Promise<Payload | null> => {
+      seen.push(request.changed)
+
+      if (seen.length === 1) {
+        await new Promise<void>((resolve) => {
+          release = resolve
+        })
+
+        return payload({ 0: "served-a" })
+      }
+
+      return null
+    }
+
+    const state = new State(slots, { debounce: 20, transport })
+
+    state.adopt()
+
+    const first = state.set("a", "new-a")
+
+    await vi.waitFor(() => {
+      if (seen.length === 0) {
+        throw new Error("still waiting")
+      }
+    })
+
+    const second = state.set("b", "new-b")
+
+    release!()
+
+    expect((await first).applied).toBe(1)
+    expect(await second).toMatchObject({ applied: 0, written: 1, stale: false, failed: false })
+    expect(seen).toEqual([["a"], ["b"]])
+    expect(text(0, slots)).toBe("served-a")
+    expect(text(1, slots)).toBe("new-b")
+  })
 })
 
 describe("reconciling with the server", () => {

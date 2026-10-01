@@ -391,7 +391,7 @@ module SnapshotUtils
     require_erubi_silently
 
     begin
-      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer", **options.slice(:trim))
+      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer", **options.slice(:trim, :literal_prefix, :literal_postfix))
 
       view = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
       view.instance_variable_set(:@output_buffer, ActionView::OutputBuffer.new)

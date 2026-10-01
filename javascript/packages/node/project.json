@@ -10,13 +10,14 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["@herb-tools/core:build"]
+      "dependsOn": ["templates:generate", "prism:build", "@herb-tools/core:build"]
     },
     "test": {
       "executor": "nx:run-script",
       "options": {
         "script": "test"
-      }
+      },
+      "dependsOn": ["build"]
     },
     "clean": {
       "executor": "nx:run-script",

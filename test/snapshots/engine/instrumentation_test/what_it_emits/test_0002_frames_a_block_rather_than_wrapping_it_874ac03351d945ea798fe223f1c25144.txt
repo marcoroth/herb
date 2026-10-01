@@ -2,5 +2,5 @@
 source: "Engine::InstrumentationTest::what it emits#test_0002_frames a block rather than wrapping it"
 input: "{source: \"<% items.each do |item| %><%= item %><% end %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 1, 0); items.each do |item|; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 26) { item }).to_s; end; ::Herb::Engine::Runtime::Session.leave; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 1, 0, nil, end_line: 1, end_column: 46); items.each do |item|; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 26, nil, end_line: 1, end_column: 37) { item }).to_s; end; ::Herb::Engine::Runtime::Session.leave; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
 _buf.to_s

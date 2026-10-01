@@ -84,6 +84,7 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   static autocorrectable = true
   static ruleName = "html-boolean-attributes-no-value"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

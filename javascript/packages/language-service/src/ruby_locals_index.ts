@@ -11,13 +11,14 @@ import { collectHerbAttributes, collectStateDirectives } from "./herb_attribute_
 import type { HerbAttributeLinks, AttributeStateUsage } from "./herb_attribute_links"
 
 import type { ParserService } from "./parser_service"
-import type { DocumentNode, Node, RubyReference, ERBContentNode } from "@herb-tools/core"
+import type { DocumentNode, Node, RubyReference, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 import type { StateSignature } from "@herb-tools/client/directives"
 
 const PARSER_OPTIONS = { prism_program: true, strict_locals: true, action_view_helpers: true } as const
 
 export interface RubyLocal {
   name: string
+  origin: "strict" | "block" | "state"
   declaration: Range
   usages: Range[]
   defaultValue?: Range
@@ -37,7 +38,7 @@ export class RubyLocalsIndex {
 
     const empty = { stateUsages: [], slotNames: [] }
 
-    const result = parserService.parseContent(text, PARSER_OPTIONS)
+    const result = parserService.parseContent(text, PARSER_OPTIONS, textDocument.uri)
     if (result.failed) return new RubyLocalsIndex([], empty)
 
     const document = result.value as DocumentNode
@@ -78,6 +79,7 @@ function strictLocals(document: DocumentNode, references: RubyReferenceCollector
 
   return collector.declarations.map(declaration => ({
     name: declaration.name,
+    origin: "strict",
     declaration: nameRange(declaration.location.start, declaration.name),
     usages: references.bareCalls.filter(call => call.name === declaration.name).map(toRange)
   }))
@@ -91,7 +93,7 @@ function blockLocals(document: DocumentNode, references: RubyReferenceCollector,
     const scope = innermostEnclosing(blocks, range)
     const usages = references.localReads.filter(read => read.name === binding.name).map(toRange).filter(usage => !scope || encloses(scope, usage))
 
-    return { name: binding.name, declaration: range, usages }
+    return { name: binding.name, origin: "block", declaration: range, usages }
   })
 }
 
@@ -99,6 +101,7 @@ function stateLocals(document: DocumentNode, references: RubyReferenceCollector,
   return collectStateDirectives(document).flatMap(({ node, signature }) =>
     signature.declarations.map(declaration => ({
       name: declaration.name,
+      origin: "state",
       declaration: contentRange(node, declaration.nameOffset, declaration.name.length),
       usages: [
         ...references.bareCalls
@@ -111,7 +114,7 @@ function stateLocals(document: DocumentNode, references: RubyReferenceCollector,
   )
 }
 
-function contentRange(node: ERBContentNode, offset: number, length: number): Range {
+function contentRange(node: ERBCommentNode | ERBContentNode, offset: number, length: number): Range {
   const content = node.content
 
   if (!content) return nodeToRange(node)

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0063_writes an item key the same way the values payload does, under either escaping"
+input: "markers_test-4"
+---
+<!--herb-region:app/views/test.html.erb:6d3cc90f:0--><ul><!--herb-slot:0:collection--><!--herb-item:0:a&b<c>"d"--><li id="a&amp;b&lt;c&gt;&quot;d&quot;" data-herb-slot="1:attribute:id 2:child">a&amp;b&lt;c&gt;&quot;d&quot;</li><!--/herb-item:0--><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->

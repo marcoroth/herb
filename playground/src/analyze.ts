@@ -4,6 +4,7 @@ import { Formatter } from "@herb-tools/formatter"
 import { Linter, ruleDocumentationUrl } from "@herb-tools/linter"
 import { Highlighter } from "@herb-tools/highlighter"
 import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
+import { MinifyPrinter } from "@herb-tools/minifier"
 import { rewrite, ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 
 import type { LintResult, AutofixResult, Framework } from "@herb-tools/linter"
@@ -35,6 +36,7 @@ export type AnalyzeJob =
   | "html"
   | "format"
   | "printer"
+  | "minify"
   | "rewrite"
   | "lint"
   | "autofix"
@@ -48,6 +50,7 @@ export const ALL_ANALYZE_JOBS: AnalyzeJob[] = [
   "html",
   "format",
   "printer",
+  "minify",
   "rewrite",
   "lint",
   "autofix",
@@ -176,6 +179,12 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
       )
     : undefined
 
+  const minified = wants("minify")
+    ? await safeExecute<string>(
+        new Promise((resolve) => resolve(MinifyPrinter.print(parseResult.value))),
+      )
+    : undefined
+
   const printedDiff = wants("printer") && typeof printed === "string" && printed !== source && !printed.startsWith("Error: Cannot print")
     ? await safeExecute<string>(renderPrinterDiff(herb, source, printed))
     : undefined
@@ -234,6 +243,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
     formatted,
     printed,
     printedDiff,
+    minified,
     rewritten,
     version,
     lintResult,

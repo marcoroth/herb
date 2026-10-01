@@ -120,6 +120,7 @@ export class ERBRequireWhitespaceRule extends ParserRule<CommentedERBTagAutofixC
   static autocorrectable = true
   static ruleName = "erb-require-whitespace-inside-tags"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

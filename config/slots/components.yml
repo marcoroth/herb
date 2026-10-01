@@ -1,0 +1,52 @@
+---
+version: 1
+
+attribute_definitions:
+  delay: &delay
+    name: "delay"
+    type: "milliseconds"
+    description: "How long to wait before the fallback appears, so a fast answer never flashes it."
+
+  hold: &hold
+    name: "hold"
+    type: "milliseconds"
+    description: "How long the fallback stays once it appears, so it does not flicker away."
+
+  poll: &poll
+    name: "poll"
+    type: "milliseconds"
+    description: "How often to request the block again once it has settled."
+
+  on: &on
+    name: "on"
+    type: "state_list"
+    description: "The states whose writes mask this fragment, named as a list."
+
+components:
+  - name: "Fragment"
+    void: false
+    deferred: false
+    parents: null
+    description: "Wraps server-derived content with the markup to stand in while that content is stale."
+    attributes: [*delay, *hold, *on]
+
+  - name: "Fallback"
+    void: false
+    deferred: false
+    parents: ["Fragment", "Async", "Lazy"]
+    description: "The markup its component shows in place of content that is stale or not there yet."
+    attributes: []
+
+  - name: "Async"
+    void: false
+    deferred: true
+    parents: null
+    description: "A deferred block the client requests on mount, so its content loads in parallel with the page."
+    attributes: [*delay, *hold, *poll]
+
+  - name: "Lazy"
+    void: false
+    deferred: true
+    parents: null
+    description: "A deferred block the client requests when it nears the viewport, and never for content the reader never reaches."
+    attributes: [*delay, *hold, *poll]

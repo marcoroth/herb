@@ -35,4 +35,4 @@ A state can legitimately be driven only from app code, through `stateFor` or `us
 
 ## References
 
-\-
+- [Language reference: State](https://herb-tools.dev/language/state)

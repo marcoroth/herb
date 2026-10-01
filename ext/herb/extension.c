@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/thread.h>
 
 #include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_arena_debug.h"
@@ -7,6 +8,7 @@
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 VALUE mHerb;
 VALUE cPosition;
@@ -20,8 +22,10 @@ VALUE cParserOptions;
 
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
+  const char* input;
   VALUE source;
   const parser_options_T* parser_options;
+  bool print_arena_stats;
   hb_allocator_T allocator;
 } parse_args_T;
 
@@ -36,8 +40,20 @@ typedef struct {
   hb_allocator_T allocator;
 } buffer_args_T;
 
-static VALUE parse_convert_body(VALUE arg) {
+static void* parse_without_gvl(void* arg) {
   parse_args_T* args = (parse_args_T*) arg;
+
+  args->root = herb_parse(args->input, args->parser_options, &args->allocator);
+
+  return NULL;
+}
+
+static VALUE parse_body(VALUE arg) {
+  parse_args_T* args = (parse_args_T*) arg;
+
+  rb_thread_call_without_gvl(parse_without_gvl, (void*) arg, NULL, NULL);
+
+  if (args->print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args->allocator.context); }
 
   return create_parse_result(args->root, args->source, args->parser_options);
 }
@@ -156,6 +172,8 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
 
+  herb_extract_parser_options(options, &parser_options);
+
   if (!NIL_P(options)) {
     size_t opener_count = read_erb_openers(options, opener_buffer);
 
@@ -164,92 +182,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
       parser_options.erb_opener_count = opener_count;
     }
 
-    VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
-    if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
-
-    VALUE track_locations = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_locations"));
-    if (NIL_P(track_locations)) { track_locations = rb_hash_lookup(options, ID2SYM(rb_intern("track_locations"))); }
-    if (!NIL_P(track_locations) && !RTEST(track_locations)) { parser_options.track_locations = false; }
-
-    VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
-    if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
-    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
-
-    VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
-    if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
-    if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
-
-    VALUE action_view_helpers = rb_hash_lookup(options, rb_utf8_str_new_cstr("action_view_helpers"));
-    if (NIL_P(action_view_helpers)) {
-      action_view_helpers = rb_hash_lookup(options, ID2SYM(rb_intern("action_view_helpers")));
-    }
-    if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
-
-    VALUE transform_conditionals = rb_hash_lookup(options, rb_utf8_str_new_cstr("transform_conditionals"));
-    if (NIL_P(transform_conditionals)) {
-      transform_conditionals = rb_hash_lookup(options, ID2SYM(rb_intern("transform_conditionals")));
-    }
-    if (!NIL_P(transform_conditionals) && RTEST(transform_conditionals)) {
-      parser_options.transform_conditionals = true;
-    }
-
-    VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
-    if (NIL_P(dot_notation_tags)) {
-      dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
-    }
-    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
-
-    VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
-    if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
-    if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }
-
-    VALUE strict_locals = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict_locals"));
-    if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
-    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
-
-    VALUE herb_directives = rb_hash_lookup(options, rb_utf8_str_new_cstr("herb_directives"));
-    if (NIL_P(herb_directives)) { herb_directives = rb_hash_lookup(options, ID2SYM(rb_intern("herb_directives"))); }
-    if (!NIL_P(herb_directives) && RTEST(herb_directives)) { parser_options.herb_directives = true; }
-
-    VALUE iteration_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("iteration_nodes"));
-    if (NIL_P(iteration_nodes)) { iteration_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("iteration_nodes"))); }
-    if (!NIL_P(iteration_nodes) && RTEST(iteration_nodes)) { parser_options.iteration_nodes = true; }
-
-    VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
-    if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
-    if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
-
-    VALUE prism_nodes_deep = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes_deep"));
-    if (NIL_P(prism_nodes_deep)) { prism_nodes_deep = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes_deep"))); }
-    if (!NIL_P(prism_nodes_deep) && RTEST(prism_nodes_deep)) { parser_options.prism_nodes_deep = true; }
-
-    VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
-    if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
-    if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
-
-    VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
-    if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
-    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
-
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    VALUE timeout = rb_hash_lookup(options, rb_utf8_str_new_cstr("timeout"));
-    if (NIL_P(timeout)) { timeout = rb_hash_lookup(options, ID2SYM(rb_intern("timeout"))); }
-    if (!NIL_P(timeout)) { parser_options.timeout_ms = (uint32_t) (NUM2DBL(timeout) * 1000); }
-
-    VALUE max_errors_sentinel = ID2SYM(rb_intern("__not_set__"));
-    VALUE max_errors = rb_hash_lookup2(options, rb_utf8_str_new_cstr("max_errors"), max_errors_sentinel);
-
-    if (max_errors == max_errors_sentinel) {
-      max_errors = rb_hash_lookup2(options, ID2SYM(rb_intern("max_errors")), max_errors_sentinel);
-    }
-
-    if (max_errors != max_errors_sentinel) {
-      parser_options.max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
-    }
   }
 
   uint32_t error_count = 0;
@@ -258,14 +193,20 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parse_args_T args = { 0 };
   args.source = source;
   args.parser_options = &parser_options;
+  args.print_arena_stats = print_arena_stats;
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
-  args.root = herb_parse(string, &parser_options, &args.allocator);
+  if (string != NULL) {
+    args.input = hb_allocator_strndup(&args.allocator, string, (size_t) RSTRING_LEN(source));
 
-  if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args.allocator.context); }
+    if (args.input == NULL) {
+      hb_allocator_destroy(&args.allocator);
+      rb_raise(rb_eNoMemError, "failed to allocate a parser input buffer");
+    }
+  }
 
-  return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
+  return rb_ensure(parse_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {

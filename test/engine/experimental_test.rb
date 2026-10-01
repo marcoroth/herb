@@ -5,6 +5,8 @@ require "stringio"
 require_relative "../test_helper"
 require_relative "../../lib/herb/visitor/experimental"
 require_relative "../../lib/herb/engine/component_tags/visitor"
+require_relative "../../lib/herb/engine/css_inliner/visitor"
+require_relative "../../lib/herb/engine/inline_render/visitor"
 require_relative "../../lib/herb/engine/visitors/instrumentation_visitor"
 require_relative "../../lib/herb/engine/visitors/optimize_visitor"
 require_relative "../../lib/herb/engine/scoped_style/visitor"
@@ -14,6 +16,8 @@ module Engine
   class ExperimentalTest < Minitest::Spec
     ANNOUNCED = [
       Herb::Engine::ComponentTags::Visitor,
+      Herb::Engine::CSSInliner::Visitor,
+      Herb::Engine::InlineRender::Visitor,
       Herb::Engine::InstrumentationVisitor,
       Herb::Engine::OptimizeVisitor,
       Herb::Engine::ScopedStyle::Visitor,

@@ -112,4 +112,4 @@ The engine raises these as compile errors when the template renders. This rule r
 
 ## References
 
-\-
+- [Language reference: State, Kinds](https://herb-tools.dev/language/state#kinds)

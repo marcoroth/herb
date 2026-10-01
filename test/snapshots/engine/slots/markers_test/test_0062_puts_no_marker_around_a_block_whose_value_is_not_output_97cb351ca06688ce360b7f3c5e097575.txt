@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0062_puts no marker around a block whose value is not output"
+input: "markers-nested-child"
+---
+<!--herb-region:app/views/test.html.erb:7f51843e:0--><div data-herb-slot="1:child"><b data-herb-slot="0:child">hi</b></div><!--/herb-region:app/views/test.html.erb-->

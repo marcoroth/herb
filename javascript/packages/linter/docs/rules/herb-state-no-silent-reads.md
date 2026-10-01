@@ -36,4 +36,4 @@ The generic `erb-no-unused-expressions` rule steps aside for declared states ins
 
 ## References
 
-\-
+- [Language reference: State, Reading a state](https://herb-tools.dev/language/state#reading-a-state)

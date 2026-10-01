@@ -10,7 +10,7 @@ input: "<div class=\"valid\" id=`invalid` data-test='also-valid'></div>"
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── tag_closing: ">" (location: (1:54)-(1:55))
-        │       ├── children: (4 items)
+        │       ├── children: (3 items)
         │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:18))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
@@ -31,7 +31,7 @@ input: "<div class=\"valid\" id=`invalid` data-test='also-valid'></div>"
         │       │   │           └── quoted: true
         │       │   │
         │       │   │
-        │       │   ├── @ HTMLAttributeNode (location: (1:19)-(1:23))
+        │       │   ├── @ HTMLAttributeNode (location: (1:19)-(1:31))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:21))
         │       │   │   │       └── children: (1 item)
@@ -41,30 +41,24 @@ input: "<div class=\"valid\" id=`invalid` data-test='also-valid'></div>"
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:21)-(1:22))
         │       │   │   └── value:
-        │       │   │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:23))
-        │       │   │           ├── errors: (1 error)
-        │       │   │           │   └── @ UnexpectedError (location: (1:22)-(1:23))
-        │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: single quote (') or double quote (\"), found: a backtick."
-        │       │   │           │       ├── description: "Invalid quote character for HTML attribute"
-        │       │   │           │       ├── expected: "single quote (') or double quote (\")"
-        │       │   │           │       └── found: "a backtick"
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:31))
+        │       │   │           ├── errors: (2 errors)
+        │       │   │           │   ├── @ UnexpectedCharacterInUnquotedAttributeValueError (location: (1:22)-(1:23))
+        │       │   │           │   │   ├── message: "Unexpected ``` in unquoted attribute value at (1:22)."
+        │       │   │           │   │   └── character: "`" (location: (1:22)-(1:23))
+        │       │   │           │   │
+        │       │   │           │   └── @ UnexpectedCharacterInUnquotedAttributeValueError (location: (1:30)-(1:31))
+        │       │   │           │       ├── message: "Unexpected ``` in unquoted attribute value at (1:30)."
+        │       │   │           │       └── character: "`" (location: (1:30)-(1:31))
         │       │   │           │
         │       │   │           ├── open_quote: ∅
-        │       │   │           ├── children: []
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:22)-(1:31))
+        │       │   │           │       └── content: "`invalid`"
+        │       │   │           │
         │       │   │           ├── close_quote: ∅
         │       │   │           └── quoted: false
         │       │   │
-        │       │   │
-        │       │   ├── @ HTMLAttributeNode (location: (1:23)-(1:31))
-        │       │   │   ├── name:
-        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:23)-(1:31))
-        │       │   │   │       └── children: (1 item)
-        │       │   │   │           └── @ LiteralNode (location: (1:23)-(1:31))
-        │       │   │   │               └── content: "invalid`"
-        │       │   │   │
-        │       │   │   │
-        │       │   │   ├── equals: ∅
-        │       │   │   └── value: ∅
         │       │   │
         │       │   └── @ HTMLAttributeNode (location: (1:32)-(1:54))
         │       │       ├── name:

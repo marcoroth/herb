@@ -1,0 +1,40 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0050_rescue and end in same ERB tag"
+input: |2-
+<% begin %>
+  x
+<% rescue
+  y
+end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBBeginNode (location: (1:0)-(5:6))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " begin " (location: (1:2)-(1:9))
+    │   ├── tag_closing: "%>" (location: (1:9)-(1:11))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:11)-(3:0))
+    │   │       └── content: "\n  x\n"
+    │   │
+    │   ├── rescue_clause:
+    │   │   └── @ ERBRescueNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " rescue
+    │   │         y
+    │   │       " (location: (3:2)-(5:0))
+    │   │       ├── tag_closing: ∅
+    │   │       ├── statements: []
+    │   │       └── subsequent: ∅
+    │   │
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:6))
+    │           ├── tag_opening: ∅
+    │           ├── content: "end " (location: (5:0)-(5:4))
+    │           └── tag_closing: "%>" (location: (5:4)-(5:6))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:6)-(6:0))
+        └── content: "\n"

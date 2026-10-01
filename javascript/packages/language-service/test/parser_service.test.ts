@@ -11,8 +11,8 @@ describe("ParserService", () => {
     await Herb.load()
   })
 
-  function documentFor(content: string): TextDocument {
-    return TextDocument.create("file:///test.html.erb", "erb", 1, content)
+  function documentFor(content: string, uri = "file:///test.html.erb"): TextDocument {
+    return TextDocument.create(uri, "erb", 1, content)
   }
 
   describe("erb_openers", () => {
@@ -52,6 +52,56 @@ describe("ParserService", () => {
       service.setConfig(undefined)
 
       expect(service.parseDocument(documentFor(GRAPHQL_TEMPLATE)).diagnostics.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("config resolver", () => {
+    const STOREFRONT = "file:///workspace/storefront/index.html.erb"
+    const ADMIN = "file:///workspace/admin/index.html.erb"
+
+    function serviceForTwoProjects(): ParserService {
+      const service = new ParserService(Herb)
+
+      service.setConfigResolver(uri => (
+        uri.startsWith("file:///workspace/storefront/") ? { parserOptions: { erb_openers: ["graphql"] } } : undefined
+      ))
+
+      return service
+    }
+
+    it("parses a document with the openers of the project it belongs to", () => {
+      const service = serviceForTwoProjects()
+
+      expect(service.parseDocument(documentFor(GRAPHQL_TEMPLATE, STOREFRONT)).diagnostics).toEqual([])
+      expect(service.parseDocument(documentFor(GRAPHQL_TEMPLATE, ADMIN)).diagnostics.length).toBeGreaterThan(0)
+    })
+
+    it("parses content with the openers of the URI it came from", () => {
+      const service = serviceForTwoProjects()
+
+      expect(service.parseContent(GRAPHQL_TEMPLATE, undefined, STOREFRONT).recursiveErrors()).toEqual([])
+      expect(service.parseContent(GRAPHQL_TEMPLATE, undefined, ADMIN).recursiveErrors().length).toBeGreaterThan(0)
+    })
+
+    it("offers the prefixes of the project a URI belongs to", () => {
+      const service = serviceForTwoProjects()
+
+      expect(service.commentedERBTagPrefixes(undefined, STOREFRONT)).toContain("graphql")
+      expect(service.commentedERBTagPrefixes(undefined, ADMIN)).not.toContain("graphql")
+    })
+
+    it("falls back to the configured config for a URI no project covers", () => {
+      const service = serviceForTwoProjects()
+      service.setConfig({ parserOptions: { erb_openers: ["graphql"] } })
+
+      expect(service.parseDocument(documentFor(GRAPHQL_TEMPLATE, ADMIN)).diagnostics).toEqual([])
+    })
+
+    it("keeps using the configured config when no URI is given", () => {
+      const service = serviceForTwoProjects()
+      service.setConfig({ parserOptions: { erb_openers: ["graphql"] } })
+
+      expect(service.parseContent(GRAPHQL_TEMPLATE).recursiveErrors()).toEqual([])
     })
   })
 

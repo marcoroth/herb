@@ -259,13 +259,13 @@ describe("RewriteCodeActionProvider", () => {
     class CachingParserService extends ParserService {
       private cache = new Map<string, ParseResult>()
 
-      parseContent(content: string, options?: ParseOptions): ParseResult {
-        const key = `${JSON.stringify(options ?? null)} ${content}`
+      parseContent(content: string, options?: ParseOptions, uri?: string): ParseResult {
+        const key = `${uri} ${JSON.stringify(options ?? null)} ${content}`
         const cached = this.cache.get(key)
 
         if (cached) return cached
 
-        const result = super.parseContent(content, options)
+        const result = super.parseContent(content, options, uri)
         this.cache.set(key, result)
 
         return result
@@ -279,11 +279,11 @@ describe("RewriteCodeActionProvider", () => {
       const provider = new RewriteCodeActionProvider(caching)
       const options = { action_view_helpers: true, track_whitespace: true }
 
-      expect((caching.parseContent(content, options).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
+      expect((caching.parseContent(content, options, document.uri).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
 
       provider.getCodeActions(document, Range.create(0, 0, 0, 11), { framework: "actionview" })
 
-      expect((caching.parseContent(content, options).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
+      expect((caching.parseContent(content, options, document.uri).value.children[0] as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
     })
   })
 })

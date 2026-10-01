@@ -171,15 +171,15 @@ class CachingParserService extends ParserService {
 
   parseDocument(textDocument) {
     return this.#remember(
-      `document ${textDocument.getText()}`,
+      `document ${textDocument.uri} ${textDocument.getText()}`,
       () => super.parseDocument(textDocument),
     )
   }
 
-  parseContent(content, options) {
+  parseContent(content, options, uri) {
     return this.#remember(
-      `content ${JSON.stringify(options ?? null)} ${content}`,
-      () => super.parseContent(content, options),
+      `content ${uri} ${JSON.stringify(options ?? null)} ${content}`,
+      () => super.parseContent(content, options, uri),
     )
   }
 }

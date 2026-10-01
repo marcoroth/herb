@@ -1,0 +1,4 @@
+---
+source: "Engine::ControlFlowClosingTest#test_0007_unless with else and end in same ERB tag"
+input: "{source: \"<% unless condition %>\\n  <span>No</span>\\n<% else\\nend %>\\n\", locals: {condition: true}, options: {escape: false}}"
+---

@@ -75,7 +75,8 @@ module Engine
         assert_equal :warning, diagnostic.severity
         assert_equal FILENAME, diagnostic.template
         assert_equal 1, diagnostic.location.start.line
-        assert_includes diagnostic.message, "`tag` was compiled away as #{TAG_OWNER}"
+
+        assert_equal %(`tag` was compiled away as ActionView::Helpers::TagHelper, but here it is defined by Engine::OptimizedHelpersTest::OverriddenTag), diagnostic.message
       end
 
       test "names the module that took the helper over" do
@@ -132,7 +133,7 @@ module Engine
         compiled = compile
         context = overriding_context
 
-        counts = 3.times.map do
+        counts = Array.new(3) do
           Herb::Engine::Runtime::Session.capture { context.instance_eval(compiled) }.diagnostics.length
         end
 

@@ -136,7 +136,7 @@ module Analyze
       HTML
     end
 
-    test "strict locals comment without option enabled stays as ERBContentNode" do
+    test "strict locals comment without option enabled stays an ERBCommentNode" do
       assert_parsed_snapshot(<<~HTML)
         <%# locals: (message:) %>
       HTML
@@ -383,6 +383,12 @@ module Analyze
     test "local with a multi-byte character in its default" do
       assert_parsed_snapshot(<<~HTML, strict_locals: true)
         <%# locals: (greeting: "grüß", after: 1) %>
+      HTML
+    end
+
+    test "missing parentheses with nothing after the prefix and whitespace trimming" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: -%>
       HTML
     end
   end

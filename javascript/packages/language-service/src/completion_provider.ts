@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { ParserService } from "./parser_service"
 import { Visitor, RubyReferenceCollector } from "@herb-tools/core"
-import { Command, CompletionItem, CompletionItemKind, CompletionList, InsertTextFormat, MarkupKind, Position, Range, TextEdit } from "vscode-languageserver-types"
+import { Command, CompletionItem, CompletionItemKind, CompletionItemTag, CompletionList, InsertTextFormat, MarkupKind, Position, Range, TextEdit } from "vscode-languageserver-types"
 
 import { getBlockArgumentCompletions } from "./language-service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
@@ -214,7 +214,7 @@ export class CompletionProvider {
   getCompletions(document: TextDocument, position: Position): CompletionList | null {
     const parseResult = this.parserService.parseContent(document.getText(), {
       track_whitespace: true,
-    })
+    }, document.uri)
 
     const herb = this.getHerbAttributeCompletions(document, position, parseResult.value as DocumentNode)
 
@@ -574,7 +574,8 @@ export class CompletionProvider {
           label: tag.name,
           kind: CompletionItemKind.Property,
           detail: `tag.${tag.name} - ${tag.description}`,
-          sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          sortText: `!0${tag.isDeprecated ? "2" : isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          tags: tag.isDeprecated ? [CompletionItemTag.Deprecated] : undefined,
           insertTextFormat: hasClosingERBTag ? InsertTextFormat.PlainText : InsertTextFormat.Snippet,
           insertText,
         }
@@ -593,7 +594,8 @@ export class CompletionProvider {
           label: `:${tag.name}`,
           kind: CompletionItemKind.Property,
           detail: `content_tag :${tag.name} - ${tag.description}`,
-          sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          sortText: `!0${tag.isDeprecated ? "2" : isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          tags: tag.isDeprecated ? [CompletionItemTag.Deprecated] : undefined,
           insertTextFormat: InsertTextFormat.PlainText,
           filterText: tag.name,
           insertText: hasSpaceAfterCursor ? tag.name : `${tag.name} `,
@@ -616,7 +618,8 @@ export class CompletionProvider {
           label: tag.name,
           kind: CompletionItemKind.Property,
           detail: `<${tag.name}> - ${tag.description}`,
-          sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          sortText: `!0${tag.isDeprecated ? "2" : isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
+          tags: tag.isDeprecated ? [CompletionItemTag.Deprecated] : undefined,
           insertTextFormat: InsertTextFormat.Snippet,
           insertText,
         }
@@ -900,7 +903,7 @@ export class CompletionProvider {
 
   private variablesIn(document: TextDocument, contentStart: Position): string[] {
     const text = document.getText()
-    const result = this.parserService.parseContent(text, { prism_program: true })
+    const result = this.parserService.parseContent(text, { prism_program: true }, document.uri)
 
     if (!result.value.prismNode) return []
 

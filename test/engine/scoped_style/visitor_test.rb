@@ -173,7 +173,8 @@ module Engine
 
       assert_empty visitor.diagnostics
       assert_equal 1, visitor.styles.length
-      assert_includes visitor.styles.values.first, "[data-herb-scope-"
+
+      assert_equal ".title[data-herb-scope-2940ba8a] {\n  color: red;\n}\n", visitor.styles.values.first
     end
 
     test "refuses a template compiled without a path, because a scope would not be stable" do
@@ -371,7 +372,7 @@ module Engine
       visitor = Untransformable.new
       Herb::Engine.new(%(<style scoped>.title { color: red; }</style><h1>Hi</h1>), filename: TEMPLATE, escape: false, visitors: [visitor])
 
-      assert_includes visitor.diagnostics.first.message, "cannot load such file -- lightningcss"
+      assert_equal "A `<style scoped>` block was found, and there is no `transform` to narrow its selectors with, so it was left as it was written and still applies to the whole page. Loading `lightningcss` failed with `cannot load such file -- lightningcss`. Install `lightningcss`, or give Engine::ScopedStyleVisitorTest::Untransformable a `transform` of its own.", visitor.diagnostics.first.message
     end
 
     test "files what it found in an inlined partial under the partial, not the file it landed in" do
@@ -392,6 +393,15 @@ module Engine
 
       refute_nil diagnostic
       assert_equal "app/views/posts/_dynamic.html.erb", diagnostic.template
+    end
+
+    test "carries the scope into the fallback a client stands in while content is stale" do
+      source = %(<%# herb:slots client %><%# herb:state (album: "") %><style scoped>.g { color: red; }</style><Fragment on="album"><b>Loaded</b><Fallback><i class="g">Loading</i></Fallback></Fragment>)
+
+      assert_compiled_snapshot(
+        source,
+        options(visitors: [Herb::Engine::Slots::Visitor.new(mode: :client)], project_path: PROJECT_PATH)
+      )
     end
   end
 end

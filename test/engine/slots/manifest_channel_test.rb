@@ -71,7 +71,7 @@ module Engine
         held = JSON.parse(json)
 
         assert_equal 1, held.size
-        assert_equal ["file", "identifier", "version", "names", "parts", "states"], held.values.fetch(0).keys
+        assert_equal ["file", "identifier", "version", "names", "parts", "bindings", "states"], held.values.fetch(0).keys
       end
 
       test "records the manifest once for a partial rendered many times when it is hoisted" do

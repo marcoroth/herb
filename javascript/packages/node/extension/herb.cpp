@@ -14,6 +14,7 @@ extern "C" {
 #include "error_helpers.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 #include <node_api.h>
 #include <stdio.h>
@@ -154,119 +155,6 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
     napi_typeof(env, args[1], &valuetype);
 
     if (valuetype == napi_object) {
-      napi_value track_whitespace_prop;
-      bool has_track_whitespace_prop;
-      napi_has_named_property(env, args[1], "track_whitespace", &has_track_whitespace_prop);
-
-      if (has_track_whitespace_prop) {
-        napi_get_named_property(env, args[1], "track_whitespace", &track_whitespace_prop);
-        bool track_whitespace_value;
-        napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
-
-        if (track_whitespace_value) {
-          parser_options.track_whitespace = true;
-        }
-      }
-
-      napi_value max_errors_prop;
-      bool has_max_errors_prop;
-      napi_has_named_property(env, args[1], "max_errors", &has_max_errors_prop);
-
-      if (has_max_errors_prop) {
-        napi_get_named_property(env, args[1], "max_errors", &max_errors_prop);
-
-        napi_valuetype max_errors_type;
-        napi_typeof(env, max_errors_prop, &max_errors_type);
-
-        if (max_errors_type == napi_number) {
-          uint32_t max_errors_value;
-          napi_get_value_uint32(env, max_errors_prop, &max_errors_value);
-          parser_options.max_errors = max_errors_value;
-        } else {
-          parser_options.max_errors = 0;
-        }
-      }
-
-      napi_value track_locations_prop;
-      bool has_track_locations_prop;
-      napi_has_named_property(env, args[1], "track_locations", &has_track_locations_prop);
-
-      if (has_track_locations_prop) {
-        napi_get_named_property(env, args[1], "track_locations", &track_locations_prop);
-        bool track_locations_value;
-        napi_get_value_bool(env, track_locations_prop, &track_locations_value);
-        parser_options.track_locations = track_locations_value;
-      }
-
-      napi_value analyze_prop;
-      bool has_analyze_prop;
-      napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
-
-      if (has_analyze_prop) {
-        napi_get_named_property(env, args[1], "analyze", &analyze_prop);
-        bool analyze_value;
-        napi_get_value_bool(env, analyze_prop, &analyze_value);
-
-        if (!analyze_value) {
-          parser_options.analyze = false;
-        }
-      }
-
-      napi_value strict_prop;
-      bool has_strict_prop;
-      napi_has_named_property(env, args[1], "strict", &has_strict_prop);
-
-      if (has_strict_prop) {
-        napi_get_named_property(env, args[1], "strict", &strict_prop);
-        bool strict_value;
-        napi_get_value_bool(env, strict_prop, &strict_value);
-        parser_options.strict = strict_value;
-      }
-
-      napi_value action_view_helpers_prop;
-      bool has_action_view_helpers_prop;
-      napi_has_named_property(env, args[1], "action_view_helpers", &has_action_view_helpers_prop);
-
-      if (has_action_view_helpers_prop) {
-        napi_get_named_property(env, args[1], "action_view_helpers", &action_view_helpers_prop);
-        bool action_view_helpers_value;
-        napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
-        parser_options.action_view_helpers = action_view_helpers_value;
-      }
-
-      napi_value render_nodes_prop;
-      bool has_render_nodes_prop;
-      napi_has_named_property(env, args[1], "render_nodes", &has_render_nodes_prop);
-
-      if (has_render_nodes_prop) {
-        napi_get_named_property(env, args[1], "render_nodes", &render_nodes_prop);
-        bool render_nodes_value;
-        napi_get_value_bool(env, render_nodes_prop, &render_nodes_value);
-        parser_options.render_nodes = render_nodes_value;
-      }
-
-      napi_value iteration_nodes_prop;
-      bool has_iteration_nodes_prop;
-      napi_has_named_property(env, args[1], "iteration_nodes", &has_iteration_nodes_prop);
-
-      if (has_iteration_nodes_prop) {
-        napi_get_named_property(env, args[1], "iteration_nodes", &iteration_nodes_prop);
-        bool iteration_nodes_value;
-        napi_get_value_bool(env, iteration_nodes_prop, &iteration_nodes_value);
-        parser_options.iteration_nodes = iteration_nodes_value;
-      }
-
-      napi_value strict_locals_prop;
-      bool has_strict_locals_prop;
-      napi_has_named_property(env, args[1], "strict_locals", &has_strict_locals_prop);
-
-      if (has_strict_locals_prop) {
-        napi_get_named_property(env, args[1], "strict_locals", &strict_locals_prop);
-        bool strict_locals_value;
-        napi_get_value_bool(env, strict_locals_prop, &strict_locals_value);
-        parser_options.strict_locals = strict_locals_value;
-      }
-
       if (!ReadERBOpeners(env, args[1], openers)) {
         free(string);
         return nullptr;
@@ -274,49 +162,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
       ApplyERBOpeners(parser_options, openers);
 
-      napi_value herb_directives_prop;
-      bool has_herb_directives_prop;
-      napi_has_named_property(env, args[1], "herb_directives", &has_herb_directives_prop);
-
-      if (has_herb_directives_prop) {
-        napi_get_named_property(env, args[1], "herb_directives", &herb_directives_prop);
-        bool herb_directives_value;
-        napi_get_value_bool(env, herb_directives_prop, &herb_directives_value);
-        parser_options.herb_directives = herb_directives_value;
-      }
-
-      napi_value prism_nodes_prop;
-      bool has_prism_nodes_prop;
-      napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
-
-      if (has_prism_nodes_prop) {
-        napi_get_named_property(env, args[1], "prism_nodes", &prism_nodes_prop);
-        bool prism_nodes_value;
-        napi_get_value_bool(env, prism_nodes_prop, &prism_nodes_value);
-        parser_options.prism_nodes = prism_nodes_value;
-      }
-
-      napi_value prism_nodes_deep_prop;
-      bool has_prism_nodes_deep_prop;
-      napi_has_named_property(env, args[1], "prism_nodes_deep", &has_prism_nodes_deep_prop);
-
-      if (has_prism_nodes_deep_prop) {
-        napi_get_named_property(env, args[1], "prism_nodes_deep", &prism_nodes_deep_prop);
-        bool prism_nodes_deep_value;
-        napi_get_value_bool(env, prism_nodes_deep_prop, &prism_nodes_deep_value);
-        parser_options.prism_nodes_deep = prism_nodes_deep_value;
-      }
-
-      napi_value prism_program_prop;
-      bool has_prism_program_prop;
-      napi_has_named_property(env, args[1], "prism_program", &has_prism_program_prop);
-
-      if (has_prism_program_prop) {
-        napi_get_named_property(env, args[1], "prism_program", &prism_program_prop);
-        bool prism_program_value;
-        napi_get_value_bool(env, prism_program_prop, &prism_program_value);
-        parser_options.prism_program = prism_program_value;
-      }
+      herb_extract_parser_options(env, args[1], &parser_options);
     }
   }
 

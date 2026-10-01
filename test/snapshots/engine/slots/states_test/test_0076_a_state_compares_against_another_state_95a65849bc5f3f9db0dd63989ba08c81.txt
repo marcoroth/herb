@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0076_a state compares against another state"
+input: "states_test-25"
+---
+<!--herb-region:app/views/test.html.erb:f6935667:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->Behind<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:f6935667"><!--herb-branch:0:0-->Ahead<!--herb-branch:0:1-->Behind</template>

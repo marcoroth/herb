@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0069_a state read compiles as an interpolated attribute's only output"
+input: "states_test-22"
+---
+<!--herb-region:app/views/test.html.erb:23272f38:0--><div class="row-" data-herb-slot="0:attribute_interpolation:class">x</div><!--/herb-region:app/views/test.html.erb-->

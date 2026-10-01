@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, getTagLocalName } from "@herb-tools/core"
+import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 import type { ParseResult, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions } from "@herb-tools/core"
@@ -48,7 +48,39 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
       return
     }
 
+    const fallbacks = this.fallbackChildren(node)
+
+    if (fallbacks.length > 0) {
+      this.visitElementWithFallbacks(node, fallbacks)
+
+      return
+    }
+
     super.visitHTMLElementNode(node)
+  }
+
+  private fallbackChildren(node: HTMLElementNode): HTMLElementNode[] {
+    const name = getTagName(node)
+
+    if (!name || !/^[A-Z]/.test(name) || isKnownHTMLElement(name.toLowerCase())) return []
+
+    return node.body.filter((child): child is HTMLElementNode => isHTMLElementNode(child) && getTagName(child) === "Fallback")
+  }
+
+  private visitElementWithFallbacks(node: HTMLElementNode, fallbacks: HTMLElementNode[]): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => {
+      if (node.open_tag) this.visit(node.open_tag)
+
+      for (const child of node.body) {
+        if (!fallbacks.includes(child as HTMLElementNode)) this.visit(child)
+      }
+
+      for (const fallback of fallbacks) {
+        this.startNewBranch(() => super.visitHTMLElementNode(fallback))
+      }
+
+      if (node.close_tag) this.visit(node.close_tag)
+    })
   }
 
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
@@ -311,6 +343,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 export class HTMLNoDuplicateIdsRule extends ParserRule {
   static ruleName = "html-no-duplicate-ids"
   static introducedIn = this.version("0.4.1")
+  static defaultEnabledIn = this.version("0.4.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

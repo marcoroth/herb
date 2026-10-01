@@ -10,33 +10,11 @@ Disallow the pattern of opening an HTML tag in one conditional block and closing
 
 This pattern is difficult to read, maintain, and reason about. It can lead to confusion when trying to understand the document structure, and it makes the template harder to format, lint, and analyze. The opening and closing tags are visually separated, making it non-obvious that they form a matched pair.
 
-Instead, prefer using `capture` blocks with `content_tag` helpers, which make the conditional wrapping explicit and keeps the logic together.
+Instead, keep an element's opening and closing tag in the same branch, or build the content once and wrap it conditionally, so the pair stays together.
 
 ## Examples
 
 ### ✅ Good
-
-Using a `capture` block to conditionally wrap content:
-
-```erb
-<% content = capture do %>
-  <div>Content</div>
-<% end %>
-
-<% if wrap_in_dialog? %>
-  <dialog><%= content %></dialog>
-<% else %>
-  <%= content %>
-<% end %>
-```
-
-```erb
-<% content = capture do %>
-  <div>Content</div>
-<% end %>
-
-<%= wrap_in_dialog? ? content_tag(:dialog, content) : content %>
-```
 
 Complete elements within conditional branches:
 
@@ -46,6 +24,26 @@ Complete elements within conditional branches:
 <% else %>
   <div class="b">Content</div>
 <% end %>
+```
+
+Building the content once and wrapping it conditionally:
+
+```erb
+<% if wrap_in_dialog? %>
+  <dialog><%= content %></dialog>
+<% else %>
+  <%= content %>
+<% end %>
+```
+
+On Action View, a `capture` block does the same for markup written inline:
+
+```erb
+<% content = capture do %>
+  <div>Content</div>
+<% end %>
+
+<%= wrap_in_dialog? ? content_tag(:dialog, content) : content %>
 ```
 
 ### 🚫 Bad

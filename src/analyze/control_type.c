@@ -3,6 +3,8 @@
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
 #include "../include/ast/ast_node.h"
+#include "../include/errors.h"
+#include "../include/lib/hb_array.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -179,9 +181,22 @@ static control_type_t find_earliest_control_keyword(pm_node_t* root, const uint8
   return result.found ? result.type : CONTROL_TYPE_UNKNOWN;
 }
 
+static bool erb_content_is_unterminated(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (erb_node->tag_closing != NULL) { return false; }
+  if (erb_node->base.errors == NULL) { return false; }
+
+  for (size_t index = 0; index < hb_array_size(erb_node->base.errors); index++) {
+    const ERROR_T* error = hb_array_get(erb_node->base.errors, index);
+
+    if (error && error->type == UNCLOSED_ERB_TAG_ERROR) { return true; }
+  }
+
+  return false;
+}
+
 control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
-  if (erb_node->tag_closing == NULL) { return CONTROL_TYPE_UNKNOWN; }
+  if (erb_content_is_unterminated(erb_node)) { return CONTROL_TYPE_UNKNOWN; }
 
   analyzed_ruby_T* ruby = erb_node->analyzed_ruby;
 

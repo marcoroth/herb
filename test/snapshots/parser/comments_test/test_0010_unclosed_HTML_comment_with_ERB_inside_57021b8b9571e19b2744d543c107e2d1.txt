@@ -1,0 +1,40 @@
+---
+source: "Parser::CommentsTest#test_0010_unclosed HTML comment with ERB inside"
+input: |2-
+<!-- <% presenter = featured.presenter %>
+<div data-id="<%= presenter.id %>"></div>
+---
+@ DocumentNode (location: (1:0)-(2:41))
+└── children: (1 item)
+    └── @ HTMLCommentNode (location: (1:0)-(2:41))
+        ├── errors: (1 error)
+        │   └── @ UnclosedCommentError (location: (1:0)-(2:41))
+        │       ├── message: "Comment opened at (1:0) is missing its closing `-->`."
+        │       └── comment_start: "<!--" (location: (1:0)-(1:4))
+        │
+        ├── comment_start: "<!--" (location: (1:0)-(1:4))
+        ├── children: (5 items)
+        │   ├── @ LiteralNode (location: (1:4)-(1:5))
+        │   │   └── content: " "
+        │   │
+        │   ├── @ ERBContentNode (location: (1:5)-(1:41))
+        │   │   ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │   │   ├── content: " presenter = featured.presenter " (location: (1:7)-(1:39))
+        │   │   ├── tag_closing: "%>" (location: (1:39)-(1:41))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   ├── @ LiteralNode (location: (1:41)-(2:14))
+        │   │   └── content: "\n<div data-id=\""
+        │   │
+        │   ├── @ ERBContentNode (location: (2:14)-(2:33))
+        │   │   ├── tag_opening: "<%=" (location: (2:14)-(2:17))
+        │   │   ├── content: " presenter.id " (location: (2:17)-(2:31))
+        │   │   ├── tag_closing: "%>" (location: (2:31)-(2:33))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (2:33)-(2:41))
+        │       └── content: "\"></div>"
+        │
+        └── comment_end: "" (location: (2:41)-(2:41))

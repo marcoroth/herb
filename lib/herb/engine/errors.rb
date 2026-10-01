@@ -5,7 +5,7 @@ require_relative "../diagnostic"
 
 module Herb
   class Engine
-    class CompilationError < StandardError
+    class CompilationError < SyntaxError
       attr_reader :details, :diagnostics, :visitors, :parser_options
 
       def initialize(message, details: nil, diagnostics: [], visitors: [], parser_options: {})
@@ -30,20 +30,7 @@ module Herb
       end
     end
 
-    class GeneratorTemplateError < CompilationError
-    end
-
-    class InvalidRubyError < CompilationError
-      attr_reader :compiled_source
-
-      def initialize(message, compiled_source: nil)
-        @compiled_source = compiled_source
-
-        super(message)
-      end
-    end
-
-    class SecurityError < StandardError
+    module LocatedError
       attr_reader :line, :column, :filename, :suggestion
 
       def initialize(message, line: nil, column: nil, filename: nil, suggestion: nil)
@@ -75,6 +62,24 @@ module Herb
 
         parts.join(" - ")
       end
+    end
+
+    class GeneratorTemplateError < CompilationError
+      include LocatedError
+    end
+
+    class InvalidRubyError < CompilationError
+      attr_reader :compiled_source
+
+      def initialize(message, compiled_source: nil)
+        @compiled_source = compiled_source
+
+        super(message)
+      end
+    end
+
+    class SecurityError < StandardError
+      include LocatedError
     end
 
     class ParseError < CompilationError

@@ -1,0 +1,36 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0052_escaped ERB tag with a continuation and an end"
+input: |2-
+<%% if a %>x<%% else
+  y
+end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:12))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:11))
+        │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% if %>`"
+        │
+        ├── tag_opening: "<%%" (location: (1:0)-(1:3))
+        ├── content: " if a " (location: (1:3)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── then_keyword: ∅
+        ├── statements: (1 item)
+        │   └── @ HTMLTextNode (location: (1:11)-(1:12))
+        │       └── content: "x"
+        │
+        ├── subsequent:
+        │   └── @ ERBElseNode (location: (1:12)-(4:0))
+        │       ├── tag_opening: "<%%" (location: (1:12)-(1:15))
+        │       ├── content: " else
+        │         y
+        │       end " (location: (1:15)-(3:4))
+        │       ├── tag_closing: "%>" (location: (3:4)-(3:6))
+        │       └── statements: (1 item)
+        │           └── @ HTMLTextNode (location: (3:6)-(4:0))
+        │               └── content: "\n"
+        │
+        │
+        └── end_node: ∅

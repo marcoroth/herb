@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0039_to_s renders what Ruby renders, for every kind"
+input: "<%# herb:state (note: nil) %><p>[<%= note.to_s %>]</p>"
+---
+<!--herb-region:app/views/test.html.erb:a61587c8:0--><p>[<!--herb-slot:0--><!--/herb-slot:0-->]</p><!--/herb-region:app/views/test.html.erb-->

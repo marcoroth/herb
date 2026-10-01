@@ -102,6 +102,8 @@ module Herb
 
       OUTPUT_OPENINGS = ["<%=", "<%=="].freeze #: Array[String]
       CHILD_LISTS = [:children, :body, :statements].freeze #: Array[Symbol]
+      BRANCHLESS_KEYWORDS = [:end, :case_opening].freeze #: Array[Symbol]
+      CHAIN_OPENINGS = [:opening, :case_opening].freeze #: Array[Symbol]
       DUPLICATION_LIMIT = 4 #: Integer
 
       required_parser_option action_view_helpers: true, transform_conditionals: true
@@ -533,7 +535,7 @@ module Herb
       def within_duplication_limit?(paths, tokens)
         static_bytes = tokens.sum { |token| token[0] == :text ? token[1].bytesize : 0 }
 
-        paths.map(&:bytesize).sum <= DUPLICATION_LIMIT * static_bytes
+        paths.sum(&:bytesize) <= DUPLICATION_LIMIT * static_bytes
       end
 
       #: (Herb::Engine, Hash[Symbol, untyped], String, String, Hash[Symbol, Array[String?]]) -> void
@@ -565,7 +567,7 @@ module Herb
         opening = tokens[index]
 
         return unless opening[0] == :code
-        return unless [:opening, :case_opening].include?(chain_keyword(opening[1].strip.to_s))
+        return unless CHAIN_OPENINGS.include?(chain_keyword(opening[1].strip.to_s))
 
         closing = chain_end_index(tokens, index)
 
@@ -602,7 +604,7 @@ module Herb
 
           keyword = chain_keyword(token[1].strip.to_s)
 
-          depth += 1 if [:opening, :case_opening].include?(keyword)
+          depth += 1 if CHAIN_OPENINGS.include?(keyword)
           depth -= 1 if keyword == :end
 
           return position if depth.zero? && keyword == :end
@@ -660,7 +662,7 @@ module Herb
           src << value
           src << ";" unless value.end_with?("\n")
 
-          next if [:end, :case_opening].include?(keyword)
+          next if BRANCHLESS_KEYWORDS.include?(keyword)
 
           literal = queues[:branches].shift
           src << " #{literal};" if literal

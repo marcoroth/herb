@@ -9,6 +9,7 @@ import { AutofixService } from "./autofix_service"
 
 import { CodeActionProvider } from "./code_action_provider"
 import { FormattingProvider } from "./formatting_provider"
+import { RuntimeReports } from "./runtime_reports"
 import { CompletionProvider, ReferencesProvider } from "@herb-tools/language-service"
 
 import { version } from "../package.json"
@@ -44,10 +45,10 @@ export class Project {
   readonly formattingProvider: FormattingProvider
   readonly referencesProvider: ReferencesProvider
   readonly completionProvider: CompletionProvider
+  readonly runtimeReports: RuntimeReports
 
   private readonly connection: Connection
   private readonly userSettings: UserSettings
-  private readonly parserService: ParserService
 
   constructor(connection: Connection, root: string, shared: SharedServices) {
     const { userSettings, capabilities } = shared
@@ -56,7 +57,6 @@ export class Project {
     this.userSettings = userSettings
     this.root = root
     this.herbBackend = Herb
-    this.parserService = shared.parserService
 
     this.configService = new ConfigService(root)
     this.index = new ProjectIndex({ root, backend: this.herbBackend, logger: connection.console })
@@ -64,6 +64,7 @@ export class Project {
     this.autofixService = new AutofixService(connection, this, undefined, this.index)
     this.codeActionProvider = new CodeActionProvider(this, undefined, this.index)
     this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
+    this.runtimeReports = new RuntimeReports(root)
 
     this.completionProvider = new CompletionProvider(
       shared.parserService,
@@ -103,7 +104,6 @@ export class Project {
     this.linterService.setConfig(this.config)
     this.completionProvider.setConfig(this.config)
     this.referencesProvider.setConfig(this.config)
-    this.parserService.setConfig(this.config)
 
     this.linterService.rebuildLinter()
   }

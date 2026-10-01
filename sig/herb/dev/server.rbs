@@ -41,6 +41,9 @@ module Herb
       # : () { (Symbol, Integer) -> void } -> void
       def on_client: () { (Symbol, Integer) -> void } -> void
 
+      # : () { () -> Array[Hash[Symbol, untyped]] } -> void
+      def on_welcome: () { () -> Array[Hash[Symbol, untyped]] } -> void
+
       # : (Client) -> void
       def register: (Client) -> void
 
@@ -60,6 +63,9 @@ module Herb
       def handle_text_frame: (Client, String) -> void
 
       private
+
+      # : () -> Array[Hash[Symbol, untyped]]
+      def broken_entries: () -> Array[Hash[Symbol, untyped]]
 
       # : (untyped) -> void
       def safely_close: (untyped) -> void

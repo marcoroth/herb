@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0001_compile valid template"
+input: "test_0001_compile valid template"
+---
+_buf = ::String.new; _buf << '<div>Hello '.freeze; _buf << (name).to_s; _buf << '!</div>'.freeze;
+_buf.to_s

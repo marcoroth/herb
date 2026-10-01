@@ -1,0 +1,29 @@
+---
+source: "Parser::TextareaTest#test_0007_textarea with a closing tag for a different element"
+input: "<textarea></div></textarea>"
+---
+@ DocumentNode (location: (1:0)-(1:27))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:27))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:10))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        │       ├── tag_closing: ">" (location: (1:9)-(1:10))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "textarea" (location: (1:1)-(1:9))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:10)-(1:16))
+        │       └── content: "</div>"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:27))
+        │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+        │       ├── tag_name: "textarea" (location: (1:18)-(1:26))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:26)-(1:27))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

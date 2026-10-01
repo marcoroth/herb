@@ -1,0 +1,13 @@
+---
+source: "Engine::ErrorHandlingTest::what the message says and what it holds back#test_0006_colors the detailed message when asked"
+input: "error_handling_test-4"
+---
+[1mapp/views/posts/index.html.erb:2:3: Opening tag `<form>` at (2:3) doesn't have a matching closing tag `</form>` in the same scope. ([1;4mHerb::Engine::ParseError[m[1m)[m
+
+[31m✘[0m [MissingClosingTagError] Opening tag `<form>` at (2:3) doesn't have a matching closing tag `</form>` in the same scope.
+
+    [2mapp/views/posts/index.html.erb:2:3:[0m
+[2m      2 │ [0m  <form action="/posts" method="post">
+[2m        ╵ [0m  [31m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Add the closing tag, or make it self-closing.

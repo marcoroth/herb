@@ -1,0 +1,27 @@
+# Generated from lib/herb/dev/assets.rb with RBS::Inline
+
+module Herb
+  module Dev
+    # Tracks the build outputs a project's asset watchers write.
+    #
+    # A build tool rewrites its output on every run, and most runs change nothing,
+    # so only a moved digest counts as a change.
+    class Assets
+      ROOT: String
+
+      PATTERNS: Array[String]
+
+      # : () -> void
+      def initialize: () -> void
+
+      # : (String) -> Symbol
+      def self.kind_for: (String) -> Symbol
+
+      # : (String) -> void
+      def index: (String) -> void
+
+      # : (String) -> bool
+      def changed?: (String) -> bool
+    end
+  end
+end
