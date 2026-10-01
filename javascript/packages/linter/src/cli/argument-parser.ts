@@ -1,6 +1,7 @@
 import dedent from "dedent"
 
 import { availableParallelism } from "node:os"
+import { resolve } from "node:path"
 import { parseArgs } from "util"
 import { Herb } from "@herb-tools/node-wasm"
 
@@ -12,12 +13,29 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json"
+export type FormatOption = "simple" | "detailed" | "json" | "junit"
+
+const FORMAT_OPTIONS: FormatOption[] = ["simple", "detailed", "json", "junit"]
+
+/**
+ * Structured formats are meant for programs rather than humans, so they can
+ * be written to a file and keep stdout free of any other output.
+ */
+export function isStructuredFormat(format: FormatOption): format is "json" | "junit" {
+  return format === "json" || format === "junit"
+}
+
+export interface OutputTarget {
+  format: FormatOption
+  path?: string
+}
 
 export interface ParsedArguments {
   patterns: string[]
   configFile?: string
+  /** The format written to stdout, or the first structured format when every output goes to a file */
   formatOption: FormatOption
+  outputs: OutputTarget[]
   showTiming: boolean
   theme: ThemeInput
   wrapLines: boolean
@@ -75,9 +93,12 @@ export class ArgumentParser {
                                     lower-severity offenses are still counted in the summary, but aren't
                                     printed or annotated in CI
                                     --only and --all-rules lower this level unless it's passed explicitly
-      --format                      output format (simple|detailed|json) [default: detailed]
+      --format <format>             output format (simple|detailed|json|junit) [default: detailed]
+                                    can be passed multiple times to produce several outputs in one run
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
+      -o, --output-file <path>      write the preceding structured --format (json|junit) to a file instead of stdout
+                                    (e.g., herb-lint --format detailed --format junit -o herb-lint.xml)
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
@@ -92,8 +113,9 @@ export class ArgumentParser {
   `
 
   parse(argv: string[]): ParsedArguments {
-    const { values, positionals } = parseArgs({
+    const { values, positionals, tokens } = parseArgs({
       args: argv.slice(2),
+      tokens: true,
       options: {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
@@ -110,9 +132,10 @@ export class ArgumentParser {
         "update-disable-counts": { type: "boolean" },
         "fail-level": { type: "string" },
         "log-level": { type: "string" },
-        format: { type: "string" },
+        format: { type: "string", multiple: true },
         simple: { type: "boolean" },
         json: { type: "boolean" },
+        "output-file": { type: "string", short: "o", multiple: true },
         github: { type: "boolean" },
         "no-github": { type: "boolean" },
         theme: { type: "string" },
@@ -142,24 +165,25 @@ export class ArgumentParser {
 
     const isGitHubActions = process.env.GITHUB_ACTIONS === "true"
 
-    let formatOption: FormatOption = "detailed"
-    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
-      formatOption = values.format
-    }
+    const outputs = this.parseOutputs(tokens)
+    const stdoutOutput = outputs.find(output => output.path === undefined)
+    const formatOption = (stdoutOutput ?? outputs[0]).format
 
-    if (values.simple) {
-      formatOption = "simple"
-    }
+    let useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
 
-    if (values.json) {
-      formatOption = "json"
-    }
+    if (useGitHubActions && stdoutOutput && isStructuredFormat(stdoutOutput.format)) {
+      if (values.github) {
+        if (stdoutOutput.format === "json") {
+          console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+        } else {
+          console.error("Error: --github cannot be used with --format junit on stdout. Use --output-file to write the JUnit report to a file.")
+        }
 
-    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+        process.exit(1)
+      }
 
-    if (useGitHubActions && formatOption === "json") {
-      console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
-      process.exit(1)
+      // Annotations detected from GITHUB_ACTIONS would end up in the middle of the structured output
+      useGitHubActions = false
     }
 
     if (values["no-color"]) {
@@ -228,7 +252,71 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, outputs, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+  }
+
+  /**
+   * Each --format (or --simple/--json) adds an output, and --output-file
+   * redirects the format right before it to a file, like RuboCop's --format/--out.
+   */
+  private parseOutputs(tokens: NonNullable<ReturnType<typeof parseArgs>["tokens"]>): OutputTarget[] {
+    const outputs: (OutputTarget & { flag: string })[] = []
+
+    for (const token of tokens) {
+      if (token.kind !== "option") continue
+
+      if (token.name === "format") {
+        const format = FORMAT_OPTIONS.find(option => option === token.value) ?? "detailed"
+
+        outputs.push({ format, flag: `--format ${token.value}` })
+      } else if (token.name === "simple" || token.name === "json") {
+        outputs.push({ format: token.name, flag: `--${token.name}` })
+      } else if (token.name === "output-file") {
+        const output = outputs[outputs.length - 1]
+        const path = token.value ?? ""
+
+        if (!output) {
+          console.error(`Error: --output-file must come after the --format it applies to (e.g., --format json --output-file ${path || "herb-lint.json"}).`)
+          process.exit(1)
+        }
+
+        if (path === "" || path === "-") {
+          console.error(`Error: --output-file needs a file path, but got "${path}". Leave out --output-file to write to stdout.`)
+          process.exit(1)
+        }
+
+        if (!isStructuredFormat(output.format)) {
+          console.error(`Error: --output-file only supports the json and junit formats, but it follows ${output.flag}.`)
+          process.exit(1)
+        }
+
+        if (output.path !== undefined) {
+          console.error(`Error: ${output.flag} can only be written to one --output-file. Pass ${output.flag} again for another file.`)
+          process.exit(1)
+        }
+
+        if (outputs.some(other => other.path !== undefined && resolve(other.path) === resolve(path))) {
+          console.error(`Error: --output-file ${path} is used for more than one format.`)
+          process.exit(1)
+        }
+
+        output.path = path
+      }
+    }
+
+    // Only one format can be printed. When several are left for stdout, keep the precedence
+    // herb-lint has always had: --json, then --simple, then the last --format.
+    const stdoutOutputs = outputs.filter(output => output.path === undefined)
+    const stdoutOutput = stdoutOutputs.find(output => output.flag === "--json") ?? stdoutOutputs.find(output => output.flag === "--simple") ?? stdoutOutputs[stdoutOutputs.length - 1]
+    const fileOutputs = outputs.filter(output => output.path !== undefined)
+
+    if (!stdoutOutput && fileOutputs.length === 0) {
+      return [{ format: "detailed" }]
+    }
+
+    return [stdoutOutput, ...fileOutputs]
+      .filter(output => output !== undefined)
+      .map(({ format, path }) => ({ format, path }))
   }
 
   private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {

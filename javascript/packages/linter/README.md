@@ -170,6 +170,12 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 
 # Combine GitHub Actions output with detailed format (explicit)
 npx @herb-tools/linter template.html.erb --format=detailed --github
+
+# Use JUnit XML output format
+npx @herb-tools/linter template.html.erb --format junit
+
+# Print the detailed format and also write JUnit XML and JSON reports to files
+npx @herb-tools/linter --format detailed --format junit --output-file herb-lint.xml --format json -o herb-lint.json
 ```
 
 **Display Options:**
@@ -473,6 +479,54 @@ JSON output fields:
 - `completed`: Whether the linter ran successfully on files
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
+
+#### JUnit XML Output Format
+
+The linter can report offenses as JUnit XML with `--format junit`, so CI systems that understand test reports (like Buildkite Test Engine, GitLab, or Jenkins) can show them as test failures.
+
+Every linted file becomes a `<testsuite>`, and every rule with offenses in that file becomes a `<testcase>` with the file as its `classname` and the rule as its `name`. Grouping by rule keeps test identities stable when lines move. Files without offenses get a single passing testcase. Because testcases follow offenses, fixing every offense of a rule removes its testcase rather than turning it green.
+
+A testcase fails when any of its offenses meets the `--fail-level`; offenses below it are listed in `<system-out>` of a passing testcase. Offenses that fail the run are included even when `--log-level` hides them, so the report fails exactly when `herb-lint` exits with an error.
+
+A run that stops before linting, such as an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, reports the message as a single erroring testcase. A run with nothing to lint, such as a disabled linter, reports a single skipped testcase.
+
+<details>
+<summary>Example output:</summary>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="2" failures="1" errors="0" time="0.312">
+  <testsuite name="app/views/home.html.erb" tests="2" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/home.html.erb" name="html-img-require-alt" file="app/views/home.html.erb" line="3" time="0">
+      <system-out>app/views/home.html.erb:3:3: warning: Missing required `alt` attribute on `&lt;img&gt;` tag. ...</system-out>
+    </testcase>
+    <testcase classname="app/views/home.html.erb" name="html-tag-name-lowercase" file="app/views/home.html.erb" line="2" time="0">
+      <failure message="Opening tag name `&lt;SPAN&gt;` should be lowercase. Use `&lt;span&gt;` instead. (and 1 more)" type="error">app/views/home.html.erb:2:3: error: Opening tag name `&lt;SPAN&gt;` should be lowercase. Use `&lt;span&gt;` instead.
+app/views/home.html.erb:2:22: error: Closing tag name `&lt;/SPAN&gt;` should be lowercase. Use `&lt;/span&gt;` instead.
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
+```
+
+</details>
+
+#### Multiple Outputs
+
+`--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the structured format (`json` or `junit`) right before it to a file instead of stdout.
+
+This makes it possible to keep readable output in your CI logs while also producing machine-readable reports as artifacts:
+
+```bash
+npx @herb-tools/linter --format detailed --format junit -o tmp/herb-lint.xml --format json -o tmp/herb-lint.json
+```
+
+Only one format is printed. If several are left without an `--output-file`, `--json` wins over `--simple`, which wins over the last `--format`. When every format goes to a file, nothing is printed to stdout.
+
+Missing parent directories of an output file are created. If a file can't be written, the error is printed to stderr and `herb-lint` exits with an error, while the other outputs are still produced.
+
+The output files are also written when the run stops before linting because of an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, so a CI step that uploads them finds a report explaining what happened.
 
 ### Disabling Rules Inline <Badge type="info" text="v0.8.0+" />
 

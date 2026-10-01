@@ -10,14 +10,14 @@ import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
 import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
-import { ArgumentParser } from "./cli/argument-parser.js"
+import { ArgumentParser, isStructuredFormat } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 import { version } from "../package.json"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
-import type { FormatOption } from "./cli/argument-parser.js"
+import type { FormatOption, OutputTarget } from "./cli/argument-parser.js"
 import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 import type { RuleClass } from "./types.js"
 
@@ -30,14 +30,16 @@ export class CLI {
   protected fileProcessor = new FileProcessor()
   protected outputManager = new OutputManager()
   protected projectPath: string = process.cwd()
+  protected outputs?: OutputTarget[]
 
   getProjectPath(): string {
     return this.projectPath
   }
 
-  protected exitWithError(message: string, formatOption: FormatOption, exitCode: number = 1) {
+  protected exitWithError(message: string, formatOption: FormatOption, exitCode: number = 1): never {
     this.outputManager.outputError(message, {
       formatOption,
+      outputs: this.outputs,
       theme: 'auto',
       wrapLines: false,
       truncateLines: false,
@@ -46,12 +48,13 @@ export class CLI {
       startTime: 0,
       startDate: new Date()
     })
-    process.exit(exitCode)
+    process.exit(exitCode || process.exitCode)
   }
 
-  protected exitWithInfo(message: string, formatOption: FormatOption, exitCode: number = 0, timingData?: { startTime: number, startDate: Date, showTiming: boolean }) {
+  protected exitWithInfo(message: string, formatOption: FormatOption, exitCode: number = 0, timingData?: { startTime: number, startDate: Date, showTiming: boolean }): never {
     const outputOptions = {
       formatOption,
+      outputs: this.outputs,
       theme: 'auto' as const,
       wrapLines: false,
       truncateLines: false,
@@ -62,7 +65,7 @@ export class CLI {
     }
 
     this.outputManager.outputInfo(message, outputOptions)
-    process.exit(exitCode)
+    process.exit(exitCode || process.exitCode)
   }
 
   protected determineProjectPath(patterns: string[]): void {
@@ -131,8 +134,8 @@ export class CLI {
         console.error(`   Use --force to lint it anyway.\n`)
         process.exit(0)
       } else {
-        console.log(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
-        console.log()
+        console.error(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
+        console.error()
         files = [adjustedPattern]
       }
     }
@@ -148,7 +151,7 @@ export class CLI {
     const supported = files.filter(file => config.isPathIncludedForTool(file, 'linter'))
     const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'linter'))
 
-    if (unsupported.length > 0 && formatOption !== 'json') {
+    if (unsupported.length > 0 && !isStructuredFormat(formatOption)) {
       console.error(`⚠️  Skipped ${unsupported.length} ${unsupported.length === 1 ? 'file' : 'files'} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
 
       for (const file of unsupported) {
@@ -219,8 +222,9 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, outputs, showTiming, theme, wrapLines, truncateLines, showFixDiff, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
+    this.outputs = outputs
     this.determineProjectPath(patterns)
 
     if (init) {
@@ -481,8 +485,17 @@ export class CLI {
       process.exit(0)
     }
 
-    const silent = formatOption === 'json'
-    const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
+    const silent = isStructuredFormat(formatOption)
+    const writesReport = silent || outputs.some(output => output.path !== undefined)
+    let config: Config
+
+    try {
+      // Structured formats report a broken config as an error in their own output instead of exiting
+      config = await Config.load(configFile || this.projectPath, { version, exitOnError: !writesReport, createIfMissing: false, silent })
+    } catch (error) {
+      this.exitWithError(`✗ ${error instanceof Error ? error.message : error}`, formatOption)
+    }
+
     const linterConfig = config.options.linter || {}
 
     const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"
@@ -491,6 +504,7 @@ export class CLI {
 
     const outputOptions = {
       formatOption,
+      outputs,
       theme,
       wrapLines,
       truncateLines,
@@ -511,8 +525,8 @@ export class CLI {
       }
 
       if (force && linterConfig.enabled === false) {
-        console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
-        console.log()
+        console.error("⚠️  Forcing linter run (disabled in .herb.yml)")
+        console.error()
       }
 
       if (only) {
@@ -541,8 +555,7 @@ export class CLI {
           const { files: patternFiles, explicitFile } = await this.resolvePatternToFiles(pattern, config, force)
 
           if (patternFiles.length === 0) {
-            console.error(`✗ No files found matching pattern: ${pattern}`)
-            process.exit(1)
+            this.exitWithError(`✗ No files found matching pattern: ${pattern}`, formatOption)
           }
 
           allFiles.push(...patternFiles)
@@ -558,7 +571,7 @@ export class CLI {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
-      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+      if (files.length > 1 && !isStructuredFormat(formatOption) && !useGitHubActions) {
         console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
       }
 
@@ -616,7 +629,7 @@ export class CLI {
         logLevelLoweredBy: lowered?.flag
       })
 
-      const showTips = formatOption !== 'json' && !useGitHubActions
+      const showTips = !isStructuredFormat(formatOption) && !useGitHubActions
 
       if (!Config.exists(this.projectPath) && showTips) {
         console.log("")
