@@ -7,12 +7,14 @@ import { HerbDisableCommentUnnecessaryRule } from "../../src/rules/herb-disable-
 import { HTMLTagNameLowercaseRule } from "../../src/rules/html-tag-name-lowercase.js"
 import { HTMLAttributeDoubleQuotesRule } from "../../src/rules/html-attribute-double-quotes.js"
 import { ERBCommentSyntax } from "../../src/rules/erb-comment-syntax.js"
+import { ActionViewPreferCollectionRenderRule } from "../../src/rules/actionview-prefer-collection-render.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest([
   HerbDisableCommentUnnecessaryRule,
   HTMLTagNameLowercaseRule,
   HTMLAttributeDoubleQuotesRule,
   ERBCommentSyntax,
+  ActionViewPreferCollectionRenderRule,
 ])
 
 describe("HerbDisableCommentUnnecessaryRule", () => {
@@ -101,5 +103,13 @@ describe("HerbDisableCommentUnnecessaryRule", () => {
     expectNoOffenses(dedent`
       <DIV></DIV><%# herb:disable all, html-tag-name-lowercase %>
     `)
+  })
+
+  test("does not warn when the disable comment on an each line disables actionview-prefer-collection-render", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %> <%# herb:disable actionview-prefer-collection-render %>
+        <%= render "user", user: user %>
+      <% end %>
+    `, { framework: "actionview" })
   })
 })

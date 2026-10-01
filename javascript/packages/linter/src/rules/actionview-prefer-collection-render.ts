@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { isERBOutputNode, isNode, HTMLTextNode } from "@herb-tools/core"
+import { isERBCommentNode, isERBOutputNode, isNode, HTMLTextNode } from "@herb-tools/core"
 
 import type { ERBIterationBlockNode, ERBRenderNode, Node, ParseResult, ParserOptions } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
@@ -44,7 +44,7 @@ class PreferCollectionRenderVisitor extends BaseRuleVisitor {
   }
 
   private singleRenderNodeInBody(node: ERBIterationBlockNode): ERBRenderNode | null {
-    const body = node.body.filter(child => !this.isWhitespaceOnlyText(child))
+    const body = node.body.filter(child => !this.isWhitespaceOnlyText(child) && !isERBCommentNode(child))
 
     if (body.length !== 1) return null
 
