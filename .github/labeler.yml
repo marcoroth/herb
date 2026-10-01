@@ -266,6 +266,7 @@ rubygem:
   - changed-files:
     - any-glob-to-any-file:
       - 'herb.gemspec'
+      - 'gems/**/*'
       - 'lib/**/*'
       - 'templates/lib/**/*'
 

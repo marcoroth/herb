@@ -53,6 +53,27 @@ Run the linter and the formatter:
 
 ```sh
 npx @herb-tools/linter
+```
+
+Run your project's configured RuboCop rules against Ruby in HTML+ERB (`.html.erb`) templates with the `rubocop-herb` plugin:
+
+```sh
+bundle add rubocop-herb
+```
+
+```yaml
+# .rubocop.yml
+plugins:
+  - rubocop-herb
+```
+
+```sh
+bundle exec rubocop app/views
+```
+
+Format your HTML+ERB templates:
+
+```sh
 npx @herb-tools/formatter
 ```
 
