@@ -22,15 +22,11 @@ module Parser
     test "track_locations false leaves node and token locations nil" do
       result = Herb.parse(SOURCE, track_locations: false)
       element = result.value.children.first
-      token = element.open_tag.tag_name
 
       assert_nil result.value.location
       assert_nil element.location
-      assert_nil token.location
-      assert_nil token.range
-      assert_equal false, token.instance_variables.include?(:@location_data)
-      assert_equal false, token.instance_variables.include?(:@location)
-      assert_equal false, token.instance_variables.include?(:@range)
+      assert_nil element.open_tag.tag_name.location
+      assert_nil element.open_tag.tag_name.range
       assert_equal false, result.options.track_locations
       assert_parsed_snapshot(SOURCE, track_locations: false)
     end

@@ -15,7 +15,31 @@
 #include "../../src/include/location/location.h"
 #include "../../src/include/location/position.h"
 
-static ID id_ivar_location_data;
+// Cached ivar IDs for the raw numeric range/location components `Herb::Token` stores
+// when locations are tracked, computed once via `rb_intern` and reused on every token
+// construction to avoid repeated symbol lookups in the lex/parse hot path. The
+// `Range`/`Location`/`Position` objects themselves are only materialized lazily, on
+// first access to `Herb::Token#range`/`#location` (see `lib/herb/token.rb`).
+static ID id_ivar_range_from;
+static ID id_ivar_range_to;
+static ID id_ivar_loc_start_line;
+static ID id_ivar_loc_start_column;
+static ID id_ivar_loc_end_line;
+static ID id_ivar_loc_end_column;
+static bool token_ivar_ids_initialized = false;
+
+static void init_token_ivar_ids(void) {
+  if (token_ivar_ids_initialized) { return; }
+
+  id_ivar_range_from = rb_intern("@range_from");
+  id_ivar_range_to = rb_intern("@range_to");
+  id_ivar_loc_start_line = rb_intern("@loc_start_line");
+  id_ivar_loc_start_column = rb_intern("@loc_start_column");
+  id_ivar_loc_end_line = rb_intern("@loc_end_line");
+  id_ivar_loc_end_column = rb_intern("@loc_end_column");
+
+  token_ivar_ids_initialized = true;
+}
 
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
@@ -43,7 +67,6 @@ static void init_ast_value_ivar_ids(void) {
   id_range = rb_intern("@range");
   id_location = rb_intern("@location");
   id_type = rb_intern("@type");
-  id_ivar_location_data = rb_intern("@location_data");
 
   ast_value_ivar_ids_initialized = true;
 }
@@ -112,27 +135,24 @@ VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   if (!token) { return Qnil; }
 
   init_ast_value_ivar_ids();
+  init_token_ivar_ids();
 
   VALUE object = rb_obj_alloc(cToken);
   rb_ivar_set(object, id_value, rb_string_from_hb_string(token->value));
   rb_ivar_set(object, id_type, rb_token_type_value(token->type));
 
-  // The parser arena is destroyed immediately after conversion, so copy the numeric
-  // location data into one GC-owned payload now. Individual range/location ivars and
-  // their wrapper objects remain absent until their accessors are called.
+  // Defer building `Range`/`Location`/`Position` Ruby objects until they're actually
+  // accessed via `Herb::Token#range`/`#location`. The raw numeric components are cheap
+  // to copy out of the (arena-allocated) `token_T*` up front; storing them as plain
+  // ivars instead of eagerly allocating the wrapper objects avoids the bulk of Token's
+  // allocations when callers never touch `#range`/`#location` (see `lib/herb/token.rb`).
   if (options->track_locations) {
-    VALUE location_data = rb_ary_new_from_args(
-      6,
-      UINT2NUM(token->range.from),
-      UINT2NUM(token->range.to),
-      UINT2NUM(token->location.start.line),
-      UINT2NUM(token->location.start.column),
-      UINT2NUM(token->location.end.line),
-      UINT2NUM(token->location.end.column)
-    );
-
-    rb_obj_freeze(location_data);
-    rb_ivar_set(object, id_ivar_location_data, location_data);
+    rb_ivar_set(object, id_ivar_range_from, UINT2NUM(token->range.from));
+    rb_ivar_set(object, id_ivar_range_to, UINT2NUM(token->range.to));
+    rb_ivar_set(object, id_ivar_loc_start_line, UINT2NUM(token->location.start.line));
+    rb_ivar_set(object, id_ivar_loc_start_column, UINT2NUM(token->location.start.column));
+    rb_ivar_set(object, id_ivar_loc_end_line, UINT2NUM(token->location.end.line));
+    rb_ivar_set(object, id_ivar_loc_end_column, UINT2NUM(token->location.end.column));
   }
 
   return object;
