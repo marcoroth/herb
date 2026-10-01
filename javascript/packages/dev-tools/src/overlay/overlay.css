@@ -306,6 +306,12 @@
   font-family: var(--herb-sans);
 }
 
+@media print {
+  .herb-floating-menu {
+    display: none !important;
+  }
+}
+
 .herb-menu-trigger {
   position: relative;
   z-index: 2147483640;
