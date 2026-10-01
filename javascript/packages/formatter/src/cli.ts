@@ -219,7 +219,7 @@ export class CLI {
         process.exit(0)
       }
 
-      const config = await Config.load(configFile || this.projectPath, { version, silent: isQuietMode })
+      const config = await Config.loadForCLI(configFile || this.projectPath, version, false, { quiet: isQuietMode })
       const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 

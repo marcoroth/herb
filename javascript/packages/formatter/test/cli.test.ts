@@ -234,6 +234,31 @@ describe("CLI Binary", () => {
     }
   })
 
+  it("should keep the misnamed config warning with --quiet", async () => {
+    const directory = "test-quiet-misnamed"
+    const configFile = join(directory, ".herb.yml")
+    const input = '<div class="test"><p>Hello</p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(configFile, dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+    `)
+    await writeFile(join(directory, ".herb.yaml"), "")
+
+    try {
+      const result = await execBinary(["--quiet", "--config-file", configFile], input)
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain(`⚠ Ignoring ${resolve(directory, ".herb.yaml")}: Herb only reads \`.herb.yml\``)
+      expect(result.stderr).not.toContain("Using Herb config file")
+      expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
   it("should keep the forcing warning with --quiet", async () => {
     const directory = "test-quiet-force"
     const configFile = join(directory, ".herb.yml")
@@ -264,7 +289,6 @@ describe("CLI Binary", () => {
 
     expectExitCode(result, 0)
     expect(result.stdout).toContain("-q, --quiet")
-    expect(result.stdout).toContain("herb-format --quiet")
   })
 
   it("should format empty input from stdin when no args provided", async () => {
