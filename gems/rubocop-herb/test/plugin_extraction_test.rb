@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 module RuboCop
   module Herb
-    class RubyExtractorTest < Minitest::Spec
+    class PluginExtractionTest < Minitest::Spec
       test "builds one position-preserving Ruby source" do
         template = "<p>Café <%= x=1 %></p>\n"
         fragment = extract(template).first
@@ -68,18 +68,18 @@ module RuboCop
       end
 
       test "returns nil for non-ERB files" do
-        assert_nil RubyExtractor.call(processed_source("x=1\n", "example.rb"))
+        assert_nil Plugin.extract_ruby(processed_source("x=1\n", "example.rb"))
       end
 
       test "does not extract Ruby from non-HTML ERB files" do
-        assert_empty RubyExtractor.call(processed_source("<%= x=1 %>\n", "example.rss.erb"))
-        assert_empty RubyExtractor.call(processed_source("<%= x=1 %>\n", "example.erb"))
+        assert_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.rss.erb"))
+        assert_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.erb"))
       end
 
       private
 
       def extract(source)
-        RubyExtractor.call(processed_source(source, "example.html.erb"))
+        Plugin.extract_ruby(processed_source(source, "example.html.erb"))
       end
 
       def processed_source(source, path)

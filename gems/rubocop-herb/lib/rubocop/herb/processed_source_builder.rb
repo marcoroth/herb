@@ -3,14 +3,13 @@
 module RuboCop
   module Herb
     class ProcessedSourceBuilder
-      def self.call(code:, processed_source:, ruby_ranges:)
-        new(code, processed_source, ruby_ranges).call
+      def self.call(code:, processed_source:)
+        new(code, processed_source).call
       end
 
-      def initialize(code, processed_source, ruby_ranges)
+      def initialize(code, processed_source)
         @code = code
         @processed_source = processed_source
-        @ruby_ranges = ruby_ranges
       end
 
       def call
@@ -22,10 +21,6 @@ module RuboCop
         )
         source.config = @processed_source.config
         source.registry = @processed_source.registry
-        source.define_singleton_method(:herb_ruby_ranges) { @ruby_ranges }
-        source.instance_variable_set(:@ruby_ranges, @ruby_ranges)
-        source.buffer.define_singleton_method(:herb_ruby_ranges) { @ruby_ranges }
-        source.buffer.instance_variable_set(:@ruby_ranges, @ruby_ranges)
         source
       end
     end
