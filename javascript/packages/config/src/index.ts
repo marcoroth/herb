@@ -14,6 +14,7 @@ export type {
   RuleConfig,
   FilesConfig,
   LoadOptions,
+  TodoExcludes,
   FromObjectOptions,
   ConfigValidationError,
   SeverityConfig,
