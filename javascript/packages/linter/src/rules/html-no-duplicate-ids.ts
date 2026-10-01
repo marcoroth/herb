@@ -40,6 +40,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   private loopVariableScopes: string[][] = []
 
   private static readonly IMPLICIT_BLOCK_PARAMETERS = ["it", "_1", "_2", "_3", "_4", "_5", "_6", "_7", "_8", "_9"]
+  private static readonly ASSIGNMENT = /(?:^|[;\n])\s*([a-z_][A-Za-z0-9_]*)\s*=(?![=~>])\s*([^;\n]+)/g
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagLocalName(node) === "template") {
@@ -100,6 +101,26 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     this.loopVariableScopes.pop()
   }
 
+  visitERBContentNode(node: ERBContentNode): void {
+    this.trackLoopDerivedNames(node)
+
+    super.visitERBContentNode(node)
+  }
+
+  private trackLoopDerivedNames(node: ERBContentNode): void {
+    const names = this.loopVariableScopes[this.loopVariableScopes.length - 1]
+
+    if (!names || names.length === 0 || isERBOutputNode(node)) return
+
+    for (const [, target, source] of (node.content?.value ?? "").matchAll(NoDuplicateIdsVisitor.ASSIGNMENT)) {
+      if (!names.includes(target) && this.referencesAny(source, names)) names.push(target)
+    }
+  }
+
+  private referencesAny(code: string, names: string[]): boolean {
+    return names.some(name => new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(code))
+  }
+
   private variesPerIteration(attributeNode: HTMLAttributeNode): boolean {
     const names = this.loopVariableScopes[this.loopVariableScopes.length - 1] ?? []
 
@@ -113,7 +134,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
       if (code === null) return false
 
-      return names.some(name => new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(code!))
+      return this.referencesAny(code, names)
     })
   }
 
