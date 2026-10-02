@@ -10,8 +10,13 @@ const FORM_HELPERS = new Set(getHelpersForTag("form").filter(helper => !helper.s
 class FormHelperCallCollector extends PrismVisitor {
   public helperName: string | null = null
 
+  constructor(private readonly tagContentEnd: number) {
+    super()
+  }
+
   visitCallNode(node: PrismNode): void {
     if (this.helperName) return
+    if (node.location.startOffset >= this.tagContentEnd) return
 
     if (!node.receiver && FORM_HELPERS.has(node.name)) {
       this.helperName = node.name
@@ -117,7 +122,7 @@ class NestedFormVisitor extends ElementStackVisitor {
     const prismNode = node.prismNode
     if (!prismNode) return null
 
-    const collector = new FormHelperCallCollector()
+    const collector = new FormHelperCallCollector(node.content?.range.to ?? Infinity)
     collector.visit(prismNode)
 
     return collector.helperName
