@@ -21,10 +21,11 @@ module RuboCop
       end
 
       test "excludes cops that misinterpret HTML conditional bodies" do
-        config = YAML.load_file(File.expand_path("../config/default.yml", __dir__))
+        config = YAML.load_file(File.expand_path("../config/default.yml", __dir__), aliases: true)
+        template_files = ["**/*.erb", "**/*.herb"]
 
-        assert_equal ["**/*.html.erb"], config.dig("Lint/EmptyConditionalBody", "Exclude")
-        assert_equal ["**/*.html.erb"], config.dig("Rails/Presence", "Exclude")
+        assert_equal template_files, config.dig("Lint/EmptyConditionalBody", "Exclude")
+        assert_equal template_files, config.dig("Rails/Presence", "Exclude")
       end
     end
   end

@@ -32,8 +32,7 @@ module RuboCop
 
       def self.extract_ruby(processed_source)
         path = processed_source.path
-        return unless path&.end_with?(".erb")
-        return [] unless path.end_with?(".html.erb")
+        return unless path&.end_with?(".erb", ".herb")
 
         template = processed_source.raw_source
         code = position_preserving_ruby(template)

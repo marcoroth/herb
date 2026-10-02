@@ -4,104 +4,105 @@ inherit_mode:
     - Include
 
 AllCops:
-  Include:
-    - '**/*.html.erb'
+  Include: &template_files
+    - '**/*.erb'
+    - '**/*.herb'
 
 # These cops depend on physical Ruby file contents or layout that is obscured
 # by the position-preserving template representation.
 Layout/ArgumentAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/ArrayAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/BlockAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/ClosingParenthesisIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/CommentIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/InitialIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/EmptyLineAfterGuardClause:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/EndAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstArgumentIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstArrayElementIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstArrayElementLineBreak:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstHashElementIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstHashElementLineBreak:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstMethodArgumentLineBreak:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/FirstParameterIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/HashAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/IndentationConsistency:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/IndentationWidth:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/LeadingEmptyLine:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/LeadingEmptyLines:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/LineEndStringConcatenationIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/LineLength:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineArrayBraceLayout:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineAssignmentLayout:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineHashBraceLayout:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineMethodCallBraceLayout:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineMethodCallIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineMethodDefinitionBraceLayout:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/MultilineOperationIndentation:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/ParameterAlignment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/SpaceBeforeSemicolon:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/TrailingEmptyLines:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Layout/TrailingWhitespace:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Lint/EmptyFile:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Lint/EmptyConditionalBody:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Metrics/BlockLength:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Naming/FileName:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Rails/Presence:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/FrozenStringLiteralComment:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/EmptyElse:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/IdenticalConditionalBranches:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/IfWithSemicolon:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/IfUnlessModifier:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/MultilineTernaryOperator:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/NestedTernaryOperator:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/Next:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/Semicolon:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files
 Style/WhileUntilModifier:
-  Exclude: ['**/*.html.erb']
+  Exclude: *template_files

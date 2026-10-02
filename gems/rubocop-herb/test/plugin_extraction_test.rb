@@ -70,9 +70,13 @@ module RuboCop
         assert_nil Plugin.extract_ruby(processed_source("x=1\n", "example.rb"))
       end
 
-      test "does not extract Ruby from non-HTML ERB files" do
-        assert_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.rss.erb"))
-        assert_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.erb"))
+      test "extracts Ruby from non-HTML ERB files" do
+        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.rss.erb"))
+        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.erb"))
+      end
+
+      test "extracts Ruby from Herb files" do
+        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.herb"))
       end
 
       private

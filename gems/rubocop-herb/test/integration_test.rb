@@ -106,12 +106,11 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
     refute_includes output, "Lint/UselessAssignment"
   end
 
-  test "runs only on HTML ERB files" do
+  test "runs on non-HTML ERB files" do
     write_config(<<~YAML)
       Layout/SpaceAroundOperators:
         Enabled: true
     YAML
-    write("example.html.erb", "<%= html=1 %>\n")
     write("example.rss.erb", "<%= rss=1 %>\n")
     write("example.erb", "<%= generic=1 %>\n")
 
@@ -119,23 +118,23 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
 
     refute status.success?
     assert_empty error
-    assert_includes output, "example.html.erb"
-    refute_includes output, "example.rss.erb"
-    refute_includes output, "example.erb"
+    assert_includes output, "example.rss.erb"
+    assert_includes output, "example.erb"
   end
 
-  test "does not inspect explicitly passed non-HTML ERB files" do
+  test "runs on Herb files" do
     write_config(<<~YAML)
       Layout/SpaceAroundOperators:
         Enabled: true
     YAML
-    write("example.rss.erb", "<%= rss=1 %>\n")
+    write("example.herb", "<%= herb=1 %>\n")
 
-    output, error, status = run_rubocop("example.rss.erb", chdir: @directory)
+    output, error, status = run_rubocop("example.herb", chdir: @directory)
 
-    assert status.success?, output
+    refute status.success?
     assert_empty error
-    refute_includes output, "Layout/SpaceAroundOperators"
+    assert_includes output, "example.herb"
+    assert_includes output, "Layout/SpaceAroundOperators"
   end
 
   test "leaves ordinary Ruby inspection unchanged" do
