@@ -26,6 +26,7 @@ const DEFINITIONS = [
 type StatementsScope = {
   depth: number
   statements: PrismNodes.Node[]
+  expression: { from: number, to: number } | null
 }
 
 type Split = {
@@ -45,13 +46,34 @@ class StatementsCollector extends PrismVisitor {
   readonly scopes: StatementsScope[] = []
 
   private depth = 0
+  private expression: { from: number, to: number } | null = null
 
   override visitStatementsNode(node: PrismNodes.StatementsNode): void {
-    this.scopes.push({ depth: this.depth, statements: node.body })
+    this.scopes.push({ depth: this.depth, statements: node.body, expression: this.expression })
 
     this.depth++
     this.visitChildNodes(node)
     this.depth--
+  }
+
+  override visitParenthesesNode(node: PrismNodes.ParenthesesNode): void {
+    this.visitExpression(node)
+  }
+
+  override visitBlockNode(node: PrismNodes.BlockNode): void {
+    this.visitExpression(node)
+  }
+
+  override visitLambdaNode(node: PrismNodes.LambdaNode): void {
+    this.visitExpression(node)
+  }
+
+  private visitExpression(node: PrismNodes.Node): void {
+    const previous = this.expression
+
+    this.expression = { from: node.location.startOffset, to: node.location.startOffset + node.location.length }
+    this.visitChildNodes(node)
+    this.expression = previous
   }
 }
 
@@ -108,7 +130,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
 
     if (!contentRange) return
 
-    const statements = this.shallowestStatementsIn(contentRange.from, contentRange.to).filter(statement => {
+    const statements = this.shallowestStatementsIn(contentRange.from, contentRange.to, true).filter(statement => {
       return statement.location.startOffset + statement.location.length <= contentRange.to
     })
 
@@ -245,12 +267,13 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     return stringIndexFromByteOffset(this.source, byteOffset)
   }
 
-  private shallowestStatementsIn(from: number, to: number): PrismNodes.Node[] {
+  private shallowestStatementsIn(from: number, to: number, skipEnclosedExpressions = false): PrismNodes.Node[] {
     let shallowestDepth = Infinity
     let statements: PrismNodes.Node[] = []
 
     for (const scope of this.scopes) {
       if (scope.depth > shallowestDepth) continue
+      if (skipEnclosedExpressions && scope.expression && scope.expression.from >= from && scope.expression.to <= to) continue
 
       const inRange = scope.statements.filter(statement => {
         const statementOffset = statement.location.startOffset

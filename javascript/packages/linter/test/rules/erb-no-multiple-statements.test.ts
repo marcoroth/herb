@@ -202,6 +202,46 @@ describe("erb-no-multiple-statements", () => {
     `)
   })
 
+  test("passes for a condition wrapped in parentheses", () => {
+    expectNoOffenses(dedent`
+      <% if a %>
+        <p>a</p>
+      <% elsif (b) %>
+        <p>b</p>
+      <% end %>
+    `)
+  })
+
+  test("passes for a condition grouping part of itself in parentheses", () => {
+    expectNoOffenses(dedent`
+      <% if a %>
+        <p>a</p>
+      <% elsif ready? && (!blocked? || override) %>
+        <p>b</p>
+      <% end %>
+    `)
+  })
+
+  test("passes for a condition passing a block to a predicate", () => {
+    expectNoOffenses(dedent`
+      <% if a %>
+        <p>a</p>
+      <% elsif list.any? { |item| item.ready? } %>
+        <p>b</p>
+      <% end %>
+    `)
+  })
+
+  test("passes for an assignment in a condition, parenthesised or not", () => {
+    expectNoOffenses(dedent`
+      <% if a %>
+        <p>a</p>
+      <% elsif (value = lookup) %>
+        <p><%= value %></p>
+      <% end %>
+    `)
+  })
+
   test("reports a statement sharing a tag with else", () => {
     expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
 
