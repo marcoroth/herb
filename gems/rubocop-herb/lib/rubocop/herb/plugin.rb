@@ -16,8 +16,7 @@ module RuboCop
       end
 
       def rules(_context)
-        extractors = RuboCop::Runner.ruby_extractors
-        extractors.unshift(EXTRACT_RUBY) unless extractors.include?(EXTRACT_RUBY)
+        RuboCop::Runner.ruby_extractors.unshift(EXTRACT_RUBY)
 
         LintRoller::Rules.new(
           config_format: :rubocop,

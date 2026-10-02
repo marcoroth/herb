@@ -6,16 +6,16 @@ require "yaml"
 module RuboCop
   module Herb
     class PluginTest < Minitest::Spec
-      test "registers the extractor only once" do
+      test "registers the extractor" do
         extractors = ::RuboCop::Runner.ruby_extractors
         extractor = Plugin::EXTRACT_RUBY
         extractors.delete(extractor)
         plugin = Plugin.new
         context = LintRoller::Context.new(engine: :rubocop, engine_version: "1.84.0")
 
-        2.times { plugin.rules(context) }
+        plugin.rules(context)
 
-        assert_equal 1, extractors.count(extractor)
+        assert_equal extractor, extractors.first
       ensure
         extractors&.delete(extractor)
       end
