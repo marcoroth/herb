@@ -79,12 +79,6 @@ Lint/EmptyFile:
   Exclude: ['**/*.html.erb']
 Lint/EmptyConditionalBody:
   Exclude: ['**/*.html.erb']
-Lint/OutOfRangeRegexpRef:
-  Exclude: ['**/*.html.erb']
-Lint/Syntax:
-  Exclude: ['**/*.html.erb']
-Lint/Void:
-  Exclude: ['**/*.html.erb']
 Metrics/BlockLength:
   Exclude: ['**/*.html.erb']
 Naming/FileName:
@@ -108,8 +102,6 @@ Style/NestedTernaryOperator:
 Style/Next:
   Exclude: ['**/*.html.erb']
 Style/Semicolon:
-  Exclude: ['**/*.html.erb']
-Style/WhileUntilDo:
   Exclude: ['**/*.html.erb']
 Style/WhileUntilModifier:
   Exclude: ['**/*.html.erb']
