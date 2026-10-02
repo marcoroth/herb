@@ -188,6 +188,53 @@ describe("misnamed config files", () => {
     })
   })
 
+  describe("Config.loadForCLI", () => {
+    test("keeps the misnamed config warning and hides the notice in quiet mode", async () => {
+      writeFileSync(join(testDir, ".herb.yml"), "linter:\n  enabled: false\n")
+      writeFileSync(join(testDir, ".herb.yaml"), "")
+
+      const messages = captureStderr()
+
+      await Config.loadForCLI(testDir, "0.10.3", false, { quiet: true })
+
+      expect(messages).toEqual([Config.misnamedConfigWarning(join(testDir, ".herb.yaml"))])
+    })
+
+    test("keeps the misnamed config warning for an explicit path in quiet mode", async () => {
+      const configPath = join(testDir, ".herb.yml")
+
+      writeFileSync(configPath, "linter:\n  enabled: false\n")
+      writeFileSync(join(testDir, "herb.yml"), "")
+
+      const messages = captureStderr()
+
+      await Config.loadForCLI(configPath, "0.10.3", false, { quiet: true })
+
+      expect(messages).toEqual([Config.misnamedConfigWarning(join(testDir, "herb.yml"))])
+    })
+
+    test("hides the created config notice in quiet mode", async () => {
+      const messages = captureStderr()
+
+      await Config.loadForCLI(testDir, "0.10.3", true, { quiet: true })
+
+      expect(existsSync(join(testDir, ".herb.yml"))).toBe(true)
+      expect(messages).toEqual([])
+    })
+
+    test("prints the notice without quiet mode", async () => {
+      const configPath = join(testDir, ".herb.yml")
+
+      writeFileSync(configPath, "linter:\n  enabled: false\n")
+
+      const messages = captureStderr()
+
+      await Config.loadForCLI(testDir, "0.10.3")
+
+      expect(messages).toEqual([`✓ Using Herb config file at ${configPath}`])
+    })
+  })
+
   describe("Config.validateConfigText", () => {
     test("reports a config file with the wrong extension", async () => {
       writeFileSync(join(testDir, ".herb.yaml"), "")
