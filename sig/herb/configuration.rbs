@@ -20,6 +20,8 @@ module Herb
 
     DEFAULTS: untyped
 
+    GLOB_CHARACTERS: Regexp
+
     attr_reader config: untyped
 
     attr_reader user_config: untyped
@@ -50,6 +52,14 @@ module Herb
 
     def file_exclude_patterns: () -> untyped
 
+    def parser: () -> untyped
+
+    # : () -> Array[String]
+    def erb_openers: () -> Array[String]
+
+    # : () -> Hash[Symbol, untyped]
+    def parser_options: () -> Hash[Symbol, untyped]
+
     def linter: () -> untyped
 
     def engine: () -> untyped
@@ -79,13 +89,19 @@ module Herb
 
     def formatter_enabled_for_path?: (untyped path) -> untyped
 
-    def path_excluded?: (untyped path, untyped patterns) -> untyped
+    def path_excluded?: (untyped path, untyped patterns, ?untyped include_patterns) -> untyped
 
     def path_included?: (untyped path, untyped patterns) -> untyped
+
+    def include_overrides_exclude?: (untyped include_pattern, untyped exclude_pattern) -> untyped
+
+    def literal_prefix_segments: (untyped pattern) -> untyped
 
     def find_files: (?untyped search_path) -> untyped
 
     def find_files_for_tool: (untyped tool, ?untyped search_path) -> untyped
+
+    def collect_files: (untyped search_path, untyped include_patterns, untyped exclude_patterns) -> untyped
 
     def find_files_for_linter: (?untyped search_path) -> untyped
 

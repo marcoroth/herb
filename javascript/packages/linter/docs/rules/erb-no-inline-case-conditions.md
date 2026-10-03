@@ -4,18 +4,15 @@
 
 ## Description
 
-Disallow placing `case` and its first `when`/`in` condition in the same ERB tag. When a `case` statement and its condition appear in a single ERB tag (e.g., `<% case x when y %>`), the parser cannot reliably process, compile, or format the template. This rule flags such patterns and guides users toward separate ERB tags.
+Disallow placing `case` and its first `when`/`in` condition in the same ERB tag. This rule flags such patterns and guides users toward separate ERB tags.
 
 ## Rationale
 
-ERB templates that combine `case` with a `when` or `in` condition in a single tag create parsing ambiguity. The parser creates synthetic condition nodes to handle this pattern in non-strict mode, but the resulting AST cannot be reliably formatted or compiled.
+The parser handles this pattern by splitting the tag, so the `case` and its first condition each own the Ruby they introduce. The template then compiles the same as one written with separate tags, and `herb format` rewrites it into that shape for you.
 
-Using separate ERB tags for `case` and its conditions:
+What the shared tag costs is readability. The `case` expression and its first branch run together in one tag while every later branch gets its own, so the branches no longer line up. Separate tags also match the conventional ERB style used across the Ruby on Rails ecosystem.
 
-- Makes the template structure unambiguous for the parser
-- Enables proper formatting and compilation
-- Improves readability by clearly separating the case expression from its branches
-- Follows the conventional ERB style used across the Ruby on Rails ecosystem
+Two parser errors cover the same shape from a different angle. Under [strict parsing](/parser-options), which is the default, `ERB_CASE_WITH_CONDITIONS_ERROR` rejects the tag outright, so this rule only reports where strict mode is off. A `case` and its first `in` pattern on the same line (`<% case x in y %>`) is Ruby's one-line pattern match instead of a `case`/`in`, so `ERB_CASE_INLINE_PATTERN_MATCH_ERROR` reports it in both modes. That one is a real parse failure, so `herb format` leaves it for you to fix.
 
 ## Examples
 

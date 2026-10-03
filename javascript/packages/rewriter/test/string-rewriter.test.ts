@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
-import { StringRewriter } from "@herb-tools/rewriter"
+import { StringRewriter } from "../src/index.js"
 
-import type { RewriteContext } from "@herb-tools/rewriter"
+import type { RewriteContext } from "../src/index.js"
 
 describe("StringRewriter", () => {
   test("can be extended", () => {

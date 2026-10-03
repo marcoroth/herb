@@ -1,0 +1,44 @@
+---
+source: "Engine::Slots::DeferredTest#test_0020_steering a deferred block ships a collection's item statics along"
+input: |2-
+<%# herb:slots client %>
+<Async>
+  <ul>
+    <% @rows.each do |row| %>
+      <li herb-key="<%= row %>"><%= row %></li>
+    <% end %>
+  </ul>
+  <Fallback><p class="pulse">rows loading</p></Fallback>
+</Async>
+options: {probe: "steered collection values"}
+---
+{
+  "template": "app/views/test.html.erb",
+  "version": "a8478f9f",
+  "occurrence": 0,
+  "slots": {
+    "0": {
+      "branch": 0,
+      "statics": "<!--herb-branch:0:0-->\n  <ul>\n    <!--herb-slot:1:collection--><!--/herb-slot:1-->\n  </ul>\n  \n",
+      "slots": {
+        "1": {
+          "items": {
+            "Europe": {
+              "2": "Europe",
+              "3": "Europe"
+            },
+            "Asia": {
+              "2": "Asia",
+              "3": "Asia"
+            }
+          },
+          "order": [
+            "Europe",
+            "Asia"
+          ],
+          "statics": "<!--herb-branch:1:item--><!--herb-item:1:-->\n      <li herb-key=\"\" data-herb-slot=\"2:attribute:herb-key 3:child\"></li>\n    <!--/herb-item:1-->"
+        }
+      }
+    }
+  }
+}

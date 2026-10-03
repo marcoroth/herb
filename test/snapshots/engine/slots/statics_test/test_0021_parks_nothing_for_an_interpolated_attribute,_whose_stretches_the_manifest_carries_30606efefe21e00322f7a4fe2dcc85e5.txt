@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0021_parks nothing for an interpolated attribute, whose stretches the manifest carries"
+input: "{source: \"<div id=\\\"message_<%= @id %>\\\" class=\\\"row-<%= @kind %>-of-<%= @size %>\\\">x</div>\", locals: {\"@id\" => 7, \"@kind\" => \"a\", \"@size\" => \"b\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:20670f1f:0--><div id="message_7" class="row-a-of-b" data-herb-slot="0:attribute_interpolation:id 1:attribute_interpolation:class">x</div><!--/herb-region:app/views/test.html.erb-->

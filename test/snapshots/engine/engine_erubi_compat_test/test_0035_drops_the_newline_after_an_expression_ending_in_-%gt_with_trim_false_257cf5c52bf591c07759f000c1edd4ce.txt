@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0035_drops the newline after an expression ending in -%> with trim: false"
+input: "{source: \"<%= a -%>\\ntext\\n\", locals: {a: 1}, options: {trim: false}}"
+---
+1text

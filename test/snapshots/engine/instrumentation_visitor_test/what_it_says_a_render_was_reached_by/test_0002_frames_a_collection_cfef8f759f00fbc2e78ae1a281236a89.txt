@@ -1,8 +1,0 @@
----
-source: "Engine::InstrumentationVisitorTest::what it says a render was reached by#test_0002_frames a collection"
-input: "{source: \"<%= render partial: \\\"card\\\", collection: @posts %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
----
-_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
- ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0, :collection) 
- _buf << (render partial: "card", collection: @posts).to_s; ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
-_buf.to_s

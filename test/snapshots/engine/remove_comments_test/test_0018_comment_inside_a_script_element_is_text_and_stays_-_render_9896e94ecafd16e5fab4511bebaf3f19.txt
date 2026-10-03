@@ -1,0 +1,5 @@
+---
+source: "Engine::RemoveCommentsTest#test_0018_comment inside a script element is text and stays - render"
+input: "{source: \"<script>// <!-- keep this --></script><style>/* <!-- and this --> */</style>\", locals: {}, options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+<script>// <!-- keep this --></script><style>/* <!-- and this --> */</style>

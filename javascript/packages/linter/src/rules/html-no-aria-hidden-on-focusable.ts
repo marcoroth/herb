@@ -38,11 +38,13 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
   static ruleName = "html-no-aria-hidden-on-focusable"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

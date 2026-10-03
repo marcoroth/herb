@@ -1,0 +1,5 @@
+---
+source: "Engine::SecureCompilerTest#test_0019_mixed contexts"
+input: "secure_compiler_test-11"
+---
+<div class="test" onclick="alert('Alice')">Content</div>

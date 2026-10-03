@@ -67,6 +67,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
   static ruleName = "html-input-require-autocomplete"
   static introducedIn = this.version("0.8.0")
+  static defaultEnabledIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

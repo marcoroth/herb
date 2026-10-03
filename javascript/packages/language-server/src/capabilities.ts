@@ -5,6 +5,7 @@ import type { PersonalHerbSettings } from "./user_settings"
 export interface HerbInitializationOptions extends PersonalHerbSettings {
   experimental?: {
     extractToPartialCommand?: boolean
+    runtimeOverlays?: boolean
   }
 }
 
@@ -32,6 +33,14 @@ export class Capabilities {
     this.hasDiagnosticRelatedInformation = !!this.client.textDocument?.publishDiagnostics?.relatedInformation
   }
 
+  get supportsConfigurationRegistration(): boolean {
+    return this.client.workspace?.didChangeConfiguration?.dynamicRegistration === true
+  }
+
+  get supportsWatchedFilesRegistration(): boolean {
+    return this.client.workspace?.didChangeWatchedFiles?.dynamicRegistration === true
+  }
+
   get supportsInlayHintRefresh(): boolean {
     return this.client.workspace?.inlayHint?.refreshSupport === true
   }
@@ -40,8 +49,18 @@ export class Capabilities {
     return this.client.textDocument?.definition?.linkSupport === true
   }
 
+  get supportsSnippetEdits(): boolean {
+    return this.client.workspace?.applyEdit === true && this.client.workspace?.workspaceEdit?.snippetEditSupport === true
+  }
+
   get supportsResourceCreation(): boolean {
     return this.client.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
+  }
+
+  get supportsRuntimeOverlays(): boolean {
+    const options = this.params.initializationOptions as HerbInitializationOptions | undefined | null
+
+    return options?.experimental?.runtimeOverlays === true
   }
 
   get supportsExtractToPartialCommand(): boolean {

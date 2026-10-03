@@ -1,7 +1,0 @@
----
-source: "Engine::OpenTagWhitespaceTest#test_0012_preserves whitespace around an erb expression in attribute position"
-input: "{source: \"<div <%= attributes %> id=\\\"bar\\\">Content</div>\\n\", options: {}}"
----
-_buf = ::String.new; _buf << '<div '.freeze; _buf << (attributes).to_s; _buf << ' id="bar">Content</div>
-'.freeze;
-_buf.to_s

@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0025_disable directive with several rule names and no space after the comma"
+input: |2-
+<%# herb:disable erb-comment-syntax,html-tag-name-lowercase %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:62))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:disable erb-comment-syntax,html-tag-name-lowercase " (location: (1:3)-(1:60))
+    │   ├── tag_closing: "%>" (location: (1:60)-(1:62))
+    │   ├── key: "disable" (location: (1:9)-(1:16))
+    │   └── arguments: "erb-comment-syntax,html-tag-name-lowercase" (location: (1:17)-(1:59))
+    │
+    └── @ HTMLTextNode (location: (1:62)-(2:0))
+        └── content: "\n"

@@ -1,8 +1,8 @@
 import { describe, test, expect } from "vitest"
-import { ASTRewriter } from "@herb-tools/rewriter"
+import { ASTRewriter } from "../src/index.js"
 
 import type { Node } from "@herb-tools/core"
-import type { RewriteContext } from "@herb-tools/rewriter"
+import type { RewriteContext } from "../src/index.js"
 
 describe("ASTRewriter", () => {
   test("can be extended", () => {

@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0042_emits an escaped ERB case as literal text"
+input: "{source: \"<%% case status %>\\n<%% when :active %>\\n  on\\n<%% else %>\\n  off\\n<%% end %>\\n\", locals: {}, options: {}}"
+---
+<% case status %>
+<% when :active %>
+  on
+<% else %>
+  off
+<% end %>

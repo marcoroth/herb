@@ -1,0 +1,52 @@
+# Generated from lib/herb/backend.rb with RBS::Inline
+
+module Herb
+  # What the native extension defines, declared in Ruby so that it can be read without reading C.
+  #
+  # Loading the extension reopens this module and defines each method for real, so nothing here
+  # runs in a working install. What is left when the extension does not load is a set of methods
+  # that say so, instead of the `NoMethodError` a missing definition would raise:
+  #
+  #     Herb::Backend.parse(source)
+  #     #=> NotImplementedError: Herb::Backend.parse is defined by the native extension, which did not load
+  #
+  # The public API is `Herb.parse` and its neighbours, which are Ruby and live in `lib/herb.rb`.
+  # This is only the seam they call through.
+  module Backend
+    module Unavailable
+      # : (String, **untyped) -> Herb::ParseResult
+      def parse: (String, **untyped) -> Herb::ParseResult
+
+      # : (String, **untyped) -> Herb::LexResult
+      def lex: (String, **untyped) -> Herb::LexResult
+
+      # : (String, **untyped) -> String
+      def extract_ruby: (String, **untyped) -> String
+
+      # : (String) -> String
+      def extract_html: (String) -> String
+
+      # : (String, String, **untyped) -> Herb::Diff::Result
+      def diff: (String, String, **untyped) -> Herb::Diff::Result
+
+      # : (**untyped) -> untyped
+      def arena_stats: (**untyped) -> untyped
+
+      # : (String) -> untyped
+      def leak_check: (String) -> untyped
+
+      # : () -> Array[String]
+      def default_erb_openings: () -> Array[String]
+
+      # : () -> String
+      def version: () -> String
+
+      private
+
+      # : (Symbol?) -> bot
+      def unavailable: (Symbol?) -> bot
+    end
+
+    extend Unavailable
+  end
+end

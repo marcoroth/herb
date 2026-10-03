@@ -259,4 +259,13 @@ describe("actionview-no-unused-strict-locals", () => {
       <%= name %>
     `, { fileName: "app/views/users/_card.html.erb" })
   })
+
+  test("counts a herb:state default naming the local as a use", () => {
+    expectNoOffenses(dedent`
+      <%# locals: (open_initially: false) %>
+      <%# herb:slots client %>
+      <%# herb:state (open: open_initially) %>
+      <% if open? %>Open<% end %>
+    `, { fileName: "app/views/users/_menu.html.erb" })
+  })
 })

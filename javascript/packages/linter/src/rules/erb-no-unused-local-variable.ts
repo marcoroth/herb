@@ -1,4 +1,5 @@
 import { ParserRule } from "../types.js"
+import { StateScopeMap } from "../utils/state-directives-utils.js"
 import { PrismVisitor, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { ParseResult, ParserOptions, PrismNodes } from "@herb-tools/core"
@@ -111,7 +112,8 @@ class LocalVariableCollector extends PrismVisitor {
 
 export class ERBNoUnusedLocalVariableRule extends ParserRule {
   static ruleName = "erb-no-unused-local-variable"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -140,7 +142,9 @@ export class ERBNoUnusedLocalVariableRule extends ParserRule {
 
     collector.visit(program)
 
-    return collector.unusedWrites.map(write => {
+    const stateNames = new Set(StateScopeMap.collect(result.value).allNames())
+
+    return collector.unusedWrites.filter(write => !stateNames.has(String(write.name))).map(write => {
       const { startOffset, length } = write.nameLoc
 
       return this.createOffense(

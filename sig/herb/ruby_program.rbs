@@ -1,0 +1,51 @@
+# Generated from lib/herb/ruby_program.rb with RBS::Inline
+
+module Herb
+  # Answers what Ruby a span of a template holds, out of the one Prism program the parser built
+  # for the whole document. `extract_ruby` blanks the HTML in place, so a Prism byte offset and a
+  # template byte offset are the same number, which is what lets a `Herb::Location` address Ruby.
+  #
+  #     program = Herb::RubyProgram.for(document)
+  #     program.resolve(node.content.location)&.nodes #=> [#<Prism::CallNode>]
+  #
+  # The document has to have been parsed with the `prism_program` parser option, and `for` answers
+  # `nil` when it was not. `Herb::Locate` is the same question asked of the HTML tree, and
+  # `Herb::Analysis::RubyLocalsIndex::OffsetTable` walks the other way, from a Prism offset back
+  # to a `Herb::Location`.
+  class RubyProgram
+    class Resolved < Data
+      attr_reader nodes(): Array[untyped]
+
+      attr_reader offset(): Integer
+
+      attr_reader source(): String
+
+      def self.new: (Array[untyped] nodes, Integer offset, String source) -> instance
+                  | (nodes: Array[untyped], offset: Integer, source: String) -> instance
+
+      def self.members: () -> [ :nodes, :offset, :source ]
+
+      def members: () -> [ :nodes, :offset, :source ]
+    end
+
+    # : (untyped) -> RubyProgram?
+    def self.for: (untyped) -> RubyProgram?
+
+    # : (String, untyped) -> void
+    def initialize: (String, untyped) -> void
+
+    # : (Herb::Location?) -> Resolved?
+    def resolve: (Herb::Location?) -> Resolved?
+
+    private
+
+    # : (untyped) -> Array[untyped]
+    def flatten: (untyped) -> Array[untyped]
+
+    # : (Integer, Integer) -> Array[untyped]
+    def enclosed: (Integer, Integer) -> Array[untyped]
+
+    # : (untyped) -> Integer?
+    def offset_of: (untyped) -> Integer?
+  end
+end

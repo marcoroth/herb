@@ -56,7 +56,7 @@ export class RewriteCodeActionProvider {
     const parseResult = this.parserService.parseContent(document.getText(), {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, document.uri)
 
     const collector = new ElementCollector()
     collector.visit(parseResult.value)
@@ -92,7 +92,7 @@ export class RewriteCodeActionProvider {
     const parseResult = this.parserService.parseContent(originalText, {
       action_view_helpers: true,
       track_whitespace: true,
-    })
+    }, document.uri)
 
     if (parseResult.failed) return null
 
@@ -128,7 +128,7 @@ export class RewriteCodeActionProvider {
 
     const parseResult = this.parserService.parseContent(originalText, {
       track_whitespace: true,
-    })
+    }, document.uri)
 
     if (parseResult.failed) return null
 

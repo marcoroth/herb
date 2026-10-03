@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0136_a seeded value ships in the seeds marker even when the default is a literal"
+input: "states_test-57"
+---
+<!--herb-region:app/views/test.html.erb:f638e919:0--><!--herb-seeds:{"open":true}--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0-->yes<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:f638e919"><!--herb-branch:0:0-->yes<!--herb-branch:0:1-->no</template>

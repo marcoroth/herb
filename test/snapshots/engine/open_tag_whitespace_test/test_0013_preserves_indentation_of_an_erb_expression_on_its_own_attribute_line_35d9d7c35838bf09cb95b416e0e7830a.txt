@@ -1,8 +1,0 @@
----
-source: "Engine::OpenTagWhitespaceTest#test_0013_preserves indentation of an erb expression on its own attribute line"
-input: "{source: \"<div\\n  class=\\\"foo\\\"\\n  <%= attributes %>\\n>Content</div>\\n\", locals: {attributes: \"id=\\\"bar\\\"\"}, options: {}}"
----
-<div
-  class="foo"
-  id="bar"
->Content</div>

@@ -1,0 +1,9 @@
+# Generated from lib/herb/ensure_installed.rb with RBS::Inline
+
+module Herb
+  # : (*String gems) -> void
+  def self.ensure_installed: (*String gems) -> void
+
+  # : (Array[String]) -> void
+  def self.refuse_bundle_replacement: (Array[String]) -> void
+end

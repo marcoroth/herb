@@ -1,0 +1,19 @@
+# Generated from lib/herb/engine/slots/component_definitions.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The built-in components a slots template may use, and what each one takes.
+      module ComponentDefinitions
+        COMPONENTS: Hash[String, { void: bool, deferred: bool, parents: Array[String]?, description: String, attributes: Hash[String, Hash[Symbol, String]] }]
+
+        BUILT_IN: Array[String]
+
+        DEFERRED: Array[String]
+
+        # : (String) -> Hash[String, Hash[Symbol, String]]
+        def self.attributes_for: (String) -> Hash[String, Hash[Symbol, String]]
+      end
+    end
+  end
+end

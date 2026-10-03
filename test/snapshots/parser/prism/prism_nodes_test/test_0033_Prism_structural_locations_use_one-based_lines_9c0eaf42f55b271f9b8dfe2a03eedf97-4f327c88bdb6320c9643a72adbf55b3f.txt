@@ -1,0 +1,47 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0033_Prism structural locations use one-based lines"
+input: |2-
+<% if true %>
+<%= User %>
+<% end %>
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(3:9))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(3:9))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true " (location: (1:2)-(1:11))
+        ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── then_keyword: ∅
+        ├── prism_node:
+        │   └── @ IfNode (location: (1:3)-(3:6))
+        │       ├── if_keyword_loc: (1:3)-(1:5)
+        │       ├── predicate:
+        │       │   └── @ TrueNode (location: (1:6)-(1:10))
+        │       ├── then_keyword_loc: ∅
+        │       ├── statements: ∅
+        │       ├── subsequent: ∅
+        │       └── end_keyword_loc: (3:3)-(3:6)
+        ├── statements: (3 items)
+        │   ├── @ HTMLTextNode (location: (1:13)-(2:0))
+        │   │   └── content: "\n"
+        │   │
+        │   ├── @ ERBContentNode (location: (2:0)-(2:11))
+        │   │   ├── tag_opening: "<%=" (location: (2:0)-(2:3))
+        │   │   ├── content: " User " (location: (2:3)-(2:9))
+        │   │   ├── tag_closing: "%>" (location: (2:9)-(2:11))
+        │   │   ├── parsed: true
+        │   │   ├── valid: true
+        │   │   └── prism_node:
+        │   │       └── @ ConstantReadNode (location: (2:4)-(2:8))
+        │   │           └── name: :User
+        │   │
+        │   └── @ HTMLTextNode (location: (2:11)-(3:0))
+        │       └── content: "\n"
+        │
+        ├── subsequent: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (3:0)-(3:9))
+                ├── tag_opening: "<%" (location: (3:0)-(3:2))
+                ├── content: " end " (location: (3:2)-(3:7))
+                └── tag_closing: "%>" (location: (3:7)-(3:9))

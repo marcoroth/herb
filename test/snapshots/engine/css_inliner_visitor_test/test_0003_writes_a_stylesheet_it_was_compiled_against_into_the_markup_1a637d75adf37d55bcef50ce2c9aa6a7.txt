@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0003_writes a stylesheet it was compiled against into the markup"
+input: "{source: \"<div class=\\\"card\\\">Hi</div>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor stylesheets=email.css>]}}"
+---
+<div class="card" style="padding: 4px;color: #ff0000;">Hi</div>

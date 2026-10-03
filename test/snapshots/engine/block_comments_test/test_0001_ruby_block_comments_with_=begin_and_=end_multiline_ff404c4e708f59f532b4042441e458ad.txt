@@ -4,11 +4,9 @@ input: "{source: \"<%\\n=begin %>\\n  This, while unusual, is a legal form of co
 ---
 _buf = ::String.new;
 =begin 
-
  _buf << '  This, while unusual, is a legal form of commenting.
 '.freeze;
 =end 
-
  _buf << '<div>Hey there</div>
 '.freeze;
 _buf.to_s

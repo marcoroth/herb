@@ -1,0 +1,8 @@
+---
+source: "Engine::CLITest#test_0005_compile with --no-trim"
+input: "test_0005_compile with --no-trim"
+---
+_buf = ::String.new; a = 1; _buf << '
+text
+'.freeze;
+_buf.to_s

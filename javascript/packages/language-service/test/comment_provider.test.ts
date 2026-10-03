@@ -18,6 +18,13 @@ describe("CommentProvider", () => {
     service = new CommentProvider(parserService)
   })
 
+  function graphqlService(): CommentProvider {
+    const parserServiceWithGraphQL = new ParserService(Herb)
+    parserServiceWithGraphQL.setConfig({ parserOptions: { erb_openers: ["graphql"] } })
+
+    return new CommentProvider(parserServiceWithGraphQL)
+  }
+
   function createDocument(content: string): TextDocument {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
@@ -539,10 +546,10 @@ describe("CommentProvider", () => {
         expect(applyEdits(original, edits)).toBe(`<%%= expression %>`)
       })
 
-      it("uncomments <%# graphql query %> back to <%graphql query %>", () => {
+      it("uncomments <%# graphql query %> back to <%graphql query %> when graphql is a configured opener", () => {
         const original = `<%# graphql { user { name } } %>`
         const document = createDocument(original)
-        const edits = service.toggleLineComment(document, lineRange(0))
+        const edits = graphqlService().toggleLineComment(document, lineRange(0))
 
         expect(applyEdits(original, edits)).toBe(`<%graphql { user { name } } %>`)
       })
@@ -885,12 +892,20 @@ describe("CommentProvider", () => {
         expect(uncommented).toBe(`<%%= expression %>`)
       })
 
-      it("round-trips linter-formatted <%# graphql query %>", () => {
+      it("round-trips linter-formatted <%# graphql query %> when graphql is a configured opener", () => {
+        const linterFormatted = `<%# graphql { user { name } } %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, graphqlService().toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%graphql { user { name } } %>`)
+      })
+
+      it("leaves a linter-formatted <%# graphql query %> alone when graphql is not configured", () => {
         const linterFormatted = `<%# graphql { user { name } } %>`
         const document = createDocument(linterFormatted)
         const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
 
-        expect(uncommented).toBe(`<%graphql { user { name } } %>`)
+        expect(uncommented).toBe(`<% graphql { user { name } } %>`)
       })
 
       it("round-trips plain text", () => {

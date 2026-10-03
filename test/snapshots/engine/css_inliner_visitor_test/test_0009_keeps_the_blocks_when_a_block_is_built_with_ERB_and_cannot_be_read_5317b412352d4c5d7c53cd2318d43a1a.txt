@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0009_keeps the blocks when a block is built with ERB and cannot be read"
+input: "{source: \"<style>.title { color: <%= \\\"#ff0000\\\" %> }</style><h1 class=\\\"title\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<style>.title { color: \000023ff0000 }</style><h1 class="title" style="color: \000023ff0000;">Hi</h1>

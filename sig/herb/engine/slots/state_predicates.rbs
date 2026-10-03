@@ -1,0 +1,16 @@
+# Generated from lib/herb/engine/slots/state_predicates.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The Ruby predicates a `herb:state` read may use, and the condition each one resolves into.
+      module StatePredicates
+        TABLE: Hash[String, Hash[Symbol, untyped]]
+
+        NEGATED: Hash[String, String]
+
+        UNARY: Hash[String, String]
+      end
+    end
+  end
+end

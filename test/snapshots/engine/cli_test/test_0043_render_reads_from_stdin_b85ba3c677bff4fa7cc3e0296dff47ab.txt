@@ -1,0 +1,5 @@
+---
+source: "Engine::CLITest#test_0043_render reads from stdin"
+input: "test_0043_render reads from stdin"
+---
+<div>Rendered content</div>

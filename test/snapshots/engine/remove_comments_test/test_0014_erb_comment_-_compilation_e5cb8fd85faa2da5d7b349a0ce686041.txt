@@ -1,0 +1,11 @@
+---
+source: "Engine::RemoveCommentsTest#test_0014_erb comment - compilation"
+input: "{source: \"<div>\\n  <%# a comment %>\\n  <% # another comment %>\\n  <p>Content</p>\\n</div>\\n\", options: {escape: false, visitors: [#<Herb::Engine::RemoveCommentsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<div>
+  
+  
+  <p>Content</p>
+</div>
+'.freeze;
+_buf.to_s

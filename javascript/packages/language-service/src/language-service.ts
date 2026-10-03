@@ -3,11 +3,12 @@ import { CompletionItemKind, InsertTextFormat } from "vscode-html-languageservic
 
 import { buildHTMLDocument } from "./herb-html-document.js"
 import { getLanguageService as getUpstreamLanguageService } from "vscode-html-languageservice"
+import { herbHTMLDataProvider } from "./herb_html_data_provider"
 
 import { TOKEN_LIST_ATTRIBUTES, getHelper } from "@herb-tools/core"
 
 import type { ParseOptions } from "@herb-tools/core"
-import type { LanguageServiceOptions, ProjectConfig } from "./types.js"
+import type { LanguageServiceOptions, FrameworkOptions } from "./types.js"
 import type { Framework } from "@herb-tools/config"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { Position, Range, CompletionList, CompletionItem, Hover, TextEdit, DocumentHighlight, DocumentLink, SymbolInformation, DocumentSymbol, FoldingRange, SelectionRange, WorkspaceEdit, IHTMLDataProvider } from "vscode-html-languageservice"
@@ -21,9 +22,9 @@ const DEFAULT_HERB_PARSE_OPTIONS: ParseOptions = {
 }
 
 export function getLanguageService(options?: LanguageServiceOptions): LanguageService {
-  const upstream = getUpstreamLanguageService(options)
+  const dataProviders = [herbHTMLDataProvider, ...(options?.customDataProviders ?? [])]
+  const upstream = getUpstreamLanguageService({ ...options, customDataProviders: dataProviders })
   const herb = options?.herb
-  const dataProviders = options?.customDataProviders ?? []
 
   const framework = options?.framework
 
@@ -175,7 +176,7 @@ function currentERBTag(source: string, offset: number): string | null {
   return source.slice(opening, offset)
 }
 
-export function getBlockArgumentCompletions(document: TextDocument, position: Position, config?: ProjectConfig): CompletionList | null {
+export function getBlockArgumentCompletions(document: TextDocument, position: Position, config?: FrameworkOptions): CompletionList | null {
   const source = document.getText()
   const offset = document.offsetAt(position)
   const tag = currentERBTag(source, offset)

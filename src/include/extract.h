@@ -1,6 +1,7 @@
 #ifndef HERB_EXTRACT_H
 #define HERB_EXTRACT_H
 
+#include "lexer/erb_openers.h"
 #include "lib/hb_allocator.h"
 #include "lib/hb_buffer.h"
 
@@ -15,6 +16,9 @@ typedef struct {
   bool semicolons;
   bool comments;
   bool preserve_positions;
+  bool custom_tags;
+  const hb_string_T* erb_openers;
+  size_t erb_opener_count;
 } herb_extract_ruby_options_T;
 
 extern const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
@@ -29,6 +33,13 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output, hb_all
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output, hb_allocator_T* allocator);
 
 char* herb_extract_ruby_with_semicolons(const char* source, hb_allocator_T* allocator);
+
+char* herb_extract_ruby_with_semicolons_and_openers(
+  const char* source,
+  const hb_string_T* erb_openers,
+  size_t erb_opener_count,
+  hb_allocator_T* allocator
+);
 
 char* herb_extract(const char* source, herb_extract_language_T language, hb_allocator_T* allocator);
 

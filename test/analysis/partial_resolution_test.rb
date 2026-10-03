@@ -10,9 +10,7 @@ class PartialResolutionTest < Minitest::Spec
   end
 
   test "covers every extension in the template glob" do
-    Subject::EXTENSIONS.each do |extension|
-      assert_includes Subject::TEMPLATE_GLOB_PATTERN, extension.delete_prefix(".")
-    end
+    assert_equal "*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}", Subject::TEMPLATE_GLOB_PATTERN
   end
 
   test "recognises a template path" do

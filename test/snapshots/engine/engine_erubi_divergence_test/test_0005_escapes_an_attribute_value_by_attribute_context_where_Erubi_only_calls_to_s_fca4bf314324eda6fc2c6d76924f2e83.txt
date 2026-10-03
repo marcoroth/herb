@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiDivergenceTest#test_0005_escapes an attribute value by attribute context where Erubi only calls to_s"
+input: "engine_erubi_divergence_test-8"
+---
+<img src="photo.jpg" alt="Photo">
+<br>
+<input type="text" name="a" onload="alert(1)">

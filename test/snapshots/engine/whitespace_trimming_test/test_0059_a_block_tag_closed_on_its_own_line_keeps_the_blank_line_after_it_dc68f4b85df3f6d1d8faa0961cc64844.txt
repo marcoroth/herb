@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0059_a block tag closed on its own line keeps the blank line after it"
+input: "{source: \"<% a = 1 %>\\n\\n<% provide :t do %><%= x %><% end %>\\n\\n<% b = 2 %>\\n\", options: {}}"
+---
+_buf = ::String.new; a = 1 
+ _buf << '
+'.freeze; provide :t do ; _buf << (x).to_s; end; _buf << '
+
+'.freeze; b = 2 
+_buf.to_s

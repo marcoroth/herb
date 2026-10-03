@@ -1,0 +1,11 @@
+---
+source: "Engine::CLITest#test_0032_compile preserves whitespace structure"
+input: "test_0032_compile preserves whitespace structure"
+---
+_buf = ::String.new; _buf << '<ul>
+'.freeze;   items.each do |item| 
+ _buf << '    <li>'.freeze; _buf << (item).to_s; _buf << '</li>
+'.freeze;   end 
+ _buf << '</ul>
+'.freeze;
+_buf.to_s

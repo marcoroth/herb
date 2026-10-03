@@ -115,6 +115,7 @@ export default class extends Controller {
     "autofixError",
     "autofixVerification",
     "autofixIncludeUnsafe",
+    "minifyViewer",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -517,6 +518,9 @@ export default class extends Controller {
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
+      case 'minify':
+        content = this.minifyViewerTarget.textContent
+        break
       case 'printer':
         content = this.printerOutputTarget.textContent
         break
@@ -717,7 +721,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'minify', 'printer', 'diagnostics', 'rewrite', 'diff', 'full', 'highlighter']
     return validTabs.includes(tab)
   }
 
@@ -1464,6 +1468,19 @@ export default class extends Controller {
       Prism.highlightElement(this.lexViewerTarget)
     }
 
+    if (this.hasMinifyViewerTarget && result.minified !== undefined) {
+      const minifiedContent = result.minified
+
+      if (typeof minifiedContent === 'string' && minifiedContent.startsWith('Error:')) {
+        this.minifyViewerTarget.classList.remove("language-html")
+        this.minifyViewerTarget.textContent = minifiedContent
+      } else {
+        this.minifyViewerTarget.classList.add("language-html")
+        this.minifyViewerTarget.textContent = minifiedContent
+        Prism.highlightElement(this.minifyViewerTarget)
+      }
+    }
+
     if (this.hasPrinterViewerTarget && result.printed !== undefined) {
       const trackLocations = this.getParserOptions().track_locations
       const printedContent = result.printed || 'No printed output available'
@@ -1622,6 +1639,8 @@ export default class extends Controller {
       const optionName = input.dataset.option
       if (input.type === 'checkbox') {
         options[optionName] = input.checked
+      } else if (input.dataset.optionType === 'list') {
+        options[optionName] = input.value.split(',').map(entry => entry.trim()).filter(Boolean)
       } else {
         options[optionName] = input.value
       }
@@ -1639,6 +1658,9 @@ export default class extends Controller {
       if (options.hasOwnProperty(optionName)) {
         if (input.type === 'checkbox') {
           input.checked = Boolean(options[optionName])
+        } else if (input.dataset.optionType === 'list') {
+          const value = options[optionName]
+          input.value = Array.isArray(value) ? value.join(', ') : value
         } else {
           input.value = options[optionName]
         }
@@ -1802,12 +1824,14 @@ export default class extends Controller {
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      herb_directives: false,
       iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
       dot_notation_tags: false,
       html: true,
+      erb_openers: [],
     }
 
     const nonDefaultOptions = {}
@@ -1815,6 +1839,12 @@ export default class extends Controller {
     Object.keys(options).forEach(key => {
       const value = options[key]
       const defaultValue = defaults[key]
+
+      if (Array.isArray(value)) {
+        if (value.length > 0) nonDefaultOptions[key] = value
+
+        return
+      }
 
       if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
         nonDefaultOptions[key] = value

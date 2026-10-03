@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizeTogglesTest::the literals pass#test_0003_left off, a template the helpers made static still collapses"
+input: "{source: \"<p><%= tag.br %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor literals=false>]}}"
+---
+'<p><br></p>'.freeze

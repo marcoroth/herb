@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
-import { SlotIndex } from "../src/slot-index"
-import type { Item } from "../src/slot-index"
-import { HerbRuntime } from "../src/runtime"
+import { Slots } from "../src/slots/slots"
+import type { Item } from "../src/types"
+import { Runtime } from "../src/runtime"
 
 const FILE = "app/views/posts/index.html.erb"
 
@@ -29,12 +29,12 @@ function mount(html: string): HTMLElement {
   return host
 }
 
-describe("SlotIndex", () => {
-  let index: SlotIndex
+describe("Slots", () => {
+  let index: Slots
 
   beforeEach(() => {
     document.body.innerHTML = ""
-    index = new SlotIndex()
+    index = new Slots()
   })
 
   describe("regions", () => {
@@ -82,8 +82,8 @@ describe("SlotIndex", () => {
     test("attributes a slot to the rendering its markers name, not the one they sit in", () => {
       index.scan(mount(DISPLACED))
 
-      expect(index.rangeFor(index.slot(FILE, 5)!).toString()).toBe("Title")
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("body")
+      expect(index.rangeOf(index.slot(FILE, 5)!).toString()).toBe("Title")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("body")
     })
 
     test("keeps a rendering while any part of it is still on the page", () => {
@@ -156,7 +156,7 @@ describe("SlotIndex", () => {
       const slot = index.slot(FILE, 0)
 
       expect(slot?.branch).toBeNull()
-      expect(index.rangeFor(slot!).toString()).toBe("")
+      expect(index.rangeOf(slot!).toString()).toBe("")
     })
   })
 
@@ -172,7 +172,7 @@ describe("SlotIndex", () => {
 
       const item = index.itemsFor(FILE, 0).get("2")!
 
-      expect(index.rangeForItem(item).toString()).toBe("2")
+      expect(index.rangeOf(item).toString()).toBe("2")
     })
   })
 
@@ -221,7 +221,7 @@ describe("SlotIndex", () => {
 
       expect(result.slots).toHaveLength(1)
       expect(index.slot(FILE, 5)?.type).toBe("child")
-      expect(index.rangeFor(index.slot(FILE, 5)!).toString()).toBe("late")
+      expect(index.rangeOf(index.slot(FILE, 5)!).toString()).toBe("late")
     })
 
     test("reports what a scan added", () => {
@@ -246,6 +246,30 @@ describe("SlotIndex", () => {
 
       expect(index.regionsFor(FILE)).toHaveLength(1)
       expect([...index.itemsFor(FILE, 0).keys()]).toEqual(["1", "2"])
+
+      index.disconnect()
+    })
+
+    test("keeps unrelated subtrees of one batch apart", async () => {
+      const host = mount("")
+
+      index.observe(host)
+
+      const first = document.createElement("div")
+      const second = document.createElement("div")
+
+      host.append(first, second)
+      await settle()
+
+      first.innerHTML = CHILD
+      second.innerHTML = ANCHORED
+      await settle()
+
+      const regions = index.regionsFor(FILE)
+
+      expect(regions.map((region) => region.version).sort()).toEqual(["25c0946e", "fd3dfd36"])
+      expect(index.slot(FILE, 0, 0)?.anchor.kind).toBe("range")
+      expect(regions.find((region) => region.version === "fd3dfd36")?.slots.get(0)?.anchor.kind).toBe("content")
 
       index.disconnect()
     })
@@ -320,19 +344,19 @@ describe("SlotIndex", () => {
     test("covers what a child slot rendered", () => {
       index.scan(mount(CHILD))
 
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Marco")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Marco")
     })
 
     test("covers an anchored element's content", () => {
       index.scan(mount(ANCHORED))
 
-      expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Marco")
+      expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Marco")
     })
 
     test("covers the element itself for an element anchor", () => {
       index.scan(mount(ATTR))
 
-      const range = index.rangeFor(index.slot(FILE, 1)!)
+      const range = index.rangeOf(index.slot(FILE, 1)!)
 
       expect((range.cloneContents().firstElementChild as HTMLElement).tagName).toBe("DIV")
     })
@@ -342,12 +366,12 @@ describe("SlotIndex", () => {
 const NESTED = `<!--herb-region:${"app/views/posts/index.html.erb"}:8318a878:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><span data-herb-slot="1:child">Marco</span><!--/herb-slot:0--></div><!--/herb-region:app/views/posts/index.html.erb-->`
 const DEEP = `<!--herb-region:app/views/posts/index.html.erb:df85c53b:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><li id="1" data-herb-slot="1:attribute"><!--herb-slot:2:conditional--><!--herb-branch:2:0--><b data-herb-slot="3:child">1</b><!--/herb-slot:2--></li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/posts/index.html.erb-->`
 
-function mounted(html: string): SlotIndex {
+function mounted(html: string): Slots {
   const host = document.createElement("div")
   host.innerHTML = html
   document.body.appendChild(host)
 
-  const index = new SlotIndex()
+  const index = new Slots()
   index.scan(host)
 
   return index
@@ -486,7 +510,7 @@ describe("reflecting updates", () => {
     index.update(index.slot(FILE, 0)!, "Alice")
 
     expect(document.body.textContent).toContain("Hi Alice!")
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("Alice")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("Alice")
   })
 
   test("writes into an element-anchored content slot", () => {
@@ -514,7 +538,7 @@ describe("reflecting updates", () => {
     const result = index.update(index.slot(FILE, 0)!, `<!--herb-slot:7-->fresh<!--/herb-slot:7-->`)
 
     expect(result.slots.map((slot) => slot.index)).toEqual([7])
-    expect(index.rangeFor(index.slot(FILE, 7)!).toString()).toBe("fresh")
+    expect(index.rangeOf(index.slot(FILE, 7)!).toString()).toBe("fresh")
     expect(index.slot(FILE, 7)?.parent).toBe(index.slot(FILE, 0))
   })
 
@@ -524,7 +548,7 @@ describe("reflecting updates", () => {
     index.updateItem(index.slot(FILE, 0)!, "2", `<li id="2">changed</li>`)
 
     expect(document.body.textContent).toContain("changed")
-    expect(index.rangeForItem(index.itemsFor(FILE, 0).get("1")!).toString()).toBe("1")
+    expect(index.rangeOf(index.itemsFor(FILE, 0).get("1")!).toString()).toBe("1")
   })
 
   test("parses a replacement item in table context, where a bare <tr> would be dropped", () => {
@@ -557,7 +581,7 @@ describe("markers that arrive as their own node", () => {
 
   test("indexes a marker appended as a bare comment", () => {
     const host = mount(`<!--herb-region:${FILE}:aaaaaaaa:0--><div id="host"></div><!--/herb-region:${FILE}-->`)
-    const index = new SlotIndex()
+    const index = new Slots()
 
     index.scan(host)
 
@@ -570,7 +594,7 @@ describe("markers that arrive as their own node", () => {
     const result = index.scan([open, close])
 
     expect(result.slots.map((slot) => slot.index)).toEqual([9])
-    expect(index.rangeFor(index.slot(FILE, 9)!).toString()).toBe("bare")
+    expect(index.rangeOf(index.slot(FILE, 9)!).toString()).toBe("bare")
   })
 
   test("a walker rooted at a comment would find nothing, which is why that path exists", () => {
@@ -586,12 +610,12 @@ describe("markers that arrive as their own node", () => {
     const host = mount(
       `<!--herb-region:${FILE}:bbbbbbbb:0--><!-- a note --><!--herb-slot:0-->x<!--/herb-slot:0--><!-- another --><!--/herb-region:${FILE}-->`,
     )
-    const index = new SlotIndex()
+    const index = new Slots()
 
     index.scan(host)
 
     expect(index.slot(FILE, 0)?.type).toBe("child")
-    expect(index.rangeFor(index.slot(FILE, 0)!).toString()).toBe("x")
+    expect(index.rangeOf(index.slot(FILE, 0)!).toString()).toBe("x")
   })
 })
 
@@ -609,8 +633,8 @@ describe("a template rendered more than once", () => {
     const second = index.slotInItem(FILE, 0, "2", 2)!
 
     expect(first).not.toBe(second)
-    expect(index.rangeFor(first).toString()).toBe("1")
-    expect(index.rangeFor(second).toString()).toBe("2")
+    expect(index.rangeOf(first).toString()).toBe("1")
+    expect(index.rangeOf(second).toString()).toBe("2")
   })
 
   test("a collection's descendants include every item's slots", () => {
@@ -631,8 +655,8 @@ describe("updating one item of a collection", () => {
 
     index.update(index.slotInItem(FILE, 0, "1", 2)!, "changed")
 
-    expect(index.rangeFor(index.slotInItem(FILE, 0, "1", 2)!).toString()).toBe("changed")
-    expect(index.rangeFor(index.slotInItem(FILE, 0, "2", 2)!).toString()).toBe("2")
+    expect(index.rangeOf(index.slotInItem(FILE, 0, "1", 2)!).toString()).toBe("changed")
+    expect(index.rangeOf(index.slotInItem(FILE, 0, "2", 2)!).toString()).toBe("2")
   })
 
   test("each item's attribute slot points at that item's element", () => {
@@ -647,28 +671,126 @@ describe("updating one item of a collection", () => {
     expect((second.anchor as { element: Element }).element.getAttribute("id")).toBe("2")
     expect(document.querySelectorAll(".active")).toHaveLength(1)
   })
+
+  test("a comment-anchored slot written into an item belongs to that item", () => {
+    const index = mounted(COLLECTION)
+    const collection = index.slot(FILE, 0)!
+
+    index.updateItem(collection, "1", `<li id="1" data-herb-slot="1:attribute"><!--herb-slot:2-->changed<!--/herb-slot:2--></li>`)
+
+    expect(index.slotInItem(FILE, 0, "1", 2)?.anchor.kind).toBe("range")
+    expect(index.slotInItem(FILE, 0, "1", 2)?.item?.key).toBe("1")
+    expect(index.slot(FILE, 2)).toBeNull()
+  })
+
+  test("a batch adding into two different items indexes each into its own item", () => {
+    const index = mounted(COLLECTION)
+    const list = document.querySelector("ul") ?? document.body.firstElementChild!
+    const first = document.createElement("i")
+    const second = document.createElement("i")
+
+    first.setAttribute("data-herb-slot", "7:child")
+    second.setAttribute("data-herb-slot", "8:child")
+
+    list.insertBefore(first, index.itemsFor(FILE, 0).get("1")!.end)
+    list.insertBefore(second, index.itemsFor(FILE, 0).get("2")!.end)
+
+    index.scan([first, second])
+
+    expect(index.slotInItem(FILE, 0, "1", 7)?.item?.key).toBe("1")
+    expect(index.slotInItem(FILE, 0, "2", 8)?.item?.key).toBe("2")
+  })
+
+  test("a slot written into an item keeps the collection as its parent", () => {
+    const index = mounted(COLLECTION)
+    const collection = index.slot(FILE, 0)!
+
+    index.update(index.slotInItem(FILE, 0, "1", 2)!, `<!--herb-slot:3-->inner<!--/herb-slot:3--> text`)
+
+    const inner = index.slotInItem(FILE, 0, "1", 3)!
+
+    expect(inner.parent).toBe(index.slotInItem(FILE, 0, "1", 2))
+    expect(index.ancestorsOf(inner)).toContain(collection)
+  })
 })
 
-describe("HerbRuntime", () => {
+describe("Runtime", () => {
   beforeEach(() => {
     document.body.innerHTML = ""
-    HerbRuntime.get()?.stop()
+    Runtime.get()?.stop()
   })
 
   test("hands back the same runtime rather than a second index", () => {
-    const runtime = HerbRuntime.start()
+    const runtime = Runtime.start()
 
-    expect(HerbRuntime.start()).toBe(runtime)
-    expect(HerbRuntime.get()).toBe(runtime)
+    expect(Runtime.start()).toBe(runtime)
+    expect(Runtime.get()).toBe(runtime)
 
     runtime.stop()
   })
 
   test("refuses to be constructed directly, since a second index would see only its own updates", () => {
-    expect(() => new (HerbRuntime as unknown as new () => unknown)()).toThrow(TypeError)
+    expect(() => new (Runtime as unknown as new () => unknown)()).toThrow(TypeError)
   })
 
   test("is not running until asked", () => {
-    expect(HerbRuntime.get()).toBeNull()
+    expect(Runtime.get()).toBeNull()
+  })
+})
+
+describe("a partial rendered inside a collection item", () => {
+  const PARTIAL = "app/views/posts/_post.html.erb"
+
+  const NESTED =
+    `<!--herb-region:${FILE}:aaaaaaaa:0--><ul><!--herb-slot:0:collection-->` +
+    `<!--herb-item:0:a--><li>` +
+    `<!--herb-region:${PARTIAL}:bbbbbbbb:0--><!--herb-slot:5-->body<!--/herb-slot:5--><!--/herb-region:${PARTIAL}-->` +
+    `</li><!--/herb-item:0-->` +
+    `<!--/herb-slot:0--></ul><!--/herb-region:${FILE}-->`
+
+  let index: Slots
+
+  beforeEach(() => {
+    document.body.innerHTML = ""
+    index = new Slots()
+  })
+
+  test("indexes the partial's slot in the partial's own region", () => {
+    index.scan(mount(NESTED))
+
+    expect(index.slot(PARTIAL, 5)).not.toBeNull()
+    expect(index.slotInItem(FILE, 0, "a", 5)).toBeNull()
+  })
+
+  test("parents a slot that arrives inside the partial's slot on a later scan", () => {
+    const host = mount(NESTED)
+
+    index.scan(host)
+
+    const outer = index.slot(PARTIAL, 5)!
+
+    index.rangeOf(outer).deleteContents()
+    index.rangeOf(outer).insertNode(index.rangeOf(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.scan(host)
+
+    const inner = index.slot(PARTIAL, 6)!
+
+    expect(inner).not.toBeNull()
+    expect(index.ancestorsOf(inner)).toEqual([outer])
+  })
+
+  test("forgets the slots inside the partial's slot when it is written", () => {
+    const host = mount(NESTED)
+
+    index.scan(host)
+
+    const outer = index.slot(PARTIAL, 5)!
+
+    index.rangeOf(outer).deleteContents()
+    index.rangeOf(outer).insertNode(index.rangeOf(outer).createContextualFragment(`<!--herb-slot:6-->deep<!--/herb-slot:6-->`))
+    index.scan(host)
+    index.update(outer, "replaced")
+
+    expect(index.slot(PARTIAL, 6)).toBeNull()
   })
 })

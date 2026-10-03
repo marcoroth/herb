@@ -8,6 +8,8 @@ import type { AnalysisResult, FileStatus } from './types'
 
 const execFileAsync = promisify(execFile)
 
+const WORKER_TIMEOUT_MS = 30_000
+
 export class AnalysisService {
   private workerPath: string
   private onVersionUpdate?: (version: string) => void
@@ -56,7 +58,7 @@ export class AnalysisService {
         JSON.stringify(linterRules),
         workspaceRoot,
         formatterIndentStyle
-      ], { timeout: 1000 })
+      ], { timeout: WORKER_TIMEOUT_MS })
 
       const result = JSON.parse(stdout.trim())
       const failed = result.errors > 0 || result.lintErrors > 0
@@ -66,7 +68,7 @@ export class AnalysisService {
       }
 
       return {
-        status: failed ? 'failed' : 'ok',
+        status: result.timedOut ? 'timeout' : failed ? 'failed' : 'ok',
         errors: result.errors as number,
         lintWarnings: result.lintWarnings as number || 0,
         lintErrors: result.lintErrors as number || 0,

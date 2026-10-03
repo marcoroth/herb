@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0037_emits escaped ERB tags as literal text"
+input: "{source: \"<%% literal %>\\n<%%= name %>\\n<%%- a -%>\\n\", locals: {}, options: {}}"
+---
+<% literal %>
+<%= name %>
+<%- a -%>

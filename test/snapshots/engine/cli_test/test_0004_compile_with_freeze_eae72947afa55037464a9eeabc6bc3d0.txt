@@ -1,0 +1,7 @@
+---
+source: "Engine::CLITest#test_0004_compile with freeze"
+input: "test_0004_compile with freeze"
+---
+# frozen_string_literal: true
+_buf = ::String.new; _buf << '<div>Static content</div>'.freeze;
+_buf.to_s

@@ -1,0 +1,16 @@
+---
+source: "Engine::Slots::ComponentsTest#test_0003_the rendered page shows the primary and parks the fallback with its ERB evaluated"
+input: "{source: \"<%# herb:slots client %>\\n<%# herb:state (peek: \\\"basel\\\") %>\\n<input value=\\\"<%= peek %>\\\">\\n<Fragment>\\n  <p id=\\\"card\\\">located <%= peek.upcase %></p>\\n  <Fallback>\\n    <p id=\\\"card\\\" class=\\\"pulse\\\">Looking up <%= @hint %> now</p>\\n  </Fallback>\\n</Fragment>\\n\", locals: {\"@hint\" => \"Basel\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client fatal=false>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:22caf89f:0-->
+<input value="basel" data-herb-slot="0:attribute:value">
+<!--herb-slot:1:conditional--><!--herb-branch:1:0-->
+  <p id="card">located <!--herb-slot:2-->BASEL<!--/herb-slot:2--></p>
+  
+<!--/herb-slot:1-->
+<!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:22caf89f"><!--herb-branch:1:0-->
+  <p id="card">located <!--herb-slot:2--><!--/herb-slot:2--></p>
+  
+<!--herb-branch:1:1-->
+    <p id="card" class="pulse">Looking up Basel now</p>
+  </template>

@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizeTogglesTest::the conditionals pass#test_0001_left off alone, helpers still bring the unroll with them"
+input: "{source: \"<p><%= \\\"yes\\\" if flag %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor conditionals=false>]}}"
+---
+if flag; "<p>yes</p>".freeze; else "<p></p>".freeze;end;

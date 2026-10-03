@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0020_render picks up a herb:slots directive without the flag"
+input: "test_0020_render picks up a herb:slots directive without the flag"
+---
+<!--herb-region:TEMPLATE:04c77562:0-->
+<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->b<!--/herb-slot:0--></div><!--/herb-region:TEMPLATE--><template data-herb-region="TEMPLATE:04c77562"><!--herb-branch:0:0-->a<!--herb-branch:0:1-->b</template>

@@ -44,12 +44,12 @@ fn validate_config_text_warns_on_a_version_mismatch() {
 fn validate_config_text_warns_about_a_stray_herb_yaml() {
   let dir = tempfile::tempdir().unwrap();
 
-  fs::write(dir.path().join(".herb.yaml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join(".herb.yaml"), "version: 0.11.0\n").unwrap();
 
   let errors = validate_config_text(
-    "version: 0.10.3\n",
+    "version: 0.11.0\n",
     &ValidateOptions {
-      version: Some("0.10.3"),
+      version: Some("0.11.0"),
       project_path: Some(dir.path()),
     },
   );
@@ -61,12 +61,12 @@ fn validate_config_text_warns_about_a_stray_herb_yaml() {
 fn validate_config_text_warns_about_a_config_file_missing_the_leading_dot() {
   let dir = tempfile::tempdir().unwrap();
 
-  fs::write(dir.path().join("herb.yml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join("herb.yml"), "version: 0.11.0\n").unwrap();
 
   let errors = validate_config_text(
-    "version: 0.10.3\n",
+    "version: 0.11.0\n",
     &ValidateOptions {
-      version: Some("0.10.3"),
+      version: Some("0.11.0"),
       project_path: Some(dir.path()),
     },
   );
@@ -84,14 +84,14 @@ fn validate_config_text_warns_about_a_config_file_missing_the_leading_dot() {
 fn validate_config_text_warns_once_per_misnamed_config_file() {
   let dir = tempfile::tempdir().unwrap();
 
-  fs::write(dir.path().join(".herb.yaml"), "version: 0.10.3\n").unwrap();
-  fs::write(dir.path().join("herb.yml"), "version: 0.10.3\n").unwrap();
-  fs::write(dir.path().join("herb.yaml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join(".herb.yaml"), "version: 0.11.0\n").unwrap();
+  fs::write(dir.path().join("herb.yml"), "version: 0.11.0\n").unwrap();
+  fs::write(dir.path().join("herb.yaml"), "version: 0.11.0\n").unwrap();
 
   let errors = validate_config_text(
-    "version: 0.10.3\n",
+    "version: 0.11.0\n",
     &ValidateOptions {
-      version: Some("0.10.3"),
+      version: Some("0.11.0"),
       project_path: Some(dir.path()),
     },
   );
@@ -103,12 +103,12 @@ fn validate_config_text_warns_once_per_misnamed_config_file() {
 fn validate_config_text_does_not_warn_without_a_misnamed_config_file() {
   let dir = tempfile::tempdir().unwrap();
 
-  fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join(".herb.yml"), "version: 0.11.0\n").unwrap();
 
   let errors = validate_config_text(
-    "version: 0.10.3\n",
+    "version: 0.11.0\n",
     &ValidateOptions {
-      version: Some("0.10.3"),
+      version: Some("0.11.0"),
       project_path: Some(dir.path()),
     },
   );

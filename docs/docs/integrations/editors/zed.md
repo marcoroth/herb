@@ -67,6 +67,28 @@ Herb annotates the closing tag of longer blocks with what it closes. Zed turns i
 
 Herb emits its hints as parameter hints, so leave Zed's `show_parameter_hints` at its default of `true`.
 
+### Closing ERB blocks
+
+When you finish typing the `%>` of a block opener, Herb writes the matching `<% end %>` below it and leaves your cursor on the indented blank line in between:
+
+```erb
+<% if user.admin? %>
+  <!-- cursor lands here -->
+<% end %>
+```
+
+Zed runs this through `use_on_type_format`, which is already on by default. To turn it off for HTML+ERB:
+
+```json [settings.json]
+{
+  "languages": {
+    "HTML+ERB": {
+      "use_on_type_format": false
+    }
+  }
+}
+```
+
 ## Other editors
 
 If you are looking to use Herb in another editor, check out the instructions on the [editor integrations page](/integrations/editors).

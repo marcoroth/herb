@@ -65,6 +65,36 @@ describe("Project", () => {
     return new Project(connection, root, shared)
   }
 
+  describe("parser options", () => {
+    test("exposes the openers a checked-in config names", async () => {
+      writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
+
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.config?.parserOptions?.erb_openers).toEqual(["graphql"])
+    })
+
+    test("names no openers without a config", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.config?.parserOptions?.erb_openers).toBeUndefined()
+    })
+
+    test("picks up openers that are added to the config while the server runs", async () => {
+      const project = projectFor()
+      await project.loadConfig()
+
+      expect(project.config?.parserOptions?.erb_openers).toBeUndefined()
+
+      writeFileSync(join(root, ".herb.yml"), "parser:\n  erb_openers:\n    - graphql\n")
+      await project.refreshConfig()
+
+      expect(project.config?.parserOptions?.erb_openers).toEqual(["graphql"])
+    })
+  })
+
   describe("framework", () => {
     test("exposes the framework a checked-in config sets", async () => {
       writeFileSync(join(root, ".herb.yml"), "framework: actionview\n")

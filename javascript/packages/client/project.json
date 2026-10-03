@@ -5,10 +5,12 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
-      }
+      },
+      "dependsOn": ["templates:generate"]
     },
     "test": {
       "executor": "nx:run-script",

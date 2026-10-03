@@ -7,36 +7,61 @@ input: "<div data-msg='Don't worry'>Text</div>"
     └── @ HTMLElementNode (location: (1:0)-(1:38))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:28))
+        │       ├── errors: (1 error)
+        │       │   └── @ MissingWhitespaceBetweenAttributesError (location: (1:19)-(1:20))
+        │       │       ├── message: "Missing whitespace between attributes at (1:19). `t` is parsed as the start of a new attribute."
+        │       │       └── found: "t" (location: (1:19)-(1:20))
+        │       │
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── tag_closing: ">" (location: (1:27)-(1:28))
-        │       ├── children: (1 item)
-        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:27))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:19))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:13))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:13))
+        │       │   │   │               └── content: "data-msg"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:13)-(1:14))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:14)-(1:19))
+        │       │   │           ├── open_quote: "'" (location: (1:14)-(1:15))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:15)-(1:18))
+        │       │   │           │       └── content: "Don"
+        │       │   │           │
+        │       │   │           ├── close_quote: "'" (location: (1:18)-(1:19))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:19)-(1:20))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:20))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:19)-(1:20))
+        │       │   │   │               └── content: "t"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:21)-(1:27))
         │       │       ├── name:
-        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:13))
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:27))
+        │       │       │       ├── errors: (1 error)
+        │       │       │       │   └── @ UnexpectedCharacterInAttributeNameError (location: (1:26)-(1:27))
+        │       │       │       │       ├── message: "Unexpected `'` in attribute name at (1:26)."
+        │       │       │       │       └── character: "'" (location: (1:26)-(1:27))
+        │       │       │       │
         │       │       │       └── children: (1 item)
-        │       │       │           └── @ LiteralNode (location: (1:5)-(1:13))
-        │       │       │               └── content: "data-msg"
+        │       │       │           └── @ LiteralNode (location: (1:21)-(1:27))
+        │       │       │               └── content: "worry'"
         │       │       │
         │       │       │
-        │       │       ├── equals: "=" (location: (1:13)-(1:14))
-        │       │       └── value:
-        │       │           └── @ HTMLAttributeValueNode (location: (1:14)-(1:27))
-        │       │               ├── errors: (1 error)
-        │       │               │   └── @ UnexpectedError (location: (1:18)-(1:19))
-        │       │               │       ├── message: "Unescaped quote character in attribute value. Expected: HTML entity (&apos;/&quot;) or different quote style, found: '."
-        │       │               │       ├── description: "Unescaped quote character in attribute value"
-        │       │               │       ├── expected: "HTML entity (&apos;/&quot;) or different quote style"
-        │       │               │       └── found: "'"
-        │       │               │
-        │       │               ├── open_quote: "'" (location: (1:14)-(1:15))
-        │       │               ├── children: (1 item)
-        │       │               │   └── @ LiteralNode (location: (1:15)-(1:26))
-        │       │               │       └── content: "Don't worry"
-        │       │               │
-        │       │               ├── close_quote: "'" (location: (1:26)-(1:27))
-        │       │               └── quoted: true
-        │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
         │       │
         │       └── is_void: false
         │

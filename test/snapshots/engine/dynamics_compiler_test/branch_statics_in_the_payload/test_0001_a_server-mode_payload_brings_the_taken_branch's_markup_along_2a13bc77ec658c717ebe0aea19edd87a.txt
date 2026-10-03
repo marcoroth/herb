@@ -1,0 +1,6 @@
+---
+source: "Engine::DynamicsCompilerTest::branch statics in the payload#test_0001_a server-mode payload brings the taken branch's markup along"
+input: "dynamics_compiler_test-7"
+---
+<!--herb-branch:0:1-->
+  <i>dark</i>

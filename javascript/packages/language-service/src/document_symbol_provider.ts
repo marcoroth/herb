@@ -11,7 +11,7 @@ import type { FrameworkOptions } from "./types.js"
 
 import type { Range } from "vscode-languageserver-types"
 import type { TextDocument } from "vscode-languageserver-textdocument"
-import type { DocumentNode, ERBContentNode, ERBNode, ERBRenderNode, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
+import type { DocumentNode, ERBCommentNode, ERBContentNode, ERBNode, ERBRenderNode, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 const PARSER_OPTIONS = { render_nodes: true, action_view_helpers: true } as const
 const PLAIN_PARSER_OPTIONS = { render_nodes: true } as const
@@ -56,6 +56,14 @@ class DocumentSymbolCollector extends Visitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
+    this.symbolForERBTag(node)
+  }
+
+  visitERBCommentNode(node: ERBCommentNode): void {
+    this.symbolForERBTag(node)
+  }
+
+  private symbolForERBTag(node: ERBContentNode | ERBCommentNode): void {
     if (this.attributes === 0) {
       this.visitChildNodes(node)
 
@@ -150,7 +158,7 @@ export class DocumentSymbolProvider {
 
   getDocumentSymbols(document: TextDocument, options: NodeLabelOptions & FrameworkOptions = {}): DocumentSymbol[] {
     const parserOptions = options.framework === "actionview" ? PARSER_OPTIONS : PLAIN_PARSER_OPTIONS
-    const result = this.parserService.parseContent(document.getText(), parserOptions)
+    const result = this.parserService.parseContent(document.getText(), parserOptions, document.uri)
     const collector = new DocumentSymbolCollector({ ...LABEL_OPTIONS, ...options })
 
     collector.visit(result.value as DocumentNode)

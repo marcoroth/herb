@@ -1,0 +1,5 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0002_a conditional on one line"
+input: "{source: \"<% if flag %>A<% else %>B<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+if flag ; "A".freeze;else; "B".freeze;end;

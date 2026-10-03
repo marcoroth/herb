@@ -1,0 +1,5 @@
+---
+source: "Engine::CLITest#test_0016_render with slots emits markers around the rendered output"
+input: "test_0016_render with slots emits markers around the rendered output"
+---
+<!--herb-region:TEMPLATE:0417e5d5:0--><div data-herb-slot="0:child">2</div><!--/herb-region:TEMPLATE-->

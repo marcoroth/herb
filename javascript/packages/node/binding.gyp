@@ -8,6 +8,7 @@
         "./extension/extension_helpers.cpp",
         "./extension/herb.cpp",
         "./extension/nodes.cpp",
+        "./extension/parser_options_helpers.cpp",
 
         # Herb main source files
         "./extension/libherb/analyze/action_view/attribute_extraction_helpers.c",
@@ -37,6 +38,7 @@
         "./extension/libherb/analyze/conditional_elements.c",
         "./extension/libherb/analyze/conditional_open_tags.c",
         "./extension/libherb/analyze/control_type.c",
+        "./extension/libherb/analyze/herb_directives.c",
         "./extension/libherb/analyze/invalid_structures.c",
         "./extension/libherb/analyze/iteration_nodes.c",
         "./extension/libherb/analyze/missing_end.c",
@@ -72,6 +74,7 @@
         "./extension/libherb/parser/dot_notation.c",
         "./extension/libherb/parser/match_tags.c",
         "./extension/libherb/parser/parser_helpers.c",
+        "./extension/libherb/parser_options_defaults.c",
         "./extension/libherb/prism/prism_helpers.c",
         "./extension/libherb/prism/ruby_parser.c",
         "./extension/libherb/util/html_util.c",

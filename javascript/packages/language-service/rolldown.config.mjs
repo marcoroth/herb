@@ -1,10 +1,14 @@
-const external = [
-  "@herb-tools/core",
-  "@herb-tools/node-wasm",
-  "@herb-tools/browser",
-  "vscode-html-languageservice",
-  "vscode-languageserver-textdocument",
+import { createRequire } from "module"
+
+const { dependencies, peerDependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = [
+  ...Object.keys(dependencies ?? {}),
+  ...Object.keys(peerDependencies ?? {}),
 ]
+
+function external(id) {
+  return runtimeDependencies.some((pkg) => id === pkg || id.startsWith(pkg + "/"))
+}
 
 export default [
   {

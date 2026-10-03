@@ -14,15 +14,82 @@ extern "C" {
 #include "error_helpers.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 #include <node_api.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+#include <vector>
+
+#define HERB_MAX_ERB_OPENERS 64
+
+struct ERBOpeners {
+  std::vector<std::string> values;
+  std::vector<hb_string_T> items;
+  bool configured = false;
+};
+
+static bool ReadERBOpeners(napi_env env, napi_value options, ERBOpeners& openers) {
+  bool has_property = false;
+  napi_has_named_property(env, options, "erb_openers", &has_property);
+
+  if (!has_property) { return true; }
+
+  napi_value value;
+  napi_get_named_property(env, options, "erb_openers", &value);
+
+  bool is_array = false;
+  napi_is_array(env, value, &is_array);
+
+  if (!is_array) { return true; }
+
+  uint32_t length = 0;
+  napi_get_array_length(env, value, &length);
+
+  if (length > HERB_MAX_ERB_OPENERS) {
+    napi_throw_error(env, nullptr, "erb_openers accepts at most 64 entries");
+    return false;
+  }
+
+  openers.configured = true;
+  openers.values.reserve(length);
+
+  for (uint32_t index = 0; index < length; index++) {
+    napi_value entry;
+    napi_get_element(env, value, index, &entry);
+
+    size_t entry_length = 0;
+    napi_get_value_string_utf8(env, entry, nullptr, 0, &entry_length);
+
+    std::string opener(entry_length, '\0');
+    napi_get_value_string_utf8(env, entry, &opener[0], entry_length + 1, &entry_length);
+    opener.resize(entry_length);
+
+    openers.values.push_back(opener);
+  }
+
+  openers.items.reserve(openers.values.size());
+
+  for (const std::string& opener : openers.values) {
+    openers.items.push_back(hb_string_from_data(opener.c_str(), opener.length()));
+  }
+
+  return true;
+}
+
+static void ApplyERBOpeners(parser_options_T& parser_options, const ERBOpeners& openers) {
+  if (!openers.configured) { return; }
+
+  parser_options.erb_openers = openers.items.data();
+  parser_options.erb_opener_count = openers.items.size();
+}
+
 napi_value Herb_lex(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -33,6 +100,23 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  ERBOpeners openers;
+
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        free(string);
+        return nullptr;
+      }
+
+      ApplyERBOpeners(parser_options, openers);
+    }
+  }
+
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(string);
@@ -40,7 +124,7 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  hb_array_T* tokens = herb_lex(string, &allocator);
+  hb_array_T* tokens = herb_lex_with_options(string, &parser_options, &allocator);
   napi_value result = CreateLexResult(env, tokens, args[0]);
 
   herb_free_tokens(&tokens, &allocator);
@@ -64,157 +148,21 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  ERBOpeners openers;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
     napi_typeof(env, args[1], &valuetype);
 
     if (valuetype == napi_object) {
-      napi_value track_whitespace_prop;
-      bool has_track_whitespace_prop;
-      napi_has_named_property(env, args[1], "track_whitespace", &has_track_whitespace_prop);
-
-      if (has_track_whitespace_prop) {
-        napi_get_named_property(env, args[1], "track_whitespace", &track_whitespace_prop);
-        bool track_whitespace_value;
-        napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
-
-        if (track_whitespace_value) {
-          parser_options.track_whitespace = true;
-        }
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        free(string);
+        return nullptr;
       }
 
-      napi_value max_errors_prop;
-      bool has_max_errors_prop;
-      napi_has_named_property(env, args[1], "max_errors", &has_max_errors_prop);
+      ApplyERBOpeners(parser_options, openers);
 
-      if (has_max_errors_prop) {
-        napi_get_named_property(env, args[1], "max_errors", &max_errors_prop);
-
-        napi_valuetype max_errors_type;
-        napi_typeof(env, max_errors_prop, &max_errors_type);
-
-        if (max_errors_type == napi_number) {
-          uint32_t max_errors_value;
-          napi_get_value_uint32(env, max_errors_prop, &max_errors_value);
-          parser_options.max_errors = max_errors_value;
-        } else {
-          parser_options.max_errors = 0;
-        }
-      }
-
-      napi_value track_locations_prop;
-      bool has_track_locations_prop;
-      napi_has_named_property(env, args[1], "track_locations", &has_track_locations_prop);
-
-      if (has_track_locations_prop) {
-        napi_get_named_property(env, args[1], "track_locations", &track_locations_prop);
-        bool track_locations_value;
-        napi_get_value_bool(env, track_locations_prop, &track_locations_value);
-        parser_options.track_locations = track_locations_value;
-      }
-
-      napi_value analyze_prop;
-      bool has_analyze_prop;
-      napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
-
-      if (has_analyze_prop) {
-        napi_get_named_property(env, args[1], "analyze", &analyze_prop);
-        bool analyze_value;
-        napi_get_value_bool(env, analyze_prop, &analyze_value);
-
-        if (!analyze_value) {
-          parser_options.analyze = false;
-        }
-      }
-
-      napi_value strict_prop;
-      bool has_strict_prop;
-      napi_has_named_property(env, args[1], "strict", &has_strict_prop);
-
-      if (has_strict_prop) {
-        napi_get_named_property(env, args[1], "strict", &strict_prop);
-        bool strict_value;
-        napi_get_value_bool(env, strict_prop, &strict_value);
-        parser_options.strict = strict_value;
-      }
-
-      napi_value action_view_helpers_prop;
-      bool has_action_view_helpers_prop;
-      napi_has_named_property(env, args[1], "action_view_helpers", &has_action_view_helpers_prop);
-
-      if (has_action_view_helpers_prop) {
-        napi_get_named_property(env, args[1], "action_view_helpers", &action_view_helpers_prop);
-        bool action_view_helpers_value;
-        napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
-        parser_options.action_view_helpers = action_view_helpers_value;
-      }
-
-      napi_value render_nodes_prop;
-      bool has_render_nodes_prop;
-      napi_has_named_property(env, args[1], "render_nodes", &has_render_nodes_prop);
-
-      if (has_render_nodes_prop) {
-        napi_get_named_property(env, args[1], "render_nodes", &render_nodes_prop);
-        bool render_nodes_value;
-        napi_get_value_bool(env, render_nodes_prop, &render_nodes_value);
-        parser_options.render_nodes = render_nodes_value;
-      }
-
-      napi_value iteration_nodes_prop;
-      bool has_iteration_nodes_prop;
-      napi_has_named_property(env, args[1], "iteration_nodes", &has_iteration_nodes_prop);
-
-      if (has_iteration_nodes_prop) {
-        napi_get_named_property(env, args[1], "iteration_nodes", &iteration_nodes_prop);
-        bool iteration_nodes_value;
-        napi_get_value_bool(env, iteration_nodes_prop, &iteration_nodes_value);
-        parser_options.iteration_nodes = iteration_nodes_value;
-      }
-
-      napi_value strict_locals_prop;
-      bool has_strict_locals_prop;
-      napi_has_named_property(env, args[1], "strict_locals", &has_strict_locals_prop);
-
-      if (has_strict_locals_prop) {
-        napi_get_named_property(env, args[1], "strict_locals", &strict_locals_prop);
-        bool strict_locals_value;
-        napi_get_value_bool(env, strict_locals_prop, &strict_locals_value);
-        parser_options.strict_locals = strict_locals_value;
-      }
-
-      napi_value prism_nodes_prop;
-      bool has_prism_nodes_prop;
-      napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
-
-      if (has_prism_nodes_prop) {
-        napi_get_named_property(env, args[1], "prism_nodes", &prism_nodes_prop);
-        bool prism_nodes_value;
-        napi_get_value_bool(env, prism_nodes_prop, &prism_nodes_value);
-        parser_options.prism_nodes = prism_nodes_value;
-      }
-
-      napi_value prism_nodes_deep_prop;
-      bool has_prism_nodes_deep_prop;
-      napi_has_named_property(env, args[1], "prism_nodes_deep", &has_prism_nodes_deep_prop);
-
-      if (has_prism_nodes_deep_prop) {
-        napi_get_named_property(env, args[1], "prism_nodes_deep", &prism_nodes_deep_prop);
-        bool prism_nodes_deep_value;
-        napi_get_value_bool(env, prism_nodes_deep_prop, &prism_nodes_deep_value);
-        parser_options.prism_nodes_deep = prism_nodes_deep_value;
-      }
-
-      napi_value prism_program_prop;
-      bool has_prism_program_prop;
-      napi_has_named_property(env, args[1], "prism_program", &has_prism_program_prop);
-
-      if (has_prism_program_prop) {
-        napi_get_named_property(env, args[1], "prism_program", &prism_program_prop);
-        bool prism_program_value;
-        napi_get_value_bool(env, prism_program_prop, &prism_program_value);
-        parser_options.prism_program = prism_program_value;
-      }
+      herb_extract_parser_options(env, args[1], &parser_options);
     }
   }
 
@@ -267,6 +215,7 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   }
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  ERBOpeners openers;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -275,6 +224,26 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
     if (valuetype == napi_object) {
       napi_value prop;
       bool has_prop;
+
+      if (!ReadERBOpeners(env, args[1], openers)) {
+        hb_buffer_free(&output);
+        hb_allocator_destroy(&allocator);
+        free(string);
+        return nullptr;
+      }
+
+      if (openers.configured) {
+        extract_options.erb_openers = openers.items.data();
+        extract_options.erb_opener_count = openers.items.size();
+      }
+
+      napi_has_named_property(env, args[1], "custom_tags", &has_prop);
+      if (has_prop) {
+        napi_get_named_property(env, args[1], "custom_tags", &prop);
+        bool value;
+        napi_get_value_bool(env, prop, &value);
+        extract_options.custom_tags = value;
+      }
 
       napi_has_named_property(env, args[1], "semicolons", &has_prop);
       if (has_prop) {
@@ -387,6 +356,21 @@ napi_value Herb_parse_ruby(napi_env env, napi_callback_info info) {
   free(string);
 
   return result;
+}
+
+napi_value Herb_default_erb_openings(napi_env env, napi_callback_info info) {
+  napi_value openings;
+  napi_create_array_with_length(env, HERB_DEFAULT_ERB_OPENINGS_COUNT, &openings);
+
+  for (size_t index = 0; index < HERB_DEFAULT_ERB_OPENINGS_COUNT; index++) {
+    hb_string_T opening = HERB_DEFAULT_ERB_OPENINGS[index];
+
+    napi_value entry;
+    napi_create_string_utf8(env, opening.data, opening.length, &entry);
+    napi_set_element(env, openings, index, entry);
+  }
+
+  return openings;
 }
 
 napi_value Herb_version(napi_env env, napi_callback_info info) {
@@ -550,6 +534,7 @@ napi_value Init(napi_env env, napi_value exports) {
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "diff", nullptr, Herb_diff, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "defaultERBOpenings", nullptr, Herb_default_erb_openings, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "parseRuby", nullptr, Herb_parse_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
   };

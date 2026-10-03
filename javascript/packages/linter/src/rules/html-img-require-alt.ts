@@ -54,11 +54,13 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
 export class HTMLImgRequireAltRule extends ParserRule {
   static ruleName = "html-img-require-alt"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

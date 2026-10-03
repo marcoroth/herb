@@ -1,0 +1,32 @@
+# Generated from lib/herb/visitor/context_aware.rb with RBS::Inline
+
+module Herb
+  class Visitor
+    # Opt-in for visitors that want the template information the engine was built with.
+    #
+    # `Herb::Visitor` is generated and holds no state, so a visitor asks for a context by
+    # including this module. The engine then hands it one before it walks the AST:
+    #
+    #     class MyVisitor < Herb::Visitor
+    #       include Herb::Visitor::ContextAware
+    #     end
+    #
+    #     Herb::Engine.new(source, filename: path, visitors: [MyVisitor.new])
+    #
+    # A context passed by the caller always wins over the one the engine supplies, so a
+    # visitor can also be used on its own, without an engine.
+    module ContextAware
+      # : () -> Herb::Visitor::Context
+      def context: () -> Herb::Visitor::Context
+
+      # : (Herb::Visitor::Context) -> void
+      def context=: (Herb::Visitor::Context) -> void
+
+      # : (Herb::Visitor::Context) -> void
+      def inherit_context: (Herb::Visitor::Context) -> void
+
+      # : () -> Herb::Visitor::Context::Origin
+      def origin: () -> Herb::Visitor::Context::Origin
+    end
+  end
+end

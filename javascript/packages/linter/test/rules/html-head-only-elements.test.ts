@@ -9,6 +9,18 @@ import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-ca
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLHeadOnlyElementsRule)
 
 describe("html-head-only-elements", () => {
+  test("reports only the opening tag, not the whole element", () => {
+    expectError("Element `<style>` must be placed inside the `<head>` tag.", { line: 2, column: 2, endLine: 2, endColumn: 9 })
+
+    assertOffenses(dedent`
+      <body>
+        <style>
+          .a { color: red; }
+        </style>
+      </body>
+    `)
+  })
+
   test("passes when head-only elements are inside head", () => {
     expectNoOffenses(dedent`
       <html>
@@ -147,6 +159,57 @@ describe("html-head-only-elements", () => {
         <body>
           <meta charset="UTF-8">
           <h1>Welcome</h1>
+        </body>
+      </html>
+    `)
+  })
+
+  test("passes when a scoped style block is in the body", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style scoped>
+            .card { color: red; }
+          </style>
+
+          <div class="card">Hi</div>
+        </body>
+      </html>
+    `)
+  })
+
+  test("passes when a scoped style block was already narrowed, so `scoped` is gone", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style data-herb-style-scoped="data-herb-scope-2940ba8a">
+            .card[data-herb-scope-2940ba8a] { color: red; }
+          </style>
+
+          <div class="card" data-herb-scope-2940ba8a>Hi</div>
+        </body>
+      </html>
+    `)
+  })
+
+  test("fails when a style block in the body was not written as scoped", () => {
+    expectError("Element `<style>` must be placed inside the `<head>` tag.")
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <style>
+            .card { color: red; }
+          </style>
         </body>
       </html>
     `)
@@ -455,7 +518,7 @@ describe("html-head-only-elements", () => {
     })
 
     test("treats a javascript_tag body as script text rather than markup", () => {
-      expectNoOffenses(`<html><head><%= javascript_tag do %>\n  var s = '<title>' + 'x';\n<% end %></head></html>`)
+      expectNoOffenses(`<html><body><%= javascript_tag do %>\n  var s = '<meta charset="utf-8">' + 'x';\n<% end %></body></html>`)
     })
   })
 

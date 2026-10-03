@@ -1,5 +1,5 @@
-import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
-import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, isInlineRubyCommentNode, isERBContentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode, HTML_WHITESPACE_PRESERVING_ELEMENTS, isInlineElement } from "@herb-tools/core"
+import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBCommentNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
 
@@ -39,22 +39,47 @@ export interface ContentUnitWithNode {
  */
 export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
+export const NON_SQUIGGLY_HEREDOC = /<<(?!~)-?['"`]?[A-Za-z_]/
+
+/**
+ * Matches a line break, with or without a carriage return.
+ */
+export const LINE_BREAK = /\r?\n/
+
+/**
+ * Matches ASCII whitespace at the very start of a string.
+ *
+ * Deliberately not `\s`, for the reason {@link ASCII_WHITESPACE} gives.
+ */
+export const LEADING_ASCII_WHITESPACE = /^[ \t\n\r]+/
+
+/**
+ * Matches an ERB tag appearing anywhere inside a string.
+ */
+export const ERB_TAG = /<%[^%]*%>/
+
+/**
+ * Matches a line break at the very start of a string, after optional horizontal space.
+ */
+export const LEADING_LINE_BREAK = /^[ \t]*\r?\n/
+
+/**
+ * Matches a newline at the start of a string, after optional whitespace.
+ */
+export const LEADING_NEWLINE = /^\s*\n/
+
+/**
+ * Matches a string that is empty or entirely whitespace.
+ */
+export const WHITESPACE_ONLY = /^\s*$/
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
   'img': ['srcset', 'sizes']
 }
 
-export const INLINE_ELEMENTS = new Set([
-  'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
-  'dfn', 'em', 'hr', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
-  'samp', 'small', 'span', 'strong', 'sub', 'sup',
-  'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
-])
-
-export const CONTENT_PRESERVING_ELEMENTS = new Set([
-  'script', 'style', 'pre', 'textarea'
-])
+export const CONTENT_PRESERVING_ELEMENTS = HTML_WHITESPACE_PRESERVING_ELEMENTS
 
 // https://tailwindcss.com/docs/white-space
 export const WHITESPACE_PRESERVING_CLASSES = [
@@ -220,12 +245,7 @@ export function isInlineOrERBNode(node: Node): boolean {
   return isERBNode(node) || (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node)))
 }
 
-/**
- * Check if an element should be treated as inline based on its tag name
- */
-export function isInlineElement(tagName: string): boolean {
-  return INLINE_ELEMENTS.has(tagName.toLowerCase())
-}
+export { isInlineElement }
 
 /**
  * Check if the current inline element is adjacent to a previous inline element (no whitespace between)
@@ -247,10 +267,83 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
+ * Check if a node is a plain ERB tag: `<% %>`, `<%= %>` or `<%# %>`, as opposed
+ * to a control flow node like `ERBIfNode` that owns children.
+ */
+export function isERBTagNode(node: Node | null | undefined): node is ERBContentNode | ERBCommentNode {
+  return isERBContentNode(node) || isERBCommentNode(node)
+}
+
+/**
  * Check if a node is an ERB comment that renders as a block.
  */
 export function isMultilineERBComment(node: Node): boolean {
-  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+  return isERBTagNode(node) && (isERBCommentNode(node) || isInlineRubyCommentNode(node)) && (node.content?.value ?? "").trim().includes("\n")
+}
+
+/**
+ * Matches a Ruby block-comment delimiter (`=begin` / `=end`) at the start of a line.
+ */
+export const ERB_BLOCK_COMMENT_DELIMITER = /\n=(begin|end)\b/
+
+/**
+ * Check if an ERB tag carries a Ruby block-comment delimiter (`=begin` / `=end`).
+ */
+export function isERBBlockCommentDelimiter(node: Node): boolean {
+  if (!isNode(node, ERBContentNode)) return false
+
+  const content = node.content?.value ?? ""
+
+  return ERB_BLOCK_COMMENT_DELIMITER.test(content)
+}
+
+/**
+ * Matches a heredoc opener and captures the identifier that terminates it.
+ */
+const HEREDOC_OPENER = /<<[-~]?(?<quote>["'`]?)(?<identifier>[A-Za-z_]\w*)\k<quote>/g
+
+/**
+ * Check if ERB content ends on a heredoc terminator line.
+ *
+ * A heredoc opened inside an ERB tag has to close inside the same tag, so its terminator
+ * is always the last line of the content. Matching the opener alone would also catch the
+ * `<<` operator written without a space, so the identifier it captures has to be the last
+ * line for this to report a heredoc.
+ */
+export function endsWithHeredocTerminator(content: string): boolean {
+  const trimmed = content.trim()
+
+  if (!trimmed.includes("\n")) return false
+
+  const lastLine = trimmed.slice(trimmed.lastIndexOf("\n") + 1).trim()
+
+  if (!lastLine) return false
+
+  for (const opener of trimmed.matchAll(HEREDOC_OPENER)) {
+    if (opener.groups?.identifier === lastLine) return true
+  }
+
+  return false
+}
+
+/**
+ * Check if an ERB tag ends with a heredoc.
+ */
+export function isERBHeredoc(node: Node): boolean {
+  return isERBTagNode(node) && endsWithHeredocTerminator(node.content?.value ?? "")
+}
+
+/**
+ * Check if an ERB tag has to sit on a line of its own.
+ *
+ * Ruby only recognizes `=begin` / `=end` as block-comment delimiters at the start of a
+ * line, a comment that already spans lines cannot be joined onto one, and a heredoc
+ * terminator has to be alone on its line. All three are lost as soon as the tag is
+ * inlined, appended to a preceding line, or fused into a text-flow run, so all three are
+ * kept block-level.
+ */
+export function isOwnLineERBTag(node: Node): boolean {
+  return isMultilineERBComment(node) || isERBBlockCommentDelimiter(node) || isERBHeredoc(node)
 }
 
 /**
@@ -269,8 +362,8 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
     return isAdjacentToPreviousInline(siblings, index)
   }
 
-  if (isNode(child, ERBContentNode)) {
-    if (isMultilineERBComment(child)) return false
+  if (isERBTagNode(child)) {
+    if (isOwnLineERBTag(child)) return false
 
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]
@@ -458,7 +551,7 @@ export function countAdjacentInlineElements(children: Node[], startIndex = 0, pr
       break
     }
 
-    const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)
+    const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isERBTagNode(child)
 
     if (!isInlineOrERB) {
       break
@@ -485,7 +578,7 @@ export function isBlockLevelNode(node: Node): boolean {
 
   const tagName = getTagName(node)
 
-  if (INLINE_ELEMENTS.has(tagName)) {
+  if (isInlineElement(tagName)) {
     return false
   }
 
@@ -564,8 +657,8 @@ export function setEdgeWhitespace(text: string, keepLeading: boolean, keepTraili
 /**
  * Check if an ERB content node is a herb:disable comment
  */
-export function isHerbDisableComment(node: Node): node is ERBContentNode & { tag_opening: { value: "<%#" } } {
-  if (!isNode(node, ERBContentNode)) return false
+export function isHerbDisableComment(node: Node): node is ERBContentNode | ERBCommentNode {
+  if (!isERBTagNode(node)) return false
   if (node.tag_opening?.value !== "<%#") return false
 
   const content = node?.content?.value || ""

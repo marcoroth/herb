@@ -2,17 +2,24 @@
 
 module Herb
   module Analysis
-    StrictLocal = Data.define(:name, :required)
+    StrictLocal = Data.define(:name, :required, :default_source)
 
     class StrictLocal
+      #: (name: String, required: bool, ?default_source: String?) -> void
+      def initialize(name:, required:, default_source: nil)
+        super
+      end
+
       #: () -> Hash[String, untyped]
       def to_h
-        { "name" => name, "required" => required }
+        serialized = { "name" => name, "required" => required }
+        serialized["defaultSource"] = default_source if default_source
+        serialized
       end
 
       #: (Hash[String, untyped]) -> StrictLocal
       def self.from(data)
-        new(name: data["name"], required: data["required"])
+        new(name: data["name"], required: data["required"], default_source: data["defaultSource"])
       end
     end
 
@@ -54,7 +61,7 @@ module Herb
 
             name = local.name&.value
 
-            declaration.add_local(name, local.required) if name
+            declaration.add_local(name, local.required, default_source: local.default_value&.content) if name
           end
         end
 
@@ -78,7 +85,7 @@ module Herb
         declaration.location = data["location"]
 
         (data["locals"] || []).each do |local|
-          declaration.add_local(local["name"], local["required"])
+          declaration.add_local(local["name"], local["required"], default_source: local["defaultSource"])
         end
 
         declaration
@@ -96,9 +103,9 @@ module Herb
       #: (Hash[String, Integer]?) -> void
       attr_writer :location
 
-      #: (String, bool) -> void
-      def add_local(name, required)
-        @locals << StrictLocal.new(name: name, required: required)
+      #: (String, bool, ?default_source: String?) -> void
+      def add_local(name, required, default_source: nil)
+        @locals << StrictLocal.new(name: name, required: required, default_source: default_source)
       end
 
       #: () -> Array[String]

@@ -155,6 +155,16 @@ npx https://pkg.pr.new/@herb-tools/language-server@{commit} --stdio
 
 This is perfect for testing bug fixes or new features before they're officially released!
 
-## Getting Started
+## The API
 
-Regardless of whether you imported `Herb` from `@herb-tools/browser` or `@herb-tools/node`, the API remains the same for both packages.
+Regardless of whether you imported `Herb` from `@herb-tools/browser` or `@herb-tools/node`, the API is the same. The API pages document each call once, with a JavaScript tab alongside the other bindings.
+
+| Page | JavaScript methods |
+| --- | --- |
+| [Parsing](/bindings/parsing) | `Herb.parse`, `Herb.parseFile` |
+| [Lexing](/bindings/lexing) | `Herb.lex`, `Herb.lexFile` |
+| [Extracting Ruby and HTML](/bindings/extracting) | `Herb.extractRuby`, `Herb.extractHTML` |
+| [Working with the tree](/bindings/tree) | `Visitor`, `locate` |
+| [Versions](/bindings/versions) | `Herb.version` |
+
+`Herb.load()` has to resolve before any of them are called. The file variants, `parseFile` and `lexFile`, throw in the browser package, which has no file access.

@@ -51,7 +51,7 @@ export function formatHTMLCommentInner(rawInner: string, indentWidth: number, ba
 
   const trimmedInner = rawInner.trim()
 
-  if (trimmedInner.startsWith('[if ') && trimmedInner.endsWith('<![endif]')) {
+  if (trimmedInner.startsWith('[if ') || trimmedInner.endsWith('<![endif]')) {
     return rawInner
   }
 

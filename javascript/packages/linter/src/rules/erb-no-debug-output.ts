@@ -21,6 +21,7 @@ class DebugOutputCallCollector extends PrismVisitor {
 export class ERBNoDebugOutputRule extends ParserRule {
   static ruleName = "erb-no-debug-output"
   static introducedIn = this.version("0.9.3")
+  static defaultEnabledIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

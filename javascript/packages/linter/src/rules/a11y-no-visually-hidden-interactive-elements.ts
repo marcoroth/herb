@@ -106,7 +106,7 @@ class NoVisuallyHiddenInteractiveElementsVisitor extends ElementStackVisitor {
 
 export class A11yNoVisuallyHiddenInteractiveElementsRule extends ParserRule {
   static ruleName = "a11y-no-visually-hidden-interactive-elements"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

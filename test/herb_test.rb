@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class HerbTest < Minitest::Spec
   test "version" do
-    assert_equal "herb gem v0.10.3, libprism v1.9.0, libherb v0.10.3 (Ruby C native extension)", Herb.version
+    assert_equal "herb gem v0.11.0, libprism v1.9.0, libherb v0.11.0 (Ruby C native extension)", Herb.version
   end
 
   test "ensure_installed requires available gems without loading bundler/inline" do
@@ -15,5 +15,13 @@ class HerbTest < Minitest::Spec
 
     assert defined?(Parallel)
     assert_equal already_loaded, bundler_inline_loaded.call
+  end
+
+  test "ensure_installed refuses to replace an active bundle for a missing gem" do
+    error = assert_raises(LoadError) do
+      Herb.ensure_installed("herb-test-gem-that-does-not-exist")
+    end
+
+    assert_equal 'Herb needs the `herb-test-gem-that-does-not-exist` gem. Add `gem "herb-test-gem-that-does-not-exist"` to the Gemfile.', error.message
   end
 end

@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0048_linter ignore directive"
+input: |2-
+<%# herb:linter ignore %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:25))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:linter ignore " (location: (1:3)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── key: "linter" (location: (1:9)-(1:15))
+    │   └── arguments: "ignore" (location: (1:16)-(1:22))
+    │
+    └── @ HTMLTextNode (location: (1:25)-(2:0))
+        └── content: "\n"

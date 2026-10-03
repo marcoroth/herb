@@ -56,6 +56,14 @@ module Engine
       assert_compiled_snapshot(template)
     end
 
+    test "compiles an erb comment to the same lines as erubi" do
+      assert_compiled_snapshot("<%# a comment %>\n<div>Content</div>\n", enforce_erubi_equality: true)
+    end
+
+    test "compiles an erb comment followed by text to the same lines as erubi" do
+      assert_compiled_snapshot("<%# comment %>\nhi\n", enforce_erubi_equality: true)
+    end
+
     test "handles escape option" do
       template = "<%= content %>"
 
@@ -257,7 +265,166 @@ module Engine
         Herb::Engine.new(template)
       end
 
-      assert_includes error.message, "ERBCaseWithConditions"
+      assert_equal ["ERBCaseWithConditionsError"], error.diagnostics.map(&:code)
+    end
+
+    test "keeps the whitespace around a standalone code tag with trim: false" do
+      template = <<~ERB
+        <% a = 1 %>
+        text
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation in front of a code tag with trim: false" do
+      template = "before\n  <% a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around a comment with trim: false" do
+      template = "before\n  <%# comment %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "leaves whitespace before a <%- tag alone with trim: false" do
+      template = "before\n  <%- a = 1 %>\nafter\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the newline after a code tag ending in -%> with trim: false" do
+      template = "<% a = 1 -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "drops the newline after an expression ending in -%> with trim: false" do
+      template = "<%= a -%>\ntext\n"
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "keeps the whitespace around control flow with trim: false" do
+      template = <<~ERB
+        <% if a == 1 %>
+          yes
+        <% else %>
+          no
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, trim: false)
+      assert_evaluated_snapshot(template, { a: 1 }, trim: false, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block as literal text" do
+      template = "<%% foo do %>\nx\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits escaped ERB tags as literal text inside parsed HTML" do
+      template = "<div class=\"card\"><%%= name %></div>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB conditional as literal text" do
+      template = "<%% if admin? %>\n  <p>hi</p>\n<%% else %>\n  <p>bye</p>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB iteration as literal text" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB case as literal text" do
+      template = "<%% case status %>\n<%% when :active %>\n  on\n<%% else %>\n  off\n<%% end %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+    test "emits an escaped ERB case sharing a tag with its condition as literal text" do
+      template = "<%% case status when :active %>\n  on\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, parser_options: { strict: false })
+      assert_evaluated_snapshot(template, {}, { parser_options: { strict: false } }, enforce_erubi_equality: true)
+    end
+
+    test "keeps the line count when a continuation closes its block in the same tag" do
+      template = <<~ERB
+        <% begin %>
+          body
+        <% rescue; end %>
+        <%= after %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "emits escaped ERB tags with custom literal delimiters" do
+      template = "<%% literal %>\n<%%= name %>\n<%%- a -%>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB block with custom literal delimiters" do
+      template = "<%% for item in @items %>\n  <li><%%= item %></li>\n<%% end %>\n"
+
+      assert_compiled_snapshot(template, literal_prefix: "{%", literal_postfix: "%}")
+      assert_evaluated_snapshot(template, literal_prefix: "{%", literal_postfix: "%}", enforce_erubi_equality: true)
+    end
+
+    test "emits an escaped ERB comment as literal text" do
+      template = "<%%# a comment %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "renders an ERB delimiter held in a single quoted Ruby string" do
+      template = %(<% x = '<%' %><%= x %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
+    end
+
+    test "renders an ERB delimiter held in a double quoted Ruby string" do
+      template = %(<% x = "<%" %><%= x %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
+    end
+
+    test "renders an ERB delimiter held in a Ruby string in an output tag" do
+      template = %(<%= '<%' %>)
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
     end
   end
 end

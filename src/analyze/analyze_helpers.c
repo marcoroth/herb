@@ -93,6 +93,130 @@ bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
       || (has_case_match_node(analyzed) && has_in_node(analyzed));
 }
 
+typedef struct {
+  const uint8_t* source_start;
+  uint32_t offset;
+  bool found;
+} inline_condition_offset_T;
+
+static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
+  inline_condition_offset_T* context = (inline_condition_offset_T*) data;
+
+  uint32_t keyword_offset = UINT32_MAX;
+
+  if (node->type == PM_WHEN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_when_node_t*) node)->keyword_loc.start - context->source_start);
+  } else if (node->type == PM_IN_NODE) {
+    keyword_offset = (uint32_t) (((const pm_in_node_t*) node)->in_loc.start - context->source_start);
+  } else if (node->type == PM_MATCH_PREDICATE_NODE) {
+    keyword_offset = (uint32_t) (((const pm_match_predicate_node_t*) node)->operator_loc.start - context->source_start);
+  }
+
+  if (keyword_offset != UINT32_MAX && (!context->found || keyword_offset < context->offset)) {
+    context->offset = keyword_offset;
+    context->found = true;
+  }
+
+  pm_visit_child_nodes(node, search_inline_condition_offset, context);
+
+  return false;
+}
+
+static hb_string_T control_continuation_keywords[] = HB_STRING_LIST("else", "elsif", "when", "in", "rescue", "ensure");
+static hb_string_T control_terminator_keywords[] = HB_STRING_LIST("end", "}");
+
+static bool matches_keyword(hb_string_T keyword, const hb_string_T* keywords, size_t count) {
+  for (size_t index = 0; index < count; index++) {
+    if (hb_string_equals(keyword, keywords[index])) { return true; }
+  }
+
+  return false;
+}
+
+static bool is_control_continuation_keyword(hb_string_T keyword) {
+  return matches_keyword(
+    keyword,
+    control_continuation_keywords,
+    sizeof(control_continuation_keywords) / sizeof(control_continuation_keywords[0])
+  );
+}
+
+static bool is_control_role_keyword(hb_string_T keyword) {
+  return is_control_continuation_keyword(keyword)
+      || matches_keyword(
+           keyword,
+           control_terminator_keywords,
+           sizeof(control_terminator_keywords) / sizeof(control_terminator_keywords[0])
+      );
+}
+
+bool control_role_split_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
+  if (!analyzed || !offset) { return false; }
+
+  uint32_t first = UINT32_MAX;
+  uint32_t second = UINT32_MAX;
+  bool first_continues = false;
+
+  for (const pm_diagnostic_t* diagnostic = (const pm_diagnostic_t*) analyzed->parser.error_list.head;
+       diagnostic != NULL;
+       diagnostic = (const pm_diagnostic_t*) diagnostic->node.next) {
+    if (diagnostic->diag_id != PM_ERR_UNEXPECTED_TOKEN_IGNORE) { continue; }
+
+    hb_string_T keyword = hb_string_from_data(
+      (const char*) diagnostic->location.start,
+      (size_t) (diagnostic->location.end - diagnostic->location.start)
+    );
+
+    if (!is_control_role_keyword(keyword)) { continue; }
+
+    uint32_t start = (uint32_t) (diagnostic->location.start - analyzed->parser.start);
+
+    if (start < first) {
+      second = first;
+      first = start;
+      first_continues = is_control_continuation_keyword(keyword);
+    } else if (start < second) {
+      second = start;
+    }
+  }
+
+  if (second == UINT32_MAX) { return false; }
+  if (!first_continues) { return false; }
+
+  *offset = second;
+
+  return true;
+}
+
+bool has_inline_pattern_match(analyzed_ruby_T* analyzed, hb_string_T content) {
+  if (!has_case_match_node(analyzed) || !has_in_node(analyzed)) { return false; }
+
+  uint32_t offset = 0;
+
+  if (!inline_condition_keyword_offset(analyzed, &offset)) { return false; }
+  if (offset > content.length) { return false; }
+
+  return memchr(content.data, '\n', offset) == NULL;
+}
+
+bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* offset) {
+  if (!analyzed || !analyzed->root || !offset) { return false; }
+
+  inline_condition_offset_T context = {
+    .source_start = analyzed->parser.start,
+    .offset = UINT32_MAX,
+    .found = false,
+  };
+
+  pm_visit_node(analyzed->root, search_inline_condition_offset, &context);
+
+  if (!context.found) { return false; }
+
+  *offset = context.offset;
+
+  return true;
+}
+
 bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {

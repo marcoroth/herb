@@ -76,14 +76,38 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        erb_openers: [],
         timeout: 1000,
         max_errors: 25,
       })
+    })
+
+    test("uses the erb openers the config asks for", () => {
+      const cache = new ParseCache(Herb, { erb_openers: ["graphql"] })
+      const options = cache.resolveOptions({})
+
+      expect(options.erb_openers).toEqual(["graphql"])
+    })
+
+    test("lets a caller override the erb openers from the config", () => {
+      const cache = new ParseCache(Herb, { erb_openers: ["graphql"] })
+      const options = cache.resolveOptions({ erb_openers: ["herb"] })
+
+      expect(options.erb_openers).toEqual(["herb"])
+    })
+
+    test("parses a configured opener as a tag whose body is not Ruby", () => {
+      const cache = new ParseCache(Herb, { erb_openers: ["graphql"] })
+      const source = "<%graphql query Products($first: Int!) { products(first: $first) { id } } %>"
+
+      expect(cache.get(source).recursiveErrors()).toEqual([])
+      expect(new ParseCache(Herb).get(source).recursiveErrors().length).toBeGreaterThan(0)
     })
 
     test("allows overriding strict mode", () => {
@@ -100,11 +124,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        erb_openers: [],
         timeout: 1000,
         max_errors: 25,
       })
@@ -124,11 +150,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        erb_openers: [],
         timeout: 1000,
         max_errors: 25,
       })
@@ -148,11 +176,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        herb_directives: false,
         iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        erb_openers: [],
         timeout: 1000,
         max_errors: 25,
       })

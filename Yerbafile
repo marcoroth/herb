@@ -25,6 +25,7 @@ rules:
           order:
             - errors
             - warnings
+            - parser_options
             - nodes
 
       - sort_keys:
@@ -44,10 +45,17 @@ rules:
           order:
             - name
             - message
+            - suggestion
             - fields
 
       - sort_keys:
           path: "errors.types[].message"
+          order:
+            - template
+            - arguments
+
+      - sort_keys:
+          path: "errors.types[].suggestion"
           order:
             - template
             - arguments
@@ -63,6 +71,45 @@ rules:
           order:
             - fields
             - types
+
+      - sort_keys:
+          path: "parser_options"
+          order:
+            - fields
+            - internal_fields
+
+      - sort_keys:
+          path: "parser_options.fields[]"
+          order:
+            - name
+            - type
+            - c_name
+            - count_name
+            - const_name
+            - default
+            - default_ms
+            - nullable
+            - null_sentinel
+            - ruby_unit
+            - lex
+            - only
+            - skip
+            - description
+
+      - sort_keys:
+          path: "parser_options.internal_fields[]"
+          order:
+            - name
+            - type
+            - default
+
+      - sort:
+          path: "parser_options.fields"
+          by: name
+
+      - sort:
+          path: "parser_options.internal_fields"
+          by: name
 
       - sort_keys:
           path: "nodes"
@@ -104,7 +151,19 @@ rules:
           count: 0
 
       - blank_lines:
+          path: "errors.types[].suggestion.arguments"
+          count: 0
+
+      - blank_lines:
           path: "errors.types[].fields"
+          count: 1
+
+      - blank_lines:
+          path: "parser_options.fields"
+          count: 1
+
+      - blank_lines:
+          path: "parser_options.internal_fields"
           count: 1
 
       - blank_lines:

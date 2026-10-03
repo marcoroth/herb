@@ -5,7 +5,8 @@ require "nokogiri"
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/engine/slot_visitor"
+require_relative "../../../lib/herb/engine/slots/visitor"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
@@ -13,7 +14,7 @@ module Engine
       include SnapshotUtils
 
       def options
-        { visitors: [Herb::Engine::SlotVisitor.new], filename: "app/views/test.html.erb" }
+        { visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb" }
       end
 
       def parse_slotted(template, locals)
@@ -279,8 +280,7 @@ module Engine
           engine = Herb::Engine.new(template, **options)
           output = evaluate_herb_source(engine.src, locals)
 
-          refute_includes output, "<span", "expected no wrapper element for: #{template}"
-          refute_includes output, "display: contents"
+          assert_snapshot_matches(output, template)
         end
       end
 
@@ -412,7 +412,8 @@ module Engine
         untaken = rendered(template, locals.merge("@c" => false))
 
         assert_equal taken.sub("Mon", "?"), untaken.sub("Tue", "?")
-        refute_includes taken, "herb-branch"
+
+        assert_snapshot_matches(taken, "markers-same-branch")
       end
 
       test "collapses a same-shaped conditional to one slot" do
@@ -429,6 +430,130 @@ module Engine
           { "@c" => false, "@today" => "Mon", "@tomorrow" => "Tue" },
           options
         )
+      end
+
+      class CapturingView
+        def initialize
+          @output_buffer = +""
+        end
+
+        def grab
+          outer = @output_buffer
+          @output_buffer = +""
+
+          yield
+
+          captured = @output_buffer
+          @output_buffer = outer
+
+          captured
+        end
+      end
+
+      test "puts no marker around a block whose value is not output" do
+        template = %(<% link = ->(label) do %><% grab do %><b><%= label %></b><% end %><% end %><div><%= link.call("hi") %></div>)
+        source = Herb::Engine.new(template, **options, bufvar: "@output_buffer").src
+        rendered = CapturingView.new.instance_eval(source)
+
+        assert_snapshot_matches(source.split("link.call").first, "markers-no-slot-before-link")
+        assert_equal 1, rendered.scan("<b").size
+
+        assert_snapshot_matches(rendered, "markers-nested-child")
+      end
+
+      test "writes an item key the same way the values payload does, under either escaping" do
+        template = %(<ul><% @items.each do |item| %><li id="<%= item %>"><%= item %></li><% end %></ul>)
+        key = %(a&b<c>"d")
+
+        [false, true].each do |escape|
+          markup = evaluate_herb_source(Herb::Engine.new(template, **options, escape: escape).src, { "@items" => [key] })
+
+          assert_snapshot_matches(markup, "markers-item-#{escape}")
+        end
+      end
+
+      test "leaves a block's value as the block's own last expression" do
+        template = "<% data = fetch do %><% { count: 7 } %><% end %><p><%= data[:count] %></p>"
+        source = Herb::Engine.new(template, **options).src
+
+        refute_match(/herb-slot:\d+:block/, source)
+        refute_match(%r{/herb-slot:\d+-->'.freeze;\s*end}, source)
+      end
+      test "a visitor that rewrites the template never sees a marker" do
+        seen = []
+
+        rewriter = Class.new(Herb::Visitor) do
+          define_method(:seen) { seen }
+
+          def self.rewrites_erb_source? = true
+
+          def visit_html_comment_node(node)
+            seen << node.to_s
+
+            super
+          end
+        end.new
+
+        source = Herb::Engine.new(
+          "<div><%= @name %></div>",
+          visitors: [Herb::Engine::Slots::Visitor.new, rewriter],
+          filename: "app/views/test.html.erb"
+        ).src
+
+        assert_empty rewriter.seen
+
+        assert_snapshot_matches(evaluate_herb_source(source, { "@name" => "Marco" }), "markers-eval-slot")
+      end
+
+      test "recognizes every marker it writes as a comment" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        comments = [
+          markers.slot_open(0, :child),
+          markers.slot_open(0, :attribute),
+          markers.slot_close(0),
+          markers.branch(0, 1),
+          markers.seeds_open_prefix,
+          markers.item_open_prefix(0),
+          markers.item_close(0),
+          markers.region_open_prefix("app/views/test.html.erb", "0417e5d5"),
+          markers.region_close("app/views/test.html.erb")
+        ]
+
+        recognized = comments.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal comments, recognized
+      end
+
+      test "recognizes nothing else" do
+        markers = Herb::Engine::Slots::Markers.new
+
+        others = [
+          "<!-- a note -->",
+          "<!--herbivore-->",
+          "<!-- herb-slot:0 -->",
+          markers.statics_open("app/views/test.html.erb", "0417e5d5"),
+          markers.manifests_open
+        ]
+
+        recognized = others.select { |text| Herb::Engine::Slots::Markers.marker?(text) }
+
+        assert_equal [], recognized
+      end
+
+      test "delimits a standalone keyed element with its key in the slot marker" do
+        assert_evaluated_snapshot(
+          %(<%# herb:slots %>\n<div herb-key="<%= @id %>"><%= @name %></div>),
+          { "@id" => 7, "@name" => "Marco" },
+          options
+        )
+      end
+
+      test "anchors a slot on an element opened across a conditional" do
+        template = %(<% if @c %><div class="a"><% else %><div class="b"><% end %><%= @value %></div>)
+
+        assert_evaluated_snapshot(template, { "@c" => true, "@value" => "v" }, options)
+        assert_evaluated_snapshot(template, { "@c" => false, "@value" => "v" }, options)
       end
     end
   end

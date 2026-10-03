@@ -20,6 +20,12 @@ extern "C" {
 
 HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* allocator);
 
+HERB_EXPORTED_FUNCTION hb_array_T* herb_lex_with_options(
+  const char* source,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+);
+
 HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   const char* source,
   const parser_options_T* options,

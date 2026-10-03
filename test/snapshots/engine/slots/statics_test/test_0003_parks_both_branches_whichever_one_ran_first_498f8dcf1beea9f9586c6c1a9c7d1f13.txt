@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0003_parks both branches whichever one ran first"
+input: "{source: \"<div><% if @admin %><b>Hi <%= @name %></b><% else %><i>guest</i><% end %></div>\", locals: {\"@admin\" => true, \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:5ac3015e:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:0--><b>Hi <!--herb-slot:1-->Marco<!--/herb-slot:1--></b><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:5ac3015e"><!--herb-branch:0:0--><b>Hi <!--herb-slot:1--><!--/herb-slot:1--></b><!--herb-branch:0:1--><i>guest</i></template>

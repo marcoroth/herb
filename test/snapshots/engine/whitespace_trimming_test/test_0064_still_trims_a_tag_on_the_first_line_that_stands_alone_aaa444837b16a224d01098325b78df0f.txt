@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0064_still trims a tag on the first line that stands alone"
+input: "{source: \"  <% x = 1 %>\\n<%= x %>\", locals: {}, options: {}}"
+---
+1

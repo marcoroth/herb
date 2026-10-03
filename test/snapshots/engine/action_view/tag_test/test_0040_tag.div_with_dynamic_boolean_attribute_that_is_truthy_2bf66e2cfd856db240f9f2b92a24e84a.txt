@@ -2,5 +2,4 @@
 source: "Engine::ActionView::TagTest#test_0040_tag.div with dynamic boolean attribute that is truthy"
 input: "{source: \"<%= tag.div hidden: a != b %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
 ---
-_buf = ::String.new; _buf << '<div'.freeze; if (a != b); _buf << ' hidden'.freeze; end; _buf << '></div>'.freeze;
-_buf.to_s
+if (a != b); "<div hidden></div>".freeze; else "<div></div>".freeze;end;

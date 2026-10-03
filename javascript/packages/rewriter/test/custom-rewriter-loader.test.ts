@@ -1,14 +1,14 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 
-import { CustomRewriterLoader } from "@herb-tools/rewriter/loader"
-import { ASTRewriter } from "@herb-tools/rewriter"
+import { CustomRewriterLoader } from "../src/loader.js"
+import { ASTRewriter } from "../src/index.js"
 
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 
 import type { Node } from "@herb-tools/core"
-import type { RewriteContext } from "@herb-tools/rewriter"
+import type { RewriteContext } from "../src/index.js"
 
 describe("CustomRewriterLoader", () => {
   let tempDir: string

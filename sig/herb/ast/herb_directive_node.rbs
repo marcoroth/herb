@@ -1,0 +1,13 @@
+# Generated from lib/herb/ast/herb_directive_node.rb with RBS::Inline
+
+module Herb
+  module AST
+    class HerbDirectiveNode < Node
+      # : () -> String
+      def directive: () -> String
+
+      # : () -> String
+      def argument: () -> String
+    end
+  end
+end

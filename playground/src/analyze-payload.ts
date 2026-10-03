@@ -21,6 +21,7 @@ export type AnalyzePayload = {
   formatted?: string
   printed?: string
   printedDiff?: string
+  minified?: string
   rewritten?: string | null
   highlighted?: string
   version?: string
@@ -83,6 +84,7 @@ export function toAnalyzePayload(result: AnalyzeResult): AnalyzePayload {
     formatted: result.formatted,
     printed: result.printed,
     printedDiff: result.printedDiff,
+    minified: result.minified,
     rewritten: result.rewritten,
     highlighted: result.highlighted,
     version: result.version,

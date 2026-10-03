@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StaticsTest#test_0015_parks the item template, with its values blanked, when the collection rendered nothing"
+input: "{source: \"<ul><% @items.each do |item| %><li id=\\\"<%= item %>\\\"><%= item %></li><% end %></ul>\", locals: {\"@items\" => []}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:6d3cc90f:0--><ul><!--herb-slot:0:collection--><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:6d3cc90f"><!--herb-branch:0:item--><!--herb-item:0:--><li id="" data-herb-slot="1:attribute:id 2:child"></li><!--/herb-item:0--></template>

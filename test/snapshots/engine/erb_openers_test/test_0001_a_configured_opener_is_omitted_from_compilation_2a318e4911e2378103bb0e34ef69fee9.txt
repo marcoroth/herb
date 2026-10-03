@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBOpenersTest#test_0001_a configured opener is omitted from compilation"
+input: "{source: \"<%herb slot :header %>\", options: {parser_options: {erb_openers: [\"herb\"]}}}"
+---
+_buf = ::String.new;
+_buf.to_s

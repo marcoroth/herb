@@ -3,6 +3,8 @@
 
 require "json"
 
+require_relative "locate"
+
 module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
@@ -31,19 +33,19 @@ module Herb
       super + value.recursive_errors
     end
 
-    #: () -> bool
-    def failed?
-      errors.any?
-    end
-
-    #: () -> bool
-    def success?
-      !failed?
-    end
-
     #: () -> String
     def pretty_errors
       JSON.pretty_generate(errors)
+    end
+
+    #: (Herb::Position) -> Herb::Locate::Result?
+    def locate(position)
+      Locate.call(self, position)
+    end
+
+    #: (Herb::Position) -> bool
+    def locatable?(position)
+      Locate.locatable?(self, position)
     end
 
     #: (Visitor) -> void

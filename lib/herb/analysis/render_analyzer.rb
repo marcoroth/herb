@@ -3,6 +3,8 @@
 
 require "pathname"
 
+require_relative "../colors"
+require_relative "../configuration"
 require_relative "partial_resolution"
 require_relative "partial_index"
 

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach } from "vitest"
 
-import { SlotIndex } from "../src/slot-index"
-import type { Payload } from "../src/slot-index"
+import { Slots } from "../src/slots/slots"
+import type { Payload } from "../src/types"
 
 import fixture from "./fixtures/round-trip.json"
 
@@ -9,7 +9,7 @@ const values = fixture.values as Payload
 
 describe("a page given the values of a later render", () => {
   let host: HTMLElement
-  let index: SlotIndex
+  let index: Slots
 
   beforeEach(() => {
     document.body.innerHTML = ""
@@ -18,7 +18,7 @@ describe("a page given the values of a later render", () => {
     host.innerHTML = fixture.rendered
     document.body.appendChild(host)
 
-    index = new SlotIndex()
+    index = new Slots()
     index.scan(host)
   })
 
@@ -48,7 +48,7 @@ describe("a page given the values of a later render", () => {
   test("leaves every marker where it was, so the next update has the same page to work on", () => {
     index.apply(values)
 
-    const reindexed = new SlotIndex()
+    const reindexed = new Slots()
     reindexed.scan(host)
 
     expect(reindexed.size).toBe(index.size)

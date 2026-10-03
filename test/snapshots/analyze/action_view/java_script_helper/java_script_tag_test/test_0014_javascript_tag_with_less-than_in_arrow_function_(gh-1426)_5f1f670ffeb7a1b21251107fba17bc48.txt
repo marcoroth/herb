@@ -21,13 +21,7 @@ input: |2-
         │   │   └── content: "\n  const filtered = items.filter(x => x"
         │   │
         │   └── @ HTMLOpenTagNode (location: (2:38)-(4:0))
-        │       ├── errors: (2 errors)
-        │       │   ├── @ UnexpectedError (location: (2:48)-(2:49))
-        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
-        │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
-        │       │   │   └── found: "a character"
-        │       │   │
+        │       ├── errors: (1 error)
         │       │   └── @ UnclosedOpenTagError (location: (2:39)-(4:0))
         │       │       ├── message: "Opening tag `<threshold>` at (2:39) is missing closing `>`."
         │       │       └── tag_name: "threshold" (location: (2:39)-(2:48))
@@ -35,7 +29,18 @@ input: |2-
         │       ├── tag_opening: "<" (location: (2:38)-(2:39))
         │       ├── tag_name: "threshold" (location: (2:39)-(2:48))
         │       ├── tag_closing: ∅
-        │       ├── children: (1 item)
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (2:48)-(2:49))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:48)-(2:49))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (2:48)-(2:49))
+        │       │   │   │               └── content: ")"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
         │       │   └── @ ERBContentNode (location: (3:0)-(3:9))
         │       │       ├── errors: (1 error)
         │       │       │   └── @ ERBControlFlowScopeError (location: (3:0)-(3:9))

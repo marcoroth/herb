@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, RuleConfig};
+use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, ParserConfig, RuleConfig};
 use crate::defaults::{config_template, default_config, default_config_value, DEFAULT_VERSION};
-use crate::glob::{glob, glob_absolute, is_path_matching};
+use crate::glob::{glob, glob_absolute, is_path_excluded, is_path_matching};
 use crate::merge::deep_merge;
 use crate::semver::semver_greater_than;
 use crate::severity::{resolve_severity, LinterMode, Severity, SeverityConfig};
@@ -82,6 +82,7 @@ impl Config {
   pub fn options(&self) -> HerbConfigOptions {
     HerbConfigOptions {
       files: self.config.files.clone(),
+      parser: self.config.parser.clone(),
       engine: None,
       linter: self.config.linter.clone(),
       formatter: self.config.formatter.clone(),
@@ -94,6 +95,14 @@ impl Config {
 
   pub fn formatter(&self) -> Option<&FormatterConfig> {
     self.config.formatter.as_ref()
+  }
+
+  pub fn parser(&self) -> Option<&ParserConfig> {
+    self.config.parser.as_ref()
+  }
+
+  pub fn erb_openers(&self) -> Option<Vec<String>> {
+    self.config.parser.as_ref()?.erb_openers.clone()
   }
 
   pub fn to_json(&self) -> String {
@@ -122,6 +131,10 @@ impl Config {
 
   pub fn default_rule_enabled(&self) -> Option<bool> {
     self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.enabled)
+  }
+
+  pub fn default_rule_severity(&self) -> Option<SeverityConfig> {
+    self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.severity)
   }
 
   pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
@@ -209,12 +222,12 @@ impl Config {
     file_path.to_string()
   }
 
-  fn is_path_excluded(&self, file_path: &str, exclude_patterns: &[String]) -> bool {
+  fn is_path_excluded(&self, file_path: &str, exclude_patterns: &[String], include_patterns: &[String]) -> bool {
     if exclude_patterns.is_empty() {
       return false;
     }
 
-    is_path_matching(&self.normalize_file_path(file_path), exclude_patterns)
+    is_path_excluded(&self.normalize_file_path(file_path), exclude_patterns, include_patterns)
   }
 
   fn is_path_included(&self, file_path: &str, include_patterns: &[String]) -> bool {
@@ -237,8 +250,9 @@ impl Config {
 
     let files_config = self.get_files_config_for_tool(tool);
     let exclude_patterns = files_config.exclude.unwrap_or_default();
+    let include_patterns = files_config.include.unwrap_or_default();
 
-    !self.is_path_excluded(file_path, &exclude_patterns)
+    !self.is_path_excluded(file_path, &exclude_patterns, &include_patterns)
   }
 
   pub fn is_linter_enabled_for_path(&self, file_path: &str) -> bool {
@@ -283,7 +297,7 @@ impl Config {
       return false;
     }
 
-    !self.is_path_excluded(file_path, &rule_exclude_patterns)
+    !self.is_path_excluded(file_path, &rule_exclude_patterns, &[])
   }
 
   pub fn has_rule_exclude(&self, rule_name: &str) -> bool {
@@ -291,7 +305,11 @@ impl Config {
   }
 
   pub fn get_configured_severity(&self, rule_name: &str, default_severity: SeverityConfig, mode: LinterMode) -> Severity {
-    let severity = self.get_rule_config(rule_name).and_then(|rule| rule.severity).unwrap_or(default_severity);
+    let severity = self
+      .get_rule_config(rule_name)
+      .and_then(|rule| rule.severity)
+      .or_else(|| self.default_rule_severity())
+      .unwrap_or(default_severity);
 
     resolve_severity(severity, mode)
   }
@@ -302,7 +320,11 @@ impl Config {
     }
 
     for offense in offenses {
-      if let Some(severity) = self.get_rule_config(offense.rule()).and_then(|rule| rule.severity) {
+      if let Some(severity) = self
+        .get_rule_config(offense.rule())
+        .and_then(|rule| rule.severity)
+        .or_else(|| self.default_rule_severity())
+      {
         offense.set_severity(resolve_severity(severity, mode));
       }
     }

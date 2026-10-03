@@ -1,3 +1,8 @@
+import { createRequire } from "module"
+
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = Object.keys(dependencies ?? {})
+
 const external = [
   "node-addon-api",
   "fs",
@@ -10,10 +15,11 @@ const external = [
 
 function isExternal(id) {
   return (
-    external.includes(id) ||
     id.endsWith(".html") ||
     id.endsWith(".node") ||
-    id.startsWith("@herb-tools/core")
+    [...external, ...runtimeDependencies].some(
+      (pkg) => id === pkg || id.startsWith(pkg + "/")
+    )
   )
 }
 

@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0048_renders an ERB delimiter held in a single quoted Ruby string"
+input: "{source: \"<% x = '<%' %><%= x %>\", options: {}}"
+---
+_buf = ::String.new; x = '<%' ; _buf << (x).to_s;
+_buf.to_s

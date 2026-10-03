@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedLiteralsTest::what stays dynamic#test_0005_a literal that renders nothing"
+input: "{source: \"<p><%= \\\"\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << ("").to_s; _buf << '</p>'.freeze;
+_buf.to_s

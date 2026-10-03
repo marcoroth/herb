@@ -134,12 +134,13 @@ class NestedFormVisitor extends ElementStackVisitor {
 
 export class HTMLNoNestedFormsRule extends ParserRule {
   static ruleName = "html-no-nested-forms"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
+  static defaultEnabledIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
     }
   }
 

@@ -1,0 +1,17 @@
+---
+source: "Engine::ErrorHandlingTest#test_0008_block element in paragraph"
+input: |2-
+<p>
+  This is a paragraph with a
+  <div>block element inside</div>
+  which is invalid HTML!
+</p>
+options: {validators: true}
+---
+[source]:3:3: Block element <div> cannot be nested inside <p> at line 3 (Herb::Engine::CompilationError)
+
+✘ [InvalidNestingError] Block element <div> cannot be nested inside <p> at line 3
+
+    [source]:3:3:
+      3 │   <div>block element inside</div>
+        ╵   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

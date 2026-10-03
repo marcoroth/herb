@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0128_a value computing with an item state still raises"
+input: "states_test-53"
+---
+app/views/test.html.erb:3:30: `likes * 2` computes with the state `likes`, which lives on an item. The server cannot be asked for an item's answer yet.

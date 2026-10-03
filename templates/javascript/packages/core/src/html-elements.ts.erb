@@ -1,0 +1,41 @@
+// https://html.spec.whatwg.org/multipage/indices.html#elements-3
+// https://html.spec.whatwg.org/multipage/obsolete.html#non-conforming-features
+
+export interface HTMLElementInfo {
+  name: string
+  description: string
+  isVoid: boolean
+  isDeprecated: boolean
+}
+
+export const HTML_ELEMENTS: HTMLElementInfo[] = [
+<%- html_elements.each do |element| -%>
+  { name: <%= element.name.inspect %>, description: <%= element.description.inspect %>, isVoid: <%= element.void? %>, isDeprecated: <%= element.deprecated? %> },
+<%- end -%>
+]
+
+export const HTML_ELEMENT_NAMES = new Set(HTML_ELEMENTS.map(element => element.name))
+
+export const HTML_VOID_ELEMENTS = new Set(
+  HTML_ELEMENTS.filter(element => element.isVoid).map(element => element.name),
+)
+
+export const HTML_DEPRECATED_ELEMENTS = new Set(
+  HTML_ELEMENTS.filter(element => element.isDeprecated).map(element => element.name),
+)
+
+export function isKnownHTMLElement(tagName: string): boolean {
+  return HTML_ELEMENT_NAMES.has(tagName.toLowerCase())
+}
+
+export function isVoidElement(tagName: string): boolean {
+  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isDeprecatedElement(tagName: string): boolean {
+  return HTML_DEPRECATED_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isCustomElement(tagName: string): boolean {
+  return tagName.includes("-")
+}

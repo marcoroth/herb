@@ -1,0 +1,11 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0001_a conditional between static markup"
+input: "{source: \"<p>\\n  <% if flag %>\\n    Hello World\\n  <% else %>\\n    Hello Tomorrow\\n  <% end %>\\n</p>\\n\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+
+  if flag 
+ "<p>\n    Hello World\n</p>\n".freeze;
+  else 
+ "<p>\n    Hello Tomorrow\n</p>\n".freeze;
+  end 
+

@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentTags::VisitorTest#test_0020_the first of a duplicated attribute wins"
+input: "{source: \"<MyComponent name=\\\"a\\\" name=\\\"b\\\" />\", options: {visitors: [#<Herb::Engine::ComponentTags::Visitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "a")).to_s;
+_buf.to_s

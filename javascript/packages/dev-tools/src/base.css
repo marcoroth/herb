@@ -9,8 +9,9 @@
 }
 
 .herb-floating-menu:has(.herb-dev-tools-attached .herb-dev-tools-badge) .herb-menu-trigger {
+  align-self: stretch;
   border-radius: 0;
-  border-left: none;
+  border-left: 1px solid var(--herb-rule);
 }
 
 .herb-dev-tools-badge-slot {

@@ -1,0 +1,23 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0012_state directive without parentheses"
+input: |2-
+<%# herb:state open: false %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:29))
+    │   ├── errors: (1 error)
+    │   │   └── @ HerbStateMissingParenthesisError (location: (1:15)-(1:26))
+    │   │       ├── message: "The `herb:state` directive requires parentheses. Expected `herb:state (...)` but got `herb:state open: false`."
+    │   │       └── rest: "open: false"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state open: false " (location: (1:3)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: ∅
+    │   └── states: []
+    │
+    └── @ HTMLTextNode (location: (1:29)-(2:0))
+        └── content: "\n"

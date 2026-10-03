@@ -1,6 +1,6 @@
 import picomatch from "picomatch"
 
-import { DEFAULT_FRAMEWORK, Location, semverGreaterThan } from "@herb-tools/core"
+import { DEFAULT_FRAMEWORK, Location, ParseResult, ParserOptions, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -8,14 +8,19 @@ import { findNodeByLocation } from "./utils/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 import { ParseCache } from "./parse-cache.js"
+import { domToAST, sourcePathsIn, domNodesIn } from "./browser/dom-to-ast.js"
+import { browserRules } from "./browser/rules.js"
+
+import type { DOMNodeLike } from "./browser/dom-to-ast.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
-import { DEFAULT_RULE_CONFIG } from "./types.js"
+import { DEFAULT_RULE_CONFIG, DEFAULT_ENVIRONMENT } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend, ParserOptions } from "@herb-tools/core"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework, FullRuleConfig, HerbCounterCacheEntry, HerbCounterDrift } from "./types.js"
+import type { DocumentNode, LexResult, HerbBackend } from "@herb-tools/core"
+import type { Environment } from "@herb-tools/config"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -51,6 +56,7 @@ export interface LinterOptions {
 export interface VersionSkippedRule {
   ruleName: string
   introducedIn: RuleVersion
+  defaultEnabledIn?: RuleVersion
 }
 
 export interface FilterRulesResult {
@@ -117,7 +123,7 @@ export class Linter {
    */
   constructor(herb: HerbBackend, rules?: RuleClass[], config?: Config, allAvailableRules?: RuleClass[]) {
     this.herb = herb
-    this.parseCache = new ParseCache(herb)
+    this.parseCache = new ParseCache(herb, config?.parserOptions ?? {})
     this.config = config
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
@@ -198,12 +204,15 @@ export class Linter {
         continue
       }
 
-      if (allRulesDefault !== true && configVersion && ruleClass.introducedIn) {
-        if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
+      const gateVersion = ruleClass.defaultEnabledIn ?? ruleClass.introducedIn
+
+      if (allRulesDefault !== true && configVersion && gateVersion) {
+        if (semverGreaterThan(gateVersion, configVersion)) {
           if (defaultEnabled) {
             skippedByVersion.push({
               ruleName: ruleClass.ruleName,
               introducedIn: ruleClass.introducedIn,
+              defaultEnabledIn: ruleClass.defaultEnabledIn,
             })
           } else {
             notEnabledByDefault++
@@ -265,7 +274,8 @@ export class Linter {
       "herb-disable-comment-no-duplicate-rules",
       "herb-disable-comment-malformed",
       "herb-disable-comment-missing-rules",
-      "herb-disable-comment-unnecessary"
+      "herb-disable-comment-unnecessary",
+      "herb-disable-comment-out-of-date",
     ]
   }
 
@@ -324,6 +334,25 @@ export class Linter {
   }
 
   /**
+   * Whether a rule answers in the environment it is being run in.
+   *
+   * The rule says where it applies, config overrides that, and a rule that says nothing runs only
+   * where templates are read from source. That last part is where this differs from
+   * `appliesToFramework`, which treats silence as "everywhere": most rules have never considered a
+   * rendered page, so silence there has to mean no.
+   */
+  appliesTo(rule: { ruleName: string; defaultConfig?: FullRuleConfig }, environment: Environment | undefined): boolean {
+    return this.appliesToEnvironment(rule as Rule, environment)
+  }
+
+  protected appliesToEnvironment(rule: Rule, environment: Environment | undefined): boolean {
+    const userEnvironments = this.config?.linter?.rules?.[rule.ruleName]?.environments
+    const environments = userEnvironments ?? rule.defaultConfig?.environments ?? [DEFAULT_ENVIRONMENT]
+
+    return environments.includes(environment ?? DEFAULT_ENVIRONMENT)
+  }
+
+  /**
    * The parser options a rule is run with.
    *
    * A rule asking for `action_view_helpers` is saying it wants to see Action
@@ -363,6 +392,10 @@ export class Linter {
     const ruleName = rule.ruleName
 
     if (!this.onlyRules && !this.allRules && !this.appliesToFramework(rule, context?.framework)) {
+      return []
+    }
+
+    if (!this.appliesToEnvironment(rule, context?.environment)) {
       return []
     }
 
@@ -446,7 +479,10 @@ export class Linter {
 
     if (ignoreDisableComments) {
       for (const offense of ruleOffenses) {
-        const line = offense.location.start.line
+        const line = offense.location?.start?.line ?? null
+
+        if (line === null) continue
+
         const disabledRules = herbDisableCache?.get(line) || []
 
         if (disabledRules.includes(ruleName) || disabledRules.includes("all")) {
@@ -458,7 +494,13 @@ export class Linter {
     }
 
     for (const offense of ruleOffenses) {
-      const line = offense.location.start.line
+      const line = offense.location?.start?.line ?? null
+
+      if (line === null) {
+        kept.push(offense)
+        continue
+      }
+
       const disabledRules = herbDisableCache?.get(line) || []
 
       if (disabledRules.includes(ruleName) || disabledRules.includes("all")) {
@@ -482,13 +524,88 @@ export class Linter {
     return { kept, ignored, wouldBeIgnored: [] }
   }
 
+  /**
+   * Compute counter-based suppression for one rule after `filterOffenses`
+   * has already stripped herb:disable-ignored offenses.
+   *
+   * Semantics (per spec):
+   *   - No comment: pass-through, nothing suppressed.
+   *   - Comment, E == N: suppress all N.
+   *   - Comment, N > E: keep all offenses (they still surface), and let the
+   *     drift map trigger `herb-disable-comment-out-of-date`.
+   *   - Comment, 0 < N < E: suppress all N; drift map triggers
+   *     `herb-disable-comment-out-of-date` (autocorrectable).
+   *   - Comment, N > 0 and E == 0: nothing to suppress; drift map triggers
+   *     `herb-disable-comment-out-of-date` with the "remove the count" variant.
+   *   - Comment, `all`: suppress every offense, never emit drift.
+   *
+   * Drift is recorded on `counterDriftByRule` for the file-scoped meta-rule
+   * to consume after the main rule loop.
+   */
+  private applyCounterSuppression(offenses: LintOffense[], ruleName: string, herbCounterCache: Map<string, HerbCounterCacheEntry>, counterDriftByRule: Map<string, HerbCounterDrift>, ignoreCounterComments?: boolean): { kept: LintOffense[], suppressed: LintOffense[] } {
+    if (this.nonExcludableRules.includes(ruleName)) {
+      return { kept: offenses, suppressed: [] }
+    }
+
+    const entry = herbCounterCache.get(ruleName)
+    if (!entry) {
+      return { kept: offenses, suppressed: [] }
+    }
+
+    const actual = offenses.length
+
+    if (entry.count === "all") {
+      if (ignoreCounterComments) return { kept: offenses, suppressed: [] }
+
+      return { kept: [], suppressed: offenses }
+    }
+
+    const expected = entry.count
+
+    counterDriftByRule.set(ruleName, {
+      ruleName,
+      expected,
+      actual,
+      line: entry.line,
+      column: entry.column,
+      raw: entry.raw,
+      countOffset: entry.countOffset,
+      countLength: entry.countLength,
+      measurable: true,
+    })
+
+    if (ignoreCounterComments) {
+      return { kept: offenses, suppressed: [] }
+    }
+
+    if (actual === 0) return { kept: [], suppressed: [] }
+    if (expected === 0) return { kept: offenses, suppressed: [] }
+
+    if (expected > actual) {
+      return { kept: offenses, suppressed: [] }
+    }
+
+    if (expected === actual) {
+      return { kept: [], suppressed: offenses }
+    }
+
+    return {
+      kept: offenses.slice(expected),
+      suppressed: offenses.slice(0, expected),
+    }
+  }
+
 
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
-   * @param source - The source code to lint
+   * @param source - The source code to lint, or a DOM node to lint as a rendered page
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
-  lint(source: string, context?: Partial<LintContext>): LintResult {
+  lint(source: string | DOMNodeLike, context?: Partial<LintContext>): LintResult {
+    if (typeof source !== "string") {
+      return this.lintElement(source, context)
+    }
+
     this.offenses = []
     this.parseCache.clear()
 
@@ -513,6 +630,10 @@ export class Linter {
     const sourceLines = source.split("\n")
     const ignoredOffensesByLine = new Map<number, Set<string>>()
     const herbDisableCache = new Map<number, string[]>()
+    const herbCounterCache = new Map<string, HerbCounterCacheEntry>()
+    const counterDriftByRule = new Map<string, HerbCounterDrift>()
+
+    let counterSuppressedCount = 0
 
     if (hasParserErrors) {
       const hasParserRule = this.findRuleClass("parser-no-errors")
@@ -527,10 +648,32 @@ export class Linter {
 
     for (let i = 0; i < sourceLines.length; i++) {
       const line = sourceLines[i]
+      const lineNumber = i + 1
 
       if (line.includes("herb:disable")) {
         const herbDisable = parseHerbDisableLine(line)
-        herbDisableCache.set(i + 1, herbDisable?.ruleNames || [])
+
+        if (herbDisable) {
+          herbDisableCache.set(lineNumber, herbDisable.ruleNames)
+
+          for (const entry of herbDisable.fileScopedEntries) {
+            if (herbCounterCache.has(entry.name)) continue
+
+            const matchOffset = line.indexOf(herbDisable.match)
+
+            herbCounterCache.set(entry.name, {
+              ruleName: entry.name,
+              count: entry.count,
+              line: lineNumber,
+              column: matchOffset + 1,
+              raw: herbDisable.match,
+              countOffset: entry.countOffset - matchOffset,
+              countLength: entry.countLength,
+            })
+          }
+        } else {
+          herbDisableCache.set(lineNumber, [])
+        }
       }
     }
 
@@ -538,13 +681,42 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
+      counterDriftByRule,
+      ignoreCounterComments: context?.ignoreCounterComments,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
     }
 
-    const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
+    const configuredRuleNames = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
+    const availableRuleNames = new Set(this.getAvailableRules().map(ruleClass => ruleClass.ruleName))
+
+    for (const [ruleName, entry] of herbCounterCache) {
+      if (entry.count === "all") continue
+      if (configuredRuleNames.has(ruleName)) continue
+      if (!availableRuleNames.has(ruleName)) continue
+
+      counterDriftByRule.set(ruleName, {
+        ruleName,
+        expected: entry.count,
+        actual: 0,
+        line: entry.line,
+        column: entry.column,
+        raw: entry.raw,
+        countOffset: entry.countOffset,
+        countLength: entry.countLength,
+        measurable: false,
+      })
+    }
+
+    const deferredRuleNames = new Set([
+      "herb-disable-comment-unnecessary",
+      "herb-disable-comment-out-of-date",
+    ])
+
+    const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
 
     for (const ruleClass of regularRules) {
       const rule = new ruleClass()
@@ -570,18 +742,36 @@ export class Linter {
 
       ignoredCount += ignored.length
       wouldBeIgnoredCount += wouldBeIgnored.length
-      this.offenses.push(...kept)
+
+      const { kept: postCounter, suppressed } = this.applyCounterSuppression(
+        kept,
+        ruleClass.ruleName,
+        herbCounterCache,
+        counterDriftByRule,
+        context?.ignoreCounterComments || context?.ignoreDisableComments,
+      )
+
+      counterSuppressedCount += suppressed.length
+      this.offenses.push(...postCounter)
     }
 
-    const unnecessaryRuleClass = this.findRuleClass("herb-disable-comment-unnecessary")
+    for (const deferredRuleName of deferredRuleNames) {
+      const deferredRuleClass = this.findRuleClass(deferredRuleName)
+      if (!deferredRuleClass) continue
 
-    if (unnecessaryRuleClass) {
-      const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
-      const parseResult = this.parseCache.get(source, unnecessaryRule.parserOptions)
-      const unboundOffenses = unnecessaryRule.check(parseResult, context)
-      const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRuleClass.ruleName)
+      const deferredRule = new deferredRuleClass() as Rule
 
-      this.offenses.push(...boundOffenses)
+      if (this.isSourceRuleClass(deferredRuleClass)) {
+        const unboundOffenses = (deferredRule as SourceRule).check(source, context)
+        const boundOffenses = this.bindSeverity(unboundOffenses, deferredRuleClass.ruleName)
+        this.offenses.push(...boundOffenses)
+      } else {
+        const parserRule = deferredRule as ParserRule
+        const deferredParseResult = this.parseCache.get(source, parserRule.parserOptions)
+        const unboundOffenses = parserRule.check(deferredParseResult, context)
+        const boundOffenses = this.bindSeverity(unboundOffenses, deferredRuleClass.ruleName)
+        this.offenses.push(...boundOffenses)
+      }
     }
 
     const finalOffenses = this.offenses
@@ -604,7 +794,116 @@ export class Linter {
       result.wouldBeIgnored = wouldBeIgnoredCount
     }
 
+    if (counterSuppressedCount > 0) {
+      result.counterSuppressed = counterSuppressedCount
+    }
+
     return result
+  }
+
+  /**
+   * The environment a backend puts the linter in, when it is one that says so.
+   *
+   * `HerbDOMBackend` parses with the browser, so a tree it produced carries what a DOM carries and
+   * not what a template does. Rules that have not said they answer on a rendered page would be
+   * reading locations that are not there, whether the markup arrived as a string or as an element.
+   */
+  protected get backendEnvironment(): Environment | undefined {
+    return (this.herb as Partial<{ lintEnvironment: Environment }>).lintEnvironment
+  }
+
+  /**
+   * Lints what the browser built for a page, after every template behind it has run.
+   *
+   * Takes anything the DOM calls a node: a `Document`, a `DocumentFragment`, or a single element
+   * such as `document.body`. Both the rules that read an AST and the rules that can only be
+   * answered against a live DOM run, each one filtered by the environment it declares.
+   *
+   *     const linter = Linter.from(new HerbDOMBackend())
+   *
+   *     linter.lintElement(document.body)
+   *
+   * `lint` accepts the same thing, so `linter.lint(document.body)` reaches here too.
+   *
+   * An offense comes back carrying the template it was written in whenever the element it points
+   * at was stamped, or sits inside a region the engine marked.
+   */
+  lintElement(root: DOMNodeLike, context?: Partial<LintContext>): LintResult {
+    const document = domToAST(root)
+    const result = this.lintDocument(document, context)
+    const sources = sourcePathsIn(document)
+    const elements = domNodesIn(document)
+
+    const offenses = result.offenses.map(offense => {
+      const file = sources.get(offense.location)
+      const element = elements.get(offense.location)
+
+      if (!file && !element) return offense
+
+      return { ...offense, ...(file ? { file } : {}), ...(element ? { element } : {}) }
+    })
+
+    for (const ruleClass of browserRules) {
+      const rule = new ruleClass()
+
+      if (!this.appliesTo(rule, context?.environment ?? "browser")) continue
+
+      offenses.push(...this.bindSeverity(rule.check(root, context), ruleClass.ruleName, rule))
+    }
+
+    return {
+      ...result,
+      offenses,
+      errors: offenses.filter((offense) => offense.severity === "error").length,
+      warnings: offenses.filter((offense) => offense.severity === "warning").length,
+      info: offenses.filter((offense) => offense.severity === "info").length,
+      hints: offenses.filter((offense) => offense.severity === "hint").length,
+    }
+  }
+
+  /**
+   * Lints a document that did not come from source text.
+   *
+   * A tree built from a live DOM has no source behind it, so the parts of `lint` that read one are
+   * left out: there are no `herb:disable` comments to honour, no lexing, and no autofix. Only
+   * parser rules run, and the rules that can only be answered against a live DOM are not among
+   * them, so `lintElement` is what a caller holding a DOM wants.
+   *
+   * Positions are whatever the tree carries. A tree from `domToAST` has the ones its stamps named,
+   * and one built by hand has none.
+   */
+  lintDocument(document: DocumentNode, context?: Partial<LintContext>): LintResult {
+    this.offenses = []
+
+    const parseResult = new ParseResult(document, "", [], [], new ParserOptions(), null)
+
+    const fullContext: Partial<LintContext> = {
+      ...context,
+      validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
+      framework: context?.framework ?? this.config?.framework,
+      environment: context?.environment ?? "browser",
+      herb: context?.herb ?? this.herb
+    }
+
+    for (const ruleClass of this.rules) {
+      if (!this.isParserRuleClass(ruleClass)) continue
+
+      const rule = new ruleClass() as ParserRule
+      const unboundOffenses = this.executeRule(ruleClass, rule, parseResult, null as unknown as LexResult, "", fullContext)
+
+      this.offenses.push(...this.bindSeverity(unboundOffenses, ruleClass.ruleName))
+    }
+
+    const offenses = this.offenses
+
+    return {
+      offenses,
+      errors: offenses.filter(offense => offense.severity === "error").length,
+      warnings: offenses.filter(offense => offense.severity === "warning").length,
+      info: offenses.filter(offense => offense.severity === "info").length,
+      hints: offenses.filter(offense => offense.severity === "hint").length,
+      ignored: 0
+    }
   }
 
   /**
@@ -612,27 +911,29 @@ export class Linter {
    *
    * Priority:
    * 1. User config severity override (if specified in config)
-   * 2. Rule's default severity (from defaultConfig.severity)
+   * 2. The `all` pseudo rule's severity (if specified in config)
+   * 3. Rule's default severity (from defaultConfig.severity)
    *
    * @param unboundOffenses - Array of offenses without severity
    * @param ruleName - Name of the rule that produced the offenses
    * @returns Array of offenses with severity bound
    */
-  protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string): LintOffense[] {
+  protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string, rule?: { defaultConfig?: FullRuleConfig }): LintOffense[] {
     const ruleClass = this.findRuleClass(ruleName)
 
-    if (!ruleClass) {
+    if (!ruleClass && !rule) {
       return unboundOffenses.map(offense => ({
         ...offense,
         severity: "error" as const
       }))
     }
 
-    const ruleInstance = new ruleClass()
+    const ruleInstance = rule ?? new ruleClass!()
     const defaultSeverityConfig = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]
-    const severityConfig = userRuleConfig?.severity ?? defaultSeverityConfig
+    const allSeverityConfig = this.config?.linter?.rules?.[ALL_RULES_KEY]?.severity
+    const severityConfig = userRuleConfig?.severity ?? allSeverityConfig ?? defaultSeverityConfig
     const severity = resolveSeverity(severityConfig, this.mode)
 
     return unboundOffenses.map(offense => ({
@@ -660,7 +961,8 @@ export class Linter {
       ...context,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
-      framework: context?.framework ?? this.config?.framework
+      framework: context?.framework ?? this.config?.framework,
+      herb: context?.herb ?? this.herb
     }
 
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
@@ -802,5 +1104,151 @@ export class Linter {
       fixed,
       unfixed
     }
+  }
+
+  /**
+   * Rewrite or delete the count/`all` portion of file-scoped
+   * `<%# herb:disable rule N %>` entries so every declared count matches
+   * reality for this file.
+   *
+   * Bulk-adoption entrypoint for `--update-disable-counts`, the analogue of
+   * `erb_lint -a` for counter-style disable entries. Modelled on
+   * `--disable-failing`: we run a lint pass with `ignoreCounterComments: true`
+   * to get true offense counts per rule, then reconcile the source
+   * line-by-line.
+   *
+   * Deliberately independent of `--fix`; per spec, `--fix` fixes code and
+   * would silently mask new violations if it also rewrote counts.
+   *
+   * `all` entries are left alone — they intentionally waive drift tracking.
+   *
+   * @returns { source, updated } where `updated` reports how many entries
+   * were inserted, rewritten, or deleted.
+   */
+  updateCounters(source: string, context?: Partial<LintContext>): { source: string, inserted: number, rewritten: number, deleted: number } {
+    const lines = source.split("\n")
+
+    interface ExistingEntry {
+      line: number
+      raw: string
+      count: number
+      countRaw: string
+    }
+
+    const existing = new Map<string, ExistingEntry>()
+    const knownRuleNames = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
+
+    for (let i = 0; i < lines.length; i++) {
+      const parsed = parseHerbDisableLine(lines[i])
+      if (!parsed) continue
+
+      for (const entry of parsed.fileScopedEntries) {
+        if (entry.count === "all") continue // `all` opts out of drift updates
+        if (!knownRuleNames.has(entry.name)) continue // unmeasurable — do not touch
+        if (existing.has(entry.name)) continue // duplicates handled by dedicated rule
+
+        existing.set(entry.name, {
+          line: i + 1,
+          raw: parsed.match,
+          count: entry.count,
+          countRaw: entry.countRaw,
+        })
+      }
+    }
+
+    if (existing.size === 0) {
+      return { source, inserted: 0, rewritten: 0, deleted: 0 }
+    }
+
+    const result = this.lint(source, { ...context, ignoreCounterComments: true })
+    const actualByRule = new Map<string, number>()
+
+    for (const ruleName of existing.keys()) {
+      actualByRule.set(ruleName, 0)
+    }
+
+    for (const offense of result.offenses) {
+      if (!existing.has(offense.rule)) {
+        continue
+      }
+
+      actualByRule.set(offense.rule, (actualByRule.get(offense.rule) || 0) + 1)
+    }
+
+    let rewritten = 0
+    let deleted = 0
+
+    const rewriteOps: Array<{ line: number, ruleName: string, oldRaw: string, newRaw: string }> = []
+    const deleteOps: Array<{ line: number, ruleName: string, oldRaw: string }> = []
+
+    for (const [ruleName, current] of existing) {
+      const actual = actualByRule.get(ruleName) || 0
+
+      if (actual === 0) {
+        deleteOps.push({ line: current.line, ruleName, oldRaw: current.raw })
+        deleted++
+
+        continue
+      }
+
+      if (actual === current.count) continue
+
+      const pattern = new RegExp(`(\\b${ruleName}\\s+)${current.countRaw}\\b`)
+      const newRaw = current.raw.replace(pattern, `$1${actual}`)
+
+      if (newRaw !== current.raw) {
+        rewriteOps.push({ line: current.line, ruleName, oldRaw: current.raw, newRaw })
+        rewritten++
+      }
+    }
+
+    for (const op of rewriteOps) {
+      const idx = op.line - 1
+      lines[idx] = lines[idx].replace(op.oldRaw, op.newRaw)
+    }
+
+    for (const op of [...deleteOps].sort((a, b) => b.line - a.line)) {
+      const index = op.line - 1
+      const original = lines[index]
+      const parsed = parseHerbDisableLine(original)
+      if (!parsed) continue
+
+      const remaining = parsed.ruleNameDetails.length +
+        parsed.fileScopedEntries.filter(e => e.name !== op.ruleName).length
+
+      if (remaining === 0) {
+        const stripped = original.replace(parsed.match, "").replace(/[ \t]+$/, "")
+
+        if (stripped.trim().length === 0) {
+          lines.splice(index, 1)
+        } else {
+          lines[index] = stripped
+        }
+      } else {
+        const entry = parsed.fileScopedEntries.find(e => e.name === op.ruleName)
+        if (!entry) continue
+
+        const kept: string[] = []
+
+        for (const detail of parsed.ruleNameDetails) {
+          kept.push(detail.name)
+        }
+
+        for (const fileEntry of parsed.fileScopedEntries) {
+          if (fileEntry.name === op.ruleName) {
+            continue
+          }
+
+          kept.push(`${fileEntry.name} ${fileEntry.countRaw}`)
+        }
+
+        const newRulesString = kept.join(", ")
+        const newRaw = parsed.match.replace(parsed.rulesString, newRulesString)
+
+        lines[index] = original.replace(parsed.match, newRaw)
+      }
+    }
+
+    return { source: lines.join("\n"), inserted: 0, rewritten, deleted }
   }
 }

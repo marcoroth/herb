@@ -1,0 +1,6 @@
+---
+source: "Engine::CLITest#test_0013_compile without slots emits no markers"
+input: "test_0013_compile without slots emits no markers"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<div>'.freeze; _buf << __herb.h((name)); _buf << '</div>'.freeze;
+_buf.to_s

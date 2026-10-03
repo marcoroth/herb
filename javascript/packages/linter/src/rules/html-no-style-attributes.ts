@@ -22,7 +22,7 @@ class HTMLNoStyleAttributesVisitor extends BaseRuleVisitor {
 
 export class HTMLNoStyleAttributesRule extends ParserRule {
   static ruleName = "html-no-style-attributes"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

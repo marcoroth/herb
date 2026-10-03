@@ -1,0 +1,13 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses inside a kept buffer#test_0002_a conditional attribute beside a dynamic one"
+input: "{source: \"<select>\\n<% if flag %>\\n<option <%= tag.attributes(class: kind, selected: option == current) %>>One</option>\\n<% else %>\\n<option>None</option>\\n<% end %>\\n</select>\\n\", options: {visitors: [#<Herb::Engine::OptimizeVisitor subtrees=true>]}}"
+---
+_buf = ::String.new; _buf << '<select>
+'.freeze; if flag 
+ _buf << '<option class="'.freeze; _buf << ::Herb::Engine.attr((kind)); _buf << (if (option == current); "\" selected>One</option>\n".freeze; else "\">One</option>\n".freeze;end;
+).to_s; else 
+ _buf << '<option>None</option>
+'.freeze; end 
+ _buf << '</select>
+'.freeze;
+_buf.to_s

@@ -1,10 +1,12 @@
 #include <ruby.h>
+#include <ruby/encoding.h>
 
 #include <stdbool.h>
 
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 #include "../../src/include/herb.h"
 #include "../../src/include/lexer/token.h"
@@ -79,6 +81,30 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
   return rb_utf8_str_new(string.data, string.length);
 }
 
+VALUE rb_interned_string_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
+}
+
+static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
+
+static VALUE rb_token_type_value(token_type_T type) {
+  if ((unsigned int) type > (unsigned int) TOKEN_EOF) {
+    return rb_interned_string_from_hb_string(token_type_to_string(type));
+  }
+
+  VALUE cached = token_type_value_cache[type];
+
+  if (cached == 0) {
+    cached = rb_interned_string_from_hb_string(token_type_to_string(type));
+    rb_gc_register_mark_object(cached);
+    token_type_value_cache[type] = cached;
+  }
+
+  return cached;
+}
+
 VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   if (!token) { return Qnil; }
 
@@ -88,7 +114,7 @@ VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   rb_ivar_set(object, id_value, rb_string_from_hb_string(token->value));
   rb_ivar_set(object, id_range, options->track_locations ? rb_range_from_c_struct(token->range) : Qnil);
   rb_ivar_set(object, id_location, options->track_locations ? rb_location_from_c_struct(token->location) : Qnil);
-  rb_ivar_set(object, id_type, rb_string_from_hb_string(token_type_to_string(token->type)));
+  rb_ivar_set(object, id_type, rb_token_type_value(token->type));
 
   return object;
 }
@@ -112,27 +138,7 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root, options);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
-
-  VALUE kwargs = rb_hash_new();
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict")), options->strict ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_locations")), options->track_locations ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("action_view_helpers")), options->action_view_helpers ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("transform_conditionals")), options->transform_conditionals ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("render_nodes")), options->render_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict_locals")), options->strict_locals ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("iteration_nodes")), options->iteration_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes")), options->prism_nodes ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes_deep")), options->prism_nodes_deep ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_program")), options->prism_program ? Qtrue : Qfalse);
-  rb_hash_aset(kwargs, ID2SYM(rb_intern("timeout")), DBL2NUM((double) options->timeout_ms / 1000.0));
-
-  rb_hash_aset(
-    kwargs,
-    ID2SYM(rb_intern("max_errors")),
-    options->max_errors == 0 ? Qnil : UINT2NUM(options->max_errors)
-  );
+  VALUE kwargs = herb_build_parser_options_hash(options);
 
   VALUE parser_options_args[1] = { kwargs };
   VALUE parser_options = rb_class_new_instance_kw(1, parser_options_args, cParserOptions, RB_PASS_KEYWORDS);

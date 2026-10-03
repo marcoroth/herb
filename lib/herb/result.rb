@@ -16,12 +16,12 @@ module Herb
 
     #: () -> bool
     def success?
-      false
+      errors.empty?
     end
 
     #: () -> bool
     def failed?
-      true
+      errors.any?
     end
   end
 end

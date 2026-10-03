@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0024_gives a conditional nested inside an else its own slot"
+input: "{source: \"<div><% if @a %>A<% else %><% if @b %><%= @n %><% end %><% end %></div>\", locals: {\"@a\" => false, \"@b\" => true, \"@n\" => \"N\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:1c3acdf5:0--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><!--herb-slot:1:conditional--><!--herb-branch:1:0--><!--herb-slot:2-->N<!--/herb-slot:2--><!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

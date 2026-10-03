@@ -5,7 +5,7 @@ import { ANSI_ESCAPE, ANSI_REGEX, ANSI_REGEX_START, ANSI_REGEX_CAPTURE } from ".
 import { dimStyledText } from "../src/util.js"
 import { TextFormatter } from "../src/text-formatter.js"
 import { LineWrapper } from "../src/line-wrapper.js"
-import { stripAnsiColors } from "./util.js"
+import { stripAnsiColors } from "../src/ansi.js"
 
 describe("ANSI constants", () => {
   it("ANSI_ESCAPE matches the ESC control character", () => {

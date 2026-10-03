@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0043_emits an escaped ERB case sharing a tag with its condition as literal text"
+input: "{source: \"<%% case status when :active %>\\n  on\\n<%% end %>\\n\", locals: {}, options: {parser_options: {strict: false}}}"
+---
+<% case status when :active %>
+  on
+<% end %>

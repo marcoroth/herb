@@ -22,6 +22,15 @@ module Herb
     # : () -> Location
     def self.zero: () -> Location
 
+    # : (Position) -> bool
+    def contains?: (Position) -> bool
+
+    # : (Location) -> bool
+    def covers?: (Location) -> bool
+
+    # : () -> bool
+    def empty?: () -> bool
+
     # : () -> serialized_location
     def to_hash: () -> serialized_location
 

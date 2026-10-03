@@ -94,6 +94,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
 export class ERBPreferImageTagHelperRule extends ParserRule {
   static ruleName = "erb-prefer-image-tag-helper"
   static introducedIn = this.version("0.4.3")
+  static defaultEnabledIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

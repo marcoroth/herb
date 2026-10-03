@@ -72,7 +72,7 @@ class PreferExplicitConditionalsVisitor extends BaseRuleVisitor<PreferExplicitCo
 
 export class ERBPreferExplicitConditionalsRule extends ParserRule<PreferExplicitConditionalsAutofixContext> {
   static ruleName = "erb-prefer-explicit-conditionals"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.0")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {

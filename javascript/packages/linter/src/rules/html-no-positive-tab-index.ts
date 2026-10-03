@@ -22,11 +22,13 @@ class NoPositiveTabIndexVisitor extends AttributeVisitorMixin {
 export class HTMLNoPositiveTabIndexRule extends ParserRule {
   static ruleName = "html-no-positive-tab-index"
   static introducedIn = this.version("0.6.0")
+  static defaultEnabledIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "warning",
+      environments: ["cli", "browser"],
     }
   }
 

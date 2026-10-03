@@ -1,8 +1,12 @@
 import { isPrismNodeType } from "@herb-tools/core"
 import type { PrismNode } from "@herb-tools/core"
 
-export const DEBUG_OUTPUT_METHODS = new Set(["p", "pp", "puts", "print", "warn", "debug", "byebug"])
 export const BINDING_DEBUGGER_METHODS = new Set(["pry", "irb"])
+export const CONTROL_FLOW_METHODS = new Set(["raise", "throw", "fail"])
+export const DEBUG_OUTPUT_METHODS = new Set(["p", "pp", "puts", "print", "warn", "debug", "byebug"])
+
+const CONTROL_FLOW_NODE_TYPES = ["BreakNode", "NextNode", "RedoNode", "RetryNode", "ReturnNode"]
+const COMPARISON_METHODS = new Set(["==", "===", "!=", "<=", ">=", "<=>", "=~"])
 
 export const SIDE_EFFECT_METHODS = new Set([
   "content_for",
@@ -13,10 +17,6 @@ export const SIDE_EFFECT_METHODS = new Set([
   "turbo_exempts_page_from_preview",
   "turbo_page_requires_reload",
 ])
-
-export const CONTROL_FLOW_METHODS = new Set(["raise", "throw", "fail"])
-
-const CONTROL_FLOW_NODE_TYPES = ["BreakNode", "NextNode", "RedoNode", "RetryNode", "ReturnNode"]
 
 export function isSideEffectCall(node: PrismNode): boolean {
   if (!isPrismNodeType(node, "CallNode")) return false
@@ -59,6 +59,14 @@ export function isAssignmentNode(prismNode: PrismNode): boolean {
   if (!type) return false
 
   return type.endsWith("WriteNode")
+}
+
+export function isAttributeWriteCall(node: PrismNode): boolean {
+  if (!isPrismNodeType(node, "CallNode")) return false
+  if (!node.receiver) return false
+  if (!node.name.endsWith("=")) return false
+
+  return !COMPARISON_METHODS.has(node.name)
 }
 
 export function isDebugOutputCall(node: PrismNode): boolean {

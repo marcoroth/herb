@@ -1,0 +1,30 @@
+# Generated from lib/herb/engine/slots/components.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # The compile-time components a slots template may use.
+      #
+      # A component is a capitalized wrapper tag the slots visitor recognizes and
+      # transforms away before any slot is recorded, so the rendered page never
+      # carries the tag itself. Each built-in lives in its own file under
+      # `components/` and registers here by name.
+      module Components
+        NAME: Regexp
+
+        REGISTRY: Hash[String, singleton(Base)]
+
+        BUILT_IN: Array[String]
+
+        # : (String?) -> bool
+        def self.component?: (String?) -> bool
+
+        # : (String) -> singleton(Base)?
+        def self.for: (String) -> singleton(Base)?
+
+        # : (untyped, ?String?) -> bool
+        def self.element?: (untyped, ?String?) -> bool
+      end
+    end
+  end
+end

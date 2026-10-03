@@ -34,6 +34,12 @@ This practice can cause:
   <img src="icon.png" alt="Icon">
   <span>Link text</span>
 </a>
+
+<button type="button">
+  <svg aria-hidden="true" viewBox="0 0 16 16">
+    <path d="M0 0h16v16H0z"></path>
+  </svg>
+</button>
 ```
 
 ### 🚫 Bad
@@ -62,5 +68,6 @@ This practice can cause:
 ## References
 
 * [HTML Living Standard - Content models](https://html.spec.whatwg.org/multipage/dom.html#content-models)
+* [HTML Living Standard - The SVG element](https://html.spec.whatwg.org/multipage/embedded-content-other.html#the-svg-element)
 * [MDN - Block-level elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements)
 * [MDN - Inline elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Inline_elements)

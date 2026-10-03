@@ -2,10 +2,18 @@ import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, ERBCommentNode, ERBContentNode } from "@herb-tools/core"
 
 class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
   visitERBContentNode(node: ERBContentNode): void {
+    this.checkEmpty(node)
+  }
+
+  visitERBCommentNode(node: ERBCommentNode): void {
+    this.checkEmpty(node)
+  }
+
+  private checkEmpty(node: ERBContentNode | ERBCommentNode): void {
     this.visitChildNodes(node)
 
     const { content, tag_closing } = node
@@ -27,6 +35,7 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
 export class ERBNoEmptyTagsRule extends ParserRule {
   static ruleName = "erb-no-empty-tags"
   static introducedIn = this.version("0.4.0")
+  static defaultEnabledIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

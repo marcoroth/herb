@@ -1,0 +1,65 @@
+# Generated from lib/herb/engine/css_inliner/inliner.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module CSSInliner
+      # Writes the CSS a template rendered into `style` attributes on the markup it applies to.
+      #
+      #     Herb::Engine::CSSInliner.inliner = Herb::Engine::CSSInliner::Inliner.new
+      #
+      # A template compiled with `CSSInliner::Visitor` hands everything it rendered to
+      # `CSSInliner.inline`, and this is what answers. Where the CSS came from is not something this
+      # has to know: a `<style>` block the template wrote, a block `ScopedStyle::Visitor` narrowed,
+      # and a stylesheet read at compile time all arrive the same way, and all of it is matched
+      # against the markup in the same buffer.
+      #
+      # Without an inliner installed, or if one fails, the markup is answered as it was rendered. The
+      # `<style>` blocks are still in it, so the CSS applies as it was written and the template is
+      # correct either way. Installing this is what turns a block into attributes, not what makes it
+      # work.
+      #
+      # The markup is wrapped in a `<template>` before it is parsed. A template renders a fragment,
+      # and a fragment is parsed in whatever context it is given: parsed as a body, a file whose
+      # roots are `<tr>` or `<td>` is not mangled but dropped, and `<tr><td>x</td></tr>` comes back
+      # as `x`. `<template>` is the one context that holds every element a file can start with.
+      #
+      # `keep` says whether the blocks the CSS came from are written out again, which they have to be
+      # when the CSS holds anything a `style` attribute cannot say. An inliner drops those rules
+      # instead of keeping them, so CSS holding `:hover` or `@media` is kept and says the rest twice.
+      # Which it is, is decided when the template is compiled.
+      #
+      # Anything answering `inline_fragment` with the markup and a stylesheet can stand in for
+      # `CSSInline::CSSInliner`, which is the only thing this needs it to be.
+      class Inliner
+        OPEN: String
+
+        CLOSE: String
+
+        # : (?keeping: untyped, ?dropping: untyped) -> void
+        def initialize: (?keeping: untyped, ?dropping: untyped) -> void
+
+        # : (String, ?String, ?keep: bool) -> String
+        def call: (String, ?String, ?keep: bool) -> String
+
+        # : () -> String
+        def inspect: () -> String
+
+        private
+
+        # : (bool) -> untyped
+        def build: (bool) -> untyped
+      end
+
+      attr_writer inliner: untyped
+
+      # : () -> untyped
+      def self.inliner: () -> untyped
+
+      # : (String, ?String, ?keep: bool) -> String
+      def self.inline: (String, ?String, ?keep: bool) -> String
+
+      # : () -> untyped
+      private def self.build: () -> untyped
+    end
+  end
+end

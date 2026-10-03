@@ -25,7 +25,7 @@ module Engine
         Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "ERB output tags"
+      assert_equal "1:5 - ERB output tags (<%= %>) are not allowed in attribute position. - Suggestion: Use control flow (<% %>) with static attributes instead.", error.message
       assert_equal 1, error.line
       assert_equal 5, error.column
     end
@@ -35,8 +35,8 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "invalid-nesting"
-      assert_includes error.message, "Block element <div> cannot be nested inside <p>"
+      assert_equal ["InvalidNestingError"], error.diagnostics.map(&:code)
+      assert_equal ["Block element <div> cannot be nested inside <p> at line 1"], error.diagnostics.map(&:message)
     end
 
     test "a fatal validator is the default behavior" do
@@ -92,7 +92,7 @@ module Engine
         Herb::Engine.new("<div><span>Content</div>", filename: "app/views/broken.html.erb")
       end
 
-      assert_equal ["missing-closing-tag"], error.diagnostics.map(&:code)
+      assert_equal ["MissingClosingTagError"], error.diagnostics.map(&:code)
       assert_equal "app/views/broken.html.erb", error.filename
       assert_equal "<div><span>Content</div>", error.source
       assert_equal 1, error.line_number
@@ -103,8 +103,7 @@ module Engine
         Herb::Engine.new("<div>\n<span>Content\n</div>", filename: "app/views/broken.html.erb")
       end
 
-      assert_includes error.annotated_source_code.join("\n"), "<span>Content"
-      assert_match(/\A\s+\d+\s{2}/, error.annotated_source_code.first)
+      assert_equal ["    1  <div>", "    2  <span>Content", "    3  </div>"], error.annotated_source_code
     end
 
     test "reports a parse error in a process that only loads herb" do
@@ -123,6 +122,31 @@ module Engine
       output = IO.popen([RbConfig.ruby, "-I#{lib}", "-e", script], err: [:child, :out], &:read)
 
       assert_equal "ok", output.strip
+    end
+
+    test "a fatal generator template validator raises GeneratorTemplateError" do
+      template = "<%% form_with url: x do |form| %>\n  <%%= form.submit \"Save\" %>\n<%% end %>\n"
+
+      error = assert_raises(Herb::Engine::GeneratorTemplateError) do
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
+      end
+
+      assert_equal 1, error.line
+      assert_equal 0, error.column
+    end
+
+    test "the engine compiles a generator template to literal ERB without the validator" do
+      template = "<%%= form.submit \"Save\" %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "a non-fatal generator template validator reports and still compiles" do
+      template = "<%%= form.submit \"Save\" %>\n"
+      engine = Herb::Engine.new(template, visitors: Herb::Engine::Validators.all(fatal: false))
+
+      assert_equal ["GeneratorTemplate"], engine.visitors.flat_map { |visitor| visitor.respond_to?(:diagnostics) ? visitor.diagnostics.map(&:code) : [] }.compact
     end
   end
 end

@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0032_keeps the whitespace around a comment with trim: false"
+input: "{source: \"before\\n  <%# comment %>\\nafter\\n\", locals: {}, options: {trim: false}}"
+---
+before
+  
+after

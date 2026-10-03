@@ -1149,6 +1149,73 @@ describe("html-no-duplicate-ids", () => {
     })
   })
 
+  describe("component fallback branches", () => {
+    test("passes for the same ID in a component body and its fallback", () => {
+      expectNoOffenses(dedent`
+        <Fragment>
+          <div id="card"></div>
+          <Fallback>
+            <div id="card"></div>
+          </Fallback>
+        </Fragment>
+      `)
+    })
+
+    test("fails for a duplicate inside one fallback", () => {
+      expectError("Duplicate ID `card` found within the same control flow branch. IDs must be unique within the same control flow branch.")
+
+      assertOffenses(dedent`
+        <Fragment>
+          <span id="loaded"></span>
+          <Fallback>
+            <div id="card"></div>
+            <div id="card"></div>
+          </Fallback>
+        </Fragment>
+      `)
+    })
+
+    test("fails when an ID from a component body repeats after it", () => {
+      expectError("Duplicate ID `card` found. IDs must be unique within a document.")
+
+      assertOffenses(dedent`
+        <Fragment>
+          <div id="card"></div>
+          <Fallback><div id="skeleton"></div></Fallback>
+        </Fragment>
+        <div id="card"></div>
+      `)
+    })
+
+    test("fails for the same ID in two sibling components", () => {
+      expectError("Duplicate ID `card` found. IDs must be unique within a document.")
+
+      assertOffenses(dedent`
+        <Fragment>
+          <div id="card"></div>
+          <Fallback><div id="one"></div></Fallback>
+        </Fragment>
+        <Fragment>
+          <div id="card"></div>
+          <Fallback><div id="two"></div></Fallback>
+        </Fragment>
+      `)
+    })
+
+    test("passes for a fallback sharing an ID inside an ERB branch", () => {
+      expectNoOffenses(dedent`
+        <% if @detailed %>
+          <Fragment>
+            <div id="card"></div>
+            <Fallback><div id="card"></div></Fallback>
+          </Fragment>
+        <% else %>
+          <div id="card"></div>
+        <% end %>
+      `)
+    })
+  })
+
   describe("block iteration nodes (ERBIterationBlockNode)", () => {
     describe("static IDs repeat once per iteration", () => {
       test("fails for a static ID in a single each block", () => {

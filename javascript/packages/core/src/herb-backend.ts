@@ -9,7 +9,7 @@ import { deserializePrismParseResult } from "./prism/index.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
 import type { ParseResultFor } from "./parse-result.js"
-import type { ParseOptions } from "./parser-options.js"
+import type { LexOptions, ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { PrismParseResult } from "./prism/index.js"
 import type { DiffOptions, DiffResult } from "./diff-result.js"
@@ -48,13 +48,14 @@ export abstract class HerbBackend {
   /**
    * Lexes the given source string into a `LexResult`.
    * @param source - The source code to lex.
+   * @param options - Optional lexing options.
    * @returns A `LexResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  lex(source: string): LexResult {
+  lex(source: string, options?: LexOptions): LexResult {
     this.ensureBackend()
 
-    return LexResult.from(this.backend.lex(ensureString(source)))
+    return LexResult.from(this.backend.lex(ensureString(source), options))
   }
 
   /**
@@ -62,7 +63,7 @@ export abstract class HerbBackend {
    * @param path - The file path to lex.
    * @returns A `LexResult` instance.
    */
-  abstract lexFile(path: string): LexResult
+  abstract lexFile(path: string, options?: LexOptions): LexResult
 
   /**
    * Parses the given source string into a `ParseResult`.
@@ -99,6 +100,22 @@ export abstract class HerbBackend {
     const mergedOptions = { ...DEFAULT_EXTRACT_RUBY_OPTIONS, ...options }
 
     return this.backend.extractRuby(ensureString(source), mergedOptions)
+  }
+
+  /**
+   * The ERB tag openings the lexer always recognizes, as defined in libherb.
+   *
+   * Custom openings configured through the `erb_openers` option are everything
+   * else a `tag_opening` token can hold, so this is the list to check an opening
+   * against to find out whether it is a custom one.
+   *
+   * @returns The built-in ERB tag openings, including the leading `<%`.
+   * @throws Error if the backend is not loaded.
+   */
+  defaultERBOpenings(): string[] {
+    this.ensureBackend()
+
+    return this.backend.defaultERBOpenings()
   }
 
   /**

@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0043_handles case with its first condition in the same erb tag on one line"
+input: "{source: \"<% case animal when \\\"cat\\\" %>\\n  <p>You chose a cat!</p>\\n<% when \\\"dog\\\" %>\\n  <p>You chose a dog!</p>\\n<% end %>\\n\", options: {parser_options: {strict: false}}}"
+---
+_buf = ::String.new; case animal when "cat" 
+ _buf << '  <p>You chose a cat!</p>
+'.freeze; when "dog" 
+ _buf << '  <p>You chose a dog!</p>
+'.freeze; end 
+_buf.to_s

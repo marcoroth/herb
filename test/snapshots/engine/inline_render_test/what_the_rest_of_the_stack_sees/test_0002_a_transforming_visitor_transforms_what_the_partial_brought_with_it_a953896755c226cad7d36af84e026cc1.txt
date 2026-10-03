@@ -1,0 +1,6 @@
+---
+source: "Engine::InlineRenderTest::what the rest of the stack sees#test_0002_a transforming visitor transforms what the partial brought with it"
+input: "inline_render_test-9"
+---
+_buf = ::String.new; ->() { ; _buf << (render Card.new(title: "hi")).to_s; }.call() ;
+_buf.to_s

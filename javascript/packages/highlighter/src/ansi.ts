@@ -9,4 +9,6 @@ export const ANSI_REGEX_START = /^\x1b\[[0-9;]*m/
 // eslint-disable-next-line no-control-regex
 export const ANSI_REGEX_CAPTURE = /(\x1b\[[0-9;]*m)/g
 
-export const visibleWidth = (text: string): number => text.replace(ANSI_REGEX, "").length
+export const stripAnsiColors = (text: string): string => text.replace(ANSI_REGEX, "")
+
+export const visibleWidth = (text: string): number => stripAnsiColors(text).length

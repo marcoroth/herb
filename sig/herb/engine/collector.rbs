@@ -1,0 +1,48 @@
+# Generated from lib/herb/engine/collector.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # What a set of templates says about itself, gathered without rendering any of them.
+    #
+    # Compiling a template settles things a host wants to know before a request arrives. A
+    # collector compiles files for that and nothing else, and a subclass says what to keep from
+    # each one. Which files to give it, and where what it gathers goes, is the job of whatever
+    # integrates Herb with a framework.
+    #
+    # A file that will not compile is recorded in #failures and the run carries on, so one broken
+    # template does not cost a host the rest of them.
+    class Collector
+      class Failure < Data
+        attr_reader file(): untyped
+
+        attr_reader error(): untyped
+
+        def self.new: (untyped file, untyped error) -> instance
+                    | (file: untyped, error: untyped) -> instance
+
+        def self.members: () -> [ :file, :error ]
+
+        def members: () -> [ :file, :error ]
+      end
+
+      attr_reader failures: Array[Failure]
+
+      # : (?project_path: (String | Pathname)?, **untyped) -> void
+      def initialize: (?project_path: (String | Pathname)?, **untyped) -> void
+
+      # : ((String | Pathname), ?String?) -> untyped
+      def add: (String | Pathname, ?String?) -> untyped
+
+      # : ((String | Pathname), ?String) -> Array[untyped]
+      def add_all: (String | Pathname, ?String) -> Array[untyped]
+
+      private
+
+      # : [T] ((String | Pathname), String?, untyped) { (untyped) -> T? } -> T?
+      def compile: [T] (String | Pathname, String?, untyped) { (untyped) -> T? } -> T?
+
+      # : ((String | Pathname), untyped) -> Hash[Symbol, untyped]
+      def engine_options: (String | Pathname, untyped) -> Hash[Symbol, untyped]
+    end
+  end
+end

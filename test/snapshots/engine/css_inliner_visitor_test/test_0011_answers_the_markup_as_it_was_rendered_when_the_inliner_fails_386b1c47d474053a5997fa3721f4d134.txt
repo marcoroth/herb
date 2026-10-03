@@ -1,0 +1,5 @@
+---
+source: "Engine::CSSInlinerVisitorTest#test_0011_answers the markup as it was rendered when the inliner fails"
+input: "{source: \"<style>.failing { color: #ff0000 }</style><h1 class=\\\"failing\\\">Hi</h1>\", locals: {}, options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/css_inliner\", escape: false, visitors: [#<Herb::Engine::CSSInliner::Visitor>]}}"
+---
+<style>.failing { color: #ff0000 }</style><h1 class="failing">Hi</h1>

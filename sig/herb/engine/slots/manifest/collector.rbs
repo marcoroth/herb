@@ -1,0 +1,45 @@
+# Generated from lib/herb/engine/slots/manifest/collector.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      module Manifest
+        # What a set of templates says about itself, gathered without rendering any of them.
+        #
+        # A manifest is decided when a file is compiled, so everything a page needs to know about
+        # its templates is knowable ahead of time. This compiles each file for that and nothing
+        # else, which is what makes it possible to write the manifests into an asset and have
+        # templates carry none of them:
+        #
+        #     collector = Herb::Engine::Slots::Manifest::Collector.new(project_path: root)
+        #
+        #     collector.add("app/views/posts/_card.html.erb")
+        #     collector.add("app/views/posts/index.html.erb")
+        #
+        #     collector.to_json #=> the one file those templates add up to
+        #
+        # Which files to give it, and where the asset goes, is the job of whatever integrates Herb
+        # with a framework. This knows how to compile and what to keep.
+        class Collector < Engine::Collector
+          # : (?identifier: untyped?, ?project_path: (String | Pathname)?, **untyped) -> void
+          def initialize: (?identifier: untyped?, ?project_path: (String | Pathname)?, **untyped) -> void
+
+          # : ((String | Pathname), ?String?) -> String?
+          def add: (String | Pathname, ?String?) -> String?
+
+          # : () -> Hash[String, Hash[String, untyped]]
+          def manifests: () -> Hash[String, Hash[String, untyped]]
+
+          # : () -> bool
+          def empty?: () -> bool
+
+          # : () -> String
+          def to_json: () -> String
+
+          # : () -> String
+          def inspect: () -> String
+        end
+      end
+    end
+  end
+end

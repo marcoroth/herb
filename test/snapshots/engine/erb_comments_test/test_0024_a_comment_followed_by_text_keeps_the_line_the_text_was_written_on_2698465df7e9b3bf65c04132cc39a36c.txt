@@ -1,0 +1,8 @@
+---
+source: "Engine::ERBCommentsTest#test_0024_a comment followed by text keeps the line the text was written on"
+input: "{source: \"<%# comment %>\\nhi\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << 'hi
+'.freeze;
+_buf.to_s

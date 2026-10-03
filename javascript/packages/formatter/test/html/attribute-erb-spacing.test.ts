@@ -69,9 +69,7 @@ describe("Attribute ERB Spacing", () => {
       `
       const result = formatter.format(source)
       expect(result).toEqual(dedent`
-        <button data-action="<% if clickable? %> click->handler#action <% end %>">
-          Click
-        </button>
+        <button data-action="<% if clickable? %> click->handler#action <% end %>">Click</button>
       `)
     })
 

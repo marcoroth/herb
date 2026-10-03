@@ -4,6 +4,8 @@
 module Herb
   #: type serialized_position = { line: Integer, column: Integer }
   class Position
+    include Comparable
+
     attr_reader :line #: Integer
     attr_reader :column #: Integer
 
@@ -26,6 +28,13 @@ module Herb
     #: () -> Position
     def self.zero
       new(0, 0)
+    end
+
+    #: (untyped) -> Integer?
+    def <=>(other)
+      return nil unless other.is_a?(Position)
+
+      [line, column] <=> [other.line, other.column]
     end
 
     #: () -> serialized_position

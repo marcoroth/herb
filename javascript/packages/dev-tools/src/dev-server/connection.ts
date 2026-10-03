@@ -2,6 +2,8 @@ import type { HerbMessage, ConnectionOptions } from "./types"
 
 const DEFAULT_RECONNECT_INTERVAL = 1000
 const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10
+const RECONNECT_BACKOFF_FACTOR = 2
+const MAX_RECONNECT_DELAY = 15000
 
 export class Connection {
   private socket: WebSocket | null = null
@@ -71,6 +73,14 @@ export class Connection {
     return this.givenUp
   }
 
+  send(message: unknown): void {
+    if (this.socket?.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    this.socket.send(JSON.stringify(message))
+  }
+
   private attemptConnect(): void {
     try {
       this.socket = new WebSocket(this.options.url)
@@ -85,12 +95,12 @@ export class Connection {
           const message: HerbMessage = JSON.parse(event.data)
           this.options.onMessage?.(message)
         } catch (error) {
-          console.warn("[herb-client] failed to parse message:", error)
+          console.warn("[Herb Dev Client] failed to parse message:", error)
         }
       }
 
       this.socket.onclose = () => {
-        console.debug("[herb-client] disconnected from dev server")
+        console.debug("[Herb Dev Client] disconnected from dev server")
         this.options.onDisconnect?.()
         this.scheduleReconnect()
       }
@@ -109,7 +119,7 @@ export class Connection {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.debug("[herb-client] gave up reconnecting after %d attempts", this.reconnectAttempts)
+      console.debug("[Herb Dev Client] gave up reconnecting after %d attempts", this.reconnectAttempts)
       this.givenUp = true
       this.options.onGivenUp?.()
       return
@@ -118,8 +128,8 @@ export class Connection {
     this.reconnectAttempts++
 
     const delay = Math.min(
-      this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts - 1),
-      10000
+      this.reconnectInterval * Math.pow(RECONNECT_BACKOFF_FACTOR, this.reconnectAttempts - 1),
+      MAX_RECONNECT_DELAY
     )
 
     this.options.onReconnecting?.(this.reconnectAttempts, this.maxReconnectAttempts, delay)

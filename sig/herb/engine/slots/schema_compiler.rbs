@@ -1,0 +1,62 @@
+# Generated from lib/herb/engine/slots/schema_compiler.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Slots
+      # Compiles a template into what a browser needs to know about its slots, without
+      # rendering anything.
+      #
+      # Slot identity depends on every visitor that runs before the slot visitor, and only
+      # the host knows its stack, so the host hands one over and this runs it. The stack
+      # arrives as a builder returning fresh visitors, because a visitor is stateful and the
+      # statics need a second compile:
+      #
+      #     result = Herb::Engine::Slots::SchemaCompiler.call(
+      #       source,
+      #       filename: "app/views/posts/index.html.erb",
+      #       mode: :client,
+      #       visitors: -> { [Herb::Engine::Validators::SecurityValidator.new(fatal: false)] }
+      #     )
+      #
+      #     result.version        #=> "5d1e0c77"
+      #     result.manifest       #=> what the page's manifest says
+      #     result.static_markup  #=> the markup with every slot as an empty marker pair
+      #
+      # A nil `mode` means slots are off for this template. The stack still runs so its
+      # diagnostics still flow, and everything slot-shaped comes back nil.
+      class SchemaCompiler
+        class Result < Data
+          attr_reader mode(): Symbol?
+
+          attr_reader manifest(): Hash[String, untyped]?
+
+          attr_reader version(): String?
+
+          attr_reader slot_entries(): Array[Hash[Symbol, untyped]]?
+
+          attr_reader statics(): Hash[String, String]?
+
+          attr_reader static_markup(): String?
+
+          attr_reader diagnostics(): Array[Herb::Diagnostic]
+
+          def self.new: (Symbol? mode, Hash[String, untyped]? manifest, String? version, Array[Hash[Symbol, untyped]]? slot_entries, Hash[String, String]? statics, String? static_markup, Array[Herb::Diagnostic] diagnostics) -> instance
+                      | (mode: Symbol?, manifest: Hash[String, untyped]?, version: String?, slot_entries: Array[Hash[Symbol, untyped]]?, statics: Hash[String, String]?, static_markup: String?, diagnostics: Array[Herb::Diagnostic]) -> instance
+
+          def self.members: () -> [ :mode, :manifest, :version, :slot_entries, :statics, :static_markup, :diagnostics ]
+
+          def members: () -> [ :mode, :manifest, :version, :slot_entries, :statics, :static_markup, :diagnostics ]
+        end
+
+        # : (String, filename: String, mode: Symbol?, ?visitors: ^() -> Array[::Herb::Visitor], ?engine: singleton(::Herb::Engine), ?options: Hash[Symbol, untyped]) -> Result
+        def self.call: (String, filename: String, mode: Symbol?, ?visitors: ^() -> Array[::Herb::Visitor], ?engine: singleton(::Herb::Engine), ?options: Hash[Symbol, untyped]) -> Result
+
+        # : (singleton(::Herb::Engine), String, String, Array[::Herb::Visitor], Hash[Symbol, untyped]) -> void
+        def self.compile: (singleton(::Herb::Engine), String, String, Array[::Herb::Visitor], Hash[Symbol, untyped]) -> void
+
+        # : (Array[::Herb::Visitor]) -> Array[Herb::Diagnostic]
+        def self.collect: (Array[::Herb::Visitor]) -> Array[Herb::Diagnostic]
+      end
+    end
+  end
+end

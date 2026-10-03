@@ -3,11 +3,14 @@
 require "json"
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/dynamics_compiler"
+require_relative "../../snapshot_utils"
+require_relative "../../../lib/herb/engine/slots/dynamics_compiler"
 
 module Engine
   module Slots
     class RoundTripTest < Minitest::Spec
+      include SnapshotUtils
+
       FILE = "app/views/greet.html.erb"
       FIXTURE = File.expand_path("../../../javascript/packages/client/test/fixtures/round-trip.json", __dir__)
 
@@ -32,13 +35,13 @@ module Engine
       end
 
       def render(assigns)
-        source = Herb::Engine.new(TEMPLATE, visitors: [Herb::Engine::SlotVisitor.new], filename: FILE).src
+        source = Herb::Engine.new(TEMPLATE, visitors: [Herb::Engine::Slots::Visitor.new], filename: FILE).src
 
         View.new(**assigns).instance_eval(source)
       end
 
       def values(assigns)
-        source = Herb::Engine::DynamicsCompiler.new(TEMPLATE, filename: FILE).src
+        source = Herb::Engine::Slots::DynamicsCompiler.new(TEMPLATE, filename: FILE).src
 
         View.new(**assigns).instance_eval(source)
       end
@@ -62,10 +65,9 @@ module Engine
       end
 
       test "both renderings carry the same version, which is what makes the values applicable" do
-        version = values(AFTER)[:version]
+        assert_snapshot_matches(render(BEFORE), "round_trip_test-0")
 
-        assert_includes render(BEFORE), ":#{version}:"
-        assert_includes render(AFTER), ":#{version}:"
+        assert_snapshot_matches(render(AFTER), "round_trip_test-1")
       end
 
       test "every value that changed is named by the payload" do
@@ -78,7 +80,7 @@ module Engine
       end
 
       test "a conditional whose branches lay out the same arrives as a value, not a branch" do
-        refute_includes render(BEFORE), "herb-branch"
+        assert_snapshot_matches(render(BEFORE), "round_trip_test-2")
         assert_kind_of String, values(AFTER)[:slots][5]
       end
     end

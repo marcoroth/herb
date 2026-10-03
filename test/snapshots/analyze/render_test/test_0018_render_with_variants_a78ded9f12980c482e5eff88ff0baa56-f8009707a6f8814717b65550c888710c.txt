@@ -29,7 +29,9 @@ options: {render_nodes: true}
     │   │       ├── variants: "[:tablet]" (location: (1:48)-(1:57))
     │   │       ├── handlers: ∅
     │   │       ├── content_type: ∅
-    │   │       └── locals: []
+    │   │       ├── locals: []
+    │   │       ├── state: []
+    │   │       └── state_location: ∅
     │   │
     │   ├── body: []
     │   ├── block_arguments: []

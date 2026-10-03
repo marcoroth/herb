@@ -1,0 +1,34 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0061_state directive with a multi-byte character in a default"
+input: |2-
+<%# herb:state (greeting: "grüß", after: 0) %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbStateDirectiveNode (location: (1:0)-(1:46))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:state (greeting: "grüß", after: 0) " (location: (1:3)-(1:44))
+    │   ├── tag_closing: "%>" (location: (1:44)-(1:46))
+    │   ├── key: "state" (location: (1:9)-(1:14))
+    │   ├── signature: "(greeting: "grüß", after: 0)" (location: (1:15)-(1:43))
+    │   └── states: (2 items)
+    │       ├── @ HerbStateDeclarationNode (location: (1:16)-(1:32))
+    │       │   ├── name: "greeting" (location: (1:16)-(1:24))
+    │       │   ├── default_value:
+    │       │   │   └── @ RubyLiteralNode (location: (1:26)-(1:32))
+    │       │   │       └── content: "\"grüß\""
+    │       │   │
+    │       │   └── kind: "string"
+    │       │
+    │       └── @ HerbStateDeclarationNode (location: (1:34)-(1:42))
+    │           ├── name: "after" (location: (1:34)-(1:39))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:41)-(1:42))
+    │           │       └── content: "0"
+    │           │
+    │           └── kind: "integer"
+    │
+    │
+    └── @ HTMLTextNode (location: (1:46)-(2:0))
+        └── content: "\n"

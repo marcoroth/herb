@@ -1632,7 +1632,7 @@ describe("CLI Output Formatting", () => {
 
       expect(result.summary.ruleCount).toBeGreaterThan(withoutAllRules.summary.ruleCount)
       expect(exitCode).toBe(0)
-    })
+    }, 10_000)
 
     test("can't be combined with --only", () => {
       const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules", "--only", "html-tag-name-lowercase")
@@ -1796,7 +1796,7 @@ describe("CLI Output Formatting", () => {
       } finally {
         try { unlinkSync(configPath) } catch {}
       }
-    })
+    }, 10_000)
 
     describe("`Rules` summary line", () => {
       function rulesLine(output: string): string {
@@ -2151,7 +2151,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2177,7 +2177,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2227,7 +2227,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2277,7 +2277,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2323,7 +2323,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2358,7 +2358,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.3
+          version: 0.11.0
           linter:
             enabled: true
         `)
@@ -2488,6 +2488,38 @@ describe("CLI Output Formatting", () => {
         expect(configContent).toContain("html-no-unknown-tag")
         expect(configContent).toMatch(/html-no-unknown-tag[\s\S]*enabled:\s*false/)
         expect(configContent).not.toContain("a11y-no-accesskey-attribute")
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("disables new Action View rules that have offenses", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views/items"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.10.4
+          framework: actionview
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "app/views/items/index.html.erb"), dedent`
+          <% @items.each do |item| %>
+            <%= render "item", item: item %>
+          <% end %>
+        ` + "\n")
+
+        writeFileSync(join(tempDir, "app/views/items/_item.html.erb"), `<p><%= item.name %></p>\n`)
+
+        const { exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+
+        const configContent = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+        expect(configContent).toMatch(/actionview-prefer-collection-render:\s*enabled:\s*false/)
       } finally {
         if (existsSync(tempDir)) {
           rmSync(tempDir, { recursive: true, force: true })

@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the conditionals pass#test_0002_left off with helpers, a statement modifier stays the expression it was written as"
+input: "{source: \"<p><%= \\\"yes\\\" if flag %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor helpers=false conditionals=false>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << ("yes" if flag).to_s; _buf << '</p>'.freeze;
+_buf.to_s

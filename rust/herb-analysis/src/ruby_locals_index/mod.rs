@@ -27,6 +27,7 @@ impl RubyLocalsIndex {
     let options = ParserOptions {
       prism_program: true,
       strict_locals: true,
+      herb_directives: true,
       ..Default::default()
     };
 
@@ -47,6 +48,7 @@ impl RubyLocalsIndex {
 
     let mut locals = strict_locals(document, &references, &offsets);
     locals.extend(block_locals(document, &references, &offsets));
+    locals.extend(state_locals(document, &references, &offsets));
 
     Self {
       locals,
@@ -202,6 +204,45 @@ fn any_children(node: &AnyNode) -> Vec<&AnyNode> {
     AnyNode::ERBIterationBlockNode(inner) => inner.body.iter().collect(),
     AnyNode::ERBRenderNode(inner) => inner.body.iter().collect(),
     _ => Vec::new(),
+  }
+}
+
+fn state_locals(document: &herb::nodes::DocumentNode, references: &ReferenceCollector, offsets: &OffsetTable) -> Vec<Local> {
+  let mut found = Vec::new();
+
+  for child in &document.children {
+    collect_state_locals(child, references, offsets, &mut found);
+  }
+
+  found
+}
+
+fn collect_state_locals(node: &AnyNode, references: &ReferenceCollector, offsets: &OffsetTable, found: &mut Vec<Local>) {
+  if let AnyNode::HerbStateDirectiveNode(inner) = node {
+    for state in &inner.states {
+      let AnyNode::HerbStateDeclarationNode(declaration) = state else {
+        continue;
+      };
+
+      let Some(ref token) = declaration.name else {
+        continue;
+      };
+
+      let name = token.value.clone();
+      let predicate = format!("{name}?");
+      let usages = references
+        .bare_calls
+        .iter()
+        .filter(|call| call.name == name || call.name == predicate)
+        .map(|call| offsets.location_for(call))
+        .collect();
+
+      found.push(Local::new(name, inner.location, usages));
+    }
+  }
+
+  for child in any_children(node) {
+    collect_state_locals(child, references, offsets, found);
   }
 }
 

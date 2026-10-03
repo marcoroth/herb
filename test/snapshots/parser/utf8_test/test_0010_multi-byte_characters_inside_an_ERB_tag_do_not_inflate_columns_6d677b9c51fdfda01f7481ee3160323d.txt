@@ -1,0 +1,16 @@
+---
+source: "Parser::UTF8Test#test_0010_multi-byte characters inside an ERB tag do not inflate columns"
+input: |2-
+<%= "grüß" %>X
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:13))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " "grüß" " (location: (1:3)-(1:11))
+    │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:13)-(2:0))
+        └── content: "X\n"

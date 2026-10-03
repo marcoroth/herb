@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizeTogglesTest::the literals pass#test_0002_left off, helpers still resolve"
+input: "{source: \"<p><%= tag.br %><%= \\\"text\\\" %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor literals=false>]}}"
+---
+_buf = ::String.new; _buf << '<p><br>'.freeze; _buf << ("text").to_s; _buf << '</p>'.freeze;
+_buf.to_s

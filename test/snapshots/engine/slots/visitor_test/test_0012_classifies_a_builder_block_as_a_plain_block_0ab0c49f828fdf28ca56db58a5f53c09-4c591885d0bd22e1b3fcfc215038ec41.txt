@@ -4,7 +4,7 @@ input: "<div><%= form_with model: @user do |f| %><input><% end %></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 5b55a600
+version: c00961bb
 
 slots:
-  index=0  type=block  node_path=[0, 0]  expression="form_with model: @user do |f|"  location=1:5
+  index=0  type=block  node_path=[0, 0]  expression="form_with model: @user do |f|"

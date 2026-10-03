@@ -1,0 +1,6 @@
+---
+source: "Engine::OptimizedLiteralsTest::what folds into text#test_0001_a string literal"
+input: "{source: \"<p><%= \\\"Total\\\" %>: <%= count %></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>Total: '.freeze; _buf << (count).to_s; _buf << '</p>'.freeze;
+_buf.to_s

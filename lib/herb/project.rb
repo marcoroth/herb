@@ -8,6 +8,9 @@ require "pathname"
 require "English"
 require "stringio"
 
+require_relative "colors"
+require_relative "configuration"
+
 module Herb
   class Project
     include Colors
@@ -28,6 +31,7 @@ module Herb
       "MissingERBEndTagError",
       "ERBMultipleBlocksInTagError",
       "ERBCaseWithConditionsError",
+      "ERBCaseInlinePatternMatchError",
       "ConditionalElementMultipleTagsError",
       "ConditionalElementConditionMismatchError",
       "InvalidCommentClosingTagError",
@@ -39,7 +43,15 @@ module Herb
       "UnclosedERBTagError",
       "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
-      "NestedERBTagError"
+      "NestedERBTagError",
+      "MissingWhitespaceBetweenAttributesError",
+      "UnexpectedCharacterInAttributeNameError",
+      "UnexpectedCharacterInUnquotedAttributeValueError",
+      "UnexpectedEqualsSignBeforeAttributeNameError",
+      "UnexpectedSolidusInTagError",
+      "EndTagWithTrailingSolidusError",
+      "UnclosedCommentError",
+      "NestedCommentError"
     ].freeze
 
     ISSUE_TYPES = [
@@ -326,7 +338,7 @@ module Herb
         puts "```ruby"
         puts engine.src
         puts "```"
-      rescue StandardError
+      rescue Herb::Engine::CompilationError, StandardError
         # Skip if compilation fails entirely
       end
     end
@@ -477,6 +489,7 @@ module Herb
     end
 
     def compile_file(file_path, file_content)
+      require_relative "engine"
       require_relative "engine/validators"
 
       Herb::Engine.new(
@@ -507,7 +520,7 @@ module Herb
                  compilation_error: compilation_error,
                  diagnostics: [{ name: error_name, message: e.message }],
                  log: "⚠️ Compilation failed for #{file_path} (validation error)" }
-      rescue StandardError
+      rescue Herb::Engine::CompilationError, StandardError
         # Not a validator-caused error, continue with other checks
       end
 
@@ -518,7 +531,7 @@ module Herb
                  compilation_error: compilation_error,
                  diagnostics: [{ name: "CompilationError", message: "#{e.message} (strict mode)" }],
                  log: "🔒 Compilation failed for #{file_path} (strict mode error)" }
-      rescue StandardError
+      rescue Herb::Engine::CompilationError, StandardError
         # Fall through
       end
 

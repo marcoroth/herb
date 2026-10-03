@@ -1,0 +1,53 @@
+---
+source: "Parser::IframeTest#test_0004_iframe with ERB in the fallback"
+input: "<iframe src=\"/embed\"><%= t(\".no_frames\") %></iframe>"
+---
+@ DocumentNode (location: (1:0)-(1:52))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:52))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:21))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:20)-(1:21))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:8)-(1:20))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:11))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:8)-(1:11))
+        │       │       │               └── content: "src"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:11)-(1:12))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:20))
+        │       │               ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:13)-(1:19))
+        │       │               │       └── content: "/embed"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:19)-(1:20))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "iframe" (location: (1:1)-(1:7))
+        ├── body: (1 item)
+        │   └── @ ERBContentNode (location: (1:21)-(1:43))
+        │       ├── tag_opening: "<%=" (location: (1:21)-(1:24))
+        │       ├── content: " t(".no_frames") " (location: (1:24)-(1:41))
+        │       ├── tag_closing: "%>" (location: (1:41)-(1:43))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:43)-(1:52))
+        │       ├── tag_opening: "</" (location: (1:43)-(1:45))
+        │       ├── tag_name: "iframe" (location: (1:45)-(1:51))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:51)-(1:52))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

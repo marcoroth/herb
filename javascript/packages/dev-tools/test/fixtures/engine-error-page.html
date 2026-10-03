@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="herb-debug-mode" content="true"><title>app/views/posts/_post.html.erb could not be compiled</title><style>body { margin: 0; background: #f3f4f6; color: #111827;
+       font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.herb-error { max-width: 1040px; margin: 0 auto; padding: 40px 28px; }
+.herb-error h1 { margin: 0 0 24px; font-size: 20px; }
+.herb-error section { margin-bottom: 24px; padding: 20px; border-radius: 10px; background: #fff;
+                      box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.herb-error p { margin: 0 0 8px; }
+.herb-error .herb-where { color: #6b7280;
+                          font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+.herb-error .herb-hint { color: #065f46; }
+.herb-error pre { overflow-x: auto; margin: 12px 0 0; padding: 14px; border-radius: 8px;
+                  background: #282c34; color: #abb2bf;
+                  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.herb-error pre span { display: block; }
+.herb-error .herb-marked { color: #e06c75; }
+.herb-error .herb-error-provenance { margin-top: 32px; color: #6b7280; font-size: 13px; }
+.herb-error .herb-error-provenance ul { margin: 6px 0 0; padding-left: 20px; }
+.herb-error .herb-error-provenance code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style></head><body><main class="herb-error"><h1>This template could not be compiled</h1><section><p class="herb-where">app/views/posts/_post.html.erb:2:3</p><p>Opening tag `&lt;form&gt;` does not have a matching closing tag.</p><p class="herb-hint">Close the `&lt;form&gt;` before the `&lt;/div&gt;` on line 4.</p><pre><span class="">&nbsp;    1  &lt;div&gt;</span>
+<span class="herb-marked">&gt;    2    &lt;form&gt;</span>
+<span class="">&nbsp;    3      &lt;h1&gt;Title&lt;/h1&gt;</span>
+<span class="">&nbsp;    4  &lt;/div&gt;</span></pre></section></main><footer class="herb-error-provenance"><p>Compiled by Herb 0.10.3.</p><p>Parser options it was given:</p><ul><li><code>track_locations: true</code></li><li><code>freeze: false</code></li></ul><p>Visitors on the stack when it failed:</p><ul><li><code>#&lt;Herb::Engine::Validators::SecurityValidator fatal=true&gt;</code></li><li><code>#&lt;Herb::Engine::Validators::NestingValidator fatal=true&gt;</code></li></ul></footer><script type="application/json" data-herb-diagnostics data-count="1">{"version":1,"diagnostics":[{"template":"app/views/posts/_post.html.erb","message":"Opening tag `\u003cform>` does not have a matching closing tag.","code":"missing-closing-tag","severity":"error","kind":"diagnostic","origin":"Herb Parser","location":{"start":{"line":2,"column":3},"end":{"line":2,"column":9}},"suggestion":"Close the `\u003cform>` before the `\u003c/div>` on line 4.","overlay":"blocking","phase":"compile"}],"renderTree":[],"nodes":{},"sources":{"app/views/posts/_post.html.erb":"\u003cdiv>\n  \u003cform>\n    \u003ch1>Title\u003c/h1>\n\u003c/div>\n"},"meta":{"herb_version":"0.10.3","error_class":"Herb::Engine::ParseError","visitors":["#\u003cHerb::Engine::Validators::SecurityValidator fatal=true>","#\u003cHerb::Engine::Validators::NestingValidator fatal=true>"],"parser_options":{"track_locations":true,"freeze":false}}}</script></body></html>

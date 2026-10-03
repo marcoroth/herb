@@ -34,6 +34,21 @@ module Herb
       new(Position.zero, Position.zero)
     end
 
+    #: (Position) -> bool
+    def contains?(position)
+      position >= start && position < self.end
+    end
+
+    #: (Location) -> bool
+    def covers?(other)
+      start <= other.start && other.end <= self.end
+    end
+
+    #: () -> bool
+    def empty?
+      start == self.end
+    end
+
     #: () -> serialized_location
     def to_hash
       {

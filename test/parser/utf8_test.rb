@@ -60,5 +60,17 @@ module Parser
         <div>🌿</div>
       ERB
     end
+
+    test "multi-byte characters inside an ERB tag do not inflate columns" do
+      assert_parsed_snapshot(<<~ERB)
+        <%= "grüß" %>X
+      ERB
+    end
+
+    test "multi-byte characters in an ERB tag do not shift the nodes after it" do
+      assert_parsed_snapshot(<<~ERB)
+        <% ü %><p>after</p>
+      ERB
+    end
   end
 end

@@ -1,0 +1,200 @@
+---
+source: "Parser::TitleTest#test_0009_title in an xml document keeps its elements"
+input: |2-
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title><%= @feed.title %></title>
+    <item><title>Post <b>one</b></title></item>
+  </channel>
+</rss>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (4 items)
+    ├── @ XMLDeclarationNode (location: (1:0)-(1:38))
+    │   ├── tag_opening: "<?xml" (location: (1:0)-(1:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:5)-(1:36))
+    │   │       └── content: " version=\"1.0\" encoding=\"UTF-8\""
+    │   │
+    │   └── tag_closing: "?>" (location: (1:36)-(1:38))
+    │
+    ├── @ HTMLTextNode (location: (1:38)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(7:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:19))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "rss" (location: (2:1)-(2:4))
+    │   │       ├── tag_closing: ">" (location: (2:18)-(2:19))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (2:5)-(2:18))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:5)-(2:12))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (2:5)-(2:12))
+    │   │       │       │               └── content: "version"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:18))
+    │   │       │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (2:14)-(2:17))
+    │   │       │               │       └── content: "2.0"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (2:17)-(2:18))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "rss" (location: (2:1)-(2:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (2:19)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(6:12))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:11))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "channel" (location: (3:3)-(3:10))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:10)-(3:11))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "channel" (location: (3:3)-(3:10))
+    │   │   │   ├── body: (5 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (3:11)-(4:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (4:4)-(4:37))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (4:4)-(4:11))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (4:4)-(4:5))
+    │   │   │   │   │   │       ├── tag_name: "title" (location: (4:5)-(4:10))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (4:10)-(4:11))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "title" (location: (4:5)-(4:10))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ ERBContentNode (location: (4:11)-(4:29))
+    │   │   │   │   │   │       ├── tag_opening: "<%=" (location: (4:11)-(4:14))
+    │   │   │   │   │   │       ├── content: " @feed.title " (location: (4:14)-(4:27))
+    │   │   │   │   │   │       ├── tag_closing: "%>" (location: (4:27)-(4:29))
+    │   │   │   │   │   │       ├── parsed: true
+    │   │   │   │   │   │       └── valid: true
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (4:29)-(4:37))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (4:29)-(4:31))
+    │   │   │   │   │   │       ├── tag_name: "title" (location: (4:31)-(4:36))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (4:36)-(4:37))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLTextNode (location: (4:37)-(5:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (5:4)-(5:47))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (5:4)-(5:10))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (5:4)-(5:5))
+    │   │   │   │   │   │       ├── tag_name: "item" (location: (5:5)-(5:9))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (5:9)-(5:10))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "item" (location: (5:5)-(5:9))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLElementNode (location: (5:10)-(5:40))
+    │   │   │   │   │   │       ├── open_tag:
+    │   │   │   │   │   │       │   └── @ HTMLOpenTagNode (location: (5:10)-(5:17))
+    │   │   │   │   │   │       │       ├── tag_opening: "<" (location: (5:10)-(5:11))
+    │   │   │   │   │   │       │       ├── tag_name: "title" (location: (5:11)-(5:16))
+    │   │   │   │   │   │       │       ├── tag_closing: ">" (location: (5:16)-(5:17))
+    │   │   │   │   │   │       │       ├── children: []
+    │   │   │   │   │   │       │       └── is_void: false
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── tag_name: "title" (location: (5:11)-(5:16))
+    │   │   │   │   │   │       ├── body: (2 items)
+    │   │   │   │   │   │       │   ├── @ HTMLTextNode (location: (5:17)-(5:22))
+    │   │   │   │   │   │       │   │   └── content: "Post "
+    │   │   │   │   │   │       │   │
+    │   │   │   │   │   │       │   └── @ HTMLElementNode (location: (5:22)-(5:32))
+    │   │   │   │   │   │       │       ├── open_tag:
+    │   │   │   │   │   │       │       │   └── @ HTMLOpenTagNode (location: (5:22)-(5:25))
+    │   │   │   │   │   │       │       │       ├── tag_opening: "<" (location: (5:22)-(5:23))
+    │   │   │   │   │   │       │       │       ├── tag_name: "b" (location: (5:23)-(5:24))
+    │   │   │   │   │   │       │       │       ├── tag_closing: ">" (location: (5:24)-(5:25))
+    │   │   │   │   │   │       │       │       ├── children: []
+    │   │   │   │   │   │       │       │       └── is_void: false
+    │   │   │   │   │   │       │       │
+    │   │   │   │   │   │       │       ├── tag_name: "b" (location: (5:23)-(5:24))
+    │   │   │   │   │   │       │       ├── body: (1 item)
+    │   │   │   │   │   │       │       │   └── @ HTMLTextNode (location: (5:25)-(5:28))
+    │   │   │   │   │   │       │       │       └── content: "one"
+    │   │   │   │   │   │       │       │
+    │   │   │   │   │   │       │       ├── close_tag:
+    │   │   │   │   │   │       │       │   └── @ HTMLCloseTagNode (location: (5:28)-(5:32))
+    │   │   │   │   │   │       │       │       ├── tag_opening: "</" (location: (5:28)-(5:30))
+    │   │   │   │   │   │       │       │       ├── tag_name: "b" (location: (5:30)-(5:31))
+    │   │   │   │   │   │       │       │       ├── children: []
+    │   │   │   │   │   │       │       │       └── tag_closing: ">" (location: (5:31)-(5:32))
+    │   │   │   │   │   │       │       │
+    │   │   │   │   │   │       │       ├── is_void: false
+    │   │   │   │   │   │       │       └── element_source: "HTML"
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── close_tag:
+    │   │   │   │   │   │       │   └── @ HTMLCloseTagNode (location: (5:32)-(5:40))
+    │   │   │   │   │   │       │       ├── tag_opening: "</" (location: (5:32)-(5:34))
+    │   │   │   │   │   │       │       ├── tag_name: "title" (location: (5:34)-(5:39))
+    │   │   │   │   │   │       │       ├── children: []
+    │   │   │   │   │   │       │       └── tag_closing: ">" (location: (5:39)-(5:40))
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── is_void: false
+    │   │   │   │   │   │       └── element_source: "HTML"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (5:40)-(5:47))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (5:40)-(5:42))
+    │   │   │   │   │   │       ├── tag_name: "item" (location: (5:42)-(5:46))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (5:46)-(5:47))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (5:47)-(6:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (6:2)-(6:12))
+    │   │   │   │       ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │   │   │       ├── tag_name: "channel" (location: (6:4)-(6:11))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (6:11)-(6:12))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:12)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "rss" (location: (7:2)-(7:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

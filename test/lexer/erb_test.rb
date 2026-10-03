@@ -130,5 +130,41 @@ module Lexer
     test "erb tag with no recoverable closing delimiter" do
       assert_lexed_snapshot(%(<%= items.select { |item| item.size > 3 ))
     end
+
+    test "erb tag with a configured opener" do
+      assert_lexed_snapshot(%(<%graphql query { users { id } } %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag with a configured opener that is not configured" do
+      assert_lexed_snapshot(%(<%graphql query { users { id } } %>))
+    end
+
+    test "erb tag sharing a prefix with a configured opener" do
+      assert_lexed_snapshot(%(<%graphql_helper %>), erb_openers: ["graphql"])
+    end
+
+    test "erb tag with a configured symbol opener" do
+      assert_lexed_snapshot(%(<%? maybe %>), erb_openers: ["?"])
+    end
+
+    test "erb <%== %>" do
+      assert_lexed_snapshot(%(<%== "hello world" %>))
+    end
+
+    test "erb delimiter inside a single quoted Ruby string" do
+      assert_lexed_snapshot(%(<% x = '<%' %><%= x %>))
+    end
+
+    test "erb delimiter inside a double quoted Ruby string" do
+      assert_lexed_snapshot(%(<% x = "<%" %><%= x %>))
+    end
+
+    test "erb delimiter inside a Ruby string in an output tag" do
+      assert_lexed_snapshot(%(<%= '<%' %>))
+    end
+
+    test "erb tag missing its closing delimiter before another erb tag" do
+      assert_lexed_snapshot(%(<% users.each do |user| %\n  <p>x</p>\n<% end %>))
+    end
   end
 end

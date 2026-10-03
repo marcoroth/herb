@@ -1,0 +1,12 @@
+---
+source: "Engine::EngineTest#test_0040_heredoc closed before the end of an output tag keeps the following line"
+input: "{source: \"<%= part(\\n  y: [<<-D]\\n    text\\n  D\\n) %>\\n<%= z %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << (part(
+  y: [<<-D]
+    text
+  D
+)).to_s; _buf << '
+'.freeze; _buf << (z).to_s; _buf << '
+'.freeze;
+_buf.to_s

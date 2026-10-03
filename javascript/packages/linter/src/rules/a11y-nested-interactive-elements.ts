@@ -80,7 +80,8 @@ export class A11yNestedInteractiveElementsRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "error"
+      severity: "error",
+      environments: ["cli", "browser"],
     }
   }
 

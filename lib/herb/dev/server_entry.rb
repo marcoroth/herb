@@ -6,45 +6,65 @@ require "fileutils"
 module Herb
   module Dev
     class ServerEntry
-      SERVERS_DIR = File.expand_path("~/.herb/dev-servers").freeze
-      REQUIRED_KEYS = ["pid", "port", "project", "started_at"].freeze
+      SERVERS_DIR = File.expand_path("~/.herb/dev-servers").freeze #: String
+      REQUIRED_KEYS = ["pid", "port", "project", "started_at"].freeze #: Array[String]
 
-      attr_reader :pid, :port, :project, :started_at
+      KINDS = ["standalone", "embedded"].freeze #: Array[String]
 
-      def initialize(pid:, port:, project:, started_at: Time.now.utc.iso8601)
+      attr_reader :pid #: Integer
+      attr_reader :port #: Integer
+      attr_reader :project #: String?
+      attr_reader :started_at #: String
+      attr_reader :kind #: String
+
+      #: (pid: Integer, port: Integer, project: String?, ?started_at: String, ?kind: String) -> void
+      def initialize(pid:, port:, project:, started_at: Time.now.utc.iso8601, kind: "standalone")
         @pid = pid
         @port = port
         @project = project
         @started_at = started_at
+        @kind = KINDS.include?(kind.to_s) ? kind.to_s : "standalone"
       end
 
+      #: () -> bool
+      def embedded?
+        @kind == "embedded"
+      end
+
+      #: () -> void
       def save
         FileUtils.mkdir_p(SERVERS_DIR)
         File.write(file_path, to_json)
       end
 
+      #: () -> void
       def remove
         File.delete(file_path)
       rescue StandardError
         nil
       end
 
+      #: () -> bool
       def alive?
         self.class.process_alive?(pid)
       end
 
+      #: () -> Hash[Symbol, untyped]
       def to_hash
-        { pid: pid, port: port, project: project, started_at: started_at }
+        { pid: pid, port: port, project: project, started_at: started_at, kind: kind }
       end
 
+      #: (*untyped) -> String
       def to_json(*)
         JSON.generate(to_hash)
       end
 
+      #: () -> String
       def project_name
         project&.split("/")&.last || "unknown"
       end
 
+      #: () -> bool
       def stop!
         Process.kill("INT", pid)
         remove
@@ -55,6 +75,7 @@ module Herb
       end
 
       class << self
+        #: () -> Array[ServerEntry]
         def all
           FileUtils.mkdir_p(SERVERS_DIR)
 
@@ -74,18 +95,29 @@ module Herb
           end
         end
 
+        #: (Integer) -> ServerEntry?
         def find_by_port(port)
           all.find { |entry| entry.port == port }
         end
 
+        #: (String) -> ServerEntry?
         def find_by_project(project_path)
           all.find { |entry| entry.project == project_path }
         end
 
+        #: (?String?) -> Integer?
+        def port_for(project_path = nil)
+          find_by_project(project_path || Dir.pwd)&.port
+        rescue StandardError
+          nil
+        end
+
+        #: () -> void
         def stop_all
           all.each(&:stop!)
         end
 
+        #: (Integer?) -> bool
         def process_alive?(pid)
           return false unless pid
 
@@ -97,6 +129,7 @@ module Herb
 
         private
 
+        #: (String) -> ServerEntry?
         def load_file(path)
           data = JSON.parse(File.read(path))
 
@@ -106,7 +139,8 @@ module Herb
             pid: data["pid"],
             port: data["port"],
             project: data["project"],
-            started_at: data["started_at"]
+            started_at: data["started_at"],
+            kind: data["kind"] || "standalone"
           )
         rescue JSON::ParserError, Errno::ENOENT, Errno::EACCES
           begin
@@ -120,6 +154,7 @@ module Herb
 
       private
 
+      #: () -> String
       def file_path
         File.join(SERVERS_DIR, "#{pid}.json")
       end

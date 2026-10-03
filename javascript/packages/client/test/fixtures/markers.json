@@ -1,0 +1,16 @@
+{
+  "slot_open": {
+    "child": "<!--herb-slot:3-->",
+    "conditional": "<!--herb-slot:4:conditional-->",
+    "collection": "<!--herb-slot:5:collection-->"
+  },
+  "slot_close": "<!--/herb-slot:3-->",
+  "element_anchors": "6:attribute:class 7:child 8:boolean_attribute:muted",
+  "branch": "<!--herb-branch:4:1-->",
+  "item_open": "<!--herb-item:5:a&b-->",
+  "item_close": "<!--/herb-item:5-->",
+  "region_open": "<!--herb-region:app/views/posts/_card.html.erb:aaaaaaaa:2-->",
+  "region_close": "<!--/herb-region:app/views/posts/_card.html.erb-->",
+  "statics_open": "<template data-herb-region=\"app/views/posts/_card.html.erb:aaaaaaaa\">",
+  "statics_close": "</template>"
+}

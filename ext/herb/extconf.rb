@@ -7,7 +7,6 @@ extension_name = "herb"
 
 if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
   puts "Building from source — running bootstrap..."
-  Herb::Bootstrap.generate_templates
 
   unless Herb::Bootstrap.prism_vendored?
     prism_path = Herb::Bootstrap.find_prism_gem_path
@@ -29,6 +28,8 @@ if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
     puts "Vendoring Prism from #{prism_path}..."
     Herb::Bootstrap.vendor_prism(prism_gem_path: prism_path)
   end
+
+  Herb::Bootstrap.generate_templates
 
   root_path = Herb::Bootstrap::ROOT_PATH
   sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
@@ -101,7 +102,8 @@ core_src_files = [
   "extension.c",
   "nodes.c",
   "error_helpers.c",
-  "extension_helpers.c"
+  "extension_helpers.c",
+  "parser_options_helpers.c"
 ]
 
 $srcs = core_src_files + herb_src_files + prism_main_files + prism_util_files

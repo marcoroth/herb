@@ -1,0 +1,7 @@
+---
+source: "Engine::InlineRenderTest::what the copy has to keep meaning#test_0005_resolves a partial in the format the template renders in"
+input: "inline_render_test-1"
+---
+_buf = ::String.new; ->() { ; _buf << 'turbo version
+'.freeze; }.call() ;
+_buf.to_s

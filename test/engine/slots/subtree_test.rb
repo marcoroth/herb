@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_helper"
-require_relative "../../../lib/herb/engine/slot_subtree"
+require_relative "../../../lib/herb/engine/slots/subtree"
 
 module Engine
   module Slots
@@ -16,7 +16,7 @@ module Engine
       COLLECTION = "<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>"
 
       def subtree(source)
-        Herb::Engine::SlotSubtree.new(source, filename: "app/views/posts/index.html.erb")
+        Herb::Engine::Slots::Subtree.new(source, filename: "app/views/posts/index.html.erb")
       end
 
       def render(source, index, **assigns)
@@ -56,7 +56,7 @@ module Engine
       end
 
       test "names each slot by the path the visitor recorded" do
-        visitor = Herb::Engine::SlotVisitor.new
+        visitor = Herb::Engine::Slots::Visitor.new
 
         Herb::Engine.new(COLLECTION, visitors: [visitor], filename: "app/views/posts/index.html.erb")
 
@@ -68,7 +68,7 @@ module Engine
       end
 
       test "carries the version the markers were written with" do
-        visitor = Herb::Engine::SlotVisitor.new
+        visitor = Herb::Engine::Slots::Visitor.new
 
         Herb::Engine.new(COLLECTION, visitors: [visitor], filename: "app/views/posts/index.html.erb")
 

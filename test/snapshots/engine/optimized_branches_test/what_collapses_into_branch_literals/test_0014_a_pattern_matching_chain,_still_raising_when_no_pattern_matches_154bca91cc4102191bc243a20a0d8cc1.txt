@@ -1,0 +1,10 @@
+---
+source: "Engine::OptimizedBranchesTest::what collapses into branch literals#test_0014_a pattern matching chain, still raising when no pattern matches"
+input: "{source: \"<% case value %>\\n<% in [Integer] %>\\nints\\n<% in [String] %>\\nstrings\\n<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+case value 
+in [Integer] 
+ "ints\n".freeze;
+in [String] 
+ "strings\n".freeze;
+end ;

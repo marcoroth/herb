@@ -4,7 +4,7 @@ input: "<!-- Content: <%= @c %> -->"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: 65166bbb
+version: e5623121
 
 slots:
-  index=0  type=comment  node_path=[0]  location=1:0
+  index=0  type=comment  node_path=[0]

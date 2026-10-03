@@ -1,0 +1,27 @@
+export interface StatePredicate {
+  readonly comparand?: string
+  readonly operator?: string
+  readonly kinds: string[] | null
+  readonly only: string
+  readonly rewrite?: string
+}
+
+export const STATE_PREDICATES: Record<string, StatePredicate> = {
+<%- state_predicates.each do |predicate| -%>
+  <%= predicate.literal(predicate.name) %>: {
+<%- if predicate.comparand -%>
+    comparand: <%= predicate.literal(predicate.comparand) %>,
+<%- end -%>
+<%- if predicate.operator -%>
+    operator: <%= predicate.literal(predicate.operator) %>,
+<%- end -%>
+    kinds: <%= predicate.typescript_kinds %>,
+    only: <%= predicate.literal(predicate.only) %>,
+<%- if predicate.rewrite -%>
+    rewrite: <%= predicate.literal(predicate.rewrite) %>,
+<%- end -%>
+  },
+<%- end -%>
+}
+
+export const STATE_PREDICATE_NAMES = Object.keys(STATE_PREDICATES)

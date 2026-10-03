@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0040_emits an escaped ERB conditional as literal text"
+input: "{source: \"<%% if admin? %>\\n  <p>hi</p>\\n<%% else %>\\n  <p>bye</p>\\n<%% end %>\\n\", locals: {}, options: {}}"
+---
+<% if admin? %>
+  <p>hi</p>
+<% else %>
+  <p>bye</p>
+<% end %>

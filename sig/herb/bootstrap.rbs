@@ -26,6 +26,8 @@ module Herb
 
     def self.find_prism_as_bundler_sibling: () -> untyped
 
+    def self.prism_source?: (untyped path) -> untyped
+
     def self.find_prism_from_gem_spec: () -> untyped
   end
 end

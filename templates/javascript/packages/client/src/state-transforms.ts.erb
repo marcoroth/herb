@@ -1,0 +1,19 @@
+export interface StateTransform {
+  readonly operation: string
+  readonly kinds: string[] | null
+  readonly returns: string
+  readonly only: string
+}
+
+export const STATE_TRANSFORMS: Record<string, StateTransform> = {
+<%- state_transforms.each do |transform| -%>
+  <%= transform.name.inspect %>: {
+    operation: <%= transform.operation.inspect %>,
+    kinds: <%= transform.typescript_kinds %>,
+    returns: <%= transform.returns.inspect %>,
+    only: <%= transform.only.inspect %>,
+  },
+<%- end -%>
+}
+
+export const STATE_TRANSFORM_NAMES = Object.keys(STATE_TRANSFORMS)

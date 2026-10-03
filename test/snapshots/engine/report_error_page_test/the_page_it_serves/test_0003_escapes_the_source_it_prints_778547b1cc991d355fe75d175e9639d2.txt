@@ -1,0 +1,5 @@
+---
+source: "Engine::ReportErrorPageTest::the page it serves#test_0003_escapes the source it prints"
+input: "error_page_test-3"
+---
+<pre><span class="">&nbsp;    1  &lt;div&gt;</span><span class="herb-marked">&gt;    2    &lt;form&gt;</span><span class="">&nbsp;    3      &lt;h1&gt;Title&lt;/h1&gt;</span><span class="">&nbsp;    4  &lt;/div&gt;</span></pre>

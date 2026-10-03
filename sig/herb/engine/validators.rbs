@@ -14,8 +14,8 @@ module Herb
     module Validators
       ALL: Hash[Symbol, untyped]
 
-      # : (?fatal: bool, **untyped) -> Herb::Engine::VisitorStack
-      def self.all: (?fatal: bool, **untyped) -> Herb::Engine::VisitorStack
+      # : (?fatal: bool, **untyped) -> Herb::Visitor::Stack
+      def self.all: (?fatal: bool, **untyped) -> Herb::Visitor::Stack
     end
   end
 end

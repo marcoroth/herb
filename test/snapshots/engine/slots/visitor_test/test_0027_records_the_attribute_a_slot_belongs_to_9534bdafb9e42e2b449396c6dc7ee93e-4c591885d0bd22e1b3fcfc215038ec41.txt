@@ -4,8 +4,8 @@ input: "<div class=\"<%= @c %>\" id=\"<%= @i %>\"></div>"
 options: {filename: "app/views/test.html.erb"}
 ---
 file: app/views/test.html.erb
-version: b5b81d11
+version: 6a76c755
 
 slots:
-  index=0  type=attribute  node_path=[0]  location=1:5  attribute="class"
-  index=1  type=attribute  node_path=[0]  location=1:23  attribute="id"
+  index=0  type=attribute  node_path=[0]  expression="@c"  attribute="class"
+  index=1  type=attribute  node_path=[0]  expression="@i"  attribute="id"

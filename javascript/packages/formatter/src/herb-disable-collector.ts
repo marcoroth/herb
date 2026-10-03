@@ -1,9 +1,9 @@
 import { IdentityPrinter } from "@herb-tools/printer"
-import { Visitor, Node, ERBContentNode, HTMLOpenTagNode, HTMLElementNode, WhitespaceNode, isNode, isPureWhitespaceNode } from "@herb-tools/core"
+import { Visitor, Node, ERBCommentNode, ERBContentNode, HTMLOpenTagNode, HTMLElementNode, WhitespaceNode, isNode, isPureWhitespaceNode } from "@herb-tools/core"
 import { isHerbDisableComment } from "./format-helpers.js"
 
 export interface CollectedHerbDisable {
-  node: ERBContentNode
+  node: ERBContentNode | ERBCommentNode
   anchor: Node | null
   parentNode: Node
   commentText: string

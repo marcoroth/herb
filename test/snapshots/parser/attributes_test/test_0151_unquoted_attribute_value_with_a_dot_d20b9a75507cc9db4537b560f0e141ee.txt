@@ -1,0 +1,40 @@
+---
+source: "Parser::AttributesTest#test_0151_unquoted attribute value with a dot"
+input: "<img src=image.jpg>"
+---
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:19))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:19))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:18)-(1:19))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:18))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:8))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:8))
+        │       │       │               └── content: "src"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:8)-(1:9))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:9)-(1:18))
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:9)-(1:18))
+        │       │               │       └── content: "image.jpg"
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        ├── is_void: true
+        └── element_source: "HTML"

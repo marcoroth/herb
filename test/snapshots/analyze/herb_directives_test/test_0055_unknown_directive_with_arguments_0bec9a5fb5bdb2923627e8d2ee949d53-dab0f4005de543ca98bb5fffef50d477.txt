@@ -1,0 +1,17 @@
+---
+source: "Analyze::HerbDirectivesTest#test_0055_unknown directive with arguments"
+input: |2-
+<%# herb:blahblah some payload %>
+options: {herb_directives: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HerbDirectiveNode (location: (1:0)-(1:33))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " herb:blahblah some payload " (location: (1:3)-(1:31))
+    │   ├── tag_closing: "%>" (location: (1:31)-(1:33))
+    │   ├── key: "blahblah" (location: (1:9)-(1:17))
+    │   └── arguments: "some payload" (location: (1:18)-(1:30))
+    │
+    └── @ HTMLTextNode (location: (1:33)-(2:0))
+        └── content: "\n"

@@ -6,12 +6,15 @@ pub mod errors;
 pub mod ffi;
 pub mod herb;
 pub mod lex_result;
+pub mod locate;
 pub mod location;
 pub mod nodes;
 pub mod parse_result;
+pub mod parser_options;
 pub mod position;
 pub mod prism;
 pub mod range;
+pub mod source_path;
 pub mod token;
 pub mod union_types;
 pub mod visitor;
@@ -19,11 +22,13 @@ pub mod visitor;
 pub(crate) mod style;
 
 pub use lex_result::LexResult;
+pub use locate::{locatable, locate, LocateResult, LocateSource, NodeLocate};
 pub use location::Location;
 pub use nodes::{AnyNode, ERBNode, Node};
 pub use parse_result::ParseResult;
 pub use position::Position;
 pub use range::Range;
+pub use source_path::SourcePath;
 pub use token::Token;
 pub use visitor::Visitor;
 
@@ -34,4 +39,4 @@ pub use herb::{
   version, DiffOperation, DiffOptions, DiffResult, ExtractRubyOptions, ParserOptions, RubyParseResult,
 };
 
-pub const VERSION: &str = "0.10.3";
+pub const VERSION: &str = "0.11.0";

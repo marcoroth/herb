@@ -3,7 +3,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
+import { ActionViewTagHelperToHTMLRewriter } from "../src/index.js"
 
 import type { Node } from "@herb-tools/core"
 

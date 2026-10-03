@@ -7,7 +7,7 @@ app/views/posts/_card.html.erb:2:2
 
       1 │ <div>
   →   2 │   <style>.card {}</style>
-        │   ~~~~~~~~~~~~~~~~~~~~~~~
+        │   ~~~~~~~
       3 │ </div>
       4 │
 
@@ -115,7 +115,7 @@ app/views/layouts/application.html.erb:3:4
       1 │ <html>
       2 │   <body>
   →   3 │     <style>.x {}</style>
-        │     ~~~~~~~~~~~~~~~~~~~~
+        │     ~~~~~~~
       4 │   </body>
       5 │ </html>
 
@@ -156,7 +156,7 @@ app/views/posts/_card.html.erb:2:2
 
       1 │ <div class="card">
   →   2 │   <style>.card { color: red }</style>
-        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        │   ~~~~~~~
       3 │ </div>
       4 │
 
@@ -194,7 +194,7 @@ app/views/posts/_card.html.erb:2:2
 
       1 │ <div class="card">
   →   2 │   <style>.card { color: red }</style>
-        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        │   ~~~~~~~
       3 │ </div>
       4 │
 
