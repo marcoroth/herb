@@ -203,6 +203,192 @@ jobs:
           path: corpus/runs/*.json
           retention-days: 30
 
+  performance:
+    name: Engine Compilation Performance
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Check out the base branch
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          git fetch --depth 1 origin "$BASE_SHA"
+          git worktree add base "$BASE_SHA"
+
+      - name: Build the base branch
+        working-directory: base
+        run: |-
+          bundle install --jobs 4
+          bundle exec rake templates
+          bundle exec rake make
+          bundle exec rake compile
+
+      - name: Build this branch
+        run: |-
+          bundle exec rake templates
+          bundle exec rake make
+          bundle exec rake compile
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Install corpus dependencies
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
+        run: bundle install --jobs 4
+
+      - name: Measure the base branch
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
+        run: |-
+          bundle exec corpus/bin/corpus performance \
+            --gem-path "$GITHUB_WORKSPACE/base"
+
+          mv corpus/runs/action-view/working-tree.json corpus/runs/action-view/baseline.json
+
+      - name: Measure this branch
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
+        run: |-
+          bundle exec corpus/bin/corpus performance \
+            --gem-path "$GITHUB_WORKSPACE"
+
+          mv corpus/runs/action-view/working-tree.json corpus/runs/action-view/branch.json
+
+      - name: Compare
+        id: compare
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          set -o pipefail
+
+          corpus/bin/diff-performance-runs \
+            corpus/runs/action-view/baseline.json \
+            corpus/runs/action-view/branch.json \
+            --max-regression 0.05 \
+            --absolute-budget 7.0 | tee performance.txt
+
+          touch performance-comparison-complete
+
+          ruby <<'RUBY'
+          require "bigdecimal"
+          require "json"
+
+          baseline = JSON.parse(
+            File.read("corpus/runs/action-view/baseline.json"),
+            decimal_class: BigDecimal
+          )
+          branch = JSON.parse(
+            File.read("corpus/runs/action-view/branch.json"),
+            decimal_class: BigDecimal
+          )
+          change = branch.fetch("herb_to_erubi_ratio") / baseline.fetch("herb_to_erubi_ratio") - 1
+          threshold = BigDecimal("0.05")
+
+          if change.abs > threshold
+            direction = change.negative? ? "improved" : "regressed"
+            summary = format("Corpus performance %s by %.1f%%", direction, change.abs * 100)
+            comparison = File.read("performance.txt")
+
+            File.write("performance-comment.md", <<~MARKDOWN)
+              <!-- corpus-performance-report -->
+              ### #{summary}
+
+              The normalized Herb-to-Erubi compilation ratio changed by more than 5% compared with `#{ENV.fetch("BASE_REF")}` (`#{ENV.fetch("BASE_SHA")[0, 7]}`).
+
+              ```
+              #{comparison.chomp}
+              ```
+            MARKDOWN
+          end
+
+          exit 1 if change > threshold
+          RUBY
+
+      - name: Comment on the pull request
+        if: (!cancelled()) && hashFiles('performance-comparison-complete') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          FROM_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |-
+          existing=$(gh api "repos/${{ github.repository }}/issues/$NUMBER/comments" \
+            --jq 'map(select(.body | contains("<!-- corpus-performance-report -->"))) | .[0].id // empty')
+
+          if [ ! -f performance-comment.md ]; then
+            if [ -n "$existing" ] && [ "$FROM_FORK" != "true" ]; then
+              gh api -X DELETE "repos/${{ github.repository }}/issues/comments/$existing"
+              echo "Removed obsolete performance comment $existing."
+            else
+              echo "Performance changed by no more than 5%; not posting a comment."
+            fi
+
+            exit 0
+          fi
+
+          if [ "$FROM_FORK" = "true" ]; then
+            echo "Pull request comes from a fork, so the token cannot comment. Report follows."
+            echo
+
+            cat performance-comment.md
+
+            exit 0
+          fi
+
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@performance-comment.md >/dev/null
+            echo "Updated comment $existing."
+          else
+            gh pr comment "$NUMBER" --body-file performance-comment.md
+            echo "Posted a new comment."
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Performance"
+            echo
+            echo '```'
+            cat performance.txt 2>/dev/null || echo "the comparison did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload runs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: corpus-performance-runs
+          path: corpus/runs/action-view/*.json
+          if-no-files-found: ignore
+          retention-days: 30
+
   allocations:
     name: Allocations
     runs-on: ubuntu-latest
