@@ -175,6 +175,14 @@ module Herb
         add_expression(node.content)
       end
 
+      def visit_ruby_html_attributes_splat_node(node)
+        if preceded_by_whitespace?
+          add_expression(node.content)
+        else
+          add_expression("(#{node.content}).then { |attributes| attributes.empty? ? attributes : \" \" + attributes }")
+        end
+      end
+
       def visit_html_close_tag_node(node)
         add_text(node.tag_opening&.value)
         add_text(node.tag_name&.value)

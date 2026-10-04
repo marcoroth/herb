@@ -17,7 +17,7 @@ options: {action_view_helpers: true}
     │   │       ├── tag_name: "turbo-frame" (location: (1:4)-(1:19))
     │   │       └── children: (2 items)
     │   │           ├── @ RubyHTMLAttributesSplatNode (location: (1:28)-(1:28))
-    │   │           │   ├── content: "tag.attributes(**attributes)"
+    │   │           │   ├── content: "tag.attributes({**attributes})"
     │   │           │   └── prefix: ""
     │   │           │
     │   │           └── @ HTMLAttributeNode (location: (1:20)-(1:26))
