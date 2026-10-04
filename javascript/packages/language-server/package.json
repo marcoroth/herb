@@ -56,7 +56,7 @@
     "@herb-tools/printer": "0.11.0",
     "@herb-tools/rewriter": "0.11.0",
     "vscode-html-languageservice": "^5.1.0",
-    "vscode-languageserver": "^10.1.1",
+    "vscode-languageserver": "^10.1.2",
     "vscode-languageserver-textdocument": "^1.0.15"
   },
   "devDependencies": {
