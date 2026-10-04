@@ -25,7 +25,7 @@ The scope check follows the runtime's resolution. A name resolves through the sc
 <%# herb:state (open: false, attempts: 0, sort: "name", draft: "") %>
 
 <button data-herb-toggle="open">Details</button>
-<button data-herb-set="open=true,sort=date">Both</button>
+<button data-herb-set="open=true sort=date">Both</button>
 <button data-herb-increment="attempts" data-herb-by="2">More</button>
 <select data-herb-set="change->sort=$value"></select>
 <button data-herb-set="keydown.meta+k@window->open=true">Palette</button>
