@@ -1,7 +1,4 @@
-import {
-  languages,
-  Range as MonacoRange,
-} from "monaco-editor/editor"
+import { languages, Range as MonacoRange } from "monaco-editor/editor"
 
 import {
   ParserService,
