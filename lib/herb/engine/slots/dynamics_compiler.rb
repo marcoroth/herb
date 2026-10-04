@@ -190,6 +190,16 @@ module Herb
           end
 
           #: (untyped) -> void
+          def visit_ruby_literal_node(node)
+            previous = @current_node
+            @current_node = node
+
+            super
+          ensure
+            @current_node = previous
+          end
+
+          #: (untyped) -> void
           def visit_erb_yield_node(node)
             previous = @current_node
             @current_node = node
