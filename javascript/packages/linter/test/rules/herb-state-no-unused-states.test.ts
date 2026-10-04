@@ -47,7 +47,7 @@ describe("HerbStateNoUnusedStatesRule", () => {
   test("allows a state written inside a set pair", () => {
     expectNoOffenses(dedent`
       <%# herb:state (pending: false, failed: false) %>
-      <button data-herb-set="pending=false,failed=true">Fail</button>
+      <button data-herb-set="pending=false failed=true">Fail</button>
     `)
   })
 
