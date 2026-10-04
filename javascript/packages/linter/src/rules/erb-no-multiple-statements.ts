@@ -28,6 +28,20 @@ type StatementsScope = {
   statements: PrismNodes.Node[]
 }
 
+type Clause = {
+  start: number
+  statements: PrismNodes.Node[]
+}
+
+type ClauseNode =
+  | PrismNodes.IfNode
+  | PrismNodes.UnlessNode
+  | PrismNodes.ElseNode
+  | PrismNodes.WhenNode
+  | PrismNodes.InNode
+  | PrismNodes.RescueNode
+  | PrismNodes.EnsureNode
+
 type Split = {
   tagOpening: string
   content: string
@@ -43,8 +57,42 @@ interface MultipleStatementsAutofixContext extends BaseAutofixContext {
 
 class StatementsCollector extends PrismVisitor {
   readonly scopes: StatementsScope[] = []
+  readonly clauses: Clause[] = []
 
   private depth = 0
+
+  override visitIfNode(node: PrismNodes.IfNode): void {
+    this.visitClause(node)
+  }
+
+  override visitUnlessNode(node: PrismNodes.UnlessNode): void {
+    this.visitClause(node)
+  }
+
+  override visitElseNode(node: PrismNodes.ElseNode): void {
+    this.visitClause(node)
+  }
+
+  override visitWhenNode(node: PrismNodes.WhenNode): void {
+    this.visitClause(node)
+  }
+
+  override visitInNode(node: PrismNodes.InNode): void {
+    this.visitClause(node)
+  }
+
+  override visitRescueNode(node: PrismNodes.RescueNode): void {
+    this.visitClause(node)
+  }
+
+  override visitEnsureNode(node: PrismNodes.EnsureNode): void {
+    this.visitClause(node)
+  }
+
+  private visitClause(node: ClauseNode): void {
+    this.clauses.push({ start: node.location.startOffset, statements: node.statements?.body ?? [] })
+    this.visitChildNodes(node)
+  }
 
   override visitStatementsNode(node: PrismNodes.StatementsNode): void {
     this.scopes.push({ depth: this.depth, statements: node.body })
@@ -57,12 +105,14 @@ class StatementsCollector extends PrismVisitor {
 
 class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatementsAutofixContext> {
   private readonly scopes: StatementsScope[]
+  private readonly clauses: Clause[]
   private readonly source: string
 
-  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], source: string) {
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], clauses: Clause[], source: string) {
     super(ruleName, context)
 
     this.scopes = scopes
+    this.clauses = clauses
     this.source = source
   }
 
@@ -108,9 +158,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
 
     if (!contentRange) return
 
-    const statements = this.shallowestStatementsIn(contentRange.from, contentRange.to).filter(statement => {
-      return statement.location.startOffset + statement.location.length <= contentRange.to
-    })
+    const statements = this.clauseStatementsIn(contentRange.from, contentRange.to)
 
     if (statements.length === 0) return
 
@@ -245,6 +293,20 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     return stringIndexFromByteOffset(this.source, byteOffset)
   }
 
+  private clauseStatementsIn(from: number, to: number): PrismNodes.Node[] {
+    const clause = this.clauses
+      .filter(clause => clause.start >= from && clause.start < to)
+      .sort((left, right) => left.start - right.start)[0]
+
+    if (!clause) return []
+
+    return clause.statements.filter(statement => {
+      const { startOffset, length } = statement.location
+
+      return startOffset >= from && startOffset + length <= to
+    })
+  }
+
   private shallowestStatementsIn(from: number, to: number): PrismNodes.Node[] {
     let shallowestDepth = Infinity
     let statements: PrismNodes.Node[] = []
@@ -304,7 +366,7 @@ export class ERBNoMultipleStatementsRule extends ParserRule<MultipleStatementsAu
 
     if (collector.scopes.length === 0) return []
 
-    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes, source)
+    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes, collector.clauses, source)
 
     visitor.visit(result.value)
 
