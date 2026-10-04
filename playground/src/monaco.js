@@ -1,4 +1,6 @@
 import "./monaco-environment.js"
+import "monaco-editor/features/register.all"
+import "monaco-editor/languages/definitions/ruby/register"
 
 import {
   editor as MonacoEditor,
@@ -8,9 +10,7 @@ import {
   KeyMod,
   KeyCode,
   languages,
-} from "monaco-editor/esm/vs/editor/edcore.main.js"
-
-import "monaco-editor/esm/vs/basic-languages/ruby/ruby.contribution.js"
+} from "monaco-editor/editor"
 
 const OVERFLOW_WIDGETS_ROOT_ID = "monaco-overflow-widgets-root"
 

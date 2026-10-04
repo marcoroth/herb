@@ -1,7 +1,7 @@
 import {
   languages,
   Range as MonacoRange,
-} from "monaco-editor/esm/vs/editor/edcore.main.js"
+} from "monaco-editor/editor"
 
 import {
   ParserService,
