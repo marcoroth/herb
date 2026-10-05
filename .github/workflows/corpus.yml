@@ -205,7 +205,7 @@ jobs:
 
   performance:
     name: Engine Compilation Performance
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -233,7 +233,24 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Install the last released gem
+        id: release
+        if: github.event_name == 'workflow_dispatch'
+        run: |-
+          version=$(gem search '^herb$' --remote --no-prerelease | sed -n 's/^herb (\([0-9][0-9.]*\).*/\1/p')
+
+          if [ -z "$version" ]; then
+            echo "Could not resolve the latest released herb version" >&2
+            exit 1
+          fi
+
+          gem install herb -v "$version" --no-document
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Comparing against herb $version"
+
       - name: Check out the base branch
+        if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |-
@@ -241,6 +258,7 @@ jobs:
           git worktree add base "$BASE_SHA"
 
       - name: Build the base branch
+        if: github.event_name == 'pull_request'
         working-directory: base
         run: |-
           bundle install --jobs 4
@@ -263,6 +281,7 @@ jobs:
         run: bundle install --jobs 4
 
       - name: Measure the base branch
+        if: github.event_name == 'pull_request'
         env:
           BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
         run: |-
@@ -271,7 +290,21 @@ jobs:
 
           mv corpus/runs/action-view/working-tree.json corpus/runs/action-view/baseline.json
 
+      - name: Measure the last release and this ref
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |-
+          bundle exec corpus/bin/corpus performance \
+            --herb "$VERSION" \
+            --gem-path "$GITHUB_WORKSPACE"
+
+          mv "corpus/runs/action-view/$VERSION.json" corpus/runs/action-view/baseline.json
+          mv corpus/runs/action-view/working-tree.json corpus/runs/action-view/branch.json
+
       - name: Measure this branch
+        if: github.event_name == 'pull_request'
         env:
           BUNDLE_GEMFILE: ${{ github.workspace }}/corpus/Gemfile
         run: |-
@@ -285,6 +318,7 @@ jobs:
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          COMMENT_ON_PR: ${{ github.event_name == 'pull_request' }}
         run: |-
           set -o pipefail
 
@@ -311,7 +345,7 @@ jobs:
           change = branch.fetch("herb_to_erubi_ratio") / baseline.fetch("herb_to_erubi_ratio") - 1
           threshold = BigDecimal("0.05")
 
-          if change.abs > threshold
+          if ENV["COMMENT_ON_PR"] == "true" && change.abs > threshold
             direction = change.negative? ? "improved" : "regressed"
             summary = format("Corpus performance %s by %.1f%%", direction, change.abs * 100)
             comparison = File.read("performance.txt")
@@ -332,7 +366,7 @@ jobs:
           RUBY
 
       - name: Comment on the pull request
-        if: (!cancelled()) && hashFiles('performance-comparison-complete') != ''
+        if: (!cancelled()) && github.event_name == 'pull_request' && hashFiles('performance-comparison-complete') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMBER: ${{ github.event.pull_request.number }}
