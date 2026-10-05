@@ -79,6 +79,7 @@ import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
 import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
 import { ERBPreferExplicitConditionalsRule } from "./rules/erb-prefer-explicit-conditionals.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
+import { ERBRequireTemplateFormatRule } from "./rules/erb-require-template-format.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
@@ -258,6 +259,7 @@ export const rules: RuleClass[] = [
   ERBPreferEachOverMapRule,
   ERBPreferExplicitConditionalsRule,
   ERBPreferImageTagHelperRule,
+  ERBRequireTemplateFormatRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
