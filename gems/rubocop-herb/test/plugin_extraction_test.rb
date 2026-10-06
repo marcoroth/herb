@@ -79,6 +79,20 @@ module RuboCop
         refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.herb"))
       end
 
+      test "preserves processed source metadata" do
+        original = processed_source("<%= x=1 %>\n", "example.herb")
+        original.config = Object.new
+        original.registry = Object.new
+
+        extracted = Plugin.extract_ruby(original).first[:processed_source]
+
+        assert_equal original.path, extracted.path
+        assert_equal original.ruby_version, extracted.ruby_version
+        assert_equal original.parser_engine, extracted.parser_engine
+        assert_same original.config, extracted.config
+        assert_same original.registry, extracted.registry
+      end
+
       private
 
       def extract(source)

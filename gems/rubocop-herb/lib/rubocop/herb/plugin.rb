@@ -37,10 +37,25 @@ module RuboCop
         code = position_preserving_ruby(template)
         return [] if code.strip.empty?
 
-        source = ProcessedSourceBuilder.call(code:, processed_source:)
+        source = processed_source(
+          code,
+          original: processed_source
+        )
         return [] unless source.valid_syntax? && source.ast
 
         [{ offset: 0, processed_source: source }]
+      end
+
+      def self.processed_source(code, original:)
+        ::RuboCop::ProcessedSource.new(
+          code,
+          original.ruby_version,
+          original.path,
+          parser_engine: original.parser_engine
+        ).tap do |source|
+          source.config = original.config
+          source.registry = original.registry
+        end
       end
 
       def self.position_preserving_ruby(template)
@@ -56,7 +71,7 @@ module RuboCop
         end.join
       end
 
-      private_class_method :position_preserving_ruby
+      private_class_method :position_preserving_ruby, :processed_source
 
       EXTRACT_RUBY = method(:extract_ruby).to_proc
     end
