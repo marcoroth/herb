@@ -18,6 +18,7 @@
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/extract.h"
+#include "../include/extract_internal.h"
 #include "../include/lexer/token_struct.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
@@ -1180,7 +1181,7 @@ static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocato
     .preserve_positions = true,
   };
 
-  herb_extract_ruby_to_buffer_with_options(source, &scope->buffer, &extract_options, allocator);
+  herb_extract_ruby_to_buffer_with_options_preserving_bytes(source, &scope->buffer, &extract_options, allocator);
 
   if (!scope->buffer.value || scope->buffer.length == 0) {
     hb_buffer_free(&scope->buffer);

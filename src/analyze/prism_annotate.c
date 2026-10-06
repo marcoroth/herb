@@ -2,6 +2,7 @@
 #include "../include/ast/ast_node.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/extract.h"
+#include "../include/extract_internal.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_narray.h"
@@ -301,7 +302,7 @@ void herb_annotate_prism_nodes(
     .erb_opener_count = options->erb_opener_count,
   };
 
-  herb_extract_ruby_to_buffer_with_options(source, &context->ruby_buf, &extract_options, allocator);
+  herb_extract_ruby_to_buffer_with_options_preserving_bytes(source, &context->ruby_buf, &extract_options, allocator);
 
   if (!context->ruby_buf.value || context->ruby_buf.length == 0) {
     hb_buffer_free(&context->ruby_buf);

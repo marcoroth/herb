@@ -3,6 +3,7 @@
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/extract.h"
+#include "../include/extract_internal.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_string.h"
 #include "../include/lib/string.h"
@@ -83,14 +84,25 @@ void herb_analyze_parse_errors(
   const parser_options_T* parser_options,
   hb_allocator_T* allocator
 ) {
-  char* extracted_ruby = herb_extract_ruby_with_semicolons_and_openers(
+  hb_buffer_T extracted_ruby_buffer;
+  if (!hb_buffer_init(&extracted_ruby_buffer, strlen(source), allocator)) { return; }
+
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  extract_options.erb_openers = parser_options ? parser_options->erb_openers : NULL;
+  extract_options.erb_opener_count = parser_options ? parser_options->erb_opener_count : 0;
+
+  herb_extract_ruby_to_buffer_with_options_preserving_bytes(
     source,
-    parser_options ? parser_options->erb_openers : NULL,
-    parser_options ? parser_options->erb_opener_count : 0,
+    &extracted_ruby_buffer,
+    &extract_options,
     allocator
   );
 
-  if (!extracted_ruby) { return; }
+  char* extracted_ruby = extracted_ruby_buffer.value;
+  if (!extracted_ruby) {
+    hb_buffer_free(&extracted_ruby_buffer);
+    return;
+  }
 
   bool strict_locals_enabled = parser_options && parser_options->strict_locals;
   bool has_anonymous_keyword_rest = strict_locals_enabled && document_has_anonymous_keyword_rest(document);
@@ -127,5 +139,5 @@ void herb_analyze_parse_errors(
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
   pm_options_free(&options);
-  hb_allocator_dealloc(allocator, extracted_ruby);
+  hb_buffer_free(&extracted_ruby_buffer);
 }
