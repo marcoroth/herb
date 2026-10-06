@@ -477,7 +477,7 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
-#### Multiple Outputs
+#### Multiple Outputs <Badge type="info" text="v0.11.1+" />
 
 `--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the `json` format right before it to a file instead of stdout.
 
