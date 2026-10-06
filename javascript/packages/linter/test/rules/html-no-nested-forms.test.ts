@@ -121,6 +121,28 @@ describe("html-no-nested-forms", () => {
     `)
   })
 
+  test("passes for form_with inside a render layout block", () => {
+    expectNoOffenses(dedent`
+      <%= render layout: "card" do %>
+        <%= form_with url: "/a" do |form| %>
+          <%= form.submit %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for form_with inside a render layout block inside a loop", () => {
+    expectNoOffenses(dedent`
+      <% plans.each do |plan| %>
+        <%= render layout: "billing/subscriptions/plan", locals: { plan: plan } do %>
+          <%= form_with url: "/a" do |form| %>
+            <%= form.submit %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
   test("fails for button_to inside form_with inside a block helper", () => {
     expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
 
