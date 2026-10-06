@@ -34,6 +34,8 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed->yield_node_count = 0;
   analyzed->then_keyword_count = 0;
   analyzed->unclosed_control_flow_count = 0;
+  analyzed->control_type = CONTROL_TYPE_UNKNOWN;
+  analyzed->control_type_detected = false;
 
   return analyzed;
 }
