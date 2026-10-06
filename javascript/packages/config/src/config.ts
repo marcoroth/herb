@@ -159,6 +159,7 @@ export type HerbConfig = HerbConfigOptions & {
 
 export type LoadOptions = {
   silent?: boolean
+  quiet?: boolean
   version?: string
   createIfMissing?: boolean
   exitOnError?: boolean
@@ -237,6 +238,7 @@ export class Config {
 
   get options(): HerbConfigOptions {
     return {
+      framework: this.config.framework,
       files: this.config.files,
       parser: this.config.parser,
       linter: this.config.linter,
@@ -861,11 +863,12 @@ export class Config {
     pathOrFile: string,
     options: LoadOptions = {}
   ): Promise<Config> {
-    const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
+    const { silent = false, quiet = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
+    const notify = !silent && !quiet
 
     try {
       if (pathOrFile.endsWith(this.configPath)) {
-        return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError)
+        return await this.loadFromExplicitPath(pathOrFile, silent, notify, version, exitOnError)
       }
 
       const { configPath, projectRoot } = await this.findConfigFile(pathOrFile)
@@ -875,9 +878,9 @@ export class Config {
       }
 
       if (configPath) {
-        return await this.loadFromPath(configPath, projectRoot, silent, version, exitOnError)
+        return await this.loadFromPath(configPath, projectRoot, notify, version, exitOnError)
       } else if (createIfMissing) {
-        return await this.createDefaultConfig(projectRoot, silent, version)
+        return await this.createDefaultConfig(projectRoot, silent, notify, version)
       } else {
         const defaults = this.getDefaultConfig(version)
 
@@ -915,15 +918,18 @@ export class Config {
    * @param pathOrFile - Directory path or explicit .herb.yml file path
    * @param version - Optional version string (defaults to package version)
    * @param createIfMissing - Whether to create config if missing (default: false)
+   * @param options - `quiet` hides the "Using" and "Created" notices but keeps warnings (default: false)
    * @returns Config instance or throws on errors
    */
   static async loadForCLI(
     pathOrFile: string,
     version?: string,
-    createIfMissing: boolean = false
+    createIfMissing: boolean = false,
+    options: { quiet?: boolean } = {}
   ): Promise<Config> {
     return await this.load(pathOrFile, {
       silent: false,
+      quiet: options.quiet,
       version,
       createIfMissing,
       exitOnError: false
@@ -1320,6 +1326,7 @@ export class Config {
   private static async loadFromExplicitPath(
     configPath: string,
     silent: boolean,
+    notify: boolean,
     version: string,
     exitOnError: boolean
   ): Promise<Config> {
@@ -1356,7 +1363,9 @@ export class Config {
 
     if (!silent) {
       await this.warnAboutMisnamedConfigFiles(projectRoot)
+    }
 
+    if (notify) {
       console.error(`✓ Using Herb config file at ${resolvedPath}`)
     }
 
@@ -1369,13 +1378,13 @@ export class Config {
   private static async loadFromPath(
     configPath: string,
     projectRoot: string,
-    silent: boolean,
+    notify: boolean,
     version: string,
     exitOnError: boolean
   ): Promise<Config> {
     const config = await this.readAndValidateConfig(configPath, projectRoot, version, exitOnError)
 
-    if (!silent) {
+    if (notify) {
       console.error(`✓ Using Herb config file at ${configPath}`)
     }
 
@@ -1388,6 +1397,7 @@ export class Config {
   private static async createDefaultConfig(
     projectRoot: string,
     silent: boolean,
+    notify: boolean,
     version: string
   ): Promise<Config> {
     const configPath = this.configPathFromProjectPath(projectRoot)
@@ -1395,7 +1405,7 @@ export class Config {
     try {
       await this.mutateConfigFile(configPath, {})
 
-      if (!silent) {
+      if (notify) {
         console.error(`✓ Created default configuration at ${configPath}`)
       }
     } catch (_error) {

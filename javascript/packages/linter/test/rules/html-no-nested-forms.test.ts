@@ -200,6 +200,38 @@ describe("html-no-nested-forms", () => {
     `)
   })
 
+  test("passes for block button_to inside a custom block helper", () => {
+    expectNoOffenses(dedent`
+      <%= ui_tooltip "a" do %>
+        <%= button_to "/a", method: :delete do %>A<% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for block button_to inside a custom block helper inside form_with", () => {
+    expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
+
+    assertOffenses(dedent`
+      <%= form_with model: @mission do |form| %>
+        <%= ui_tooltip "a" do %>
+          <%= button_to "/a", method: :delete do %>A<% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for multiple block button_to calls inside sibling custom block helpers", () => {
+    expectNoOffenses(dedent`
+      <%= ui_tooltip "a" do %>
+        <%= button_to "/a", method: :delete do %>A<% end %>
+      <% end %>
+
+      <%= ui_tooltip "b" do %>
+        <%= button_to "/b", method: :delete do %>B<% end %>
+      <% end %>
+    `)
+  })
+
   test("fails for button_to inside a form element", () => {
     expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
 
