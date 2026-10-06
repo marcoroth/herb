@@ -13,9 +13,9 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json" | "junit"
+const FORMAT_OPTIONS = ["simple", "detailed", "json", "junit"] as const
 
-const FORMAT_OPTIONS: FormatOption[] = ["simple", "detailed", "json", "junit"]
+export type FormatOption = typeof FORMAT_OPTIONS[number]
 
 /**
  * Structured formats are meant for programs rather than humans, so they can

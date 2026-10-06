@@ -480,7 +480,7 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
-#### JUnit XML Output Format
+#### JUnit XML Output Format <Badge type="info" text="v0.11.1+" />
 
 The linter can report offenses as JUnit XML with `--format junit`, so CI systems that understand test reports (like Buildkite Test Engine, GitLab, or Jenkins) can show them as test failures.
 
@@ -512,7 +512,7 @@ https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
 
 </details>
 
-#### Multiple Outputs
+#### Multiple Outputs <Badge type="info" text="v0.11.1+" />
 
 `--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the structured format (`json` or `junit`) right before it to a file instead of stdout.
 
