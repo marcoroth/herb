@@ -15,7 +15,6 @@ typedef enum {
 typedef struct {
   bool semicolons;
   bool comments;
-  // Preserve Unicode character positions, newlines, and Ruby content.
   bool preserve_positions;
   bool custom_tags;
   const hb_string_T* erb_openers;
