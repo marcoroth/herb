@@ -15,13 +15,11 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 3.2.0"
   spec.require_paths = ["lib"]
-  spec.files = Dir.chdir(__dir__) do
-    Dir[
-      "README.md",
-      "config/**/*.yml",
-      "lib/**/*.rb"
-    ]
-  end
+  spec.files = Dir[
+    "README.md",
+    "config/**/*.yml",
+    "lib/**/*.rb"
+  ]
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["rubygems_mfa_required"] = "true"
