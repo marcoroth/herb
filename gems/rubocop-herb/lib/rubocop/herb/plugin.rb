@@ -36,7 +36,7 @@ module RuboCop
         return [] if code.strip.empty?
 
         source = build_processed_source(code, original: processed_source)
-        return [] unless source.valid_syntax? && source.ast
+        return [] if source.valid_syntax? && !source.ast
 
         [{ offset: 0, processed_source: source }]
       end

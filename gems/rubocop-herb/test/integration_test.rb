@@ -106,6 +106,21 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
     refute_includes output, "Lint/UselessAssignment"
   end
 
+  test "reports Ruby syntax errors" do
+    write_config(<<~YAML)
+      Lint/Syntax:
+        Enabled: true
+    YAML
+    write("example.html.erb", "<%= user. %>\n")
+
+    output, error, status = run_rubocop("example.html.erb", chdir: @directory)
+
+    refute status.success?
+    assert_empty error
+    assert_includes output, "Lint/Syntax"
+    assert_includes output, "example.html.erb:1"
+  end
+
   test "runs on non-HTML ERB files" do
     write_config(<<~YAML)
       Layout/SpaceAroundOperators:
