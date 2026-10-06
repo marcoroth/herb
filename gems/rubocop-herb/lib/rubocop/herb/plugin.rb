@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "lint_roller"
-require "pathname"
 
 module RuboCop
   module Herb
@@ -11,7 +10,7 @@ module RuboCop
           description: "Run configured RuboCop rules against Ruby in ERB templates.",
           homepage: "https://github.com/marcoroth/herb",
           name: "rubocop-herb",
-          version: VERSION
+          version: ::Herb::VERSION
         )
       end
 
@@ -21,7 +20,7 @@ module RuboCop
         LintRoller::Rules.new(
           config_format: :rubocop,
           type: :path,
-          value: Pathname.new(__dir__).join("../../../config/default.yml")
+          value: File.expand_path("../../../config/default.yml", __dir__)
         )
       end
 
@@ -30,23 +29,19 @@ module RuboCop
       end
 
       def self.extract_ruby(processed_source)
-        path = processed_source.path
-        return unless path&.end_with?(".erb", ".herb")
+        return unless processed_source.path&.end_with?(".erb", ".herb")
 
         template = processed_source.raw_source
         code = position_preserving_ruby(template)
         return [] if code.strip.empty?
 
-        source = processed_source(
-          code,
-          original: processed_source
-        )
+        source = build_processed_source(code, original: processed_source)
         return [] unless source.valid_syntax? && source.ast
 
         [{ offset: 0, processed_source: source }]
       end
 
-      def self.processed_source(code, original:)
+      def self.build_processed_source(code, original:)
         ::RuboCop::ProcessedSource.new(
           code,
           original.ruby_version,
@@ -71,9 +66,9 @@ module RuboCop
         end.join
       end
 
-      private_class_method :position_preserving_ruby, :processed_source
+      private_class_method :build_processed_source, :position_preserving_ruby
 
-      EXTRACT_RUBY = method(:extract_ruby).to_proc
+      EXTRACT_RUBY = method(:extract_ruby)
     end
   end
 end
