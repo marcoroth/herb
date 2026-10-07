@@ -1893,6 +1893,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         return null
       }
 
+      if (isERBControlFlowNode(child) && child.location.start.line !== child.location.end.line) {
+        return null
+      }
+
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = startsWithWhitespace(child.content)
