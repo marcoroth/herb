@@ -783,4 +783,95 @@ describe("herb:disable comment formatting", () => {
       </section>
     `)
   })
+
+  test("keeps herb:disable on its own line when ERB tags have identical content", () => {
+    expectFormattedToMatch(dedent`
+      <% foo %> <%# herb:disable erb-no-unused-expressions %>
+      <% foo %> <%# herb:disable erb-no-unused-expressions %>
+    `)
+  })
+
+  test("keeps herb:disable on its own line when identical ERB tags are separated by other content", () => {
+    expectFormattedToMatch(dedent`
+      <% foo %> <%# herb:disable erb-no-unused-expressions %>
+
+      <p>between</p>
+      <% foo %> <%# herb:disable erb-no-unused-expressions %>
+    `)
+  })
+
+  test("keeps herb:disable on its own opening tag when an earlier sibling has the same tag name", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        first
+      </div>
+
+      <div> <%# herb:disable some-rule %>
+        <p>second</p>
+      </div>
+    `)
+  })
+
+  test("keeps herb:disable on each opening tag when sibling elements share a tag name", () => {
+    expectFormattedToMatch(dedent`
+      <div> <%# herb:disable some-rule %>
+        <p>first</p>
+      </div>
+
+      <div> <%# herb:disable some-rule %>
+        <p>second</p>
+      </div>
+    `)
+  })
+
+  test("keeps herb:disable on its own ERB output tag when an earlier tag has identical content", () => {
+    expectFormattedToMatch(dedent`
+      <%= foo %>
+      <%= foo %> <%# herb:disable some-rule %>
+    `)
+  })
+
+  test("keeps herb:disable on its own closing tag when an earlier sibling has the same tag name", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <p>first</p>
+      </div>
+
+      <div>
+        <p>second</p>
+      </div> <%# herb:disable some-rule %>
+    `)
+  })
+
+  test("keeps herb:disable on its own attribute when an earlier element has the same attribute", () => {
+    expectFormattedToMatch(dedent`
+      <div
+        data-first-really-long-attribute-name="some-long-value-here"
+        data-second-really-long-attribute="another-long-value-here"
+      >
+        <p>first</p>
+      </div>
+
+      <div
+        data-first-really-long-attribute-name="some-long-value-here"
+        data-second-really-long-attribute="another-long-value-here" <%# herb:disable some-rule %>
+      >
+        <p>second</p>
+      </div>
+    `)
+  })
+
+  test("keeps herb:disable on its own text when earlier text starts with the same word", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <p>first</p>
+        hello world
+      </div>
+
+      <div>
+        <p>second</p>
+        hello again <%# herb:disable some-rule %>
+      </div>
+    `)
+  })
 })

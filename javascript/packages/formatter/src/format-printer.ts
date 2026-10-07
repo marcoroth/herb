@@ -313,44 +313,72 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   private findOutputLineForHerbDisable(entry: CollectedHerbDisable): number {
     if (isNode(entry.anchor, HTMLOpenTagNode) && isNode(entry.parentNode, HTMLElementNode)) {
-      const tagSearch = `<${getTagName(entry.anchor)}`
+      const index = this.findOutputLineContaining(`<${getTagName(entry.anchor)}`, entry.anchor)
 
-      for (let index = 0; index < this.lines.length; index++) {
-        if (this.lines[index].includes(tagSearch)) {
-          if (this.lines[index].includes("\n")) {
-            const subLines = this.lines[index].split("\n")
-            const commentText = entry.commentText
-            const firstLine = subLines[0].trimEnd()
-            const separator = firstLine.endsWith(" ") ? "" : " "
-            subLines[0] = firstLine + separator + commentText
-            this.lines[index] = subLines.join("\n")
+      if (index >= 0) {
+        if (this.lines[index].includes("\n")) {
+          const subLines = this.lines[index].split("\n")
+          const commentText = entry.commentText
+          const firstLine = subLines[0].trimEnd()
+          const separator = firstLine.endsWith(" ") ? "" : " "
+          subLines[0] = firstLine + separator + commentText
+          this.lines[index] = subLines.join("\n")
 
-            return -1
-          }
-
-          const analysis = this.elementFormattingAnalysis.get(entry.parentNode)
-          const openTagIsMultiline = analysis ? !analysis.openTagInline : true
-
-          if (openTagIsMultiline) {
-            for (let forward = index + 1; forward < this.lines.length; forward++) {
-              if (this.lines[forward].trim() === ">") return forward
-            }
-          }
-
-          return index
+          return -1
         }
+
+        const analysis = this.elementFormattingAnalysis.get(entry.parentNode)
+        const openTagIsMultiline = analysis ? !analysis.openTagInline : true
+
+        if (openTagIsMultiline) {
+          for (let forward = index + 1; forward < this.lines.length; forward++) {
+            if (this.lines[forward].trim() === ">") return forward
+          }
+        }
+
+        return index
       }
     }
 
-    const searchContent = this.getSearchableContentForNode(entry.anchor) ?? this.getSearchableContentForNode(entry.parentNode)
+    const searchNode = this.getSearchableContentForNode(entry.anchor) ? entry.anchor : entry.parentNode
+    const searchContent = this.getSearchableContentForNode(searchNode)
 
-    if (searchContent) {
-      for (let index = 0; index < this.lines.length; index++) {
-        if (this.lines[index].includes(searchContent)) return index
-      }
+    if (searchNode && searchContent) {
+      const index = this.findOutputLineContaining(searchContent, searchNode)
+
+      if (index >= 0) return index
     }
 
     return this.lines.length > 0 ? this.lines.length - 1 : 0
+  }
+
+  /**
+   * Finds the output line holding the same occurrence of `searchContent` that `node` is in the source,
+   * so identical anchors (two `<% foo %>` tags, sibling `<div>`s) each resolve to their own line.
+   * Falls back to the first matching line if the occurrence counts don't line up.
+   */
+  private findOutputLineContaining(searchContent: string, node: Node): number {
+    const target = isNode(node, HTMLElementNode) && node.close_tag ? node.close_tag : node
+    const { line, column } = target.location.start
+
+    this.sourceLines ||= this.source.split("\n")
+
+    const precedingSource = [...this.sourceLines.slice(0, line - 1), (this.sourceLines[line - 1] ?? "").slice(0, column)].join("\n")
+
+    let remaining = precedingSource.split(searchContent).length - 1
+    let firstMatch = -1
+
+    for (let index = 0; index < this.lines.length; index++) {
+      const occurrences = this.lines[index].split(searchContent).length - 1
+
+      if (occurrences === 0) continue
+      if (firstMatch < 0) firstMatch = index
+      if (remaining < occurrences) return index
+
+      remaining -= occurrences
+    }
+
+    return firstMatch
   }
 
   private getSearchableContentForNode(node: Node | null): string | null {
