@@ -609,8 +609,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
-⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.
-   Use --force to lint it anyway."
+⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns. Use --force to lint it anyway."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `

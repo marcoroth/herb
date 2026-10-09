@@ -107,7 +107,7 @@ export class CLI {
     return pattern
   }
 
-  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean): Promise<{ files: string[], explicitFile: string | undefined }> {
+  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean, formatOption: FormatOption = "detailed"): Promise<{ files: string[], explicitFile: string | undefined }> {
     const resolvedPattern = resolve(pattern)
     const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
     let explicitFile: string | undefined
@@ -130,12 +130,10 @@ export class CLI {
 
     if (explicitFile && files.length === 0) {
       if (!force) {
-        console.error(`⚠️  File ${explicitFile} is excluded by configuration patterns.`)
-        console.error(`   Use --force to lint it anyway.\n`)
-        process.exit(0)
+        this.exitWithInfo(`⚠️  File ${explicitFile} is excluded by configuration patterns. Use --force to lint it anyway.`, formatOption)
       } else {
-        console.log(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
-        console.log()
+        console.error(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
+        console.error()
         files = [adjustedPattern]
       }
     }
@@ -172,7 +170,7 @@ export class CLI {
     const allFiles: string[] = []
 
     for (const pattern of patterns) {
-      const { files: patternFiles } = await this.resolvePatternToFiles(pattern, config, force)
+      const { files: patternFiles } = await this.resolvePatternToFiles(pattern, config, force, formatOption)
 
       if (patternFiles.length === 0) {
         console.error(`✗ No files found matching pattern: ${pattern}`)
@@ -525,8 +523,8 @@ export class CLI {
       }
 
       if (force && linterConfig.enabled === false) {
-        console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
-        console.log()
+        console.error("⚠️  Forcing linter run (disabled in .herb.yml)")
+        console.error()
       }
 
       if (only) {
@@ -552,7 +550,7 @@ export class CLI {
         const allFiles: string[] = []
 
         for (const pattern of patterns) {
-          const { files: patternFiles, explicitFile } = await this.resolvePatternToFiles(pattern, config, force)
+          const { files: patternFiles, explicitFile } = await this.resolvePatternToFiles(pattern, config, force, formatOption)
 
           if (patternFiles.length === 0) {
             this.exitWithError(`✗ No files found matching pattern: ${pattern}`, formatOption)
