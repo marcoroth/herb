@@ -133,6 +133,9 @@ module Herb
           def visit_erb_content_node: (untyped) -> void
 
           # : (untyped) -> void
+          def visit_ruby_literal_node: (untyped) -> void
+
+          # : (untyped) -> void
           def visit_erb_yield_node: (untyped) -> void
 
           # : (untyped) -> void

@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::LoweredHelperTextTest#test_0001_lowered link text has the same child slot as explicit ERB"
+input: "lowered-link-text"
+---
+<!--herb-region:unknown:0417e5d5:1--><a class="link" href="/profile" data-herb-slot="0:child">Alice</a><!--/herb-region:unknown-->
