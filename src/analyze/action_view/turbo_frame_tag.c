@@ -1,4 +1,5 @@
 #include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_buffer.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -36,18 +37,16 @@ char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser,
     }
   }
 
-  const char* prefix = "dom_id(";
-  const char* suffix = ")";
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, source_length + 128, allocator);
 
-  size_t prefix_length = strlen(prefix);
-  size_t suffix_length = strlen(suffix);
-  size_t total_length = prefix_length + source_length + suffix_length;
-  char* result = hb_allocator_alloc(allocator, total_length + 1);
+  hb_buffer_append(&buffer, "(");
+  hb_buffer_append_with_length(&buffer, source, source_length);
+  hb_buffer_append(&buffer, ").then { |value| value.respond_to?(:to_key) || value.is_a?(Class)");
+  hb_buffer_append(&buffer, " ? dom_id(value) : value.to_s }");
 
-  memcpy(result, prefix, prefix_length);
-  memcpy(result + prefix_length, source, source_length);
-  memcpy(result + prefix_length + source_length, suffix, suffix_length);
-  result[total_length] = '\0';
+  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
+  hb_buffer_free(&buffer);
 
   return result;
 }
