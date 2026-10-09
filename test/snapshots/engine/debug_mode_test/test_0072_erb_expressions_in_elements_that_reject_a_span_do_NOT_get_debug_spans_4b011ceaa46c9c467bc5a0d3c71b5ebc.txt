@@ -1,0 +1,12 @@
+---
+source: "Engine::DebugModeTest#test_0072_erb expressions in elements that reject a span do NOT get debug spans"
+input: "{source: \"<table>\\n  <thead><%= header_row %></thead>\\n  <tbody><%= rows %></tbody>\\n</table>\\n<ul><%= items %></ul>\\n<select><%= choices %></select>\\n\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<table data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-attach-to-parent="true">
+  <thead>'.freeze; _buf << (header_row).to_s; _buf << '</thead>
+  <tbody>'.freeze; _buf << (rows).to_s; _buf << '</tbody>
+</table>
+<ul>'.freeze; _buf << (items).to_s; _buf << '</ul>
+<select>'.freeze; _buf << (choices).to_s; _buf << '</select>
+'.freeze;
+_buf.to_s
