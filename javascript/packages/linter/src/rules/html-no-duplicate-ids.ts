@@ -2,10 +2,10 @@ import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName } from "@herb-tools/core"
+import { PrismVisitor, isPrismNodeType, hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
-import type { ParseResult, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions, PrismNodes } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
@@ -33,6 +33,70 @@ class OutputPrinter extends Printer {
   }
 }
 
+class LoopDerivedNamesVisitor extends PrismVisitor {
+  private readonly assignments: { node: PrismNodes.LocalVariableWriteNode, scopeStart: number }[] = []
+  private scopeStart = 0
+
+  override visitLocalVariableWriteNode(node: PrismNodes.LocalVariableWriteNode): void {
+    this.visit(node.value)
+    this.assignments.push({ node, scopeStart: this.scopeStart })
+  }
+
+  override visitBlockNode(node: PrismNodes.BlockNode): void {
+    this.visitScope(node)
+  }
+
+  override visitLambdaNode(node: PrismNodes.LambdaNode): void {
+    this.visitScope(node)
+  }
+
+  override visitDefNode(): void {}
+  override visitClassNode(): void {}
+  override visitModuleNode(): void {}
+  override visitSingletonClassNode(): void {}
+
+  track(node: ERBContentNode, names: string[]): void {
+    const range = node.content?.range
+
+    if (!range) return
+
+    for (const { node: assignment, scopeStart } of this.assignments) {
+      const { startOffset, length } = assignment.location
+
+      // A block or lambda opened inside this tag has its own local variables.
+      if (scopeStart >= range.from || startOffset < range.from || startOffset + length > range.to) continue
+
+      if (!names.includes(assignment.name) && this.referencesLoopVariable(assignment.value, names)) {
+        names.push(assignment.name)
+      }
+    }
+  }
+
+  private visitScope(node: PrismNodes.BlockNode | PrismNodes.LambdaNode): void {
+    const previous = this.scopeStart
+
+    this.scopeStart = node.location.startOffset
+    this.visitChildNodes(node)
+    this.scopeStart = previous
+  }
+
+  private referencesLoopVariable(node: PrismNodes.Node, names: string[], depth = 0): boolean {
+    if (isPrismNodeType(node, "LocalVariableReadNode")) {
+      return node.depth >= depth && names.includes(node.name)
+    }
+
+    if (isPrismNodeType(node, "ItLocalVariableReadNode")) {
+      return depth === 0 && names.includes("it")
+    }
+
+    if (isPrismNodeType(node, "DefNode") || isPrismNodeType(node, "ClassNode") || isPrismNodeType(node, "ModuleNode") || isPrismNodeType(node, "SingletonClassNode")) return false
+
+    const childDepth = isPrismNodeType(node, "BlockNode") || isPrismNodeType(node, "LambdaNode") ? depth + 1 : depth
+
+    return node.childNodes().some(child => child !== null && this.referencesLoopVariable(child, names, childDepth))
+  }
+}
+
 class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
   private documentIds: Set<string> = new Set<string>()
   private currentBranchIds: Set<string> = new Set<string>()
@@ -40,6 +104,10 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   private loopVariableScopes: string[][] = []
 
   private static readonly IMPLICIT_BLOCK_PARAMETERS = ["it", "_1", "_2", "_3", "_4", "_5", "_6", "_7", "_8", "_9"]
+
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, private readonly loopDerivedNames: LoopDerivedNamesVisitor) {
+    super(ruleName, context)
+  }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagLocalName(node) === "template") {
@@ -93,11 +161,25 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
       .map(argument => argument.name?.value)
       .filter((name): name is string => Boolean(name))
 
-    const names = declared.length > 0 ? declared : NoDuplicateIdsVisitor.IMPLICIT_BLOCK_PARAMETERS
+    const names = declared.length > 0 ? declared : [...NoDuplicateIdsVisitor.IMPLICIT_BLOCK_PARAMETERS]
 
     this.loopVariableScopes.push(names)
     super.visitERBIterationBlockNode(node)
     this.loopVariableScopes.pop()
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    this.trackLoopDerivedNames(node)
+
+    super.visitERBContentNode(node)
+  }
+
+  private trackLoopDerivedNames(node: ERBContentNode): void {
+    const names = this.loopVariableScopes[this.loopVariableScopes.length - 1]
+
+    if (!names || names.length === 0 || isERBOutputNode(node)) return
+
+    this.loopDerivedNames.track(node, names)
   }
 
   private variesPerIteration(attributeNode: HTMLAttributeNode): boolean {
@@ -356,12 +438,19 @@ export class HTMLNoDuplicateIdsRule extends ParserRule {
   get parserOptions(): Partial<ParserOptions> {
     return {
       action_view_helpers: true,
-      iteration_nodes: true
+      iteration_nodes: true,
+      prism_program: true
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoDuplicateIdsVisitor(this.ruleName, context)
+    const loopDerivedNames = new LoopDerivedNamesVisitor()
+    // An ERB tag's prismNode only includes its first statement.
+    const program = result.value.prismNode
+
+    if (program) loopDerivedNames.visit(program)
+
+    const visitor = new NoDuplicateIdsVisitor(this.ruleName, context, loopDerivedNames)
 
     visitor.visit(result.value)
 
