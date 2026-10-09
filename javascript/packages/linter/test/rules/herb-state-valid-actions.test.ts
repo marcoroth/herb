@@ -6,8 +6,8 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbStateValidActionsRule)
 
 describe("HerbStateValidActionsRule", () => {
-  test("a trailing comma reads as an empty clause", () => {
-    expectError("`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.")
+  test("a trailing comma lists several assignments in one clause", () => {
+    expectError('`data-herb-set` lists several assignments in one clause. A clause takes one assignment, so separate the clauses with spaces, like `data-herb-set="open=true"`.')
 
     assertOffenses(dedent`
       <%# herb:state (open: false) %>
@@ -15,11 +15,31 @@ describe("HerbStateValidActionsRule", () => {
     `)
   })
 
+  test("flags a comma list in one clause", () => {
+    expectError('`data-herb-set` lists several assignments in one clause. A clause takes one assignment, so separate the clauses with spaces, like `data-herb-set="open=true sort=date"`.')
+    expectError('`data-herb-reset` lists several names in one clause. A clause takes one name, so separate the clauses with spaces, like `data-herb-reset="open sort"`.')
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false, sort: "name") %>
+      <button data-herb-set="open=true,sort=date">Both</button>
+      <button data-herb-reset="open,sort">Reset</button>
+    `)
+  })
+
+  test("keeps the event on each clause it suggests", () => {
+    expectError('`data-herb-set` lists several assignments in one clause. A clause takes one assignment, so separate the clauses with spaces, like `data-herb-set="click->open=false click->sort=name"`.')
+
+    assertOffenses(dedent`
+      <%# herb:state (open: false, sort: "name") %>
+      <button data-herb-set="click->open=false,sort=name">Reset</button>
+    `)
+  })
+
   test("allows well-formed actions against declared states", () => {
     expectNoOffenses(dedent`
       <%# herb:state (open: false, attempts: 0, sort: "name", draft: "") %>
       <button data-herb-toggle="open">Details</button>
-      <button data-herb-set="open=true,sort=date">Fail</button>
+      <button data-herb-set="open=true sort=date">Both</button>
       <button data-herb-increment="attempts" data-herb-by="2">More</button>
       <select data-herb-set="change->sort=$value"></select>
       <input data-herb-reset="blur->draft">

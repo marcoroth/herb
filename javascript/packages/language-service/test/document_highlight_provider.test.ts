@@ -69,7 +69,7 @@ describe("DocumentHighlightProvider", () => {
       <%# herb:state (open: false, attempts: 0) %>
 
       <button data-herb-toggle="open">Details</button>
-      <button data-herb-set="click->open=false,attempts=0">Reset</button>
+      <button data-herb-set="click->open=false click->attempts=0">Reset</button>
       <button data-herb-increment="attempts" data-herb-by="2">More</button>
       <% if open %><nav>menu</nav><% end %>
     `
