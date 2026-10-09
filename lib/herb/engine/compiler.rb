@@ -813,15 +813,17 @@ module Herb
 
         return true if trailing_indentation?(text)
 
-        whitespace_only?(text) && (preceding_text_ends_with_newline? || @last_trim_consumed_newline)
+        whitespace_only?(text) && (preceding_token_value_ends_with_newline? || @last_trim_consumed_newline)
       end
 
-      def preceding_text_ends_with_newline?
+      def preceding_token_value_ends_with_newline?
         return true unless @tokens.length >= 2
 
         preceding = @tokens[-2]
 
-        preceding[0] == :text && preceding[1].end_with?("\n")
+        return @last_trim_consumed_newline if EXPRESSION_TOKEN_TYPES.include?(preceding[0])
+
+        preceding[1].end_with?("\n")
       end
 
       def extract_and_remove_leading_space!

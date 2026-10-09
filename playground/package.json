@@ -32,9 +32,9 @@
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.7.2",
     "lz-string": "^1.5.0",
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.57.0",
     "prismjs": "^1.30.0",
-    "vite": "^8.2.0"
+    "vite": "^8.3.1"
   },
   "devDependencies": {
     "@types/node": "^26.5.0"

@@ -70,6 +70,115 @@ describe("html-no-nested-forms", () => {
     `)
   })
 
+  test("passes for form_with inside a block helper", () => {
+    expectNoOffenses(dedent`
+      <%= panel do %>
+        <%= form_with url: "/search" do |form| %>
+          <%= form.submit %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for form_with inside nested block helpers with a receiver", () => {
+    expectNoOffenses(dedent`
+      <%= ui.card do %>
+        <%= ui.card_body do %>
+          <%= form_with url: "/search" do |form| %>
+            <%= form.submit %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for button_to inside a component render block", () => {
+    expectNoOffenses(dedent`
+      <%= render Card.new(tag: :span) do %>
+        <%= button_to path, class: "x" do %>Hi<% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for form_with inside a component slot block", () => {
+    expectNoOffenses(dedent`
+      <%= render(CardComponent.new) do |card| %>
+        <% card.with_footer do %>
+          <%= form_with url: "/search" do |form| %>
+            <%= form.submit %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for sibling form helpers inside a partial render block", () => {
+    expectNoOffenses(dedent`
+      <%= render "shared/panel", id: "x", title: "T" do %>
+        <div><%= button_to "/a", method: :post do %>Create<% end %></div>
+        <div><%= form_with url: "/b", method: :post do |f| %><%= f.select :thing, [] %><% end %></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for form_with inside a render layout block", () => {
+    expectNoOffenses(dedent`
+      <%= render layout: "card" do %>
+        <%= form_with url: "/a" do |form| %>
+          <%= form.submit %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for form_with inside a render layout block inside a loop", () => {
+    expectNoOffenses(dedent`
+      <% plans.each do |plan| %>
+        <%= render layout: "billing/subscriptions/plan", locals: { plan: plan } do %>
+          <%= form_with url: "/a" do |form| %>
+            <%= form.submit %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for button_to inside form_with inside a block helper", () => {
+    expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
+
+    assertOffenses(dedent`
+      <%= ui.card do %>
+        <%= form_with model: @mission do |form| %>
+          <%= button_to "Delete", mission_path(@mission), method: :delete %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for button_to in an inline block inside form_with", () => {
+    expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
+
+    assertOffenses(dedent`
+      <%= form_with model: @mission do |form| %>
+        <%= panel { button_to "Delete", mission_path(@mission), method: :delete } %>
+      <% end %>
+    `)
+  })
+
+  test("fails for form_with inside a block helper inside a form element", () => {
+    expectError("`form_with` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
+
+    assertOffenses(dedent`
+      <form action="/missions" method="post">
+        <%= ui.card do %>
+          <%= form_with url: "/search" do |form| %>
+            <%= form.submit %>
+          <% end %>
+        <% end %>
+      </form>
+    `)
+  })
+
   test("passes for fields_for inside form_with", () => {
     expectNoOffenses(dedent`
       <%= form_with model: @user do |form| %>
@@ -109,6 +218,38 @@ describe("html-no-nested-forms", () => {
     assertOffenses(dedent`
       <%= form_with model: @mission do |form| %>
         <%= button_to mission_path(@mission), method: :delete do %>Delete<% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for block button_to inside a custom block helper", () => {
+    expectNoOffenses(dedent`
+      <%= ui_tooltip "a" do %>
+        <%= button_to "/a", method: :delete do %>A<% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for block button_to inside a custom block helper inside form_with", () => {
+    expectError("`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.")
+
+    assertOffenses(dedent`
+      <%= form_with model: @mission do |form| %>
+        <%= ui_tooltip "a" do %>
+          <%= button_to "/a", method: :delete do %>A<% end %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for multiple block button_to calls inside sibling custom block helpers", () => {
+    expectNoOffenses(dedent`
+      <%= ui_tooltip "a" do %>
+        <%= button_to "/a", method: :delete do %>A<% end %>
+      <% end %>
+
+      <%= ui_tooltip "b" do %>
+        <%= button_to "/b", method: :delete do %>B<% end %>
       <% end %>
     `)
   })

@@ -430,6 +430,38 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   return lexer_advance_with(lexer, hb_string("%>"), TOKEN_ERB_END);
 }
 
+void lexer_skip_data_to(lexer_T* lexer, uint32_t position) {
+  if (position > lexer->source.length) { position = lexer->source.length; }
+
+  while (lexer->current_position < position && !lexer_eof(lexer)) {
+    char character = lexer->current_character;
+
+    if (character == '\r' && lexer_peek(lexer, 1) == '\n') {
+      lexer->current_position += 2;
+      lexer->current_line++;
+      lexer->current_column = 0;
+    } else if (is_newline(character)) {
+      lexer->current_position++;
+      lexer->current_line++;
+      lexer->current_column = 0;
+    } else if ((unsigned char) character < 0x80) {
+      lexer->current_position++;
+      lexer->current_column++;
+    } else {
+      uint32_t length = utf8_sequence_length(hb_string_slice(lexer->source, lexer->current_position));
+
+      lexer->current_position += length > 0 ? length : 1;
+      lexer->current_column++;
+    }
+
+    lexer->current_character = lexer->source.data[lexer->current_position];
+  }
+
+  lexer->previous_line = lexer->current_line;
+  lexer->previous_column = lexer->current_column;
+  lexer->previous_position = lexer->current_position;
+}
+
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {

@@ -2495,6 +2495,38 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    test("disables new Action View rules that have offenses", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views/items"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.10.4
+          framework: actionview
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "app/views/items/index.html.erb"), dedent`
+          <% @items.each do |item| %>
+            <%= render "item", item: item %>
+          <% end %>
+        ` + "\n")
+
+        writeFileSync(join(tempDir, "app/views/items/_item.html.erb"), `<p><%= item.name %></p>\n`)
+
+        const { exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+
+        const configContent = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+        expect(configContent).toMatch(/actionview-prefer-collection-render:\s*enabled:\s*false/)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
     test("detects offenses from new rules with many files", () => {
       try {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })

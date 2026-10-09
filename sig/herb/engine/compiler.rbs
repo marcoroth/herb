@@ -188,7 +188,7 @@ module Herb
 
       def leading_space_follows_newline?: () -> untyped
 
-      def preceding_text_ends_with_newline?: () -> untyped
+      def preceding_token_value_ends_with_newline?: () -> untyped
 
       def extract_and_remove_leading_space!: () -> untyped
 

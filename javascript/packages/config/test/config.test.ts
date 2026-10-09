@@ -163,6 +163,13 @@ describe("@herb-tools/config", () => {
 
       expect(config.config.version).toBe("1.0.0")
     })
+
+    test("keeps the framework when rebuilt from options", () => {
+      const config = Config.fromObject({ framework: "actionview" }, { projectPath: testDir })
+      const rebuilt = Config.fromObject(config.options, { projectPath: testDir })
+
+      expect(rebuilt.framework).toBe("actionview")
+    })
   })
 
   describe("Config.createConfigYamlString", () => {

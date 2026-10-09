@@ -1,0 +1,12 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0008_keeps an instrumented block after an elsif condition on a new line"
+input: "{source: \"<div>\\n  <% if condition %>\\n    <%= render(menu) do %>\\n    <% end %>\\n  <% elsif !metered? && active? %>\\n    <%= render(other) do %>\\n    <% end %>\\n  <% end %>\\n</div>\\n\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << '<div>
+'.freeze;   ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 2, 2, nil, end_line: 8, end_column: 11) ; if condition;     ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 3, 4, nil, end_line: 4, end_column: 13) ; _buf << (render(menu) do;     end )
+ ::Herb::Engine::Runtime::Session.leave ;   elsif !metered? && active? 
+     ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 6, 4, nil, end_line: 7, end_column: 13) ; _buf << (render(other) do;     end )
+ ::Herb::Engine::Runtime::Session.leave ;   end 
+ ::Herb::Engine::Runtime::Session.leave ; _buf << '</div>
+'.freeze; ensure; ::Herb::Engine::Runtime::Session.leave_render; end ;
+_buf.to_s
