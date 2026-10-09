@@ -150,7 +150,7 @@ TEST(extract_ruby_inline_comment_same_line)
   hb_allocator_destroy(&allocator);
 END
 
-TEST(extract_ruby_inline_comment_with_newline)
+TEST(extract_ruby_trailing_comment_before_newline)
   char* source = "<% if true %><% # Comment here %>\n<% end %>";
 
   hb_allocator_T allocator;
@@ -158,7 +158,7 @@ TEST(extract_ruby_inline_comment_with_newline)
 
   char* result = herb_extract_ruby_with_semicolons(source, &allocator);
 
-  char expected[] = "   if true  ;                    \n   end  ;";
+  char expected[] = "   if true  ;   # Comment here  ;\n   end  ;";
   ck_assert_str_eq(result, expected);
 
   hb_allocator_dealloc(&allocator, result);
@@ -338,7 +338,7 @@ TCase *extract_tests(void) {
   tcase_add_test(extract, extract_ruby_comments_skipped);
   tcase_add_test(extract, extract_ruby_issue_135_if_without_condition);
   tcase_add_test(extract, extract_ruby_inline_comment_same_line);
-  tcase_add_test(extract, extract_ruby_inline_comment_with_newline);
+  tcase_add_test(extract, extract_ruby_trailing_comment_before_newline);
   tcase_add_test(extract, extract_ruby_inline_comment_with_spaces);
   tcase_add_test(extract, extract_ruby_inline_comment_multiline);
   tcase_add_test(extract, extract_ruby_inline_comment_between_code);

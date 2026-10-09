@@ -9,6 +9,7 @@
 #include "include/util/util.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,6 +19,71 @@ const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicol
                                                                         .custom_tags = false,
                                                                         .erb_openers = NULL,
                                                                         .erb_opener_count = 0 };
+
+static bool skip_ruby_tag(hb_string_T opening, const herb_extract_ruby_options_T* options) {
+  return hb_string_equals(opening, hb_string("<%%")) || hb_string_equals(opening, hb_string("<%%="))
+      || (erb_opening_is_custom(opening) && !options->custom_tags);
+}
+
+// Used to decide if a comment is safe to preserve.
+static bool ruby_content_follows_on_line(const lexer_T* lexer, const herb_extract_ruby_options_T* options) {
+  lexer_T lookahead = *lexer;
+  bool skip_content = false;
+  bool erb_comment = false;
+
+  while (true) {
+    if (lookahead.state == STATE_DATA) {
+      uint32_t position = lookahead.current_position;
+      const char* data = lookahead.source.data;
+
+      while (position < lookahead.source.length && !(data[position] == '<' && data[position + 1] == '%')) {
+        if (is_newline(data[position])) { return false; }
+        position++;
+      }
+
+      lexer_skip_data_to(&lookahead, position);
+    }
+
+    token_T* token = lexer_next_token(&lookahead);
+    bool finished = false;
+    bool follows = false;
+
+    switch (token->type) {
+      case TOKEN_EOF:
+      case TOKEN_NEWLINE: finished = true; break;
+      case TOKEN_ERB_START:
+        erb_comment = hb_string_equals(token->value, hb_string("<%#"));
+        skip_content = erb_comment || skip_ruby_tag(token->value, options);
+        break;
+      case TOKEN_ERB_CONTENT: {
+        // Only skipped ERB comments preserve newlines in their content.
+        if (erb_comment && hb_string_contains_character(token->value, '\n')) { finished = true; }
+        if (skip_content || hb_string_is_empty(token->value)) { break; }
+
+        for (size_t offset = 0; offset < token->value.length; offset++) {
+          unsigned char character = (unsigned char) token->value.data[offset];
+
+          if (character == '\n') {
+            finished = true;
+            break;
+          }
+
+          if (!isspace(character)) {
+            finished = true;
+            follows = true;
+            break;
+          }
+        }
+
+        break;
+      }
+      default: break;
+    }
+
+    token_free(token, lookahead.allocator);
+    if (finished) { return follows; }
+  }
+}
 
 typedef struct {
   herb_extract_ruby_options_T options;
@@ -44,7 +110,12 @@ static void extract_ruby_data(extract_ruby_state_T* state, const char* data, uin
   if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, to - run_start); }
 }
 
-static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token, const token_T* next) {
+static void extract_ruby_token(
+  extract_ruby_state_T* state,
+  const token_T* token,
+  const token_T* next,
+  const lexer_T* lexer
+) {
   switch (token->type) {
     case TOKEN_NEWLINE: {
       hb_buffer_append_string(state->output, token->value);
@@ -87,8 +158,7 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
             hb_buffer_append_whitespace(state->output, range_length(token->range));
           }
         }
-      } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
-                 || (erb_opening_is_custom(token->value) && !state->options.custom_tags)) {
+      } else if (skip_ruby_tag(token->value, &state->options)) {
         state->skip_erb_content = true;
         state->is_comment_tag = false;
         if (state->options.preserve_positions) {
@@ -113,20 +183,20 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
       if (state->skip_erb_content == false) {
         bool is_inline_comment = false;
 
-        if (!state->options.comments && !state->is_comment_tag && !hb_string_is_empty(token->value)) {
+        if (!state->options.comments && state->options.preserve_positions && !state->is_comment_tag
+            && !hb_string_is_empty(token->value)) {
           hb_string_T trimmed = hb_string_trim_start(token->value);
 
           if (!hb_string_is_empty(trimmed) && trimmed.data[0] == '#'
-              && token->location.start.line == token->location.end.line) {
+              && token->location.start.line == token->location.end.line
+              && ruby_content_follows_on_line(lexer, &state->options)) {
             state->is_comment_tag = true;
             is_inline_comment = true;
           }
         }
 
         if (is_inline_comment) {
-          if (state->options.preserve_positions) {
-            hb_buffer_append_whitespace(state->output, range_length(token->range));
-          }
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
         } else if (state->is_erb_comment_tag && !hb_string_is_null(token->value)) {
           const char* content = token->value.data;
           size_t content_remaining = token->value.length;
@@ -260,7 +330,7 @@ void herb_extract_ruby_to_buffer_with_options(
 
     if (token->type == TOKEN_ERB_START) { pending = lexer_next_token(&lexer); }
 
-    extract_ruby_token(&state, token, pending);
+    extract_ruby_token(&state, token, pending, &lexer);
     token_free(token, allocator);
   }
 }
