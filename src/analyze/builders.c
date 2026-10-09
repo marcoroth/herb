@@ -367,6 +367,7 @@ static AST_NODE_T* build_yield_node(control_builder_context_T* context) {
     token_copy(context->tag_opening, context->allocator),
     token_copy(context->content, context->allocator),
     token_copy(context->tag_closing, context->allocator),
+    HERB_PRISM_NODE_EMPTY,
     context->start_position,
     context->end_position,
     context->errors,
