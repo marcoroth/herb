@@ -522,11 +522,11 @@ This makes it possible to keep readable output in your CI logs while also produc
 npx @herb-tools/linter --format detailed --format junit -o tmp/herb-lint.xml --format json -o tmp/herb-lint.json
 ```
 
-Only one format is printed. If several are left without an `--output-file`, `--json` wins over `--simple`, which wins over the last `--format`. When every format goes to a file, nothing is printed to stdout.
+Only one format is printed. If several are left without an `--output-file`, `--json` wins over `--simple`, which wins over the last `--format`. When every format goes to a file, stdout only gets GitHub Actions annotations, if they're enabled.
 
 Missing parent directories of an output file are created. If a file can't be written, the error is printed to stderr and `herb-lint` exits with an error, while the other outputs are still produced.
 
-The output files are also written when the run stops before linting because of an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, so a CI step that uploads them finds a report explaining what happened.
+The output files are also written when the run stops before linting because of an invalid configuration, a pattern without matching files, an excluded file, or an unknown rule passed to `--only`, so a CI step that uploads them finds a report explaining what happened. The same applies to `--json` on stdout, which reports these as JSON instead of printing a message to stderr.
 
 ### Disabling Rules Inline <Badge type="info" text="v0.8.0+" />
 
