@@ -522,6 +522,10 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   tag_helper_parse_context_T* parse_context
 ) {
   if (!erb_node || !context || !parse_context) { return NULL; }
+  // Keep dynamic content_tag calls intact rather than emitting their content twice.
+  if (string_equals(parse_context->matched_handler->name, "content_tag") && !parse_context->info->tag_name) {
+    return NULL;
+  }
   hb_allocator_T* allocator = context->allocator;
   const tag_helper_handler_T* handler = parse_context->matched_handler;
 
@@ -1295,6 +1299,10 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
   tag_helper_parse_context_T* parse_context
 ) {
   if (!block_node || !context || !parse_context) { return NULL; }
+  // Runtime tag names still require Ruby's block capture semantics.
+  if (string_equals(parse_context->matched_handler->name, "content_tag") && !parse_context->info->tag_name) {
+    return NULL;
+  }
   hb_allocator_T* allocator = context->allocator;
 
   char* tag_name = parse_context->info->tag_name ? hb_allocator_strdup(allocator, parse_context->info->tag_name) : NULL;
