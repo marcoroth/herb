@@ -71,6 +71,6 @@ describe("JUnitFormatter", () => {
     const xml = formatter.renderSkipped("Linter is disabled in .herb.yml configuration.")
 
     expect(xml).toContain(`<testsuites name="herb-lint" tests="1" failures="0" errors="0" skipped="1">`)
-    expect(xml).toContain(`<skipped message="Linter is disabled in .herb.yml configuration."/>`)
+    expect(xml).toContain(`<skipped message="Linter is disabled in .herb.yml configuration.">Linter is disabled in .herb.yml configuration.</skipped>`)
   })
 })

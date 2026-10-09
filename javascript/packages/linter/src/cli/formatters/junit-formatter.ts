@@ -103,7 +103,7 @@ export class JUnitFormatter {
    * testcase, since some CI systems reject a report without any testcases.
    */
   renderSkipped(message: string): string {
-    return this.renderSingle(`<skipped message="${escape(message)}"/>`, { errors: 0, skipped: 1 })
+    return this.renderSingle(`<skipped message="${escape(message)}">${escape(message)}</skipped>`, { errors: 0, skipped: 1 })
   }
 
   private renderSingle(element: string, { errors, skipped }: { errors: number, skipped: number }): string {

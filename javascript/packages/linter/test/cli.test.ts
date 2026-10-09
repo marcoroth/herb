@@ -294,12 +294,21 @@ describe("CLI Output Formatting", () => {
       expect(exitCode).toBe(1)
     })
 
-    test("leaves out GitHub Actions annotations detected from the environment", () => {
-      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", { GITHUB_ACTIONS: "true" })
+    test.each([["--format", "junit"], ["--json"]])("keeps GitHub Actions annotations detected from the environment out of %s on stdout", (...args) => {
+      const { spawnSync } = require("child_process")
+      const { stdout, status } = spawnSync("bin/herb-lint", ["test/fixtures/test-file-with-errors.html.erb", ...args, "--no-timing"], {
+        encoding: "utf-8",
+        env: { ...process.env, NO_COLOR: "1", GITHUB_ACTIONS: "true" }
+      })
 
-      expect(output).toMatch(/^<\?xml/)
-      expect(output).not.toContain("::error")
-      expect(exitCode).toBe(1)
+      if (args[0] === "--json") {
+        expect(JSON.parse(stdout).summary.totalErrors).toBe(2)
+      } else {
+        expect(stdout).toMatch(/^<\?xml[^]*<\/testsuites>\n$/)
+        expect(stdout).not.toContain("::error")
+      }
+
+      expect(status).toBe(1)
     })
 
     test("fails offenses that fail the run even when --log-level hides them", () => {
@@ -334,7 +343,7 @@ describe("CLI Output Formatting", () => {
 
       const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", configFile)
 
-      expect(output).toContain(`<skipped message="Linter is disabled in .herb.yml configuration. Use --force to lint anyway."/>`)
+      expect(output).toContain(`<skipped message="Linter is disabled in .herb.yml configuration. Use --force to lint anyway.">`)
       expect(exitCode).toBe(0)
     })
 
@@ -349,6 +358,26 @@ describe("CLI Output Formatting", () => {
       expect(combined.output).toBe(runLinter("test-file-with-errors.html.erb", "--simple").output)
       expect(readFileSync(junitPath, "utf-8")).toBe(`${runLinter("test-file-with-errors.html.erb", "--format", "junit").output}\n`)
       expect(combined.exitCode).toBe(1)
+    })
+
+    test("fails the JUnit report on offenses the JSON report leaves out below --log-level", () => {
+      const { mkdtempSync, readFileSync, rmSync } = require("fs")
+      const { join } = require("path")
+      const { tmpdir } = require("os")
+
+      const directory = mkdtempSync(join(tmpdir(), "herb-lint-"))
+      const junitPath = join(directory, "herb-lint.xml")
+      const jsonPath = join(directory, "herb-lint.json")
+
+      try {
+        const { exitCode } = runLinter("test-file-with-errors.html.erb", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error", "--format", "junit", "-o", junitPath, "--format", "json", "-o", jsonPath)
+
+        expect(readFileSync(junitPath, "utf-8")).toContain(`<testsuites name="herb-lint" tests="1" failures="1" errors="0">`)
+        expect(JSON.parse(readFileSync(jsonPath, "utf-8")).offenses).toEqual([])
+        expect(exitCode).toBe(1)
+      } finally {
+        rmSync(directory, { recursive: true, force: true })
+      }
     })
   })
 

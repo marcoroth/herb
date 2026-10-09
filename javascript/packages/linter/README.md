@@ -162,7 +162,7 @@ npx @herb-tools/linter template.html.erb --json
 npx @herb-tools/linter template.html.erb --format json
 
 # Use GitHub Actions output format with detailed preview (default)
-# (This is enabled automatically when the GITHUB_ACTIONS environment variable is set)
+# (This is enabled automatically when the GITHUB_ACTIONS environment variable is set, unless JSON or JUnit is printed to stdout)
 npx @herb-tools/linter template.html.erb --github
 
 # Combine GitHub Actions output with simple format
@@ -369,7 +369,7 @@ npx @herb-tools/linter --version
 The linter supports GitHub Actions annotation format with the `--github` flag, which can be combined with `--format=simple` or `--format=detailed`. The `--github` flag adds GitHub Actions annotations that GitHub can parse to create inline annotations in pull requests, while also showing the regular format output for local debugging.
 
 ::: tip Tip: Running in GitHub Actions
-When the `GITHUB_ACTIONS` environment variable is set (as in GitHub Actions), GitHub Actions annotations are enabled by default. You can disable them with `--no-github` if needed.
+When the `GITHUB_ACTIONS` environment variable is set (as in GitHub Actions), GitHub Actions annotations are enabled by default, unless JSON or JUnit is printed to stdout. You can disable them with `--no-github` if needed.
 :::
 
 ```bash
@@ -488,7 +488,12 @@ Every linted file becomes a `<testsuite>`, and every rule with offenses in that 
 
 A testcase fails when any of its offenses meets the `--fail-level`; offenses below it are listed in `<system-out>` of a passing testcase. Offenses that fail the run are included even when `--log-level` hides them, so the report fails exactly when `herb-lint` exits with an error.
 
-A run that stops before linting, such as an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, reports the message as a single erroring testcase. A run with nothing to lint, such as a disabled linter, reports a single skipped testcase.
+A run that stops before linting, such as an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, reports the message as a single erroring testcase. A run with nothing to lint, such as a disabled linter or an excluded file, reports a single skipped testcase.
+
+Some importers have limits worth knowing about:
+
+- Buildkite Test Engine rejects files with more than 5,000 test results. Lint large codebases in several runs, such as one per directory, and upload each report.
+- CircleCI miscounts testcases that contain `<system-out>`. Pass a `--log-level` equal to the `--fail-level` (for example `--log-level error`) so the report only contains offenses that fail the run.
 
 <details>
 <summary>Example output:</summary>
