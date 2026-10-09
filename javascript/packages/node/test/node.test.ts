@@ -38,6 +38,16 @@ describe("@herb-tools/node", () => {
     expect(ruby).toBe('         "Hello World"  ;      ')
   })
 
+  test("extractRuby() preserves Unicode character positions", () => {
+    const source = "<p>Café <%= x=1 %></p>"
+    const ruby = Herb.extractRuby(source)
+
+    expect(ruby).toBe("            x=1  ;    ")
+    expect(Array.from(ruby)).toHaveLength(Array.from(source).length)
+    expect(ruby.indexOf("x")).toBe(source.indexOf("x"))
+    expect(Herb.extractRuby(source, { preserve_positions: false })).toBe(" x=1 ")
+  })
+
   test("extractRuby() with semicolons: false", async () => {
     const source = "<% x = 1 %> <% y = 2 %>"
     const ruby = Herb.extractRuby(source, { semicolons: false })

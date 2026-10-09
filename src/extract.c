@@ -1,3 +1,4 @@
+#include "include/extract_internal.h"
 #include "include/herb.h"
 #include "include/lexer/lexer.h"
 #include "include/lexer/token.h"
@@ -6,6 +7,7 @@
 #include "include/lib/hb_buffer.h"
 #include "include/lib/hb_string.h"
 #include "include/lib/string.h"
+#include "include/util/utf8.h"
 #include "include/util/util.h"
 
 #include <assert.h>
@@ -26,22 +28,48 @@ typedef struct {
   bool is_comment_tag;
   bool is_erb_comment_tag;
   bool need_newline;
+  bool preserve_byte_positions;
+  const char* source;
 } extract_ruby_state_T;
 
+static void extract_ruby_mask_data(extract_ruby_state_T* state, const char* data, uint32_t length) {
+  uint32_t position = 0;
+
+  while (position < length) {
+    if (is_newline(data[position])) {
+      hb_buffer_append_char(state->output, data[position]);
+      state->need_newline = false;
+      position++;
+      continue;
+    }
+
+    uint32_t byte_length = 1;
+
+    if (!state->preserve_byte_positions) {
+      byte_length = utf8_sequence_length(hb_string_from_data(data + position, length - position));
+    }
+
+    hb_buffer_append_char(state->output, ' ');
+    position += byte_length;
+  }
+}
+
+static void extract_ruby_mask_range(extract_ruby_state_T* state, range_T range) {
+  extract_ruby_mask_data(state, state->source + range.from, range_length(range));
+}
+
 static void extract_ruby_data(extract_ruby_state_T* state, const char* data, uint32_t from, uint32_t to) {
-  uint32_t run_start = from;
+  if (state->options.preserve_positions) {
+    extract_ruby_mask_data(state, data + from, to - from);
+    return;
+  }
 
   for (uint32_t position = from; position < to; position++) {
     if (!is_newline(data[position])) { continue; }
 
-    if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, position - run_start); }
-
     hb_buffer_append_char(state->output, data[position]);
     state->need_newline = false;
-    run_start = position + 1;
   }
-
-  if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, to - run_start); }
 }
 
 static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token, const token_T* next) {
@@ -83,23 +111,19 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
         } else {
           state->skip_erb_content = true;
           state->is_comment_tag = true;
-          if (state->options.preserve_positions) {
-            hb_buffer_append_whitespace(state->output, range_length(token->range));
-          }
+          if (state->options.preserve_positions) { extract_ruby_mask_range(state, token->range); }
         }
       } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
                  || (erb_opening_is_custom(token->value) && !state->options.custom_tags)) {
         state->skip_erb_content = true;
         state->is_comment_tag = false;
-        if (state->options.preserve_positions) {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
-        }
+        if (state->options.preserve_positions) { extract_ruby_mask_range(state, token->range); }
       } else {
         state->skip_erb_content = false;
         state->is_comment_tag = false;
 
         if (state->options.preserve_positions) {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
+          extract_ruby_mask_range(state, token->range);
         } else if (state->need_newline) {
           hb_buffer_append_char(state->output, '\n');
           state->need_newline = false;
@@ -124,9 +148,7 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
         }
 
         if (is_inline_comment) {
-          if (state->options.preserve_positions) {
-            hb_buffer_append_whitespace(state->output, range_length(token->range));
-          }
+          if (state->options.preserve_positions) { extract_ruby_mask_range(state, token->range); }
         } else if (state->is_erb_comment_tag && !hb_string_is_null(token->value)) {
           const char* content = token->value.data;
           size_t content_remaining = token->value.length;
@@ -158,21 +180,9 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
         }
       } else {
         if (state->is_erb_comment_tag && state->options.preserve_positions && !hb_string_is_null(token->value)) {
-          const char* content = token->value.data;
-          size_t content_remaining = token->value.length;
-
-          while (content_remaining > 0) {
-            if (*content == '\n') {
-              hb_buffer_append_char(state->output, '\n');
-            } else {
-              hb_buffer_append_char(state->output, ' ');
-            }
-
-            content++;
-            content_remaining--;
-          }
+          extract_ruby_mask_range(state, token->range);
         } else if (state->options.preserve_positions) {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
+          extract_ruby_mask_range(state, token->range);
         }
       }
 
@@ -188,9 +198,9 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
 
       if (state->options.preserve_positions) {
         if (was_comment) {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
+          extract_ruby_mask_range(state, token->range);
         } else if (was_erb_comment && state->options.comments) {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
+          extract_ruby_mask_range(state, token->range);
         } else if (state->options.semicolons) {
           size_t length = range_length(token->range);
 
@@ -198,7 +208,7 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
           if (length >= 1) { hb_buffer_append_char(state->output, ';'); }
           if (length >= 2) { hb_buffer_append_whitespace(state->output, length - 2); }
         } else {
-          hb_buffer_append_whitespace(state->output, range_length(token->range));
+          extract_ruby_mask_range(state, token->range);
         }
       }
 
@@ -206,15 +216,16 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
     }
 
     default: {
-      if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, range_length(token->range)); }
+      if (state->options.preserve_positions) { extract_ruby_mask_range(state, token->range); }
     }
   }
 }
 
-void herb_extract_ruby_to_buffer_with_options(
+static void herb_extract_ruby_to_buffer_internal(
   const char* source,
   hb_buffer_T* output,
   const herb_extract_ruby_options_T* options,
+  bool preserve_byte_positions,
   hb_allocator_T* allocator
 ) {
   extract_ruby_state_T state = {
@@ -224,6 +235,8 @@ void herb_extract_ruby_to_buffer_with_options(
     .is_comment_tag = false,
     .is_erb_comment_tag = false,
     .need_newline = false,
+    .preserve_byte_positions = preserve_byte_positions,
+    .source = NULL,
   };
 
   parser_options_T lex_options = HERB_DEFAULT_PARSER_OPTIONS;
@@ -237,6 +250,7 @@ void herb_extract_ruby_to_buffer_with_options(
   const char* data = lexer.source.data;
   uint32_t length = (uint32_t) lexer.source.length;
   token_T* pending = NULL;
+  state.source = data;
 
   while (true) {
     if (!pending && lexer.state == STATE_DATA) {
@@ -263,6 +277,24 @@ void herb_extract_ruby_to_buffer_with_options(
     extract_ruby_token(&state, token, pending);
     token_free(token, allocator);
   }
+}
+
+void herb_extract_ruby_to_buffer_with_options(
+  const char* source,
+  hb_buffer_T* output,
+  const herb_extract_ruby_options_T* options,
+  hb_allocator_T* allocator
+) {
+  herb_extract_ruby_to_buffer_internal(source, output, options, false, allocator);
+}
+
+void herb_extract_ruby_to_buffer_with_options_preserving_bytes(
+  const char* source,
+  hb_buffer_T* output,
+  const herb_extract_ruby_options_T* options,
+  hb_allocator_T* allocator
+) {
+  herb_extract_ruby_to_buffer_internal(source, output, options, true, allocator);
 }
 
 void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output, hb_allocator_T* allocator) {

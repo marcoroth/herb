@@ -38,7 +38,7 @@ let ruby = extract_ruby("<p>Hello <%= user.name %></p>").unwrap();
 ```
 :::
 
-By default every character keeps the position it had in the template, with the HTML replaced by spaces. A Ruby error on line 12 column 30 of the extracted output is on line 12 column 30 of the template, so positions need no translation.
+By default every Unicode character keeps the position it had in the template, with non-Ruby content replaced by one space per character. Newlines and Ruby content are retained. A Ruby error on line 12 column 30 of the extracted output is on line 12 column 30 of the template, so character-based positions need no translation. Because UTF-8 characters can contain multiple bytes, the extracted output can have a different byte length than the template.
 
 ## Options
 
@@ -46,7 +46,7 @@ By default every character keeps the position it had in the template, with the H
 |---|---|---|---|
 | `semicolons` | Boolean | `true` | Add ` ;` at the end of each ERB tag to separate statements |
 | `comments` | Boolean | `false` | Include ERB comments (`<%# %>`) in the output |
-| `preserve_positions` | Boolean | `true` | Maintain character positions by padding with whitespace |
+| `preserve_positions` | Boolean | `true` | Preserve Unicode character positions, newlines, and Ruby content |
 
 ::: code-group
 ```ruby [Ruby]

@@ -325,6 +325,35 @@ TEST(extract_ruby_with_options_default)
   hb_buffer_free(&output);
 END
 
+TEST(extract_ruby_preserves_unicode_character_positions)
+  char* source = "<p>Café <%= x=1 %></p>";
+
+  hb_buffer_T output;
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
+
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &HERB_EXTRACT_RUBY_DEFAULT_OPTIONS, &allocator);
+
+  ck_assert_str_eq(output.value, "            x=1  ;    ");
+  ck_assert_uint_eq(strlen(output.value), 22);
+  ck_assert_uint_eq((size_t) (strchr(output.value, 'x') - output.value), 12);
+
+  hb_buffer_free(&output);
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
+
+  herb_extract_ruby_options_T options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  options.preserve_positions = false;
+  herb_extract_ruby_to_buffer_with_options(source, &output, &options, &allocator);
+
+  ck_assert_str_eq(output.value, " x=1 ");
+
+  hb_allocator_destroy(&allocator);
+  hb_buffer_free(&output);
+END
+
 TCase *extract_tests(void) {
   TCase *extract = tcase_create("Extract");
 
@@ -348,6 +377,7 @@ TCase *extract_tests(void) {
   tcase_add_test(extract, extract_ruby_with_options_preserve_positions_false);
   tcase_add_test(extract, extract_ruby_with_options_preserve_positions_false_and_comments_true);
   tcase_add_test(extract, extract_ruby_with_options_default);
+  tcase_add_test(extract, extract_ruby_preserves_unicode_character_positions);
 
   return extract;
 }

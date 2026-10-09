@@ -77,6 +77,15 @@ class RubyProgramTest < Minitest::Spec
     assert_equal template.byteindex(" draft"), resolved&.offset
   end
 
+  test "keeps internal Prism byte offsets aligned after multibyte template text" do
+    template = %(<p>Café</p><%= user.name %>)
+    program = program_for(template)
+    resolved = program&.resolve(erb_tokens(template).fetch(0).location)
+
+    assert_equal " user.name ", resolved&.source
+    assert_equal template.byteindex(" user.name"), resolved&.offset
+  end
+
   test "answers nothing when the document carries no program" do
     document = Herb.parse(%(<p><%= @a %></p>)).value
 
