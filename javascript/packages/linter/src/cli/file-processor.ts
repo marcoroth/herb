@@ -17,6 +17,7 @@ import { buildRenderGraph } from "@herb-tools/analysis/node"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { AncestorChain } from "@herb-tools/analysis"
+import { isStructuredFormat } from "./argument-parser.js"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
@@ -111,12 +112,12 @@ export class FileProcessor {
     try {
       const result = await loadCustomRules({
         baseDir: context.projectPath,
-        silent: formatOption === 'json'
+        silent: isStructuredFormat(formatOption)
       })
 
       this.customRules = result.rules
 
-      if (result.rules.length > 0 && formatOption !== 'json') {
+      if (result.rules.length > 0 && !isStructuredFormat(formatOption)) {
         const ruleText = result.rules.length === 1 ? 'rule' : 'rules'
         console.log(colorize(`\nLoaded ${result.rules.length} custom ${ruleText}:`, "green"))
 
@@ -136,7 +137,7 @@ export class FileProcessor {
         console.log()
       }
     } catch (error) {
-      if (formatOption !== 'json') {
+      if (!isStructuredFormat(formatOption)) {
         console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
       }
     }
@@ -178,7 +179,7 @@ export class FileProcessor {
   }
 
   private async attachFixPreviews(allOffenses: ProcessedFile[], formatOption: FormatOption, context?: ProcessingContext): Promise<void> {
-    if (formatOption === "json") return
+    if (isStructuredFormat(formatOption)) return
 
     const correctable = allOffenses.filter(item => item.autocorrectable || item.unsafeAutocorrectable)
 
@@ -372,7 +373,7 @@ export class FileProcessor {
 
           filesFixed++
 
-          if (formatOption !== 'json') {
+          if (!isStructuredFormat(formatOption)) {
             console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} ${autofixResult.fixed.length === 1 ? "offense" : "offenses"}`, "green")}`)
           }
         }
@@ -399,7 +400,7 @@ export class FileProcessor {
           filesWithOffenses++
         }
       } else if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && formatOption !== 'json') {
+        if (files.length === 1 && !isStructuredFormat(formatOption)) {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
@@ -595,7 +596,7 @@ export class FileProcessor {
         ruleOffenses.set(rule, existing)
       }
 
-      if (formatOption !== 'json') {
+      if (!isStructuredFormat(formatOption)) {
         for (const fixMessage of result.fixMessages) {
           const [filename, countStr] = fixMessage.split("\t")
           const count = parseInt(countStr, 10)

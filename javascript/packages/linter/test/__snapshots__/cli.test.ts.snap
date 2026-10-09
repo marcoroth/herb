@@ -609,8 +609,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
-⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.
-   Use --force to lint it anyway."
+⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns. Use --force to lint it anyway."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
@@ -920,6 +919,23 @@ test/fixtures/ignored.html.erb:6:14
   Ignored      3 offenses suppressed with herb:disable
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
   Rules        147 enabled | 22 not enabled"
+`;
+
+exports[`CLI Output Formatting > JUnit output > formats JUnit output with a testcase per rule, failing only at the fail level 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="2" failures="1" errors="0">
+  <testsuite name="test/fixtures/test-file-with-errors.html.erb" tests="2" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="test/fixtures/test-file-with-errors.html.erb" name="html-img-require-alt" file="test/fixtures/test-file-with-errors.html.erb" line="3" time="0">
+      <system-out>test/fixtures/test-file-with-errors.html.erb:3:3: warning: Missing required \`alt\` attribute on \`&lt;img&gt;\` tag. Add \`alt=&quot;&quot;\` for decorative images or \`alt=&quot;description&quot;\` for informative images.</system-out>
+    </testcase>
+    <testcase classname="test/fixtures/test-file-with-errors.html.erb" name="html-tag-name-lowercase" file="test/fixtures/test-file-with-errors.html.erb" line="2" time="0">
+      <failure message="Opening tag name \`&lt;SPAN&gt;\` should be lowercase. Use \`&lt;span&gt;\` instead. (and 1 more)" type="error">test/fixtures/test-file-with-errors.html.erb:2:3: error: Opening tag name \`&lt;SPAN&gt;\` should be lowercase. Use \`&lt;span&gt;\` instead.
+test/fixtures/test-file-with-errors.html.erb:2:22: error: Closing tag name \`&lt;/SPAN&gt;\` should be lowercase. Use \`&lt;/span&gt;\` instead.
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
 `;
 
 exports[`CLI Output Formatting > New rules available hint > keeps the space before the version label inside the gray sequence 1`] = `"  ]8;;https://herb-tools.dev/linter/rules/svg-tag-name-capitalization\\[37msvg-tag-name-capitalization[0m]8;;\\[90m (introduced in 0.4.2)[0m"`;
