@@ -37,6 +37,7 @@ export interface TextFlowDelegate extends TextFlowAnalyzerDelegate {
   pushWithIndent(line: string): void
   renderInlineElementAsString(element: HTMLElementNode): string
   visit(node: Node): void
+  markOutputEnd(node: Node): void
 }
 
 /**
@@ -215,10 +216,11 @@ export class TextFlowEngine {
   private buildAndWrapTextFlow(children: Node[]): void {
     const unitsWithNodes: ContentUnitWithNode[] = this.analyzer.buildContentUnits(children)
     const words: string[] = []
+    const endingNodes = new Map<number, Node[]>()
 
     for (const { unit, node } of unitsWithNodes) {
       if (unit.breaksFlow) {
-        this.flushWords(words)
+        this.flushWords(words, endingNodes)
 
         if (node) {
           if (isNode(node, HTMLElementNode) && isLineBreakingElement(node)) {
@@ -269,6 +271,12 @@ export class TextFlowEngine {
           }
         }
       }
+
+      if (!unit.breaksFlow && node && words.length > 0) {
+        const lastIndex = words.length - 1
+
+        endingNodes.set(lastIndex, [...(endingNodes.get(lastIndex) ?? []), node])
+      }
     }
 
     // Trim trailing space from last word before final flush
@@ -276,23 +284,25 @@ export class TextFlowEngine {
       words[words.length - 1] = words[words.length - 1].trimEnd()
     }
 
-    this.flushWords(words)
+    this.flushWords(words, endingNodes)
   }
 
-  private flushWords(words: string[]): void {
+  private flushWords(words: string[], endingNodes: Map<number, Node[]>): void {
     if (words.length > 0) {
-      this.wrapAndPushWords(words)
+      this.wrapAndPushWords(words, endingNodes)
       words.length = 0
+      endingNodes.clear()
     }
   }
 
-  private wrapAndPushWords(words: string[]): void {
+  private wrapAndPushWords(words: string[], endingNodes: Map<number, Node[]>): void {
     const wrapWidth = this.delegate.maxLineLength - this.delegate.indent.length
     const lines: string[] = []
+    const nodesEndingOnLine: Node[][] = []
     let currentLine = ""
     let effectiveLength = 0
 
-    for (const word of words) {
+    for (const [wordIndex, word] of words.entries()) {
       const nextLine = buildLineWithWord(currentLine, word)
       const spaceBefore = currentLine && needsSpaceBetween(currentLine, word) ? 1 : 0
       const nextEffectiveLength = effectiveLength + spaceBefore + word.length
@@ -312,6 +322,8 @@ export class TextFlowEngine {
         currentLine = nextLine
         effectiveLength = nextEffectiveLength
       }
+
+      nodesEndingOnLine[lines.length] = [...(nodesEndingOnLine[lines.length] ?? []), ...(endingNodes.get(wordIndex) ?? [])]
     }
 
     if (currentLine) {
@@ -322,6 +334,9 @@ export class TextFlowEngine {
       }
     }
 
-    lines.forEach(line => this.delegate.push(line))
+    lines.forEach((line, index) => {
+      this.delegate.push(line)
+      nodesEndingOnLine[index]?.forEach(node => this.delegate.markOutputEnd(node))
+    })
   }
 }
