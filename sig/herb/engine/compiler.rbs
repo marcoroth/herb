@@ -41,6 +41,8 @@ module Herb
 
       def visit_ruby_literal_node: (untyped node) -> untyped
 
+      def visit_ruby_html_attributes_splat_node: (untyped node) -> untyped
+
       def visit_html_close_tag_node: (untyped node) -> untyped
 
       def visit_html_omitted_close_tag_node: (untyped node) -> untyped

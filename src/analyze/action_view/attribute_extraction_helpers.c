@@ -522,9 +522,9 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
         if (value_source) {
           hb_buffer_T wrapped;
           hb_buffer_init(&wrapped, value_length + 32, allocator);
-          hb_buffer_append(&wrapped, "tag.attributes(**");
+          hb_buffer_append(&wrapped, "tag.attributes({**");
           hb_buffer_append(&wrapped, value_source);
-          hb_buffer_append(&wrapped, ")");
+          hb_buffer_append(&wrapped, "})");
 
           position_T splat_start =
             prism_location_to_position_with_offset(&splat->base.location, original_source, erb_content_offset, source);
