@@ -1,0 +1,108 @@
+inherit_mode:
+  merge:
+    - Exclude
+    - Include
+
+AllCops:
+  Include: &template_files
+    - '**/*.erb'
+    - '**/*.herb'
+
+# These cops depend on physical Ruby file contents or layout that is obscured
+# by the position-preserving template representation.
+Layout/ArgumentAlignment:
+  Exclude: *template_files
+Layout/ArrayAlignment:
+  Exclude: *template_files
+Layout/BlockAlignment:
+  Exclude: *template_files
+Layout/ClosingParenthesisIndentation:
+  Exclude: *template_files
+Layout/CommentIndentation:
+  Exclude: *template_files
+Layout/InitialIndentation:
+  Exclude: *template_files
+Layout/EmptyLineAfterGuardClause:
+  Exclude: *template_files
+Layout/EndAlignment:
+  Exclude: *template_files
+Layout/FirstArgumentIndentation:
+  Exclude: *template_files
+Layout/FirstArrayElementIndentation:
+  Exclude: *template_files
+Layout/FirstArrayElementLineBreak:
+  Exclude: *template_files
+Layout/FirstHashElementIndentation:
+  Exclude: *template_files
+Layout/FirstHashElementLineBreak:
+  Exclude: *template_files
+Layout/FirstMethodArgumentLineBreak:
+  Exclude: *template_files
+Layout/FirstParameterIndentation:
+  Exclude: *template_files
+Layout/HashAlignment:
+  Exclude: *template_files
+Layout/IndentationConsistency:
+  Exclude: *template_files
+Layout/IndentationWidth:
+  Exclude: *template_files
+Layout/LeadingEmptyLine:
+  Exclude: *template_files
+Layout/LeadingEmptyLines:
+  Exclude: *template_files
+Layout/LineEndStringConcatenationIndentation:
+  Exclude: *template_files
+Layout/LineLength:
+  Exclude: *template_files
+Layout/MultilineArrayBraceLayout:
+  Exclude: *template_files
+Layout/MultilineAssignmentLayout:
+  Exclude: *template_files
+Layout/MultilineHashBraceLayout:
+  Exclude: *template_files
+Layout/MultilineMethodCallBraceLayout:
+  Exclude: *template_files
+Layout/MultilineMethodCallIndentation:
+  Exclude: *template_files
+Layout/MultilineMethodDefinitionBraceLayout:
+  Exclude: *template_files
+Layout/MultilineOperationIndentation:
+  Exclude: *template_files
+Layout/ParameterAlignment:
+  Exclude: *template_files
+Layout/SpaceBeforeSemicolon:
+  Exclude: *template_files
+Layout/TrailingEmptyLines:
+  Exclude: *template_files
+Layout/TrailingWhitespace:
+  Exclude: *template_files
+Lint/EmptyFile:
+  Exclude: *template_files
+Lint/EmptyConditionalBody:
+  Exclude: *template_files
+Metrics/BlockLength:
+  Exclude: *template_files
+Naming/FileName:
+  Exclude: *template_files
+Rails/Presence:
+  Exclude: *template_files
+Style/FrozenStringLiteralComment:
+  Exclude: *template_files
+Style/EmptyElse:
+  Exclude: *template_files
+Style/IdenticalConditionalBranches:
+  Exclude: *template_files
+Style/IfWithSemicolon:
+  Exclude: *template_files
+Style/IfUnlessModifier:
+  Exclude: *template_files
+Style/MultilineTernaryOperator:
+  Exclude: *template_files
+Style/NestedTernaryOperator:
+  Exclude: *template_files
+Style/Next:
+  Exclude: *template_files
+Style/Semicolon:
+  Exclude: *template_files
+Style/WhileUntilModifier:
+  Exclude: *template_files
