@@ -6416,33 +6416,20 @@ vscode-html-languageservice@^5.1.0:
     vscode-languageserver-types "^3.17.5"
     vscode-uri "^3.1.0"
 
-vscode-jsonrpc@9.0.2:
-  version "9.0.2"
-  resolved "https://registry.yarnpkg.com/vscode-jsonrpc/-/vscode-jsonrpc-9.0.2.tgz#086b76c4f94f1b0743deeac4e0b57c9c4a55e81d"
-  integrity sha512-SbQSV9yRemARxeXw6LU5sS6Zq0e9/DgCCX5yelH263ZQWukbTk8EF8fjTrr1dziasf4GwlJbvTwFnTrnQFWZXQ==
-
 vscode-jsonrpc@9.0.3:
   version "9.0.3"
   resolved "https://registry.yarnpkg.com/vscode-jsonrpc/-/vscode-jsonrpc-9.0.3.tgz#98c7c2873de7824402ee5785851e33149bb4fd3a"
   integrity sha512-qETYf9PCl1lVfwR+oBmMfc4vP2nqLNA35ABxorw3j06+xlKRgDVxbLgKm4Y/xPL0YWdeDjLoI4ImICIT3nB0zQ==
 
-vscode-languageclient@^10.1.1:
-  version "10.1.1"
-  resolved "https://registry.yarnpkg.com/vscode-languageclient/-/vscode-languageclient-10.1.1.tgz#cd506c5f9010f03e46004887f1647c94454cb622"
-  integrity sha512-EbwIF+KUbwxD5jumQNpiBCv7BJM3Rierv4hcbw/p5jdsnwFFpR/B2VmwqfH4p5XsK46nkH3ugA3WtwJekHHJEw==
+vscode-languageclient@^10.1.2:
+  version "10.1.2"
+  resolved "https://registry.yarnpkg.com/vscode-languageclient/-/vscode-languageclient-10.1.2.tgz#e03f6d3eaf1511132cb8e08499f8fea8c0f4e1f8"
+  integrity sha512-cOv5SMvtAhfVeo5m2r9L2rVHAD0J5CFOsmvH1WgNmPaI61VYjJNc3XUDLOKeFSDtWoAXIEoK6KetuBEL/3hErg==
   dependencies:
     minimatch "^10.2.6"
     semver "^7.8.1"
-    vscode-languageserver-protocol "3.18.3"
-    vscode-languageserver-textdocument "1.0.14"
-
-vscode-languageserver-protocol@3.18.3:
-  version "3.18.3"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.18.3.tgz#6393a08060fb94f5529243fa3be056c676398211"
-  integrity sha512-DF49+WeV5py4zO5hhobp60jjsDSK0lAqA0OuKBLBvp423HPWQcCbhZz3JgyfIewsEz2f8U+X75xNIFHdiXZm2w==
-  dependencies:
-    vscode-jsonrpc "9.0.2"
-    vscode-languageserver-types "3.18.3"
+    vscode-languageserver-protocol "3.18.4"
+    vscode-languageserver-textdocument "1.0.15"
 
 vscode-languageserver-protocol@3.18.4:
   version "3.18.4"
@@ -6452,25 +6439,20 @@ vscode-languageserver-protocol@3.18.4:
     vscode-jsonrpc "9.0.3"
     vscode-languageserver-types "3.18.4"
 
-vscode-languageserver-textdocument@1.0.14:
-  version "1.0.14"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.14.tgz#7731b808ba1a907e3560d5e4317bcd14baf819ce"
-  integrity sha512-EQyqJMi552E4ZTf46izQ4Fj6XquqxCySR3J5ZSD1SisMf6RfpeOWHxGBE8Gr6V0/3GHIGdAzDn8F8+1nTGCnoQ==
-
-vscode-languageserver-textdocument@^1.0.12, vscode-languageserver-textdocument@^1.0.15:
+vscode-languageserver-textdocument@1.0.15, vscode-languageserver-textdocument@^1.0.12, vscode-languageserver-textdocument@^1.0.15:
   version "1.0.15"
   resolved "https://registry.yarnpkg.com/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.15.tgz#5e74ef9b83ec91c812625e0f56bab36e71f9fd07"
   integrity sha512-Gsfr9S8LU3S6885cS+NaleasJ0n3V5y/SOTqHCifQiXWFw3G9w9/YItDfwHrlCz+dSZWWZ8ilYVMcJe7Sz7Sxw==
-
-vscode-languageserver-types@3.18.3, vscode-languageserver-types@^3.17.5, vscode-languageserver-types@^3.18.3:
-  version "3.18.3"
-  resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.18.3.tgz#eb296c42fd659375a82951b9cc33e7672ba9efe7"
-  integrity sha512-XIlzJ7Qp/jzSI1ds7/FwPAWrPeTZA7pAtlW4hdJ1J6xXWJL6dR9QYnDhJOdLzdKhUQ5Mm6mvUMw+3DcOQQasPw==
 
 vscode-languageserver-types@3.18.4:
   version "3.18.4"
   resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.18.4.tgz#9fc9ba2bc5006a4335b159c7a41027bd8c7c3a07"
   integrity sha512-nQsacoiijvl0fRf2q28uFDrAVwRhdCa3QveiF7/CX0r18mLR5FU/1WskSsCKOjmEbtteKUnY8x8Yzxop+k0zwg==
+
+vscode-languageserver-types@^3.17.5, vscode-languageserver-types@^3.18.3:
+  version "3.18.3"
+  resolved "https://registry.yarnpkg.com/vscode-languageserver-types/-/vscode-languageserver-types-3.18.3.tgz#eb296c42fd659375a82951b9cc33e7672ba9efe7"
+  integrity sha512-XIlzJ7Qp/jzSI1ds7/FwPAWrPeTZA7pAtlW4hdJ1J6xXWJL6dR9QYnDhJOdLzdKhUQ5Mm6mvUMw+3DcOQQasPw==
 
 vscode-languageserver@^10.1.2:
   version "10.1.2"
