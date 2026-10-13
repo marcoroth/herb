@@ -255,7 +255,7 @@ module Herb
       search_path = @start_path
       search_path = search_path.parent if search_path.file?
 
-      while search_path.to_s != "/"
+      until search_path.root?
         CONFIG_FILENAMES.each do |filename|
           config_file = search_path / filename
           return [config_file, search_path] if config_file.exist?
