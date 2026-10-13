@@ -32,7 +32,11 @@ if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
   Herb::Bootstrap.generate_templates
 
   root_path = Herb::Bootstrap::ROOT_PATH
-  sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
+  sha = begin
+    IO.popen(["git", "-C", root_path, "rev-parse", "--short", "HEAD"], err: File::NULL, &:read).strip
+  rescue SystemCallError
+    ""
+  end
 
   $CFLAGS << " -DHERB_GIT_BUILD"
   $CFLAGS << " -DHERB_GIT_SHA=\\\"#{sha}\\\"" unless sha.empty?
@@ -55,13 +59,13 @@ $VPATH << "$(srcdir)/../../src/parser"
 $VPATH << "$(srcdir)/../../src/prism"
 $VPATH << "$(srcdir)/../../src/lib"
 $VPATH << "$(srcdir)/../../src/util"
-$VPATH << prism_src_path
-$VPATH << "#{prism_src_path}/util"
+$VPATH << "$(srcdir)/../../vendor/prism/src"
+$VPATH << "$(srcdir)/../../vendor/prism/src/util"
 
-$INCFLAGS << " -I#{prism_include_path}"
-$INCFLAGS << " -I#{include_path}"
-$INCFLAGS << " -I#{prism_src_path}"
-$INCFLAGS << " -I#{prism_src_path}/util"
+$INCFLAGS << " -I#{prism_include_path.quote}"
+$INCFLAGS << " -I#{include_path.quote}"
+$INCFLAGS << " -I#{prism_src_path.quote}"
+$INCFLAGS << " -I#{File.join(prism_src_path, "util").quote}"
 
 $CFLAGS << " -fvisibility=hidden"
 $CFLAGS << " -DHERB_EXCLUDE_PRETTYPRINT"
