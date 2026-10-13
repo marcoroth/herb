@@ -1,7 +1,7 @@
 #ifndef HERB_EXTENSION_H
 #define HERB_EXTENSION_H
 
-void Init_herb(void);
+RUBY_FUNC_EXPORTED void Init_herb(void);
 
 extern VALUE mHerb;
 extern VALUE cPosition;

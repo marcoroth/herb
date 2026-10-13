@@ -67,13 +67,18 @@ $INCFLAGS << " -I#{include_path.quote}"
 $INCFLAGS << " -I#{prism_src_path.quote}"
 $INCFLAGS << " -I#{File.join(prism_src_path, "util").quote}"
 
-$CFLAGS << " -fvisibility=hidden"
+# MSVC needs C11 mode, the standard conforming preprocessor for the variadic macros in hb_foreach.h,
+# and UTF-8 string literals (it defaults to the system code page).
+$CFLAGS << ($mswin ? " -std:c11 -Zc:preprocessor -execution-charset:utf-8" : " -fvisibility=hidden")
+
 $CFLAGS << " -DHERB_EXCLUDE_PRETTYPRINT"
 $CFLAGS << " -DPRISM_EXCLUDE_PRETTYPRINT"
 $CFLAGS << " -DPRISM_EXCLUDE_JSON"
 $CFLAGS << " -DPRISM_EXCLUDE_PACK"
 
-herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
+# src/main.c is the entry point of the `herb` executable, not part of the library.
+herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").reject { |file| File.basename(file) == "main.c" }
+herb_src_files = herb_src_files.map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 
 prism_main_files = [
   "diagnostic.c",
