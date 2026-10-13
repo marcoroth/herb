@@ -7,6 +7,7 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../../src/linter.js"
 import { ERBStrictLocalsRequiredRule } from "../../src/rules/erb-strict-locals-required.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { callerIndexWithLocals } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBStrictLocalsRequiredRule, { enabled: true })
 
@@ -59,8 +60,48 @@ describe("ERBStrictLocalsRequiredRule", () => {
 
     assertOffenses(dedent`
       <%# This is just a regular comment %>
-      <p>Content</p>
+      <p><%= content %></p>
     `, { fileName: "_partial.html.erb" })
+  })
+
+  test("allows partials that read no locals", () => {
+    expectNoOffenses(dedent`
+      <div class="card">
+        <%= link_to "Posts", posts_path %>
+      </div>
+    `, { fileName: "_card.html.erb" })
+  })
+
+  test("allows partials that only read locals they bind themselves", () => {
+    expectNoOffenses(dedent`
+      <% [1, 2].each do |item| %>
+        <span><%= item %></span>
+      <% end %>
+    `, { fileName: "_items.html.erb" })
+  })
+
+  test("flags partials that read no locals but read local_assigns", () => {
+    expectError("Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.")
+
+    assertOffenses(dedent`
+      <p><%= local_assigns[:title] %></p>
+    `, { fileName: "_heading.html.erb" })
+  })
+
+  test("flags partials that read no locals when a caller passes one", () => {
+    const partial = "app/views/posts/_card.html.erb"
+    const partialCallers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: ["title"] }])
+
+    expectError("Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.")
+
+    assertOffenses(`<p>Static content</p>`, { fileName: partial, partialCallers })
+  })
+
+  test("allows partials that read no locals when no caller passes one", () => {
+    const partial = "app/views/posts/_card.html.erb"
+    const partialCallers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
+
+    expectNoOffenses(`<p>Static content</p>`, { fileName: partial, partialCallers })
   })
 
   test("does not flag non-partial files", () => {
@@ -91,7 +132,7 @@ describe("ERBStrictLocalsRequiredRule", () => {
 
     assertOffenses(dedent`
       <% # locals: (user:) %>
-      <p>Content</p>
+      <p><%= user.name %></p>
     `, { fileName: "_partial.html.erb" })
   })
 

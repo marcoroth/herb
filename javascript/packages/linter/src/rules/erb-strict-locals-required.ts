@@ -107,12 +107,16 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
     if (visitor.foundStrictLocals) return []
 
     const document = result.value
+    const body = localsUsedInBody(document)
+    const signature = this.signatureFor(context)
+
+    if (this.acceptsNoLocals(body, signature)) return []
 
     return [
       this.createOffense(
         "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
         this.firstLineOf(document),
-        { node: document, declaration: this.declarationFor(document, context), unsafe: true }
+        { node: document, declaration: this.declarationFor(body, signature), unsafe: true }
       )
     ]
   }
@@ -132,10 +136,13 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
     return Location.from(1, 0, 1, firstLine?.length ?? 0)
   }
 
-  private declarationFor(document: DocumentNode, context?: Partial<LintContext>): string {
-    const body = localsUsedInBody(document)
-    const signature = this.signatureFor(context)
+  private acceptsNoLocals(body: BodyLocals, signature: InferredSignature | null): boolean {
+    if (body.names.length > 0 || body.usesLocalAssigns) return false
 
+    return (signature?.locals.length ?? 0) === 0
+  }
+
+  private declarationFor(body: BodyLocals, signature: InferredSignature | null): string {
     return strictLocalsDeclaration({
       locals: mergeLocals(signature?.locals ?? [], body.names),
       callSiteCount: signature?.callSiteCount ?? 0,

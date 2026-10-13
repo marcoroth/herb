@@ -11,7 +11,7 @@ describe("erb-strict-locals-required autofix", () => {
   })
 
   test("does not apply unsafe fix by default", () => {
-    const input = '<div>Content</div>'
+    const input = '<div><%= content %></div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" })
@@ -21,9 +21,9 @@ describe("erb-strict-locals-required autofix", () => {
     expect(result.unfixed).toHaveLength(1)
   })
 
-  test("adds empty strict locals declaration with --fix-unsafely", () => {
-    const input = '<div>Content</div>'
-    const expected = '<%# locals: (**) %>\n\n<div>Content</div>'
+  test("adds strict locals declaration with --fix-unsafely", () => {
+    const input = '<div><%= content %></div>'
+    const expected = '<%# locals: (content: nil, **) %>\n\n<div><%= content %></div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
@@ -61,18 +61,29 @@ describe("erb-strict-locals-required autofix", () => {
   test("handles multi-line files", () => {
     const input = dedent`
       <div class="card">
-        <h2>Title</h2>
+        <h2><%= title %></h2>
         <p>Content</p>
       </div>
     `
 
-    const expected = `<%# locals: (**) %>\n\n${input}`
+    const expected = `<%# locals: (title: nil, **) %>\n\n${input}`
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const result = linter.autofix(input, { fileName: '_card.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
+  })
+
+  test("does not add a declaration to a partial that reads no locals", () => {
+    const input = '<div>Content</div>'
+
+    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
+    const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(0)
   })
 
   test("names the locals every call site passes", () => {

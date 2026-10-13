@@ -6,13 +6,15 @@
 
 ## Description
 
-Requires that every Rails partial template includes a strict locals declaration comment using the supported syntax:
+Requires that every Rails partial template that reads locals includes a strict locals declaration comment using the supported syntax:
 
 ```erb
-<%# locals: () %>
+<%# locals: (user:) %>
 ```
 
 A partial is any template whose filename begins with an underscore (e.g. `_card.html.erb`).
+
+A partial that reads no locals, reads no `local_assigns`, and is passed no locals by any call site Herb can see is not flagged, since its declaration would be an empty list.
 
 ## Rationale
 
@@ -23,7 +25,7 @@ Partials often rely on implicit locals, which makes them harder to understand, r
 - Enables better static analysis (unknown locals, missing locals, unused locals)
 - Reduces runtime surprises when locals are renamed or removed
 
-This rule encourages partials to be explicit about what they expect. Partials that intentionally accept no locals should still declare an explicit empty signature.
+This rule encourages partials to be explicit about what they expect. Partials that accept no locals have nothing to declare, so `<%# locals: () %>` is optional for them.
 
 ## Configuration
 
@@ -98,11 +100,9 @@ Partial with keyword argument and default:
 </div>
 ```
 
-Partial with no locals (empty declaration):
+Partial with no locals:
 
 ```erb [app/views/pages/_content.html.erb]
-<%# locals: () %>
-
 <p>Static content only</p>
 ```
 
