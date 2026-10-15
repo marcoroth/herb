@@ -300,6 +300,11 @@ static AST_NODE_T* create_attribute_from_value(
     );
   } else {
     size_t value_length = value_node->location.end - value_node->location.start;
+    // Prism's implicit hash value spans the label, including its colon.
+    if (value_node->type == PM_IMPLICIT_NODE && value_length > 0
+        && value_node->location.start[value_length - 1] == ':') {
+      value_length--;
+    }
     char* raw_content = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
 
     if (raw_content && value_node->location.start) {
