@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::LoweredHelperTextTest#test_0002_keyed rows carry dynamic link text in their values and statics"
+input: "lowered-link-item-statics"
+---
+<!--herb-branch:0:item--><!--herb-item:0:--><li><a class="link" href="" data-herb-slot="1:attribute:href 2:child"></a></li><!--/herb-item:0-->
