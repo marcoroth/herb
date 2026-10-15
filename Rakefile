@@ -46,6 +46,7 @@ begin
     "arm-linux-gnu",
     "arm-linux-musl",
     "arm64-darwin",
+    "x64-mingw-ucrt",
     "x86_64-darwin",
     "x86_64-linux-gnu",
     "x86_64-linux-musl",

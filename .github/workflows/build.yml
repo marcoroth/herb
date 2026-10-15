@@ -96,3 +96,85 @@ jobs:
 
       - name: Run valgrind on examples/ with the tracking allocator
         run: ./bin/valgrind_check_allocations
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    env:
+      # The development Gemfile includes gems without Windows builds (e.g. sorbet-static),
+      # so this job uses a Gemfile with just what's needed to compile the extension and run the tests below.
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/windows.gemfile
+
+    steps:
+      # test/snapshots has paths longer than MAX_PATH, and the snapshots and
+      # templates should be checked out with the same LF line endings as on Linux.
+      - name: Configure Git
+        run: |-
+          git config --system core.longpaths true
+          git config --system core.autocrlf false
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # Like the Linux job, so the extension isn't built as a "from source" build with the git SHA as its version.
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Vendor Prism
+        run: bundle exec rake prism:vendor
+
+      - name: Compile Ruby extension
+        run: bundle exec rake compile
+
+      # test/engine, test/dev, test/integration and test/rubocop depend on gems
+      # from the Gemfile that aren't installed here (e.g. lightningcss, reactionview).
+      - name: Run Ruby Tests
+        run: bundle exec rake test
+        env:
+          # Rake splits TEST at commas, so each pattern is listed separately.
+          TEST: "test/*_test.rb,test/analysis/**/*_test.rb,test/analyze/**/*_test.rb,test/ast/**/*_test.rb,test/cli/**/*_test.rb,test/diff/**/*_test.rb,test/extractor/**/*_test.rb,test/html/**/*_test.rb,test/lexer/**/*_test.rb,test/libherb/**/*_test.rb,test/parser/**/*_test.rb"
+          # TEMP and TMP use the 8.3 short path (C:\Users\RUNNER~1\...) on the Windows runners,
+          # which doesn't match the long paths Dir.glob returns in tests using Dir.mktmpdir.
+          TMPDIR: ${{ runner.temp }}
+
+  windows-mswin:
+    name: Windows (mswin)
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/windows.gemfile
+
+    steps:
+      - name: Configure Git
+        run: |-
+          git config --system core.longpaths true
+          git config --system core.autocrlf false
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Ruby built with Visual Studio (MSVC) instead of MinGW.
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: mswin
+          bundler-cache: true
+
+      - name: Compile Ruby extension
+        run: bundle exec rake compile
+
+      # The test suite needs Action View, whose Nokogiri dependency doesn't support mswin,
+      # so this job checks that the compiled extension loads and parses through the CLI.
+      - name: Run herb CLI
+        run: |-
+          bundle exec ruby exe/herb version
+          bundle exec ruby exe/herb lex examples/if_else.html.erb
+          bundle exec ruby exe/herb parse examples/if_else.html.erb

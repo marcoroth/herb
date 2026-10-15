@@ -8,6 +8,11 @@
 
 #ifdef HERB_USE_MALLOC
 #  include <stdlib.h>
+#elif defined(_WIN32)
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h>
 #else
 #  ifdef __linux__
 #    define _GNU_SOURCE
@@ -18,6 +23,8 @@
 static void* hb_arena_allocate_page(size_t size) {
 #ifdef HERB_USE_MALLOC
   return malloc(size);
+#elif defined(_WIN32)
+  return VirtualAlloc(NULL, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 #else
   void* memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (memory == MAP_FAILED) { return NULL; }
@@ -29,6 +36,9 @@ static void* hb_arena_allocate_page(size_t size) {
 static void hb_arena_free_page(void* pointer, size_t size) {
 #ifdef HERB_USE_MALLOC
   free(pointer);
+#elif defined(_WIN32)
+  (void) size;
+  VirtualFree(pointer, 0, MEM_RELEASE);
 #else
   munmap(pointer, size);
 #endif
