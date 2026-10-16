@@ -65,7 +65,7 @@ options: {action_view_helpers: true}
     │   │               ├── equals: "=" (location: (1:39)-(1:65))
     │   │               └── value:
     │   │                   └── @ HTMLAttributeValueNode (location: (1:39)-(1:65))
-    │   │                       ├── open_quote: ∅
+    │   │                       ├── open_quote: """ (location: (1:39)-(1:39))
     │   │                       ├── children: (2 items)
     │   │                       │   ├── @ LiteralNode (location: (1:39)-(1:65))
     │   │                       │   │   └── content: "static-"
@@ -73,8 +73,8 @@ options: {action_view_helpers: true}
     │   │                       │   └── @ RubyLiteralNode (location: (1:39)-(1:65))
     │   │                       │       └── content: "dynamic"
     │   │                       │
-    │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       ├── close_quote: """ (location: (1:65)-(1:65))
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

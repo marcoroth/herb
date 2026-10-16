@@ -368,11 +368,14 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
     }
   }
 
+  token_T* open_quote = create_synthetic_token(allocator, "\"", TOKEN_QUOTE, start_position, start_position);
+  token_T* close_quote = create_synthetic_token(allocator, "\"", TOKEN_QUOTE, end_position, end_position);
+
   return ast_html_attribute_value_node_init(
-    NULL,
+    open_quote,
     value_children,
-    NULL,
-    false,
+    close_quote,
+    true,
     start_position,
     end_position,
     hb_array_init(0, allocator),
