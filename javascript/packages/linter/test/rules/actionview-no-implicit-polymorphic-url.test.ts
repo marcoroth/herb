@@ -237,6 +237,14 @@ describe("actionview-no-implicit-polymorphic-url", () => {
     expectNoOffenses(`<%= link_to "Avatar", @user.avatar_url %>`)
   })
 
+  it("passes for a URL method converted with `to_s`", () => {
+    expectNoOffenses(`<%= link_to "Ticket", ticket.view_url.to_s %>`)
+  })
+
+  it("passes for a URL method converted with `to_str`", () => {
+    expectNoOffenses(`<%= link_to "Ticket", ticket.view_url.to_str %>`)
+  })
+
   it("passes for a method call reading a URL off the request", () => {
     expectNoOffenses(`<%= link_to "Back", request.referer %>`)
   })
