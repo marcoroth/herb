@@ -668,7 +668,7 @@ exports[`CLI Output Formatting > Excluded Files > keeps excluded file notices ou
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 146,
+    "ruleCount": 147,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
