@@ -651,69 +651,6 @@ static bool is_literal_scalar_value(pm_node_t* value) {
   }
 }
 
-static bool is_literal_nested_attribute_hash(pm_hash_node_t* hash) {
-  for (size_t i = 0; i < hash->elements.size; i++) {
-    pm_node_t* element = hash->elements.nodes[i];
-
-    if (element->type == PM_ASSOC_SPLAT_NODE) { continue; }
-    if (element->type != PM_ASSOC_NODE) { return false; }
-
-    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
-
-    if (!is_static_attribute_key(assoc->key) || !is_literal_scalar_value(assoc->value)) { return false; }
-  }
-
-  return true;
-}
-
-static bool is_literal_attribute_assoc(pm_assoc_node_t* assoc, hb_allocator_T* allocator) {
-  if (!is_static_attribute_key(assoc->key) || !assoc->value) { return false; }
-
-  char* key_string = extract_string_from_prism_node(assoc->key, allocator);
-  if (!key_string) { return false; }
-
-  char* dashed_key = convert_underscores_to_dashes(key_string);
-  const char* name = dashed_key ? dashed_key : key_string;
-  pm_node_t* value = assoc->value;
-  bool literal = false;
-
-  if ((strcmp(name, "data") == 0 || strcmp(name, "aria") == 0) && value->type == PM_HASH_NODE) {
-    literal = is_literal_nested_attribute_hash((pm_hash_node_t*) value);
-  } else if (strcmp(name, "class") == 0 && (value->type == PM_HASH_NODE || value->type == PM_ARRAY_NODE)) {
-    literal = true;
-  } else if (value->type == PM_ARRAY_NODE) {
-    literal = is_static_string_array((pm_array_node_t*) value);
-  } else if (is_literal_scalar_value(value)) {
-    literal = true;
-  } else {
-    literal = value->type != PM_NIL_NODE && is_boolean_attribute(hb_string((char*) name));
-  }
-
-  if (dashed_key) { free(dashed_key); }
-  hb_allocator_dealloc(allocator, key_string);
-
-  return literal;
-}
-
-bool can_expand_tag_attributes_call(pm_call_node_t* call_node, hb_allocator_T* allocator) {
-  if (!has_html_attributes_in_call(call_node)) { return false; }
-  if (call_node->arguments->arguments.size != 1 || call_node->block) { return false; }
-
-  pm_node_t* argument = call_node->arguments->arguments.nodes[0];
-  pm_node_list_t* elements = argument->type == PM_HASH_NODE ? &((pm_hash_node_t*) argument)->elements
-                                                            : &((pm_keyword_hash_node_t*) argument)->elements;
-
-  for (size_t i = 0; i < elements->size; i++) {
-    pm_node_t* element = elements->nodes[i];
-
-    if (element->type == PM_ASSOC_SPLAT_NODE) { continue; }
-    if (element->type != PM_ASSOC_NODE) { return false; }
-    if (!is_literal_attribute_assoc((pm_assoc_node_t*) element, allocator)) { return false; }
-  }
-
-  return true;
-}
-
 bool has_html_attributes_in_call(pm_call_node_t* call_node) {
   if (!call_node || !call_node->arguments) { return false; }
 
@@ -723,6 +660,241 @@ bool has_html_attributes_in_call(pm_call_node_t* call_node) {
   pm_node_t* last_argument = arguments->arguments.nodes[arguments->arguments.size - 1];
 
   return last_argument && (last_argument->type == PM_KEYWORD_HASH_NODE || last_argument->type == PM_HASH_NODE);
+}
+
+static char* node_source(pm_node_t* node, hb_allocator_T* allocator) {
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) node->location.start,
+    (size_t) (node->location.end - node->location.start)
+  );
+}
+
+typedef struct {
+  const uint8_t* source;
+  const char* original_source;
+  size_t erb_content_offset;
+  hb_array_T* attributes;
+  hb_allocator_T* allocator;
+} tag_attributes_context_T;
+
+static void append_runtime_attributes(
+  tag_attributes_context_T* context,
+  const char* prefix,
+  const char* source,
+  const char* suffix,
+  pm_location_t* location
+) {
+  hb_buffer_T code;
+  hb_buffer_init(&code, strlen(source) + 32, context->allocator);
+  hb_buffer_append(&code, "tag.attributes(");
+  hb_buffer_append(&code, prefix);
+  hb_buffer_append(&code, source);
+  hb_buffer_append(&code, suffix);
+  hb_buffer_append(&code, ")");
+
+  position_T start = prism_location_to_position_with_offset(
+    location,
+    context->original_source,
+    context->erb_content_offset,
+    context->source
+  );
+  pm_location_t end_location = { .start = location->end, .end = location->end };
+  position_T end = prism_location_to_position_with_offset(
+    &end_location,
+    context->original_source,
+    context->erb_content_offset,
+    context->source
+  );
+
+  AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
+    hb_string_from_c_string(hb_buffer_value(&code)),
+    HB_STRING_EMPTY,
+    start,
+    end,
+    hb_array_init(0, context->allocator),
+    context->allocator
+  );
+
+  if (splat_node) { hb_array_append(context->attributes, (AST_NODE_T*) splat_node); }
+
+  hb_buffer_free(&code);
+}
+
+static void append_runtime_assoc(
+  tag_attributes_context_T* context,
+  const char* prefix,
+  pm_node_t* element,
+  const char* suffix
+) {
+  char* source = node_source(element, context->allocator);
+  if (!source) { return; }
+
+  append_runtime_attributes(context, prefix, source, suffix, &element->location);
+  hb_allocator_dealloc(context->allocator, source);
+}
+
+static void append_optional_attribute(
+  tag_attributes_context_T* context,
+  const char* name,
+  const char* conversion,
+  pm_assoc_node_t* assoc
+) {
+  char* value_source = node_source(assoc->value, context->allocator);
+  if (!value_source) { return; }
+
+  attribute_positions_T positions;
+  fill_attribute_positions(assoc, context->source, context->original_source, context->erb_content_offset, &positions);
+
+  AST_HTML_ATTRIBUTE_NODE_T* attribute =
+    create_html_attribute_with_ruby_literal_precise(name, value_source, &positions, context->allocator);
+
+  if (attribute) {
+    AST_HTML_OPTIONAL_ATTRIBUTE_NODE_T* optional = ast_html_optional_attribute_node_init(
+      attribute,
+      hb_string_from_c_string(conversion),
+      positions.name_start,
+      positions.value_end,
+      hb_array_init(0, context->allocator),
+      context->allocator
+    );
+
+    if (optional) { hb_array_append(context->attributes, (AST_NODE_T*) optional); }
+  }
+
+  hb_allocator_dealloc(context->allocator, value_source);
+}
+
+static void append_nested_attributes(tag_attributes_context_T* context, const char* prefix, pm_hash_node_t* hash) {
+  hb_buffer_T wrapper;
+  hb_buffer_init(&wrapper, strlen(prefix) + 8, context->allocator);
+  hb_buffer_append(&wrapper, prefix);
+  hb_buffer_append(&wrapper, ": { ");
+
+  const char* conversion = strcmp(prefix, "aria") == 0 ? "aria" : "data";
+
+  for (size_t i = 0; i < hash->elements.size; i++) {
+    pm_node_t* element = hash->elements.nodes[i];
+
+    if (element->type != PM_ASSOC_NODE || !is_static_attribute_key(((pm_assoc_node_t*) element)->key)) {
+      append_runtime_assoc(context, hb_buffer_value(&wrapper), element, " }");
+      continue;
+    }
+
+    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
+
+    if (assoc->value->type == PM_NIL_NODE) { continue; }
+
+    char* raw_key = extract_string_from_prism_node(assoc->key, context->allocator);
+    if (!raw_key) { continue; }
+
+    char* name = build_prefixed_key(prefix, raw_key, context->allocator);
+    hb_allocator_dealloc(context->allocator, raw_key);
+    if (!name) { continue; }
+
+    if (is_literal_scalar_value(assoc->value)) {
+      attribute_positions_T positions;
+      fill_attribute_positions(
+        assoc,
+        context->source,
+        context->original_source,
+        context->erb_content_offset,
+        &positions
+      );
+
+      AST_NODE_T* attribute = create_attribute_from_value(name, assoc->value, &positions, context->allocator, true);
+      if (attribute) { hb_array_append(context->attributes, attribute); }
+    } else {
+      append_optional_attribute(context, name, conversion, assoc);
+    }
+
+    hb_allocator_dealloc(context->allocator, name);
+  }
+
+  hb_buffer_free(&wrapper);
+}
+
+static bool is_literal_attribute_value(const char* name, pm_node_t* value) {
+  if (is_literal_scalar_value(value)) { return true; }
+
+  if (strcmp(name, "class") == 0 && (value->type == PM_HASH_NODE || value->type == PM_ARRAY_NODE)) { return true; }
+
+  return value->type == PM_ARRAY_NODE && is_static_string_array((pm_array_node_t*) value);
+}
+
+static void append_tag_attribute(tag_attributes_context_T* context, pm_assoc_node_t* assoc) {
+  char* key_string = extract_string_from_prism_node(assoc->key, context->allocator);
+  if (!key_string) { return; }
+
+  pm_node_t* value = assoc->value;
+  char* dashed_key = convert_underscores_to_dashes(key_string);
+  const char* name = dashed_key ? dashed_key : key_string;
+  bool prefixed = strcmp(key_string, "data") == 0 || strcmp(key_string, "aria") == 0;
+
+  bool omitted = strcmp(key_string, "escape") == 0 || !value || value->type == PM_NIL_NODE;
+
+  if (omitted) {
+    if (dashed_key) { free(dashed_key); }
+    hb_allocator_dealloc(context->allocator, key_string);
+
+    return;
+  }
+
+  if (prefixed && value->type == PM_HASH_NODE) {
+    append_nested_attributes(context, key_string, (pm_hash_node_t*) value);
+  } else if (is_literal_attribute_value(name, value) || (is_boolean_attribute(hb_string((char*) name)) && !prefixed)) {
+    AST_NODE_T* attribute = extract_html_attribute_from_assoc(
+      assoc,
+      context->source,
+      context->original_source,
+      context->erb_content_offset,
+      context->allocator
+    );
+
+    if (attribute) { hb_array_append(context->attributes, attribute); }
+  } else if (prefixed || value->type == PM_IMPLICIT_NODE) {
+    append_runtime_assoc(context, "", (pm_node_t*) assoc, "");
+  } else {
+    append_optional_attribute(context, name, strcmp(name, "class") == 0 ? "class" : "tag", assoc);
+  }
+
+  if (dashed_key) { free(dashed_key); }
+  hb_allocator_dealloc(context->allocator, key_string);
+}
+
+hb_array_T* extract_tag_attributes_from_call_node(
+  pm_call_node_t* call_node,
+  const uint8_t* source,
+  const char* original_source,
+  size_t erb_content_offset,
+  hb_allocator_T* allocator
+) {
+  if (!has_html_attributes_in_call(call_node)) { return NULL; }
+  if (call_node->arguments->arguments.size != 1 || call_node->block) { return NULL; }
+
+  pm_node_t* argument = call_node->arguments->arguments.nodes[0];
+  pm_node_list_t* elements = argument->type == PM_HASH_NODE ? &((pm_hash_node_t*) argument)->elements
+                                                            : &((pm_keyword_hash_node_t*) argument)->elements;
+
+  tag_attributes_context_T context = {
+    .source = source,
+    .original_source = original_source,
+    .erb_content_offset = erb_content_offset,
+    .attributes = hb_array_init(8, allocator),
+    .allocator = allocator,
+  };
+
+  for (size_t i = 0; i < elements->size; i++) {
+    pm_node_t* element = elements->nodes[i];
+
+    if (element->type == PM_ASSOC_NODE && is_static_attribute_key(((pm_assoc_node_t*) element)->key)) {
+      append_tag_attribute(&context, (pm_assoc_node_t*) element);
+    } else {
+      append_runtime_assoc(&context, "", element, "");
+    }
+  }
+
+  return context.attributes;
 }
 
 hb_array_T* extract_html_attributes_from_call_node(

@@ -118,6 +118,16 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
   }
 
 function applyValue(slots: Slots, payload: Payload, slot: Slot, index: number, value: AppliedValue, report: ApplyReport, mode: ApplyMode): void {
+    if (value === null) {
+      if (slot.type === "attribute" && slots.setAttribute(slot, null)) {
+        report.applied += 1
+      } else {
+        defer(report, payload, index, "partial-attribute")
+      }
+
+      return
+    }
+
     if (typeof value === "boolean") {
       if (slots.setBooleanAttribute(slot, value)) {
         report.applied += 1

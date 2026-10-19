@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0109_tag.attributes omits a literal nil"
+input: |2-
+<div <%= tag.attributes(id: nil, class: "card") %>></div>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:57))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:51))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:50)-(1:51))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:33)-(1:46))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:38))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:33)-(1:38))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: ": " (location: (1:38)-(1:40))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:40)-(1:46))
+    │   │       │               ├── open_quote: """ (location: (1:40)-(1:41))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:41)-(1:45))
+    │   │       │               │       └── content: "card"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:45)-(1:46))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:51)-(1:57))
+    │   │       ├── tag_opening: "</" (location: (1:51)-(1:53))
+    │   │       ├── tag_name: "div" (location: (1:53)-(1:56))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:56)-(1:57))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:57)-(2:0))
+        └── content: "\n"

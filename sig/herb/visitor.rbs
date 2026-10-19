@@ -59,6 +59,9 @@ module Herb
     # : (Herb::AST::HTMLAttributeNode) -> void
     def visit_html_attribute_node: (Herb::AST::HTMLAttributeNode) -> void
 
+    # : (Herb::AST::HTMLOptionalAttributeNode) -> void
+    def visit_html_optional_attribute_node: (Herb::AST::HTMLOptionalAttributeNode) -> void
+
     # : (Herb::AST::RubyLiteralNode) -> void
     def visit_ruby_literal_node: (Herb::AST::RubyLiteralNode) -> void
 

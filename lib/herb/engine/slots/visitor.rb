@@ -815,6 +815,21 @@ module Herb
           @in_attribute = false
         end
 
+        def visit_ruby_html_attributes_splat_node(node)
+          record_slot(node, :child)
+        end
+
+        def visit_html_optional_attribute_node(node)
+          attribute = node.attribute
+
+          record_slot(attribute, :attribute)
+          @attribute_open_tags[attribute] = @current_open_tag
+
+          @in_attribute = true
+          visit_child_nodes(attribute)
+          @in_attribute = false
+        end
+
         def visit_html_comment_node(node)
           record_slot(node, :comment) if dynamic?(node)
 

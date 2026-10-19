@@ -1,7 +1,0 @@
----
-source: "Engine::Slots::VisitorTest#test_0079_leaves tag.attributes with a value that may be nil to Action View"
-input: "visitor_test-tag-attributes-nil"
----
-_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 ; _buf << '<!--herb-region:app/views/test.html.erb:13c6b413:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '-->
-<html '.freeze; _buf << (tag.attributes("data-theme": theme)).to_s; _buf << ' data-herb-slot="0:element"></html><!--/herb-region:app/views/test.html.erb-->'.freeze;
-_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0019_tag.attributes builds a dynamic class list the way Action View does"
+input: "{source: \"<div <%= tag.attributes(class: classes) %>></div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {classes: [\"card\", nil, \"\", {active: true, hidden: false}]}}}"
+---
+_buf = ::String.new; _buf << '<div '.freeze; if (_herb_attribute_value = ::Herb::Engine.class_option_value((classes))); _buf << 'class="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '></div>'.freeze;
+_buf.to_s

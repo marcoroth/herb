@@ -11,14 +11,13 @@ import {
   isHTMLElementNode,
   isHTMLConditionalElementNode,
   isHTMLDoctypeNode,
-  isHTMLAttributeNode,
   isHTMLOpenTagNode,
   isERBOpenTagNode,
   isLiteralNode,
   isERBContentNode,
 } from "@herb-tools/core"
 
-import { getStaticAttributeName } from "@herb-tools/core"
+import { filterAttributeNodes, getStaticAttributeName } from "@herb-tools/core"
 
 import { HerbHTMLNode, type AttributeSourceRange } from "./herb-html-node.js"
 import { type LineOffsetTable, locationToOffsets, positionToOffset } from "./offset-utils.js"
@@ -153,9 +152,7 @@ function extractAttributes(openTag: HTMLElementNode["open_tag"], source: string,
   const attributes: { [name: string]: string | null } = {}
   const sourceRanges: { [name: string]: AttributeSourceRange } = {}
 
-  for (const child of children) {
-    if (!isHTMLAttributeNode(child)) continue
-
+  for (const child of filterAttributeNodes(children)) {
     const name = child.name ? getStaticAttributeName(child.name) : null
     if (!name) continue
 

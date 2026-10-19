@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0013_tag.attributes renders false for an attribute that is not boolean"
+input: "{source: \"<details <%= tag.attributes(\\\"data-open\\\": open) %>></details>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {open: false}}}"
+---
+_buf = ::String.new; _buf << '<details '.freeze; if (_herb_attribute_value = ::Herb::Engine.tag_option_value((open))); _buf << 'data-open="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '></details>'.freeze;
+_buf.to_s

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0016_tag.attributes keeps literal attributes beside an empty hash built at render time"
+input: "{source: \"<table <%= tag.attributes(id: \\\"people\\\", data: table_data) %>></table>\", locals: {table_data: {}}, options: {action_view_helpers: true}}"
+---
+<table id="people"></table>

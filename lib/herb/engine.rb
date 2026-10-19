@@ -198,6 +198,56 @@ module Herb
       value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
     end
 
+    def self.tag_option_value(value)
+      case value
+      when nil then nil
+      when ::Array, ::Hash then Array(value).flatten.join(" ")
+      when ::Regexp then value.source
+      else value.to_s
+      end
+    end
+
+    def self.class_option_value(value)
+      return tag_option_value(value) unless value.is_a?(::Array) || value.is_a?(::Hash)
+
+      tag_values(value).join(" ")
+    end
+
+    def self.data_option_value(value)
+      return nil if value.nil?
+      return tag_option_value(value) if value.is_a?(::String) || value.is_a?(::Symbol)
+      return tag_option_value(value) if defined?(::BigDecimal) && value.is_a?(::BigDecimal)
+
+      value.to_json
+    end
+
+    def self.aria_option_value(value)
+      return tag_option_value(value) unless value.is_a?(::Array) || value.is_a?(::Hash)
+
+      tokens = tag_values(value)
+
+      tokens.empty? ? nil : tokens.join(" ")
+    end
+
+    def self.tag_values(value)
+      case value
+      when ::Hash then value.filter_map { |key, enabled| key.to_s if enabled && !key.to_s.strip.empty? }
+      when ::Array then value.flat_map { |entry| tag_values(entry) }
+      when nil, false then []
+      else value.to_s.strip.empty? ? [] : [value.to_s]
+      end
+    end
+
+    def self.optional_attr(value)
+      value.nil? ? nil : ::Herb::Engine.attr(value)
+    end
+
+    def self.spaced_attributes(value)
+      string = value.to_s
+
+      string.empty? ? string : raw(" #{string}")
+    end
+
     protected
 
     #: () -> untyped

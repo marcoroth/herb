@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { getAttribute, getAttributeValue, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, filterHTMLAttributeNodes, findAttributeByName, hasDynamicAttributeValue } from "@herb-tools/core"
+import { getAttribute, getAttributeValue, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, findAttributeByName, hasDynamicAttributeValue } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -48,7 +48,7 @@ class NoRedundantImageAltVisitor extends BaseRuleVisitor {
     }
 
     if (isERBOpenTagNode(openTag)) {
-      return findAttributeByName(filterHTMLAttributeNodes(openTag.children), "alt")
+      return findAttributeByName(openTag.children, "alt")
     }
 
     return null

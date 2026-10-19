@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0018_tag.attributes does not reuse a local the template already has"
+input: "{source: \"<p <%= tag.attributes(title: _herb_attribute_value) %>></p>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {_herb_attribute_value: \"Title\"}}}"
+---
+_buf = ::String.new; _buf << '<p '.freeze; if (_herb_attribute_value_1 = ::Herb::Engine.tag_option_value((_herb_attribute_value))); _buf << 'title="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value_1)); _buf << '"'.freeze; end; _buf << '></p>'.freeze;
+_buf.to_s

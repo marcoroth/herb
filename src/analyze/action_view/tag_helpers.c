@@ -1895,9 +1895,8 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                      && string_equals(parse_context->info->tag_name, "attributes")) {
             hb_array_T* attributes = NULL;
 
-            if (parse_context->info->call_node
-                && can_expand_tag_attributes_call(parse_context->info->call_node, context->allocator)) {
-              attributes = extract_html_attributes_from_call_node(
+            if (parse_context->info->call_node) {
+              attributes = extract_tag_attributes_from_call_node(
                 parse_context->info->call_node,
                 parse_context->prism_source,
                 parse_context->original_source,
@@ -1962,9 +1961,8 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
                 && parse_context->info->tag_name && string_equals(parse_context->info->tag_name, "attributes")) {
               hb_array_T* attributes = NULL;
 
-              if (parse_context->info->call_node
-                  && can_expand_tag_attributes_call(parse_context->info->call_node, context->allocator)) {
-                attributes = extract_html_attributes_from_call_node(
+              if (parse_context->info->call_node) {
+                attributes = extract_tag_attributes_from_call_node(
                   parse_context->info->call_node,
                   parse_context->prism_source,
                   parse_context->original_source,

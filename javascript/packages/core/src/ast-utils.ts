@@ -42,7 +42,8 @@ import {
   areAllOfType,
   filterLiteralNodes,
   filterHTMLTextNodes,
-  filterHTMLAttributeNodes
+  filterHTMLAttributeNodes,
+  isHTMLOptionalAttributeNode
 } from "./node-type-guards.js"
 
 import { Location } from "./location.js"
@@ -341,10 +342,18 @@ function getOpenTagChildren(node: AttributeContainerNode | null | undefined): No
 }
 
 /**
+ * Filters a list of nodes to its attributes, including the attribute inside
+ * an HTMLOptionalAttributeNode, which is only rendered when its value is not nil
+ */
+export function filterAttributeNodes(nodes: Node[]): HTMLAttributeNode[] {
+  return filterHTMLAttributeNodes(nodes.map(node => isHTMLOptionalAttributeNode(node) && node.attribute ? node.attribute : node))
+}
+
+/**
  * Gets attributes from an HTMLElementNode or HTMLOpenTagNode
  */
 export function getAttributes(node: AttributeContainerNode | null | undefined): HTMLAttributeNode[] {
-  return filterHTMLAttributeNodes(getOpenTagChildren(node))
+  return filterAttributeNodes(getOpenTagChildren(node))
 }
 
 /**
@@ -427,7 +436,7 @@ export function getTokenList(valueOrNode: string | AttributeContainerNode | null
  * Finds an attribute by name in a list of attribute nodes
  */
 export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
-  for (const attribute of filterHTMLAttributeNodes(attributes)) {
+  for (const attribute of filterAttributeNodes(attributes)) {
     const name = getAttributeName(attribute)
 
     if (name === attributeName.toLowerCase()) {

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0044_tag.div keeps a splat"
+input: "{source: \"<%= tag.div(id: \\\"x\\\", **options) do %>Content<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {options: {title: \"Title\"}}}}"
+---
+_buf = ::String.new; _buf << '<div id="x"'.freeze; _buf << (::Herb::Engine.spaced_attributes(tag.attributes(**options))).to_s; _buf << '>Content</div>'.freeze;
+_buf.to_s

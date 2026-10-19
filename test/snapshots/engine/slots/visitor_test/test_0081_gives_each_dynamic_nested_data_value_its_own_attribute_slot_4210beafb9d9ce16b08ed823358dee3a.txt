@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::VisitorTest#test_0081_gives each dynamic nested data value its own attribute slot"
+input: "visitor_test-tag-attributes-nested-data"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 ; _buf << '<!--herb-region:app/views/test.html.erb:1afb3d46:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '-->
+<table '.freeze; if (_herb_attribute_value = ::Herb::Engine.data_option_value((layout))); _buf << 'data-people-list="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << ' data-sortable="true" data-herb-slot="0:attribute:data-people-list"></table><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0015_tag.attributes keeps literal attributes beside a hash built at render time"
+input: "{source: \"<table <%= tag.attributes(id: \\\"people\\\", data: table_data) %>></table>\", locals: {table_data: {people_list: \"responsive\"}}, options: {action_view_helpers: true}}"
+---
+<table id="people" data-people-list="responsive"></table>

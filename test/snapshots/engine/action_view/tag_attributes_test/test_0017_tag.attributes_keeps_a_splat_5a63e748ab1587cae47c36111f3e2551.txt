@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0017_tag.attributes keeps a splat"
+input: "{source: \"<div <%= tag.attributes(id: \\\"x\\\", **options) %>></div>\", locals: {options: {title: \"Title\"}}, options: {action_view_helpers: true}}"
+---
+<div id="x" title="Title"></div>

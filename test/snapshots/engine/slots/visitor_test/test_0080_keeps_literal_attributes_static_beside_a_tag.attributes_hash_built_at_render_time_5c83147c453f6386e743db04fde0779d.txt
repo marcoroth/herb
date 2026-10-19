@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::VisitorTest#test_0080_keeps literal attributes static beside a tag.attributes hash built at render time"
+input: "visitor_test-tag-attributes-data"
+---
+_buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["app/views/test.html.erb"] += 1) - 1 ; _buf << '<!--herb-region:app/views/test.html.erb:afcdaab6:'.freeze; _buf << (_herb_occurrence).to_s; _buf << '-->
+<table id="people"'.freeze; if (_herb_attribute_value = ::Herb::Engine.class_option_value((kind))); _buf << ' class="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << (::Herb::Engine.spaced_attributes(tag.attributes(data: table_data))).to_s; _buf << ' data-herb-slot="0:attribute:class 1:element"></table><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

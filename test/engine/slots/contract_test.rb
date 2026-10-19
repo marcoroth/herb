@@ -165,6 +165,16 @@ module Engine
           { items: ["a", "b"] },
           { items: ["b", "c"] }
         ],
+        "a tag.attributes value that turns nil" => [
+          %(<section <%= tag.attributes("data-theme": @theme, lang: "en") %>>x</section>),
+          { theme: "dark" },
+          { theme: nil }
+        ],
+        "a tag.attributes value that stops being nil" => [
+          %(<section <%= tag.attributes(lang: "en", "data-theme": @theme) %>>x</section>),
+          { theme: nil },
+          { theme: "light" }
+        ],
         "nothing dynamic at all" => [
           %(<p>static</p>),
           {},

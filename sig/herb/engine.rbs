@@ -46,6 +46,20 @@ module Herb
 
     def self.nested_attribute_value: (untyped value) -> untyped
 
+    def self.tag_option_value: (untyped value) -> untyped
+
+    def self.class_option_value: (untyped value) -> untyped
+
+    def self.data_option_value: (untyped value) -> untyped
+
+    def self.aria_option_value: (untyped value) -> untyped
+
+    def self.tag_values: (untyped value) -> untyped
+
+    def self.optional_attr: (untyped value) -> untyped
+
+    def self.spaced_attributes: (untyped value) -> untyped
+
     # : () -> untyped
     def compiler_class: () -> untyped
 

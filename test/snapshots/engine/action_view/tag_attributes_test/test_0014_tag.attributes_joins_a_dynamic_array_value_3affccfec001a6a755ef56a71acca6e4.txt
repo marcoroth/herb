@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0014_tag.attributes joins a dynamic array value"
+input: "{source: \"<a <%= tag.attributes(rel: rels) %>>x</a>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {rels: [\"noopener\", \"noreferrer\"]}}}"
+---
+_buf = ::String.new; _buf << '<a '.freeze; if (_herb_attribute_value = ::Herb::Engine.tag_option_value((rels))); _buf << 'rel="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '>x</a>'.freeze;
+_buf.to_s

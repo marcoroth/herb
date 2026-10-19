@@ -324,6 +324,10 @@ module Herb
 
         def visit_html_attribute_node: (untyped node) -> untyped
 
+        def visit_ruby_html_attributes_splat_node: (untyped node) -> untyped
+
+        def visit_html_optional_attribute_node: (untyped node) -> untyped
+
         def visit_html_comment_node: (untyped node) -> untyped
 
         def visit_html_doctype_node: (untyped node) -> untyped

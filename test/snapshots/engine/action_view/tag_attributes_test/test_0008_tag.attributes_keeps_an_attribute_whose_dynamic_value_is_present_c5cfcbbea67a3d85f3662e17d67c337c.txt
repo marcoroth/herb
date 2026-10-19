@@ -2,5 +2,5 @@
 source: "Engine::ActionView::TagAttributesTest#test_0008_tag.attributes keeps an attribute whose dynamic value is present"
 input: "{source: \"<html <%= tag.attributes(\\\"data-theme\\\": theme) %>></html>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {theme: \"dark\"}}}"
 ---
-_buf = ::String.new; _buf << '<html '.freeze; _buf << (tag.attributes("data-theme": theme)).to_s; _buf << '></html>'.freeze;
+_buf = ::String.new; _buf << '<html '.freeze; if (_herb_attribute_value = ::Herb::Engine.tag_option_value((theme))); _buf << 'data-theme="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '></html>'.freeze;
 _buf.to_s

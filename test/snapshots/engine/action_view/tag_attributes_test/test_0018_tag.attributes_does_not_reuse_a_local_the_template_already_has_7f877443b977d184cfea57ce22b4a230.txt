@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0018_tag.attributes does not reuse a local the template already has"
+input: "{source: \"<p <%= tag.attributes(title: _herb_attribute_value) %>></p>\", locals: {_herb_attribute_value: \"Title\"}, options: {action_view_helpers: true}}"
+---
+<p title="Title"></p>

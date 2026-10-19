@@ -127,10 +127,16 @@ module Herb
           def visit_html_attribute_node: (untyped) -> void
 
           # : (untyped) -> void
+          def visit_html_optional_attribute_node: (untyped) -> void
+
+          # : (untyped) -> void
           def visit_html_element_node: (untyped) -> void
 
           # : (untyped) -> void
           def visit_erb_content_node: (untyped) -> void
+
+          # : (untyped) -> void
+          def visit_ruby_html_attributes_splat_node: (untyped) -> void
 
           # : (untyped) -> void
           def visit_erb_yield_node: (untyped) -> void
@@ -242,6 +248,9 @@ module Herb
 
         # : (String, Symbol?, Integer?, bool, ?nested: bool) -> void
         def add_dynamic: (String, Symbol?, Integer?, bool, ?nested: bool) -> void
+
+        # : (String, Integer) -> void
+        def add_recorded_dynamic: (String, Integer) -> void
 
         # : (Integer) -> bool
         def boolean_presence?: (Integer) -> bool

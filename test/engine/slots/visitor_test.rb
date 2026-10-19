@@ -509,29 +509,36 @@ module Engine
         assert_slots_snapshot(%(<%# herb:slots %>\n<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
       end
 
-      test "leaves tag.attributes with a value that may be nil to Action View" do
+      test "gives a tag.attributes value that may be nil its own attribute slot" do
         template = %(<%# herb:slots %>\n<html <%= tag.attributes("data-theme": theme) %>></html>)
         visitor = assert_slots_snapshot(template)
         engine = Herb::Engine.new(template, visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb")
 
-        assert_equal [:element], visitor.slots.map(&:type)
+        assert_equal([[:attribute, "data-theme", "theme"]], visitor.slots.map { |slot| [slot.type, slot.attribute, slot.expression] })
         assert_snapshot_matches(engine.src, "visitor_test-tag-attributes-nil")
       end
 
-      test "leaves tag.attributes with a dynamic data hash to Action View" do
-        template = %(<%# herb:slots %>\n<table <%= tag.attributes(data: table_data) %>></table>)
+      test "keeps literal attributes static beside a tag.attributes hash built at render time" do
+        template = %(<%# herb:slots %>\n<table <%= tag.attributes(id: "people", class: kind, data: table_data) %>></table>)
         engine = Herb::Engine.new(template, visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb")
 
         assert_slots_snapshot(template)
         assert_snapshot_matches(engine.src, "visitor_test-tag-attributes-data")
       end
 
-      test "leaves tag.attributes with a dynamic nested data value to Action View" do
-        template = %(<%# herb:slots %>\n<table <%= tag.attributes(data: { people_list: layout }) %>></table>)
+      test "gives each dynamic nested data value its own attribute slot" do
+        template = %(<%# herb:slots %>\n<table <%= tag.attributes(data: { people_list: layout, sortable: "true" }) %>></table>)
         engine = Herb::Engine.new(template, visitors: [Herb::Engine::Slots::Visitor.new], filename: "app/views/test.html.erb")
 
         assert_slots_snapshot(template)
         assert_snapshot_matches(engine.src, "visitor_test-tag-attributes-nested-data")
+      end
+
+      test "reads a state through a tag.attributes value that may be nil" do
+        template = %(<%# herb:slots client %><%# herb:state (theme: "dark") %><section <%= tag.attributes("data-theme": theme) %>>x</section>)
+        visitor = slots_for(template)
+
+        assert_equal({ "theme" => [0] }, visitor.manifest["states"]["reads"])
       end
 
       test "expands tag.attributes when every value is a literal" do
@@ -546,7 +553,7 @@ module Engine
         template = %(<%# herb:slots %>\n<button <%= tag.attributes(id: "go", disabled: busy) %>>Go</button>)
         visitor = assert_slots_snapshot(template)
 
-        assert_equal [[:boolean_attribute, "disabled"]], visitor.slots.map { |slot| [slot.type, slot.attribute] }
+        assert_equal([[:boolean_attribute, "disabled"]], visitor.slots.map { |slot| [slot.type, slot.attribute] })
       end
     end
   end

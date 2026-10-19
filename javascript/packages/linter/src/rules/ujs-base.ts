@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 
-import { PrismVisitor, filterHTMLAttributeNodes, getAttributeName, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
+import { PrismVisitor, filterAttributeNodes, getAttributeName, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { ERBBlockNode, ERBContentNode, ERBOpenTagNode, HTMLOpenTagNode, Node, PrismNode } from "@herb-tools/core"
 import type { LintContext } from "../types.js"
@@ -117,7 +117,7 @@ export class UJSAttributeVisitor extends BaseRuleVisitor {
   private checkAttributes(children: Node[] | null | undefined, fromHelper = false): void {
     if (!children) return
 
-    for (const attribute of filterHTMLAttributeNodes(children)) {
+    for (const attribute of filterAttributeNodes(children)) {
       if (getAttributeName(attribute) !== this.descriptor.attribute) continue
 
       this.addOffense(

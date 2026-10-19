@@ -774,5 +774,29 @@ module Analyze::ActionView::TagHelper
         <%= tag.div data: { hidden: a != b } %>
       HTML
     end
+
+    test "tag.attributes with a dynamic value creates an optional attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <html <%= tag.attributes("data-theme": theme, class: classes) %>></html>
+      HTML
+    end
+
+    test "tag.attributes with dynamic data and aria values creates optional attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <div <%= tag.attributes(data: { controller: "list", sort: order }, aria: { describedby: ids }) %>></div>
+      HTML
+    end
+
+    test "tag.attributes leaves a hash built at render time as an output tag" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <table <%= tag.attributes(id: "people", data: table_data, **options) %>></table>
+      HTML
+    end
+
+    test "tag.attributes omits a literal nil" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <div <%= tag.attributes(id: nil, class: "card") %>></div>
+      HTML
+    end
   end
 end

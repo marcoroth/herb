@@ -259,6 +259,12 @@ pub trait Printer: Visitor + Default {
     }
   }
 
+  fn emit_html_optional_attribute(&mut self, node: &HTMLOptionalAttributeNode) {
+    if let Some(ref attribute) = node.attribute {
+      self.emit_html_attribute(attribute);
+    }
+  }
+
   fn emit_html_attribute_name(&mut self, node: &HTMLAttributeNameNode) {
     self.visit_all(&node.children);
   }

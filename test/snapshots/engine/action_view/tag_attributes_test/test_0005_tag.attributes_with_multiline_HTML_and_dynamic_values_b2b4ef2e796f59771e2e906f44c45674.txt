@@ -4,7 +4,7 @@ input: "{source: \"<div\\n  data-controller=\\\"one\\\"\\n  <%= tag.attributes(c
 ---
 _buf = ::String.new; _buf << '<div
   data-controller="one"
-  '.freeze; _buf << (tag.attributes(class: ["one", "two", "three"], id: dom_id)).to_s; _buf << '
+  class="one two three"'.freeze; if (_herb_attribute_value = ::Herb::Engine.tag_option_value((dom_id))); _buf << ' id="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '
 >
   Content
 </div>

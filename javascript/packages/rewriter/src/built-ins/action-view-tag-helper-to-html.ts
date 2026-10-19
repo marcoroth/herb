@@ -1,5 +1,5 @@
 import { Visitor, HTMLOpenTagNode, HTMLCloseTagNode, HTMLElementNode, HTMLAttributeValueNode, WhitespaceNode, ERBContentNode } from "@herb-tools/core"
-import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, Token } from "@herb-tools/core"
+import { isHTMLAttributeNode, isHTMLOptionalAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, Token } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -9,6 +9,15 @@ import type { Node } from "@herb-tools/core"
 
 function createWhitespaceNode(): WhitespaceNode {
   return WhitespaceNode.build({ value: Token.from("TOKEN_WHITESPACE", " ") })
+}
+
+function createAttributesOutputNode(content: string): ERBContentNode {
+  return ERBContentNode.build({
+    tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+    content: Token.from("TOKEN_ERB_CONTENT", ` ${content} `),
+    tag_closing: Token.from("TOKEN_ERB_END", "%>"),
+    valid: true,
+  })
 }
 
 class ActionViewTagHelperToHTMLVisitor extends Visitor {
@@ -25,7 +34,19 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     const newChildren: Node[] = []
 
     for (let index = 0; index < node.children.length; index++) {
-      const child = node.children[index]
+      const original = node.children[index]
+      const child = isHTMLOptionalAttributeNode(original) && original.attribute ? original.attribute : original
+      const previous = index > 0 ? node.children[index - 1] : null
+
+      if (isRubyHTMLAttributesSplatNode(child)) {
+        if (!previous || !isWhitespaceNode(previous)) {
+          newChildren.push(createWhitespaceNode())
+        }
+
+        newChildren.push(createAttributesOutputNode(child.content))
+
+        continue
+      }
 
       if (isHTMLAttributeNode(child)) {
         if (child.equals && child.equals.value !== "=") {
@@ -35,8 +56,6 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
         if (child.value) {
           this.transformAttributeValue(child.value)
         }
-
-        const previous = index > 0 ? node.children[index - 1] : null
 
         if (!previous || !isWhitespaceNode(previous)) {
           newChildren.push(createWhitespaceNode())
@@ -73,16 +92,12 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
     const htmlChildren: Node[] = []
 
-    for (const child of openTag.children) {
+    for (const original of openTag.children) {
+      const child = isHTMLOptionalAttributeNode(original) && original.attribute ? original.attribute : original
+
       if (isRubyHTMLAttributesSplatNode(child)) {
         htmlChildren.push(createWhitespaceNode())
-
-        htmlChildren.push(ERBContentNode.build({
-          tag_opening: Token.from("TOKEN_ERB_START", "<%="),
-          content: Token.from("TOKEN_ERB_CONTENT", ` ${child.content} `),
-          tag_closing: Token.from("TOKEN_ERB_END", "%>"),
-          valid: true,
-        }))
+        htmlChildren.push(createAttributesOutputNode(child.content))
 
         continue
       }

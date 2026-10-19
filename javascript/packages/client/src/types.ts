@@ -48,7 +48,7 @@ export type Restore = (live: Slot) => void
 
 export type PayloadItems = Record<string, PayloadSlots>
 export type SeededSlots = PayloadSlots & { seeds?: Seeds }
-export type PayloadValue = string | string[] | boolean | Payload | Branched | Collected | KeyedValue
+export type PayloadValue = string | string[] | boolean | null | Payload | Branched | Collected | KeyedValue
 export type AppliedValue = Exclude<PayloadValue, Payload>
 export type DeferredReason = "no-region" | "stale-version" | "no-slot" | "branch" | "keyed" | "block" | "items" | "partial-attribute" | "partial-content"
 

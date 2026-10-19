@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0081_gives each dynamic nested data value its own attribute slot"
+input: |2-
+<%# herb:slots %>
+<table <%= tag.attributes(data: { people_list: layout, sortable: "true" }) %>></table>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 1afb3d46
+
+slots:
+  index=0  type=attribute  node_path=[2]  expression="layout"  attribute="data-people-list"

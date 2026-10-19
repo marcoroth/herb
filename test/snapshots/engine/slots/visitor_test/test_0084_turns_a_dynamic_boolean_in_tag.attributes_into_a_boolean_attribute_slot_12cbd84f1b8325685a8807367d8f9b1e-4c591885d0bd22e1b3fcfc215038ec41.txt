@@ -1,5 +1,5 @@
 ---
-source: "Engine::Slots::VisitorTest#test_0083_turns a dynamic boolean in tag.attributes into a boolean_attribute slot"
+source: "Engine::Slots::VisitorTest#test_0084_turns a dynamic boolean in tag.attributes into a boolean_attribute slot"
 input: |2-
 <%# herb:slots %>
 <button <%= tag.attributes(id: "go", disabled: busy) %>>Go</button>

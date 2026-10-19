@@ -521,6 +521,45 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_optional_attribute_node = {
+    # |  attribute: Herb::AST::HTMLAttributeNode?,
+    # |  conversion: String?,
+    # | }
+    class HTMLOptionalAttributeNode < Node
+      include Colors
+
+      attr_reader attribute: Herb::AST::HTMLAttributeNode?
+
+      attr_reader conversion: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNode?, String?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNode?, String?) -> void
+
+      # : () -> String
+      def self.type: () -> String
+
+      # : (?attribute: Herb::AST::HTMLAttributeNode?, ?conversion: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLOptionalAttributeNode
+      def self.build: (?attribute: Herb::AST::HTMLAttributeNode?, ?conversion: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> HTMLOptionalAttributeNode
+
+      # : () -> serialized_html_optional_attribute_node
+      def to_hash: () -> serialized_html_optional_attribute_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     # : type serialized_ruby_literal_node = {
     # |  content: String?,
     # | }

@@ -1,0 +1,43 @@
+{
+  "file": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+  "template": "<section <%= tag.attributes(\"data-theme\": @theme, lang: \"en\") %>>x</section>",
+  "rendered": "<!--herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb:3cb566c2:0--><section data-theme=\"dark\" lang=\"en\" data-herb-slot=\"0:attribute:data-theme\">x</section><!--/herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb-->",
+  "client": "<!--herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb:3cb566c2:0--><section data-theme=\"dark\" lang=\"en\" data-herb-slot=\"0:attribute:data-theme\">x</section><!--/herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb-->",
+  "values": {
+    "template": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+    "version": "3cb566c2",
+    "occurrence": 0,
+    "slots": {
+      "0": null
+    }
+  },
+  "expected": "<!--herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb:3cb566c2:0--><section  lang=\"en\" data-herb-slot=\"0:attribute:data-theme\">x</section><!--/herb-region:app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb-->",
+  "schema": {
+    "file": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+    "identifier": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+    "version": "3cb566c2",
+    "slots": [
+      {
+        "index": 0,
+        "type": "attribute",
+        "node_path": [
+          0
+        ],
+        "attribute": "data-theme"
+      }
+    ]
+  },
+  "manifest": {
+    "file": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+    "identifier": "app/views/contract/a-tag-attributes-value-that-turns-nil.html.erb",
+    "version": "3cb566c2",
+    "names": {},
+    "parts": {},
+    "bindings": {},
+    "states": null
+  },
+  "dependencies": {
+    "state": {},
+    "params": {}
+  }
+}

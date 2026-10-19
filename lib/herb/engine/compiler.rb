@@ -172,7 +172,49 @@ module Herb
       end
 
       def visit_ruby_literal_node(node)
-        add_expression(node.content)
+        add_expression(@optional_attribute_value || node.content)
+      end
+
+      def visit_ruby_html_attributes_splat_node(node)
+        content = node.content.to_s
+
+        return if content.empty?
+
+        add_expression(preceded_by_whitespace? ? content : "::Herb::Engine.spaced_attributes(#{content})")
+      end
+
+      def visit_html_optional_attribute_node(node)
+        value = node.attribute&.value
+        expression = value&.children&.first
+
+        return visit(node.attribute) unless expression.is_a?(Herb::AST::RubyLiteralNode)
+
+        local = optional_attribute_local
+
+        add_code("if (#{local} = ::Herb::Engine.#{node.conversion}_option_value((#{expression.content})))")
+
+        previous = @optional_attribute_value
+        @optional_attribute_value = local
+
+        begin
+          visit(node.attribute)
+        ensure
+          @optional_attribute_value = previous
+        end
+
+        add_code("end")
+      end
+
+      def optional_attribute_local
+        @optional_attribute_local ||= begin
+          source = @source_lines&.join.to_s
+          local = "_herb_attribute_value"
+          suffix = 0
+
+          local = "_herb_attribute_value_#{suffix += 1}" while source.include?(local)
+
+          local
+        end
       end
 
       def visit_html_close_tag_node(node)

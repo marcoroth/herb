@@ -1009,6 +1009,15 @@ nodes:
           type: "node"
           kind: "HTMLAttributeValueNode"
 
+    - name: "HTMLOptionalAttributeNode"
+      fields:
+        - name: "attribute"
+          type: "node"
+          kind: "HTMLAttributeNode"
+
+        - name: "conversion"
+          type: "string"
+
     - name: "RubyLiteralNode"
       fields:
         - name: "content"

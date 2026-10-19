@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0016_tag.attributes keeps literal attributes beside an empty hash built at render time"
+input: "{source: \"<table <%= tag.attributes(id: \\\"people\\\", data: table_data) %>></table>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {table_data: {}}}}"
+---
+_buf = ::String.new; _buf << '<table id="people"'.freeze; _buf << (::Herb::Engine.spaced_attributes(tag.attributes(data: table_data))).to_s; _buf << '></table>'.freeze;
+_buf.to_s

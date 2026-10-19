@@ -1,5 +1,5 @@
 ---
-source: "Engine::ActionView::TagAttributesTest#test_0012_tag.attributes leaves a literal nil to Action View"
+source: "Engine::ActionView::TagAttributesTest#test_0012_tag.attributes omits a literal nil"
 input: "{source: \"<div <%= tag.attributes(id: nil, class: \\\"card\\\") %>></div>\", locals: {}, options: {action_view_helpers: true}}"
 ---
 <div class="card"></div>

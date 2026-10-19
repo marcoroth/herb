@@ -16,6 +16,8 @@ import aHelperBlockBuildingAnElement from "./fixtures/contract/a-helper-block-bu
 import aKeyedCollection from "./fixtures/contract/a-keyed-collection.json"
 import aKeyedCollectionWithDeclaredItemState from "./fixtures/contract/a-keyed-collection-with-declared-item-state.json"
 import aKeyedCollectionWhoseKeysCarryMarkup from "./fixtures/contract/a-keyed-collection-whose-keys-carry-markup.json"
+import aTagAttributesValueThatStopsBeingNil from "./fixtures/contract/a-tag-attributes-value-that-stops-being-nil.json"
+import aTagAttributesValueThatTurnsNil from "./fixtures/contract/a-tag-attributes-value-that-turns-nil.json"
 import aValueCarryingMarkupAndQuotes from "./fixtures/contract/a-value-carrying-markup-and-quotes.json"
 import anAttributeAndAChild from "./fixtures/contract/an-attribute-and-a-child.json"
 import anEmptyCollection from "./fixtures/contract/an-empty-collection.json"
@@ -64,6 +66,8 @@ const FIXTURES: Record<string, Fixture> = {
   "expressions in order": expressionsInOrder as Fixture,
   "nothing dynamic at all": nothingDynamicAtAll as Fixture,
   "a value carrying markup and quotes": aValueCarryingMarkupAndQuotes as Fixture,
+  "a tag.attributes value that turns nil": aTagAttributesValueThatTurnsNil as Fixture,
+  "a tag.attributes value that stops being nil": aTagAttributesValueThatStopsBeingNil as Fixture,
   "two attributes on one element": twoAttributesOnOneElement as Fixture,
 }
 
@@ -93,6 +97,13 @@ function serialized(markup: string): string {
   const holder = document.createElement("div")
 
   holder.innerHTML = markup
+
+  for (const element of holder.querySelectorAll("*")) {
+    const attributes = Array.from(element.attributes, ({ name, value }) => [name, value]).sort(([a], [b]) => a.localeCompare(b))
+
+    for (const [name] of attributes) element.removeAttribute(name)
+    for (const [name, value] of attributes) element.setAttribute(name, value)
+  }
 
   return holder.innerHTML
 }
@@ -180,7 +191,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
     const report = index.apply(fixture.values)
 
     expect(report.deferred).toEqual([])
-    expect(host.innerHTML).toBe(serialized(fixture.expected))
+    expect(serialized(host.innerHTML)).toBe(serialized(fixture.expected))
   })
 
   test("becomes the server's next render on the server render, or defers only what needs parked markup", () => {
@@ -190,7 +201,7 @@ describe.each(Object.entries(FIXTURES))("the contract for %s", (_label, fixture)
     const report = index.apply(fixture.values)
 
     if (report.deferred.length === 0) {
-      expect(host.innerHTML).toBe(serialized(fixture.expected))
+      expect(serialized(host.innerHTML)).toBe(serialized(fixture.expected))
     } else {
       for (const deferred of report.deferred) {
         expect(PARKED_REASONS).toContain(deferred.reason)

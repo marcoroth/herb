@@ -69,28 +69,77 @@ module Engine
 
       test "tag.attributes flattens a dynamic data hash" do
         assert_optimized_snapshot(
-          '<table <%= tag.attributes(data: table_data) %>></table>',
+          "<table <%= tag.attributes(data: table_data) %>></table>",
           { table_data: { people_list: "responsive" } }
         )
       end
 
       test "tag.attributes omits a nil value inside a nested data hash" do
         assert_optimized_snapshot(
-          '<table <%= tag.attributes(data: { people_list: layout, sortable: "true" }) %>></table>',
+          '<table <%= tag.attributes(data: { sortable: "true", people_list: layout }) %>></table>',
           { layout: nil }
         )
       end
 
       test "tag.attributes tokenizes a dynamic aria array" do
         assert_optimized_snapshot(
-          '<div <%= tag.attributes(aria: { describedby: ids }) %>></div>',
+          "<div <%= tag.attributes(aria: { describedby: ids }) %>></div>",
           { ids: ["hint", "error"] }
         )
       end
 
-      test "tag.attributes leaves a literal nil to Action View" do
+      test "tag.attributes omits a literal nil" do
         assert_optimized_snapshot(
           '<div <%= tag.attributes(id: nil, class: "card") %>></div>'
+        )
+      end
+
+      test "tag.attributes renders false for an attribute that is not boolean" do
+        assert_optimized_snapshot(
+          '<details <%= tag.attributes("data-open": open) %>></details>',
+          { open: false }
+        )
+      end
+
+      test "tag.attributes joins a dynamic array value" do
+        assert_optimized_snapshot(
+          "<a <%= tag.attributes(rel: rels) %>>x</a>",
+          { rels: ["noopener", "noreferrer"] }
+        )
+      end
+
+      test "tag.attributes keeps literal attributes beside a hash built at render time" do
+        assert_optimized_snapshot(
+          '<table <%= tag.attributes(id: "people", data: table_data) %>></table>',
+          { table_data: { people_list: "responsive" } }
+        )
+      end
+
+      test "tag.attributes keeps literal attributes beside an empty hash built at render time" do
+        assert_optimized_snapshot(
+          '<table <%= tag.attributes(id: "people", data: table_data) %>></table>',
+          { table_data: {} }
+        )
+      end
+
+      test "tag.attributes keeps a splat" do
+        assert_optimized_snapshot(
+          '<div <%= tag.attributes(id: "x", **options) %>></div>',
+          { options: { title: "Title" } }
+        )
+      end
+
+      test "tag.attributes does not reuse a local the template already has" do
+        assert_optimized_snapshot(
+          "<p <%= tag.attributes(title: _herb_attribute_value) %>></p>",
+          { _herb_attribute_value: "Title" }
+        )
+      end
+
+      test "tag.attributes builds a dynamic class list the way Action View does" do
+        assert_optimized_snapshot(
+          "<div <%= tag.attributes(class: classes) %>></div>",
+          { classes: ["card", nil, "", { active: true, hidden: false }] }
         )
       end
     end

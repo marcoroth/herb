@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0012_tag.attributes omits a literal nil"
+input: "{source: \"<div <%= tag.attributes(id: nil, class: \\\"card\\\") %>></div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<div class="card"></div>'.freeze

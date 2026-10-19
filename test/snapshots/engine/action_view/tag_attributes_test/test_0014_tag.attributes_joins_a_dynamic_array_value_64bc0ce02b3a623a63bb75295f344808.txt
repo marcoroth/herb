@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0014_tag.attributes joins a dynamic array value"
+input: "{source: \"<a <%= tag.attributes(rel: rels) %>>x</a>\", locals: {rels: [\"noopener\", \"noreferrer\"]}, options: {action_view_helpers: true}}"
+---
+<a rel="noopener noreferrer">x</a>

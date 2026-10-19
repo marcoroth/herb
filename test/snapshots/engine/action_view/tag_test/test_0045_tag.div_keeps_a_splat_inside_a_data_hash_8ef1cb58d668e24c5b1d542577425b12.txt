@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0045_tag.div keeps a splat inside a data hash"
+input: "{source: \"<%= tag.div(data: { controller: \\\"list\\\", **extra }) do %>Content<% end %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {extra: {action: \"click\"}}}}"
+---
+_buf = ::String.new; _buf << '<div data-controller="list"'.freeze; _buf << (::Herb::Engine.spaced_attributes(tag.attributes(data: extra))).to_s; _buf << '>Content</div>'.freeze;
+_buf.to_s

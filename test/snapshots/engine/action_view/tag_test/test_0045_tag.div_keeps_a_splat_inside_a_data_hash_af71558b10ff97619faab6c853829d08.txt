@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0045_tag.div keeps a splat inside a data hash"
+input: "{source: \"<%= tag.div(data: { controller: \\\"list\\\", **extra }) do %>Content<% end %>\", locals: {extra: {action: \"click\"}}, options: {action_view_helpers: true}}"
+---
+<div data-controller="list" data-action="click">Content</div>

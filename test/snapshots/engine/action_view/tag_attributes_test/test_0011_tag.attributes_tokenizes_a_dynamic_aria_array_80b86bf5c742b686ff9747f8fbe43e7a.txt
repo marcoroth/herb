@@ -2,5 +2,5 @@
 source: "Engine::ActionView::TagAttributesTest#test_0011_tag.attributes tokenizes a dynamic aria array"
 input: "{source: \"<div <%= tag.attributes(aria: { describedby: ids }) %>></div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {ids: [\"hint\", \"error\"]}}}"
 ---
-_buf = ::String.new; _buf << '<div '.freeze; _buf << (tag.attributes(aria: { describedby: ids })).to_s; _buf << '></div>'.freeze;
+_buf = ::String.new; _buf << '<div '.freeze; if (_herb_attribute_value = ::Herb::Engine.aria_option_value((ids))); _buf << 'aria-describedby="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '></div>'.freeze;
 _buf.to_s

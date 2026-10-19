@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { getAttribute, getStaticAttributeValue, getTagLocalName, isERBOpenTagNode, isHTMLOpenTagNode, isRubyLiteralNode, filterHTMLAttributeNodes, findAttributeByName } from "@herb-tools/core"
+import { getAttribute, getStaticAttributeValue, getTagLocalName, isERBOpenTagNode, isHTMLOpenTagNode, isRubyLiteralNode, findAttributeByName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -75,7 +75,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
     }
 
     if (isERBOpenTagNode(openTag)) {
-      return findAttributeByName(filterHTMLAttributeNodes(openTag.children), "href")
+      return findAttributeByName(openTag.children, "href")
     }
 
     return null

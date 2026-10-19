@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
-import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, filterHTMLAttributeNodes, findAttributeByName } from "@herb-tools/core"
+import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName, isHTMLOpenTagNode, isERBOpenTagNode, findAttributeByName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -44,7 +44,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
     }
 
     if (isERBOpenTagNode(openTag)) {
-      return findAttributeByName(filterHTMLAttributeNodes(openTag.children), "alt")
+      return findAttributeByName(openTag.children, "alt")
     }
 
     return null

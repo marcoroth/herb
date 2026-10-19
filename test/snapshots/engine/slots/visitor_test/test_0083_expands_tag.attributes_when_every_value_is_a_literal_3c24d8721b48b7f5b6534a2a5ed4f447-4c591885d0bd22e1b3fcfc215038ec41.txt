@@ -1,5 +1,5 @@
 ---
-source: "Engine::Slots::VisitorTest#test_0082_expands tag.attributes when every value is a literal"
+source: "Engine::Slots::VisitorTest#test_0083_expands tag.attributes when every value is a literal"
 input: |2-
 <%# herb:slots %>
 <div <%= tag.attributes(id: "x", aria: { label: "Search" }) %>><%= @a %></div>

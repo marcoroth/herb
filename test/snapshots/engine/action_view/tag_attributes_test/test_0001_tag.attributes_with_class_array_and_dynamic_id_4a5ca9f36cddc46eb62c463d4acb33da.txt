@@ -2,5 +2,5 @@
 source: "Engine::ActionView::TagAttributesTest#test_0001_tag.attributes with class array and dynamic id"
 input: "{source: \"<div data-controller=\\\"one\\\" <%= tag.attributes(class: [\\\"one\\\", \\\"two\\\", name], id: dom_id) %>>Content</div>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {name: \"three\", dom_id: \"post_1\"}}}"
 ---
-_buf = ::String.new; _buf << '<div data-controller="one" '.freeze; _buf << (tag.attributes(class: ["one", "two", name], id: dom_id)).to_s; _buf << '>Content</div>'.freeze;
+_buf = ::String.new; _buf << '<div data-controller="one" class="'.freeze; _buf << ::Herb::Engine.attr((token_list(["one", "two", name]))); _buf << '"'.freeze; if (_herb_attribute_value = ::Herb::Engine.tag_option_value((dom_id))); _buf << ' id="'.freeze; _buf << ::Herb::Engine.attr((_herb_attribute_value)); _buf << '"'.freeze; end; _buf << '>Content</div>'.freeze;
 _buf.to_s

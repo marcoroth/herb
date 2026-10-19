@@ -1124,6 +1124,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         '<div data-controller="hello"></div>'
       )
     })
+
+    test("tag.attributes with a dynamic value", () => {
+      expect(transform('<p <%= tag.attributes(id: "a", title: t) %>></p>')).toBe(
+        '<p id="a" title="<%= t %>"></p>'
+      )
+    })
+
+    test("tag.attributes with a hash built at render time", () => {
+      expect(transform('<table <%= tag.attributes(id: "people", data: table_data, **options) %>></table>')).toBe(
+        '<table id="people" <%= tag.attributes(data: table_data) %> <%= tag.attributes(**options) %>></table>'
+      )
+    })
   })
 
   describe("non-ActionView elements", () => {

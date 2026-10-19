@@ -157,6 +157,24 @@ module Herb
           end
 
           #: (untyped) -> void
+          def visit_html_optional_attribute_node(node)
+            index = @slot_visitor.index_for(node.attribute)
+
+            return super unless index
+
+            capturing = @capturing_part
+            @capturing_part = true
+
+            begin
+              super
+            ensure
+              @capturing_part = capturing
+            end
+
+            @tokens << [:dynamic, "::Herb::Engine.optional_attr(#{optional_attribute_local})", nil, [index, false, false, true]]
+          end
+
+          #: (untyped) -> void
           def visit_html_element_node(node)
             index = @slot_visitor.index_for(node)
             previous = @current_rcdata
@@ -181,6 +199,16 @@ module Herb
 
           #: (untyped) -> void
           def visit_erb_content_node(node)
+            previous = @current_node
+            @current_node = node
+
+            super
+          ensure
+            @current_node = previous
+          end
+
+          #: (untyped) -> void
+          def visit_ruby_html_attributes_splat_node(node)
             previous = @current_node
             @current_node = node
 
@@ -321,9 +349,13 @@ module Herb
               when :code then @engine.send(:add_code, value)
               when :scope then @engine.send(:add_scope, *extra)
               when :dynamic
-                index, escaped, nested = extra
+                index, escaped, nested, recorded = extra
 
-                @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
+                if recorded
+                  @engine.send(:add_recorded_dynamic, value, index)
+                else
+                  @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
+                end
               when :expr_block, :expr_block_escaped
                 @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
               when :expr_block_end
@@ -594,6 +626,11 @@ module Herb
           return if index.nil?
 
           @src << "; " << assignment(index, value) << ";"
+        end
+
+        #: (String, Integer) -> void
+        def add_recorded_dynamic(code, index)
+          @src << "; " << assignment(index, "(#{code})") << ";"
         end
 
         #: (Integer) -> bool

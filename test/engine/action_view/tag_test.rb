@@ -235,6 +235,20 @@ module Engine
       test "tag.div with boolean attribute shorthand" do
         assert_optimized_mismatch_snapshot("<%= tag.div(hidden:) %>", { hidden: true })
       end
+
+      test "tag.div keeps a splat" do
+        assert_optimized_snapshot(
+          '<%= tag.div(id: "x", **options) do %>Content<% end %>',
+          { options: { title: "Title" } }
+        )
+      end
+
+      test "tag.div keeps a splat inside a data hash" do
+        assert_optimized_snapshot(
+          '<%= tag.div(data: { controller: "list", **extra }) do %>Content<% end %>',
+          { extra: { action: "click" } }
+        )
+      end
     end
   end
 end

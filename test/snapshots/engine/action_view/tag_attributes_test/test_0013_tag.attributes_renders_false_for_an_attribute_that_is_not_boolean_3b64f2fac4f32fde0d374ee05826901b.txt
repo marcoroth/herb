@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0013_tag.attributes renders false for an attribute that is not boolean"
+input: "{source: \"<details <%= tag.attributes(\\\"data-open\\\": open) %>></details>\", locals: {open: false}, options: {action_view_helpers: true}}"
+---
+<details data-open="false"></details>

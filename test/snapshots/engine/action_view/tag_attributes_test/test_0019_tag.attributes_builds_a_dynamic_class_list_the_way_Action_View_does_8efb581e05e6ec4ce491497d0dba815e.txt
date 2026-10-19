@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0019_tag.attributes builds a dynamic class list the way Action View does"
+input: "{source: \"<div <%= tag.attributes(class: classes) %>></div>\", locals: {classes: [\"card\", nil, \"\", {active: true, hidden: false}]}, options: {action_view_helpers: true}}"
+---
+<div class="card active"></div>

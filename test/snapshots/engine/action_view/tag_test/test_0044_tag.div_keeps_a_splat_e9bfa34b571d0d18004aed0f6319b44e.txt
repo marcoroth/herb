@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0044_tag.div keeps a splat"
+input: "{source: \"<%= tag.div(id: \\\"x\\\", **options) do %>Content<% end %>\", locals: {options: {title: \"Title\"}}, options: {action_view_helpers: true}}"
+---
+<div id="x" title="Title">Content</div>

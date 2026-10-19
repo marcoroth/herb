@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0079_gives a tag.attributes value that may be nil its own attribute slot"
+input: |2-
+<%# herb:slots %>
+<html <%= tag.attributes("data-theme": theme) %>></html>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 7bd22421
+
+slots:
+  index=0  type=attribute  node_path=[2]  expression="theme"  attribute="data-theme"
