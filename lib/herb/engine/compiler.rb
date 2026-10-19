@@ -282,7 +282,7 @@ module Herb
       end
 
       def visit_erb_case_node(node)
-        visit_erb_control_with_parts(node, *case_parts(node))
+        visit_erb_case_parts(node)
       end
 
       def visit_erb_when_node(node)
@@ -318,7 +318,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, *case_parts(node))
+        visit_erb_case_parts(node)
       end
 
       def visit_erb_in_node(node)
@@ -389,14 +389,18 @@ module Herb
         end
       end
 
-      def case_parts(node)
+      def visit_erb_case_parts(node)
         parts = [:conditions, :else_clause, :end_node]
 
-        erb_escaped?(node.tag_opening.value) ? [:children, *parts] : parts
+        return visit_erb_control_with_parts(node, :children, *parts) if erb_escaped?(node.tag_opening.value)
+
+        visit_erb_control_with_parts(node, *parts) { skip_case_children(node.children) }
       end
 
-      def visit_erb_control_with_parts(node, *parts)
+      def visit_erb_control_with_parts(node, *parts, &)
         visit_erb_control_node(node) do
+          yield if block_given?
+
           parts.each do |part|
             value = node.send(part)
             case value
@@ -848,8 +852,11 @@ module Herb
 
         follows_newline = leading_space_follows_newline?
         removed_whitespace = left_trim?(node) ? remove_trailing_whitespace_from_last_token! : ""
+        line_start = at_line_start?
 
-        if at_line_start?
+        drop_pending_trim_newline! if follows_trimmed_statement_tag?(node)
+
+        if line_start
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
           right_space = if Herb::Engine::Helpers.heredoc?(code)
@@ -860,8 +867,7 @@ module Herb
                           " \n"
                         end
 
-          @pending_leading_whitespace_insert_index = @tokens.length
-          @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
+          save_pending_leading_whitespace!(effective_leading_space) if !effective_leading_space.empty? && follows_newline
           @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
           @trim_next_whitespace = true
 
@@ -913,6 +919,30 @@ module Herb
 
         @tokens[index][1] = @tokens[index][1].chomp
         @trim_next_whitespace = false if owned
+      end
+
+      #: (Array[untyped]) -> void
+      def skip_case_children(children)
+        text = children.grep(Herb::AST::HTMLTextNode).map(&:content).join
+
+        settle_pending_trim_newline!(true) if text.match?(/\A[ \t]*\r?\n/)
+      end
+
+      #: (untyped) -> bool
+      def follows_trimmed_statement_tag?(node)
+        return false if without_source?(node)
+
+        !@pending_trim_newline_index.nil? && @pending_trim_newline_index == @tokens.length - 1
+      end
+
+      #: () -> void
+      def drop_pending_trim_newline!
+        index = @pending_trim_newline_index
+        return unless index
+
+        @tokens[index][1] = @tokens[index][1].chomp
+        @pending_trim_newline_index = nil
+        @pending_trim_owns_next_whitespace = false
       end
 
       def save_pending_leading_whitespace!(whitespace)
