@@ -607,10 +607,94 @@ test-file-with-errors.html.erb:
   Rules        1 enabled | filtered by --only"
 `;
 
+exports[`CLI Output Formatting > Excluded Files > keeps excluded file notices out of JSON on stdout and writes a report for a skipped file 1`] = `
+{
+  "clean": false,
+  "completed": true,
+  "message": null,
+  "offenses": [
+    {
+      "code": "html-img-require-alt",
+      "filename": "test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 6,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "message": "Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images.",
+      "severity": "warning",
+      "source": "Herb Linter",
+    },
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 7,
+          "line": 2,
+        },
+        "start": {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "message": "Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 22,
+          "line": 2,
+        },
+      },
+      "message": "Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+  ],
+  "summary": {
+    "filesChecked": 1,
+    "filesWithOffenses": 1,
+    "ruleCount": 147,
+    "totalErrors": 2,
+    "totalHints": 0,
+    "totalIgnored": 0,
+    "totalInfo": 0,
+    "totalNotReported": 0,
+    "totalOffenses": 3,
+    "totalWarnings": 1,
+  },
+  "timing": null,
+}
+`;
+
+exports[`CLI Output Formatting > Excluded Files > keeps excluded file notices out of JSON on stdout and writes a report for a skipped file 2`] = `
+"⚠️  Forcing linter on excluded file: test/fixtures/test-file-with-errors.html.erb
+
+"
+`;
+
+exports[`CLI Output Formatting > Excluded Files > keeps excluded file notices out of JSON on stdout and writes a report for a skipped file 3`] = `
+"⚠️  File test/fixtures/test-file-with-errors.html.erb is excluded by configuration patterns. Use --force to lint it anyway.
+"
+`;
+
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
-⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.
-   Use --force to lint it anyway."
+⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns. Use --force to lint it anyway."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
@@ -920,6 +1004,27 @@ test/fixtures/ignored.html.erb:6:14
   Ignored      3 offenses suppressed with herb:disable
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
   Rules        147 enabled | 22 not enabled"
+`;
+
+exports[`CLI Output Formatting > Multiple outputs > prints only GitHub Actions annotations when every format is written to a file 1`] = `
+"
+::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.11.0::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.11.0::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.11.0::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+"
+`;
+
+exports[`CLI Output Formatting > Multiple outputs > writes an error report next to the human output for ["test/fixtures/clean-file.html.erb","--config-file","does-not-exist/.herb.yml"] 1`] = `
+"✗ Config file not found: /test/herb/javascript/packages/linter/does-not-exist/.herb.yml
+"
+`;
+
+exports[`CLI Output Formatting > Multiple outputs > writes an error report next to the human output for ["test/fixtures/does-not-exist-*.html.erb"] 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+✗ No files found matching pattern: test/fixtures/does-not-exist-*.html.erb
+"
 `;
 
 exports[`CLI Output Formatting > New rules available hint > keeps the space before the version label inside the gray sequence 1`] = `"  ]8;;https://herb-tools.dev/linter/rules/svg-tag-name-capitalization\\[37msvg-tag-name-capitalization[0m]8;;\\[90m (introduced in 0.4.2)[0m"`;

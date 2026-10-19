@@ -17,7 +17,7 @@ import { buildRenderGraph } from "@herb-tools/analysis/node"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { AncestorChain } from "@herb-tools/analysis"
-import type { FormatOption } from "./argument-parser.js"
+import type { FormatOption } from "./output-format.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "../fixability.js"

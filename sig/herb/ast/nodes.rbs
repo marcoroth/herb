@@ -2133,6 +2133,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # | }
     class ERBYieldNode < Node
       include Colors
@@ -2143,14 +2144,19 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
+      attr_reader prism_node: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, String?) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, String?) -> void
 
       # : () -> String
       def self.type: () -> String
 
-      # : (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBYieldNode
-      def self.build: (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBYieldNode
+      # : (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?prism_node: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBYieldNode
+      def self.build: (?tag_opening: Herb::Token?, ?content: Herb::Token?, ?tag_closing: Herb::Token?, ?prism_node: String?, ?location: Location, ?errors: Array[Herb::Errors::Error]) -> ERBYieldNode
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_yield_node
       def to_hash: () -> serialized_erb_yield_node
