@@ -1027,6 +1027,52 @@ exports[`CLI Output Formatting > Multiple outputs > writes an error report next 
 "
 `;
 
+exports[`CLI Output Formatting > JUnit output > formats JUnit output with a testcase per offense, failing only at the fail level 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="3" failures="2" errors="0">
+  <testsuite name="test/fixtures/test-file-with-errors.html.erb" tests="3" failures="2" errors="0" skipped="0" time="0">
+    <testcase classname="test/fixtures/test-file-with-errors.html.erb" name="html-img-require-alt:3:3" file="test/fixtures/test-file-with-errors.html.erb" line="3" time="0">
+      <system-out>[warning] Missing required \`alt\` attribute on \`&lt;img&gt;\` tag. Add \`alt=&quot;&quot;\` for decorative images or \`alt=&quot;description&quot;\` for informative images. (html-img-require-alt)
+
+test/fixtures/test-file-with-errors.html.erb:3:3
+
+      1 │ &lt;div&gt;
+      2 │   &lt;SPAN&gt;Test content&lt;/SPAN&gt;
+  →   3 │   &lt;img src=&quot;test.jpg&quot;&gt;
+        │    ~~~
+      4 │ &lt;/div&gt;
+      5 │</system-out>
+    </testcase>
+    <testcase classname="test/fixtures/test-file-with-errors.html.erb" name="html-tag-name-lowercase:2:3" file="test/fixtures/test-file-with-errors.html.erb" line="2" time="0">
+      <failure type="error">Opening tag name \`&lt;SPAN&gt;\` should be lowercase. Use \`&lt;span&gt;\` instead.
+
+test/fixtures/test-file-with-errors.html.erb:2:3
+
+      1 │ &lt;div&gt;
+  →   2 │   &lt;SPAN&gt;Test content&lt;/SPAN&gt;
+        │    ~~~~
+      3 │   &lt;img src=&quot;test.jpg&quot;&gt;
+      4 │ &lt;/div&gt;
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+    <testcase classname="test/fixtures/test-file-with-errors.html.erb" name="html-tag-name-lowercase:2:22" file="test/fixtures/test-file-with-errors.html.erb" line="2" time="0">
+      <failure type="error">Closing tag name \`&lt;/SPAN&gt;\` should be lowercase. Use \`&lt;/span&gt;\` instead.
+
+test/fixtures/test-file-with-errors.html.erb:2:22
+
+      1 │ &lt;div&gt;
+  →   2 │   &lt;SPAN&gt;Test content&lt;/SPAN&gt;
+        │                       ~~~~
+      3 │   &lt;img src=&quot;test.jpg&quot;&gt;
+      4 │ &lt;/div&gt;
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
 exports[`CLI Output Formatting > New rules available hint > keeps the space before the version label inside the gray sequence 1`] = `"  ]8;;https://herb-tools.dev/linter/rules/svg-tag-name-capitalization\\[37msvg-tag-name-capitalization[0m]8;;\\[90m (introduced in 0.4.2)[0m"`;
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `

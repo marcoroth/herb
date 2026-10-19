@@ -4,12 +4,12 @@ import { dirname, resolve } from "node:path"
 import { meetsSeverityThreshold } from "@herb-tools/core"
 
 import { SummaryReporter } from "./summary-reporter.js"
-import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, type JSONOutput } from "./formatters/index.js"
+import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, JUnitFormatter, type JSONOutput } from "./formatters/index.js"
 import { isStructuredFormat } from "./output-format.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ThemeInput } from "@herb-tools/highlighter"
-import type { FormatOption, OutputTarget } from "./output-format.js"
+import type { FormatOption, OutputTarget, StructuredFormat } from "./output-format.js"
 import type { ProcessedFile, ProcessingResult } from "./file-processor.js"
 import type { SummaryData, RuleFilterFlag } from "./summary-reporter.js"
 
@@ -54,7 +54,7 @@ export class OutputManager {
     }
 
     if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
-      console.log(this.renderJSON(this.resultsJSON(results, reportedOffenses, options)))
+      console.log(this.renderResults(stdoutFormat, results, reportedOffenses, options))
     } else if (stdoutFormat) {
       const formatter = stdoutFormat === "simple"
         ? new SimpleFormatter()
@@ -66,7 +66,28 @@ export class OutputManager {
       this.summaryReporter.displaySummary(this.summaryData(results, options))
     }
 
-    this.writeOutputFiles(options, () => this.renderJSON(this.resultsJSON(results, reportedOffenses, options)))
+    this.writeOutputFiles(options, format => this.renderResults(format, results, reportedOffenses, options))
+  }
+
+  private renderResults(format: StructuredFormat, results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): string {
+    if (format === "junit") {
+      const failLevel = options.failLevel ?? "error"
+      const logLevel = options.logLevel ?? "hint"
+
+      // Offenses that fail the run are always included, even below --log-level, so the report agrees with the exit code
+      const offenses = results.allOffenses.filter(({ offense }) =>
+        meetsSeverityThreshold(offense.severity, logLevel) || meetsSeverityThreshold(offense.severity, failLevel)
+      )
+
+      return new JUnitFormatter().render(offenses, {
+        files: results.files,
+        failLevel,
+        projectPath: results.context?.projectPath,
+        duration: options.showTiming ? Date.now() - options.startTime : undefined
+      })
+    }
+
+    return this.renderJSON(this.resultsJSON(results, reportedOffenses, options))
   }
 
   private renderJSON(output: JSONOutput): string {
@@ -175,6 +196,10 @@ export class OutputManager {
    * Output informational message (like "no files found")
    */
   outputInfo(message: string, options: OutputOptions): void {
+    const render = (format: StructuredFormat): string => format === "junit"
+      ? new JUnitFormatter().renderSkipped(message)
+      : this.renderJSON(this.infoJSON(message, options))
+
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
@@ -182,29 +207,33 @@ export class OutputManager {
     } else if (!stdoutFormat) {
       console.error(message)
     } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(this.renderJSON(this.infoJSON(message, options)))
+      console.log(render(stdoutFormat))
     } else {
       console.log(message)
     }
 
-    this.writeOutputFiles(options, () => this.renderJSON(this.infoJSON(message, options)))
+    this.writeOutputFiles(options, render)
   }
 
   /**
    * Output error message
    */
   outputError(message: string, options: OutputOptions): void {
+    const render = (format: StructuredFormat): string => format === "junit"
+      ? new JUnitFormatter().renderError(message)
+      : this.renderJSON(this.errorJSON(message))
+
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
       console.log(`::error::${message}`)
     } else if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
-      console.log(this.renderJSON(this.errorJSON(message)))
+      console.log(render(stdoutFormat))
     } else {
       console.error(message)
     }
 
-    this.writeOutputFiles(options, () => this.renderJSON(this.errorJSON(message)))
+    this.writeOutputFiles(options, render)
   }
 
   private infoJSON(message: string, options: OutputOptions): JSONOutput {
@@ -246,7 +275,7 @@ export class OutputManager {
     return outputs.find(output => output.path === undefined)?.format
   }
 
-  private writeOutputFiles(options: OutputOptions, render: () => string): void {
+  private writeOutputFiles(options: OutputOptions, render: (format: StructuredFormat) => string): void {
     for (const { format, path } of options.outputs ?? []) {
       if (path === undefined || !isStructuredFormat(format)) continue
 
@@ -254,7 +283,7 @@ export class OutputManager {
         const filePath = resolve(path)
 
         mkdirSync(dirname(filePath), { recursive: true })
-        writeFileSync(filePath, `${render()}\n`, "utf-8")
+        writeFileSync(filePath, `${render(format)}\n`, "utf-8")
       } catch (error) {
         console.error(`✗ Could not write --output-file ${path}: ${error instanceof Error ? error.message : error}`)
         process.exitCode = 1
