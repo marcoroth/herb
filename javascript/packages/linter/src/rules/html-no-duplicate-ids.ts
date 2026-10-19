@@ -2,10 +2,10 @@ import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isRubyParameterNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName } from "@herb-tools/core"
+import { Visitor, PrismVisitor, hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName, isPrismNodeType, offsetFromPosition, stringIndexFromByteOffset } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
-import type { ParseResult, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, DocumentNode, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions, PrismNode, PrismNodes } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
@@ -33,13 +33,154 @@ class OutputPrinter extends Printer {
   }
 }
 
+const IMPLICIT_BLOCK_PARAMETERS = ["it", "_1", "_2", "_3", "_4", "_5", "_6", "_7", "_8", "_9"]
+
+class IterationBlockCollector extends Visitor {
+  readonly blockOpeningOffsets = new Set<number>()
+
+  constructor(private readonly source: string) {
+    super()
+  }
+
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    const opening = node.block_opening?.location?.start
+    const offset = opening ? offsetFromPosition(this.source, opening) : null
+
+    if (offset !== null) this.blockOpeningOffsets.add(offset)
+
+    super.visitERBIterationBlockNode(node)
+  }
+}
+
+class LoopVaryingReadCollector extends PrismVisitor {
+  readonly readOffsets: number[] = []
+
+  private readonly scopes: Set<string>[] = []
+
+  constructor(private readonly source: string, private readonly iterationBlockOffsets: Set<number>) {
+    super()
+  }
+
+  override visit(node: PrismNode): void {
+    if (!node) return
+
+    super.visit(node)
+  }
+
+  visitBlockNode(node: PrismNodes.BlockNode): void {
+    if (!this.iterationBlockOffsets.has(stringIndexFromByteOffset(this.source, node.openingLoc.startOffset))) {
+      this.visitChildNodes(node)
+
+      return
+    }
+
+    this.scopes.push(new Set(this.blockParameterNames(node.parameters)))
+    this.visit(node.body)
+    this.scopes.pop()
+  }
+
+  visitLocalVariableReadNode(node: PrismNodes.LocalVariableReadNode): void {
+    this.read(node.name, node.location.startOffset)
+  }
+
+  visitItLocalVariableReadNode(node: PrismNodes.ItLocalVariableReadNode): void {
+    this.read("it", node.location.startOffset)
+  }
+
+  visitLocalVariableWriteNode(node: PrismNodes.LocalVariableWriteNode): void {
+    this.assign([node.name], node.value, true)
+  }
+
+  visitLocalVariableOperatorWriteNode(node: PrismNodes.LocalVariableOperatorWriteNode): void {
+    this.assign([node.name], node.value, false)
+  }
+
+  visitLocalVariableOrWriteNode(node: PrismNodes.LocalVariableOrWriteNode): void {
+    this.assign([node.name], node.value, false)
+  }
+
+  visitLocalVariableAndWriteNode(node: PrismNodes.LocalVariableAndWriteNode): void {
+    this.assign([node.name], node.value, false)
+  }
+
+  visitMultiWriteNode(node: PrismNodes.MultiWriteNode): void {
+    this.assign(this.targetNames(node), node.value, true)
+  }
+
+  private get currentScope(): Set<string> | undefined {
+    return this.scopes[this.scopes.length - 1]
+  }
+
+  private read(name: string, offset: number): void {
+    if (this.currentScope?.has(name)) this.readOffsets.push(stringIndexFromByteOffset(this.source, offset))
+  }
+
+  private assign(names: string[], value: PrismNode, replaces: boolean): void {
+    const readsBefore = this.readOffsets.length
+
+    this.visit(value)
+
+    const scope = this.currentScope
+    if (!scope) return
+
+    const varies = this.readOffsets.length > readsBefore
+
+    for (const name of names) {
+      if (varies) {
+        scope.add(name)
+      } else if (replaces) {
+        scope.delete(name)
+      }
+    }
+  }
+
+  private blockParameterNames(parameters: PrismNode | null): string[] {
+    if (!isPrismNodeType(parameters, "BlockParametersNode")) return IMPLICIT_BLOCK_PARAMETERS
+
+    return this.namesOf(parameters.parameters, node => node.constructor.name.endsWith("ParameterNode"))
+  }
+
+  private targetNames(node: PrismNodes.MultiWriteNode): string[] {
+    return this.namesOf(node, child => isPrismNodeType(child, "LocalVariableTargetNode"), [node.value])
+  }
+
+  private namesOf(node: PrismNode | null, matches: (node: PrismNode) => boolean, skip: PrismNode[] = []): string[] {
+    if (!node || skip.includes(node)) return []
+
+    const names: string[] = matches(node) && typeof node.name === "string" ? [node.name] : []
+
+    for (const child of node.childNodes()) {
+      names.push(...this.namesOf(child, matches, skip))
+    }
+
+    return names
+  }
+}
+
 class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
   private documentIds: Set<string> = new Set<string>()
   private currentBranchIds: Set<string> = new Set<string>()
   private controlFlowIds: Set<string> = new Set<string>()
-  private loopVariableScopes: string[][] = []
+  private iterationDepth = 0
+  private source: string | null = null
+  private loopVaryingReads: number[] | null = null
 
-  private static readonly IMPLICIT_BLOCK_PARAMETERS = ["it", "_1", "_2", "_3", "_4", "_5", "_6", "_7", "_8", "_9"]
+  collectLoopVaryingReads(document: DocumentNode): void {
+    const source = document.source
+    const program = document.prismNode
+
+    if (!source || !program) return
+
+    this.source = source
+
+    const iterationBlocks = new IterationBlockCollector(source)
+    iterationBlocks.visit(document)
+
+    const reads = new LoopVaryingReadCollector(source, iterationBlocks.blockOpeningOffsets)
+    reads.visit(program)
+
+    this.loopVaryingReads = reads.readOffsets
+  }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagLocalName(node) === "template") {
@@ -88,32 +229,27 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   }
 
   visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
-    const declared = node.block_arguments
-      .filter(isRubyParameterNode)
-      .map(argument => argument.name?.value)
-      .filter((name): name is string => Boolean(name))
-
-    const names = declared.length > 0 ? declared : NoDuplicateIdsVisitor.IMPLICIT_BLOCK_PARAMETERS
-
-    this.loopVariableScopes.push(names)
+    this.iterationDepth++
     super.visitERBIterationBlockNode(node)
-    this.loopVariableScopes.pop()
+    this.iterationDepth--
   }
 
   private variesPerIteration(attributeNode: HTMLAttributeNode): boolean {
-    const names = this.loopVariableScopes[this.loopVariableScopes.length - 1] ?? []
+    const source = this.source
+    const reads = this.loopVaryingReads
 
-    if (names.length === 0) return false
+    if (!source || !reads) return true
 
     return (attributeNode.value?.children ?? []).some(child => {
-      let code: string | null = null
+      if (!isERBOutputNode(child) && !isRubyLiteralNode(child)) return false
+      if (!child.location) return false
 
-      if (isERBOutputNode(child)) code = (child as ERBContentNode).content?.value ?? ""
-      if (isRubyLiteralNode(child)) code = (child as RubyLiteralNode).content ?? ""
+      const start = offsetFromPosition(source, child.location.start)
+      const end = offsetFromPosition(source, child.location.end)
 
-      if (code === null) return false
+      if (start === null || end === null) return false
 
-      return names.some(name => new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`).test(code!))
+      return reads.some(offset => offset >= start && offset < end)
     })
   }
 
@@ -250,7 +386,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
       return
     }
 
-    if (this.loopVariableScopes.length > 0 && !this.variesPerIteration(attributeNode)) {
+    if (this.iterationDepth > 0 && !this.variesPerIteration(attributeNode)) {
       this.addDuplicateIdOffense(identifier, attributeNode.location)
     }
   }
@@ -356,13 +492,15 @@ export class HTMLNoDuplicateIdsRule extends ParserRule {
   get parserOptions(): Partial<ParserOptions> {
     return {
       action_view_helpers: true,
-      iteration_nodes: true
+      iteration_nodes: true,
+      prism_program: true,
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoDuplicateIdsVisitor(this.ruleName, context)
 
+    visitor.collectLoopVaryingReads(result.value)
     visitor.visit(result.value)
 
     return visitor.offenses
