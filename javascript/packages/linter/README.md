@@ -162,7 +162,7 @@ npx @herb-tools/linter template.html.erb --json
 npx @herb-tools/linter template.html.erb --format json
 
 # Use GitHub Actions output format with detailed preview (default)
-# (This is enabled automatically when the GITHUB_ACTIONS environment variable is set)
+# (This is enabled automatically when the GITHUB_ACTIONS environment variable is set, unless JSON or JUnit is printed to stdout)
 npx @herb-tools/linter template.html.erb --github
 
 # Combine GitHub Actions output with simple format
@@ -171,8 +171,11 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 # Combine GitHub Actions output with detailed format (explicit)
 npx @herb-tools/linter template.html.erb --format=detailed --github
 
-# Print the detailed format and also write a JSON report to a file
-npx @herb-tools/linter --format detailed --format json --output-file herb-lint.json
+# Use JUnit XML output format
+npx @herb-tools/linter template.html.erb --format junit
+
+# Print the detailed format and also write JUnit XML and JSON reports to files
+npx @herb-tools/linter --format detailed --format junit --output-file herb-lint.xml --format json -o herb-lint.json
 ```
 
 **Display Options:**
@@ -366,7 +369,7 @@ npx @herb-tools/linter --version
 The linter supports GitHub Actions annotation format with the `--github` flag, which can be combined with `--format=simple` or `--format=detailed`. The `--github` flag adds GitHub Actions annotations that GitHub can parse to create inline annotations in pull requests, while also showing the regular format output for local debugging.
 
 ::: tip Tip: Running in GitHub Actions
-When the `GITHUB_ACTIONS` environment variable is set (as in GitHub Actions), GitHub Actions annotations are enabled by default. You can disable them with `--no-github` if needed.
+When the `GITHUB_ACTIONS` environment variable is set (as in GitHub Actions), GitHub Actions annotations are enabled by default, unless JSON or JUnit is printed to stdout. You can disable them with `--no-github` if needed.
 :::
 
 ```bash
@@ -477,14 +480,65 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
+#### JUnit XML Output Format <Badge type="info" text="v0.11.1+" />
+
+The linter can report offenses as JUnit XML with `--format junit`, so CI systems that understand test reports (like Buildkite Test Engine, GitLab, or Jenkins) can show them as test failures.
+
+Every linted file becomes a `<testsuite>`, and every reported offense becomes a separate `<testcase>` with the file as its `classname` and `rule:line:column` as its `name`. When the same rule reports multiple offenses at the same location, subsequent names get `#2`, `#3`, and so on to keep them distinct. For example, two missing `alt` attributes produce two testcases, each with its own location and message. Files without reported offenses get a single passing testcase. Fixing an offense removes its testcase rather than turning it green, and moving it changes its testcase name: this format reports individual lint results rather than tracking stable test histories.
+
+File paths are relative to the project root, so reports do not depend on the checkout directory or whether you pass an absolute or relative input path.
+
+A testcase fails when its offense meets the `--fail-level`; reported offenses below it are listed in `<system-out>` of a passing testcase. The failure count is the number of offenses meeting the fail level. Those offenses are included even when `--log-level` hides them; other offenses follow `--log-level`. A separate error, such as failing to write an output file, can still make the command exit with an error even when the lint report contains no failures.
+
+The `<failure>` body contains the message once, followed by the location, source frame, and documentation link. There is no `message` attribute: this keeps the explanation visible in GitLab, which reads only the body, without duplicating it in Buildkite Test Engine, which reads both. When source is available, diagnostic details include a plain-text source frame with two lines of surrounding context and an underline marking the offense, so CI tools can show the relevant HTML without opening the job log. Source text is XML-escaped, and frames are not wrapped or truncated to the terminal width. If source cannot be read, the report still includes the diagnostic's location and message.
+
+A run that stops before linting, such as an invalid configuration, a pattern without matching files, or an unknown rule passed to `--only`, reports the message as a single erroring testcase. A run with nothing to lint, such as a disabled linter or an excluded file, reports a single skipped testcase.
+
+Some importers have limits worth knowing about:
+
+- Buildkite Test Engine rejects files with more than 5,000 test results. Lint large codebases in several runs, such as one per directory, and upload each report.
+- CircleCI miscounts testcases that contain `<system-out>`. Pass a `--log-level` equal to the `--fail-level` (for example `--log-level error`) so the report only contains offenses that fail the run.
+
+<details>
+<summary>Abbreviated example output (source frames omitted):</summary>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="3" failures="2" errors="0" time="0.312">
+  <testsuite name="app/views/home.html.erb" tests="3" failures="2" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/home.html.erb" name="html-img-require-alt:3:3" file="app/views/home.html.erb" line="3" time="0">
+      <system-out>[warning] Missing required `alt` attribute on `&lt;img&gt;` tag. (html-img-require-alt)
+
+app/views/home.html.erb:3:3</system-out>
+    </testcase>
+    <testcase classname="app/views/home.html.erb" name="html-tag-name-lowercase:2:3" file="app/views/home.html.erb" line="2" time="0">
+      <failure type="error">Opening tag name `&lt;SPAN&gt;` should be lowercase. Use `&lt;span&gt;` instead.
+
+app/views/home.html.erb:2:3
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+    <testcase classname="app/views/home.html.erb" name="html-tag-name-lowercase:2:22" file="app/views/home.html.erb" line="2" time="0">
+      <failure type="error">Closing tag name `&lt;/SPAN&gt;` should be lowercase. Use `&lt;/span&gt;` instead.
+
+app/views/home.html.erb:2:22
+
+https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
+    </testcase>
+  </testsuite>
+</testsuites>
+```
+
+</details>
+
 #### Multiple Outputs <Badge type="info" text="v0.11.1+" />
 
-`--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the `json` format right before it to a file instead of stdout.
+`--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the structured format (`json` or `junit`) right before it to a file instead of stdout.
 
-This makes it possible to keep readable output in your CI logs while also producing a machine-readable report as an artifact:
+This makes it possible to keep readable output in your CI logs while also producing machine-readable reports as artifacts:
 
 ```bash
-npx @herb-tools/linter --format detailed --format json -o tmp/herb-lint.json
+npx @herb-tools/linter --format detailed --format junit -o tmp/herb-lint.xml --format json -o tmp/herb-lint.json
 ```
 
 Only one format is printed. If several are left without an `--output-file`, `--json` wins over `--simple`, which wins over the last `--format`. When every format goes to a file, stdout only gets GitHub Actions annotations, if they're enabled.
