@@ -1590,6 +1590,46 @@ module Engine
 
         assert_snapshot_matches(framed, "states_test-59")
       end
+
+      test "a tag.attributes boolean reading a state renders presence" do
+        template = %(<%# herb:slots client %><%# herb:state (busy: true) %><button <%= tag.attributes(id: "go", disabled: busy) %>>Go</button>)
+        visitor, = compile(template)
+
+        assert_equal [:boolean_attribute, "disabled"], [visitor.slots.fetch(0).type, visitor.slots.fetch(0).attribute]
+        assert visitor.state_presence.key?(0)
+
+        assert_snapshot_matches(render(template), "states_test-tag-attributes-on")
+        assert_snapshot_matches(render(template.sub("busy: true", "busy: false")), "states_test-tag-attributes-off")
+      end
+
+      test "a conditional boolean attribute in an open tag renders presence" do
+        template = %(<%# herb:slots client %><%# herb:state (busy: true) %><button <% if busy %>disabled<% end %>>Go</button>)
+        visitor, = compile(template)
+
+        assert_equal [:boolean_attribute, "disabled"], [visitor.slots.fetch(0).type, visitor.slots.fetch(0).attribute]
+        assert visitor.state_presence.key?(0)
+
+        assert_snapshot_matches(render(template), "states_test-open-tag-conditional-on")
+        assert_snapshot_matches(render(template.sub("busy: true", "busy: false")), "states_test-open-tag-conditional-off")
+      end
+
+      test "a tag.attributes boolean on a server read carries presence in the values payload" do
+        template = <<~ERB
+          <%# herb:slots server %>
+          <%# herb:state (page: 1) %>
+          <button data-herb-decrement="page" <%= tag.attributes(disabled: [1].include?(page)) %>>Prev</button>
+        ERB
+
+        visitor, = compile(template)
+
+        assert_equal :boolean_attribute, visitor.slots.fetch(0).type
+        assert_equal ["page"], visitor.manifest["states"]["server"]["reads"].keys
+
+        first = Herb::Engine::Slots::DynamicsCompiler.new(template, filename: "app/views/test.html.erb").src
+        second = Herb::Engine::Slots::DynamicsCompiler.new(template.sub("page: 1", "page: 2"), filename: "app/views/test.html.erb").src
+
+        assert_equal [true, false], [evaluate_herb_source(first, {})[:slots][0], evaluate_herb_source(second, {})[:slots][0]]
+      end
     end
   end
 end
