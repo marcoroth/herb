@@ -6,7 +6,7 @@ import { COMPARISON_OPERATORS, FALSY_STATE_KINDS, NILABLE_STATE_KINDS, PRISM_LIT
 
 import { declaredKind, defaultExample, kindWithArticle, predicateAdvice } from "../utils/state-directives-utils.js"
 import { bareReadName, classifyDerivedDefault, mentionsAnyState, predicateAnswers, transformApplies } from "@herb-tools/client/directives"
-import { isBooleanAttribute, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
+import { SourceOffsets, isBooleanAttribute } from "@herb-tools/core"
 import { COMPONENT_DEFINITIONS, getAttributeName, getAttributeValueNodes, getTagName, isERBContentNode } from "@herb-tools/core"
 
 import type { StateDeclaration } from "@herb-tools/client/directives"
@@ -111,18 +111,18 @@ function equalitySides(node: PrismNode): [PrismNode, PrismNode, string] | null {
 
 class StateValidReadsVisitor extends BaseRuleVisitor {
   private states: StateScopeMap
-  private source: string
+  private offsets: SourceOffsets
   private stack: (ERBBlockNode | null)[] = [null]
   private booleanAttribute = false
   private attributeName: string | null = null
   private stoodInContent = false
   private renderStates: ReadonlySet<Node> = new Set()
 
-  constructor(ruleName: string, states: StateScopeMap, source: string, context?: Partial<LintContext>) {
+  constructor(ruleName: string, states: StateScopeMap, offsets: SourceOffsets, context?: Partial<LintContext>) {
     super(ruleName, context)
 
     this.states = states
-    this.source = source
+    this.offsets = offsets
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -759,11 +759,11 @@ class StateValidReadsVisitor extends BaseRuleVisitor {
   }
 
   private sliceOf(node: PrismNode): string {
-    return substringFromByteOffset(this.source, node.location.startOffset, node.location.length)
+    return this.offsets.substringFromByteOffset(node.location.startOffset, node.location.length)
   }
 
   private locationOf(node: PrismNode): Location {
-    return locationFromByteOffset(this.source, node.location.startOffset, node.location.length)
+    return this.offsets.locationFromByteOffset(node.location.startOffset, node.location.length)
   }
 }
 
@@ -804,7 +804,7 @@ export class HerbStateValidReadsRule extends ParserRule {
 
     if (!states.hasDeclarations) return []
 
-    const visitor = new StateValidReadsVisitor(this.ruleName, states, result.source, context)
+    const visitor = new StateValidReadsVisitor(this.ruleName, states, new SourceOffsets(result.source), context)
 
     visitor.visit(result.value)
 
