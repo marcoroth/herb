@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0052_keeps the indentation before a case with several whens on one line"
+input: "{source: \"  <% case r %><% when :a %>A<% when :b %>B<% end %>\", locals: {r: :b}, options: {}}"
+---
+  B
