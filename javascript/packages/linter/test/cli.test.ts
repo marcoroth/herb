@@ -33,6 +33,37 @@ describe("CLI Output Formatting", () => {
     }
   }
 
+  function runSeparately(...args: (string | Record<string, string>)[]): { stdout: string, stderr: string, status: number | null } {
+    const { spawnSync } = require("child_process")
+    const env = typeof args[args.length - 1] === "object" ? args.pop() as Record<string, string> : {}
+
+    const { stdout, stderr, status } = spawnSync("bin/herb-lint", [...args as string[], "--no-timing"], {
+      encoding: "utf-8",
+      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined, ...env }
+    })
+
+    return { stdout, stderr, status }
+  }
+
+  const outputDirectories: string[] = []
+
+  afterAll(() => {
+    const { rmSync } = require("fs")
+
+    for (const directory of outputDirectories) rmSync(directory, { recursive: true, force: true })
+  })
+
+  function outputDirectory(): string {
+    const { mkdtempSync } = require("fs")
+    const { join } = require("path")
+    const { tmpdir } = require("os")
+
+    const directory = mkdtempSync(join(tmpdir(), "herb-lint-"))
+    outputDirectories.push(directory)
+
+    return directory
+  }
+
   function firstOffense(output: string): string {
     return output.split("\u23AF".repeat(10))[0].trim()
   }
@@ -271,40 +302,22 @@ describe("CLI Output Formatting", () => {
   })
 
   describe("Multiple outputs", () => {
-    const { mkdtempSync, readFileSync, writeFileSync, rmSync } = require("fs")
+    const { readFileSync, writeFileSync } = require("fs")
     const { join } = require("path")
-    const { tmpdir } = require("os")
-    const { spawnSync } = require("child_process")
 
-    const directories: string[] = []
-
-    afterAll(() => {
-      for (const directory of directories) rmSync(directory, { recursive: true, force: true })
-    })
-
-    function outputDirectory(): string {
-      const directory = mkdtempSync(join(tmpdir(), "herb-lint-"))
-      directories.push(directory)
-
-      return directory
+    function report(path: string): unknown {
+      return JSON.parse(readFileSync(path, "utf-8"))
     }
 
-    // A path below a regular file can't be created on any platform
+    function jsonOnStdout(...args: string[]): unknown {
+      return JSON.parse(runSeparately(...args, "--json").stdout)
+    }
+
     function unwritablePath(): string {
       const blocker = join(outputDirectory(), "not-a-directory")
       writeFileSync(blocker, "")
 
       return join(blocker, "herb-lint.json")
-    }
-
-    function runSeparately(...args: (string | Record<string, string>)[]): { stdout: string, stderr: string, status: number | null } {
-      const env = typeof args[args.length - 1] === "object" ? args.pop() as Record<string, string> : {}
-      const { stdout, stderr, status } = spawnSync("bin/herb-lint", [...args as string[], "--no-timing"], {
-        encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined, ...env }
-      })
-
-      return { stdout, stderr, status }
     }
 
     test("writes structured formats to files while printing the human format to stdout", () => {
@@ -316,7 +329,7 @@ describe("CLI Output Formatting", () => {
       expect(combined.stdout).toBe(simple.stdout)
       expect(combined.status).toBe(1)
 
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(JSON.parse(runLinter("test-file-with-errors.html.erb", "--json").output))
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
     })
 
     test.each([
@@ -328,7 +341,7 @@ describe("CLI Output Formatting", () => {
       const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args.map(arg => arg.replace("PATH", jsonPath)))
 
       expect(stdout).toBe("")
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).summary.totalErrors).toBe(2)
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
       expect(status).toBe(1)
     })
 
@@ -338,7 +351,7 @@ describe("CLI Output Formatting", () => {
       const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "json", "-o", jsonPath)
 
       expect(stdout).toBe("")
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).summary.totalErrors).toBe(2)
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
       expect(status).toBe(1)
     })
 
@@ -347,9 +360,8 @@ describe("CLI Output Formatting", () => {
 
       const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "json", "-o", jsonPath, { GITHUB_ACTIONS: "true" })
 
-      expect(stdout.trim().split("\n").filter(Boolean).every(line => line.startsWith("::"))).toBe(true)
-      expect(stdout).toContain("::error file=test/fixtures/test-file-with-errors.html.erb")
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).summary.totalErrors).toBe(2)
+      expect(stdout).toMatchSnapshot()
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
       expect(status).toBe(1)
     })
 
@@ -358,7 +370,7 @@ describe("CLI Output Formatting", () => {
 
       const { status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-altt", "--format", "simple", "--format", "json", "-o", jsonPath)
 
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).message).toBe("✗ Unknown rule html-img-require-altt passed to --only. Did you mean html-img-require-alt?")
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-altt"))
       expect(status).toBe(1)
     })
 
@@ -395,9 +407,9 @@ describe("CLI Output Formatting", () => {
 
       const { stdout, stderr, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "simple", "--format", "json", "-o", brokenPath, "--format", "json", "-o", jsonPath)
 
-      expect(stdout).toContain("html-tag-name-lowercase")
+      expect(stdout).toBe(runSeparately("test/fixtures/test-file-with-errors.html.erb", "--simple").stdout)
       expect(stderr).toContain(`✗ Could not write --output-file ${brokenPath}:`)
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).summary.totalErrors).toBe(2)
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
       expect(status).toBe(1)
     })
 
@@ -420,8 +432,8 @@ describe("CLI Output Formatting", () => {
       const { stdout, stderr, status } = runSeparately("test/fixtures/clean-file.html.erb", "--config-file", configFile, "--format", "json", "-o", jsonPath)
 
       expect(stdout).toBe("")
-      expect(stderr).toContain("Linter is disabled in .herb.yml configuration.")
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).message).toBe("Linter is disabled in .herb.yml configuration. Use --force to lint anyway.")
+      expect(stderr).toBe("Linter is disabled in .herb.yml configuration. Use --force to lint anyway.\n")
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/clean-file.html.erb", "--config-file", configFile))
       expect(status).toBe(0)
     })
 
@@ -438,15 +450,15 @@ describe("CLI Output Formatting", () => {
     })
 
     test.each([
-      [["test/fixtures/clean-file.html.erb", "--config-file", "does-not-exist/.herb.yml"], "✗ Config file not found:"],
-      [["test/fixtures/does-not-exist-*.html.erb"], "✗ No files found matching pattern:"],
-    ])("writes an error report next to the human output for %j", (args, message) => {
+      [["test/fixtures/clean-file.html.erb", "--config-file", "does-not-exist/.herb.yml"]],
+      [["test/fixtures/does-not-exist-*.html.erb"]],
+    ])("writes an error report next to the human output for %j", (args) => {
       const jsonPath = join(outputDirectory(), "herb-lint.json")
 
       const { stderr, status } = runSeparately(...args, "--format", "detailed", "--format", "json", "-o", jsonPath)
 
-      expect(stderr).toContain(message)
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).message).toContain(message)
+      expect(stderr).toMatchSnapshot()
+      expect(report(jsonPath)).toEqual(jsonOnStdout(...args))
       expect(status).toBe(1)
     })
   })
@@ -604,16 +616,10 @@ describe("CLI Output Formatting", () => {
     })
 
     test("keeps excluded file notices out of JSON on stdout and writes a report for a skipped file", () => {
-      const { spawnSync } = require("child_process")
-      const { mkdtempSync, readFileSync, rmSync } = require("fs")
+      const { readFileSync } = require("fs")
       const { join } = require("path")
-      const { tmpdir } = require("os")
 
-      const directory = mkdtempSync(join(tmpdir(), "herb-lint-"))
-      const run = (...args: string[]) => spawnSync("bin/herb-lint", ["test/fixtures/test-file-with-errors.html.erb", ...args, "--no-timing"], {
-        encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1", GITHUB_ACTIONS: undefined }
-      })
+      const run = (...args: string[]) => runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args)
 
       try {
         writeFileSync(configPath, dedent`
@@ -626,18 +632,17 @@ describe("CLI Output Formatting", () => {
 
         const forced = run("--force", "--json")
 
-        expect(JSON.parse(forced.stdout).summary.totalErrors).toBe(2)
-        expect(forced.stderr).toContain("Forcing linter on excluded file")
+        expect(JSON.parse(forced.stdout)).toMatchSnapshot()
+        expect(forced.stderr).toMatchSnapshot()
 
-        const jsonPath = join(directory, "herb-lint.json")
+        const jsonPath = join(outputDirectory(), "herb-lint.json")
         const skipped = run("--format", "simple", "--format", "json", "-o", jsonPath)
 
-        expect(skipped.stdout).toContain("is excluded by configuration patterns")
-        expect(JSON.parse(readFileSync(jsonPath, "utf-8")).message).toContain("is excluded by configuration patterns")
+        expect(skipped.stdout).toMatchSnapshot()
+        expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(JSON.parse(run("--json").stdout))
         expect(skipped.status).toBe(0)
       } finally {
         try { unlinkSync(configPath) } catch {}
-        rmSync(directory, { recursive: true, force: true })
       }
     })
 

@@ -7,33 +7,24 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import { DIAGNOSTIC_SEVERITIES, isDiagnosticSeverity } from "@herb-tools/core"
+import { FORMAT_OPTIONS, isStructuredFormat } from "./output-format.js"
 
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { DiagnosticSeverity } from "@herb-tools/core"
+import type { FormatOption, OutputTarget } from "./output-format.js"
 
 import { name, version, dependencies } from "../../package.json"
 
-const FORMAT_OPTIONS = ["simple", "detailed", "json"] as const
+const STDOUT_PRECEDENCE = { format: 0, simple: 1, json: 2 } as const
 
-export type FormatOption = typeof FORMAT_OPTIONS[number]
-
-/**
- * Structured formats are meant for programs rather than humans, so they can
- * be written to a file and keep stdout free of any other output.
- */
-export function isStructuredFormat(format: FormatOption): format is "json" {
-  return format === "json"
-}
-
-export interface OutputTarget {
-  format: FormatOption
-  path?: string
+interface RequestedOutput extends OutputTarget {
+  flag: string
+  precedence: number
 }
 
 export interface ParsedArguments {
   patterns: string[]
   configFile?: string
-  /** The format written to stdout, or the first structured format when every output goes to a file */
   formatOption: FormatOption
   outputs: OutputTarget[]
   showTiming: boolean
@@ -245,12 +236,8 @@ export class ArgumentParser {
     return { patterns, configFile, formatOption, outputs, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
   }
 
-  /**
-   * Each --format (or --simple/--json) adds an output, and --output-file
-   * redirects the format right before it to a file, like RuboCop's --format/--out.
-   */
   private parseOutputs(tokens: NonNullable<ReturnType<typeof parseArgs>["tokens"]>): OutputTarget[] {
-    const outputs: (OutputTarget & { flag: string })[] = []
+    const outputs: RequestedOutput[] = []
 
     for (const token of tokens) {
       if (token.kind !== "option") continue
@@ -258,9 +245,9 @@ export class ArgumentParser {
       if (token.name === "format") {
         const format = FORMAT_OPTIONS.find(option => option === token.value) ?? "detailed"
 
-        outputs.push({ format, flag: `--format ${token.value}` })
+        outputs.push({ format, flag: `--format ${token.value}`, precedence: STDOUT_PRECEDENCE.format })
       } else if (token.name === "simple" || token.name === "json") {
-        outputs.push({ format: token.name, flag: `--${token.name}` })
+        outputs.push({ format: token.name, flag: `--${token.name}`, precedence: STDOUT_PRECEDENCE[token.name] })
       } else if (token.name === "output-file") {
         const output = outputs[outputs.length - 1]
         const path = token.value ?? ""
@@ -294,19 +281,15 @@ export class ArgumentParser {
       }
     }
 
-    // Only one format can be printed. When several are left for stdout, keep the precedence
-    // herb-lint has always had: --json, then --simple, then the last --format.
-    const stdoutOutputs = outputs.filter(output => output.path === undefined)
-    const stdoutOutput = stdoutOutputs.find(output => output.flag === "--json") ?? stdoutOutputs.find(output => output.flag === "--simple") ?? stdoutOutputs[stdoutOutputs.length - 1]
+    const stdoutOutput = outputs.filter(output => output.path === undefined).reduce<RequestedOutput | undefined>((selected, output) => selected && selected.precedence > output.precedence ? selected : output, undefined)
     const fileOutputs = outputs.filter(output => output.path !== undefined)
+    const selected = stdoutOutput ? [stdoutOutput, ...fileOutputs] : fileOutputs
 
-    if (!stdoutOutput && fileOutputs.length === 0) {
+    if (selected.length === 0) {
       return [{ format: "detailed" }]
     }
 
-    return [stdoutOutput, ...fileOutputs]
-      .filter(output => output !== undefined)
-      .map(({ format, path }) => ({ format, path }))
+    return selected.map(({ format, path }) => ({ format, path }))
   }
 
   private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {

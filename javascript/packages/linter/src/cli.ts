@@ -17,7 +17,7 @@ import { version } from "../package.json"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
-import type { FormatOption, OutputTarget } from "./cli/argument-parser.js"
+import type { FormatOption, OutputTarget } from "./cli/output-format.js"
 import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 import type { RuleClass } from "./types.js"
 
@@ -107,7 +107,7 @@ export class CLI {
     return pattern
   }
 
-  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean, formatOption: FormatOption = "detailed"): Promise<{ files: string[], explicitFile: string | undefined }> {
+  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean, formatOption: FormatOption): Promise<{ files: string[], explicitFile: string | undefined }> {
     const resolvedPattern = resolve(pattern)
     const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
     let explicitFile: string | undefined
@@ -488,7 +488,6 @@ export class CLI {
     let config: Config
 
     try {
-      // JSON reports a broken config as an error in its own output instead of exiting
       config = await Config.load(configFile || this.projectPath, { version, exitOnError: !writesReport, createIfMissing: false, silent })
     } catch (error) {
       this.exitWithError(`✗ ${error instanceof Error ? error.message : error}`, formatOption)

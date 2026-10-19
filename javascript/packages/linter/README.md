@@ -491,7 +491,7 @@ Only one format is printed. If several are left without an `--output-file`, `--j
 
 Missing parent directories of an output file are created. If a file can't be written, the error is printed to stderr and `herb-lint` exits with an error, while the other outputs are still produced.
 
-The output files are also written when the run stops before linting because of an invalid configuration, a pattern without matching files, an excluded file, or an unknown rule passed to `--only`, so a CI step that uploads them finds a report explaining what happened. The same applies to `--json` on stdout, which reports these as JSON instead of printing a message to stderr.
+Output files are written even when the run stops before linting, for example because of an invalid configuration, a pattern without matching files, an excluded file, or an unknown rule passed to `--only`. A CI step that uploads the report always finds one explaining what happened. `--json` on stdout reports these cases as JSON too, instead of printing a message to stderr.
 
 ### Disabling Rules Inline <Badge type="info" text="v0.8.0+" />
 

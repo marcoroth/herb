@@ -5,17 +5,16 @@ import { meetsSeverityThreshold } from "@herb-tools/core"
 
 import { SummaryReporter } from "./summary-reporter.js"
 import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, type JSONOutput } from "./formatters/index.js"
-import { isStructuredFormat } from "./argument-parser.js"
+import { isStructuredFormat } from "./output-format.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ThemeInput } from "@herb-tools/highlighter"
-import type { FormatOption, OutputTarget } from "./argument-parser.js"
+import type { FormatOption, OutputTarget } from "./output-format.js"
 import type { ProcessedFile, ProcessingResult } from "./file-processor.js"
 import type { SummaryData, RuleFilterFlag } from "./summary-reporter.js"
 
 interface OutputOptions {
   formatOption: FormatOption
-  /** Every requested output. Defaults to writing `formatOption` to stdout. */
   outputs?: OutputTarget[]
   theme: ThemeInput
   wrapLines: boolean
@@ -54,11 +53,9 @@ export class OutputManager {
       await githubFormatter.formatAnnotations(reportedOffenses)
     }
 
-    if (!stdoutFormat) {
-      // Every format goes to a file
-    } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(this.renderJSON(results, reportedOffenses, options))
-    } else {
+    if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
+      console.log(this.renderJSON(this.resultsJSON(results, reportedOffenses, options)))
+    } else if (stdoutFormat) {
       const formatter = stdoutFormat === "simple"
         ? new SimpleFormatter()
         : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath, context?.showFixDiff)
@@ -69,14 +66,14 @@ export class OutputManager {
       this.summaryReporter.displaySummary(this.summaryData(results, options))
     }
 
-    this.writeOutputFiles(options, () => this.renderJSON(results, reportedOffenses, options))
+    this.writeOutputFiles(options, () => this.renderJSON(this.resultsJSON(results, reportedOffenses, options)))
   }
 
-  private renderJSON(results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): string {
-    return JSON.stringify(this.jsonResults(results, reportedOffenses, options), null, 2)
+  private renderJSON(output: JSONOutput): string {
+    return JSON.stringify(output, null, 2)
   }
 
-  private jsonResults(results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): JSONOutput {
+  private resultsJSON(results: LintResults, reportedOffenses: ProcessedFile[], options: OutputOptions): JSONOutput {
     const { allOffenses, files, totalErrors, totalWarnings, totalIgnored, filesWithOffenses, ruleCount } = results
 
     return {
@@ -178,30 +175,6 @@ export class OutputManager {
    * Output informational message (like "no files found")
    */
   outputInfo(message: string, options: OutputOptions): void {
-    const render = (): string => {
-      const output: JSONOutput = {
-        offenses: [],
-        summary: {
-          filesChecked: 0,
-          filesWithOffenses: 0,
-          totalErrors: 0,
-          totalWarnings: 0,
-          totalInfo: 0,
-          totalHints: 0,
-          totalIgnored: 0,
-          totalOffenses: 0,
-          totalNotReported: 0,
-          ruleCount: 0
-        },
-        timing: this.timing(options),
-        completed: false,
-        clean: null,
-        message
-      }
-
-      return JSON.stringify(output, null, 2)
-    }
-
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
@@ -209,42 +182,62 @@ export class OutputManager {
     } else if (!stdoutFormat) {
       console.error(message)
     } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(render())
+      console.log(this.renderJSON(this.infoJSON(message, options)))
     } else {
       console.log(message)
     }
 
-    this.writeOutputFiles(options, render)
+    this.writeOutputFiles(options, () => this.renderJSON(this.infoJSON(message, options)))
   }
 
   /**
    * Output error message
    */
   outputError(message: string, options: OutputOptions): void {
-    const render = (): string => {
-      const output: JSONOutput = {
-        offenses: [],
-        summary: null,
-        timing: null,
-        completed: false,
-        clean: null,
-        message
-      }
-
-      return JSON.stringify(output, null, 2)
-    }
-
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
       console.log(`::error::${message}`)
     } else if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
-      console.log(render())
+      console.log(this.renderJSON(this.errorJSON(message)))
     } else {
       console.error(message)
     }
 
-    this.writeOutputFiles(options, render)
+    this.writeOutputFiles(options, () => this.renderJSON(this.errorJSON(message)))
+  }
+
+  private infoJSON(message: string, options: OutputOptions): JSONOutput {
+    return {
+      offenses: [],
+      summary: {
+        filesChecked: 0,
+        filesWithOffenses: 0,
+        totalErrors: 0,
+        totalWarnings: 0,
+        totalInfo: 0,
+        totalHints: 0,
+        totalIgnored: 0,
+        totalOffenses: 0,
+        totalNotReported: 0,
+        ruleCount: 0
+      },
+      timing: this.timing(options),
+      completed: false,
+      clean: null,
+      message
+    }
+  }
+
+  private errorJSON(message: string): JSONOutput {
+    return {
+      offenses: [],
+      summary: null,
+      timing: null,
+      completed: false,
+      clean: null,
+      message
+    }
   }
 
   private stdoutFormat(options: OutputOptions): FormatOption | undefined {
@@ -253,10 +246,6 @@ export class OutputManager {
     return outputs.find(output => output.path === undefined)?.format
   }
 
-  /**
-   * Writes every structured output that targets a file. A file that can't be written is
-   * reported on stderr and fails the run, without affecting the other outputs.
-   */
   private writeOutputFiles(options: OutputOptions, render: () => string): void {
     for (const { format, path } of options.outputs ?? []) {
       if (path === undefined || !isStructuredFormat(format)) continue
