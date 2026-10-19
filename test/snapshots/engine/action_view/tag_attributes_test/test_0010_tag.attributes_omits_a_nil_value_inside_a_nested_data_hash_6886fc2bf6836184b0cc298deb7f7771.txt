@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0010_tag.attributes omits a nil value inside a nested data hash"
+input: "{source: \"<table <%= tag.attributes(data: { people_list: layout, sortable: \\\"true\\\" }) %>></table>\", locals: {layout: nil}, options: {action_view_helpers: true}}"
+---
+<table data-sortable="true"></table>

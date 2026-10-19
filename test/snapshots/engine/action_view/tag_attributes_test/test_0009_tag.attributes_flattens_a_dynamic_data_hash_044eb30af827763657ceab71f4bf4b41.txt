@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0009_tag.attributes flattens a dynamic data hash"
+input: "{source: \"<table <%= tag.attributes(data: table_data) %>></table>\", locals: {table_data: {people_list: \"responsive\"}}, options: {action_view_helpers: true}}"
+---
+<table data-people-list="responsive"></table>

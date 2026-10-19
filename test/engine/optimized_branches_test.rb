@@ -143,7 +143,7 @@ module Engine
         template = <<~ERB
           <select>
           <% if flag %>
-          <option <%= tag.attributes(class: kind, selected: option == current) %>>One</option>
+          <option <%= tag.attributes(class: ["item", kind], selected: option == current) %>>One</option>
           <% else %>
           <option>None</option>
           <% end %>

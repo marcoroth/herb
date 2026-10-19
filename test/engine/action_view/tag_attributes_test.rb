@@ -52,6 +52,47 @@ module Engine
           { option: "one", current: "two" }
         )
       end
+
+      test "tag.attributes omits an attribute whose value is nil" do
+        assert_optimized_snapshot(
+          '<html <%= tag.attributes("data-theme": theme) %>></html>',
+          { theme: nil }
+        )
+      end
+
+      test "tag.attributes keeps an attribute whose dynamic value is present" do
+        assert_optimized_snapshot(
+          '<html <%= tag.attributes("data-theme": theme) %>></html>',
+          { theme: "dark" }
+        )
+      end
+
+      test "tag.attributes flattens a dynamic data hash" do
+        assert_optimized_snapshot(
+          '<table <%= tag.attributes(data: table_data) %>></table>',
+          { table_data: { people_list: "responsive" } }
+        )
+      end
+
+      test "tag.attributes omits a nil value inside a nested data hash" do
+        assert_optimized_snapshot(
+          '<table <%= tag.attributes(data: { people_list: layout, sortable: "true" }) %>></table>',
+          { layout: nil }
+        )
+      end
+
+      test "tag.attributes tokenizes a dynamic aria array" do
+        assert_optimized_snapshot(
+          '<div <%= tag.attributes(aria: { describedby: ids }) %>></div>',
+          { ids: ["hint", "error"] }
+        )
+      end
+
+      test "tag.attributes leaves a literal nil to Action View" do
+        assert_optimized_snapshot(
+          '<div <%= tag.attributes(id: nil, class: "card") %>></div>'
+        )
+      end
     end
   end
 end

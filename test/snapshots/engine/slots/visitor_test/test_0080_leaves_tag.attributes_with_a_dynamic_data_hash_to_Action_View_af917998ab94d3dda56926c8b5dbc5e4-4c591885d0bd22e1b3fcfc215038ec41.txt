@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0080_leaves tag.attributes with a dynamic data hash to Action View"
+input: |2-
+<%# herb:slots %>
+<table <%= tag.attributes(data: table_data) %>></table>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 13c6b413
+
+slots:
+  index=0  type=element  node_path=[2]  expression="tag.attributes(data: table_data)"

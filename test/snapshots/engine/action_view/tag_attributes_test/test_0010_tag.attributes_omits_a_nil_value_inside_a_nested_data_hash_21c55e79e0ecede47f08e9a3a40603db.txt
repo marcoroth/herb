@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0010_tag.attributes omits a nil value inside a nested data hash"
+input: "{source: \"<table <%= tag.attributes(data: { people_list: layout, sortable: \\\"true\\\" }) %>></table>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {layout: nil}}}"
+---
+_buf = ::String.new; _buf << '<table '.freeze; _buf << (tag.attributes(data: { people_list: layout, sortable: "true" })).to_s; _buf << '></table>'.freeze;
+_buf.to_s

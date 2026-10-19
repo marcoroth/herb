@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0083_turns a dynamic boolean in tag.attributes into a boolean_attribute slot"
+input: |2-
+<%# herb:slots %>
+<button <%= tag.attributes(id: "go", disabled: busy) %>>Go</button>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: fa92410a
+
+slots:
+  index=0  type=boolean_attribute  node_path=[2]  expression="(busy)"  attribute="disabled"

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0007_tag.attributes omits an attribute whose value is nil"
+input: "{source: \"<html <%= tag.attributes(\\\"data-theme\\\": theme) %>></html>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {theme: nil}}}"
+---
+_buf = ::String.new; _buf << '<html '.freeze; _buf << (tag.attributes("data-theme": theme)).to_s; _buf << '></html>'.freeze;
+_buf.to_s

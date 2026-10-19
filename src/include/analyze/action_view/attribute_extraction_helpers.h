@@ -27,6 +27,8 @@ void resolve_nonce_attribute(hb_array_T* attributes, hb_allocator_T* allocator);
 
 bool has_html_attributes_in_call(pm_call_node_t* call_node);
 
+bool can_expand_tag_attributes_call(pm_call_node_t* call_node, hb_allocator_T* allocator);
+
 hb_array_T* extract_html_attributes_from_call_node(
   pm_call_node_t* call_node,
   const uint8_t* source,

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0007_tag.attributes omits an attribute whose value is nil"
+input: "{source: \"<html <%= tag.attributes(\\\"data-theme\\\": theme) %>></html>\", locals: {theme: nil}, options: {action_view_helpers: true}}"
+---
+<html ></html>

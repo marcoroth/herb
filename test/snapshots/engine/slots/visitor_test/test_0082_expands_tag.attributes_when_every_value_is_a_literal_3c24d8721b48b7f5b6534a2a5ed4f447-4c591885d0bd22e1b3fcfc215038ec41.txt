@@ -1,0 +1,12 @@
+---
+source: "Engine::Slots::VisitorTest#test_0082_expands tag.attributes when every value is a literal"
+input: |2-
+<%# herb:slots %>
+<div <%= tag.attributes(id: "x", aria: { label: "Search" }) %>><%= @a %></div>
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 6fd3ef2b
+
+slots:
+  index=0  type=child  node_path=[2, 0]  expression="@a"

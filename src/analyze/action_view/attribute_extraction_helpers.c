@@ -633,6 +633,87 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
   return attributes;
 }
 
+static bool is_static_attribute_key(pm_node_t* key) {
+  return key && (key->type == PM_SYMBOL_NODE || key->type == PM_STRING_NODE);
+}
+
+static bool is_literal_scalar_value(pm_node_t* value) {
+  if (!value) { return false; }
+
+  switch (value->type) {
+    case PM_STRING_NODE:
+    case PM_SYMBOL_NODE:
+    case PM_INTERPOLATED_STRING_NODE:
+    case PM_TRUE_NODE:
+    case PM_FALSE_NODE:
+    case PM_INTEGER_NODE: return true;
+    default: return false;
+  }
+}
+
+static bool is_literal_nested_attribute_hash(pm_hash_node_t* hash) {
+  for (size_t i = 0; i < hash->elements.size; i++) {
+    pm_node_t* element = hash->elements.nodes[i];
+
+    if (element->type == PM_ASSOC_SPLAT_NODE) { continue; }
+    if (element->type != PM_ASSOC_NODE) { return false; }
+
+    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
+
+    if (!is_static_attribute_key(assoc->key) || !is_literal_scalar_value(assoc->value)) { return false; }
+  }
+
+  return true;
+}
+
+static bool is_literal_attribute_assoc(pm_assoc_node_t* assoc, hb_allocator_T* allocator) {
+  if (!is_static_attribute_key(assoc->key) || !assoc->value) { return false; }
+
+  char* key_string = extract_string_from_prism_node(assoc->key, allocator);
+  if (!key_string) { return false; }
+
+  char* dashed_key = convert_underscores_to_dashes(key_string);
+  const char* name = dashed_key ? dashed_key : key_string;
+  pm_node_t* value = assoc->value;
+  bool literal = false;
+
+  if ((strcmp(name, "data") == 0 || strcmp(name, "aria") == 0) && value->type == PM_HASH_NODE) {
+    literal = is_literal_nested_attribute_hash((pm_hash_node_t*) value);
+  } else if (strcmp(name, "class") == 0 && (value->type == PM_HASH_NODE || value->type == PM_ARRAY_NODE)) {
+    literal = true;
+  } else if (value->type == PM_ARRAY_NODE) {
+    literal = is_static_string_array((pm_array_node_t*) value);
+  } else if (is_literal_scalar_value(value)) {
+    literal = true;
+  } else {
+    literal = value->type != PM_NIL_NODE && is_boolean_attribute(hb_string((char*) name));
+  }
+
+  if (dashed_key) { free(dashed_key); }
+  hb_allocator_dealloc(allocator, key_string);
+
+  return literal;
+}
+
+bool can_expand_tag_attributes_call(pm_call_node_t* call_node, hb_allocator_T* allocator) {
+  if (!has_html_attributes_in_call(call_node)) { return false; }
+  if (call_node->arguments->arguments.size != 1 || call_node->block) { return false; }
+
+  pm_node_t* argument = call_node->arguments->arguments.nodes[0];
+  pm_node_list_t* elements = argument->type == PM_HASH_NODE ? &((pm_hash_node_t*) argument)->elements
+                                                            : &((pm_keyword_hash_node_t*) argument)->elements;
+
+  for (size_t i = 0; i < elements->size; i++) {
+    pm_node_t* element = elements->nodes[i];
+
+    if (element->type == PM_ASSOC_SPLAT_NODE) { continue; }
+    if (element->type != PM_ASSOC_NODE) { return false; }
+    if (!is_literal_attribute_assoc((pm_assoc_node_t*) element, allocator)) { return false; }
+  }
+
+  return true;
+}
+
 bool has_html_attributes_in_call(pm_call_node_t* call_node) {
   if (!call_node || !call_node->arguments) { return false; }
 
