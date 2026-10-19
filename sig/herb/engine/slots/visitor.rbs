@@ -404,6 +404,9 @@ module Herb
 
         def erb_output_node: (untyped code) -> untyped
 
+        # : (Array[untyped], Integer) -> String
+        def attribute_spacing: (Array[untyped], Integer) -> String
+
         private
 
         def visit_children_with_paths: (untyped children) -> untyped
