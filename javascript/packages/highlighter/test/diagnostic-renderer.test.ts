@@ -34,6 +34,44 @@ describe("DiagnosticRenderer", () => {
   })
 
   describe("renderSingle", () => {
+    it("renders the diagnostic header by default without a syntax renderer", () => {
+      const diagnostic = createDiagnostic({ location: Location.from(2, 1, 2, 4) })
+      const result = stripAnsiColors(new DiagnosticRenderer().renderSingle("view.html.erb", diagnostic, "first\n<img>\nthird", {
+        wrapLines: false,
+        suffix: "Diagnostic suffix",
+      }))
+
+      expect(result).toContain("view.html.erb:2:1")
+      expect(result).toContain("Test error message")
+      expect(result).toContain("test-rule")
+      expect(result).toContain("Diagnostic suffix")
+      expect(result).toContain("→   2 │ <img>")
+      expect(result).toContain("│  ~~~")
+    })
+
+    it.each([true, false])("renders a source frame without a syntax renderer or diagnostic header (optimizeHighlighting: %s)", (optimizeHighlighting) => {
+      const diagnostic = createDiagnostic({ location: Location.from(4, 1, 4, 4) })
+      const content = "first\nsecond\nthird\n<img>\nfifth\nsixth"
+      const result = stripAnsiColors(new DiagnosticRenderer().renderSingle("view.html.erb", diagnostic, content, {
+        contextLines: 1,
+        optimizeHighlighting,
+        showDiagnostic: false,
+        wrapLines: false,
+        suffix: "Diagnostic suffix",
+      }))
+
+      expect(result).toContain("view.html.erb:4:1")
+      expect(result).toContain("3 │ third")
+      expect(result).toContain("→   4 │ <img>")
+      expect(result).toContain("│  ~~~")
+      expect(result).toContain("5 │ fifth")
+      expect(result).not.toContain("first")
+      expect(result).not.toContain("sixth")
+      expect(result).not.toContain("Test error message")
+      expect(result).not.toContain("test-rule")
+      expect(result).not.toContain("Diagnostic suffix")
+    })
+
     it("should render a single error diagnostic", () => {
       const diagnostic = createDiagnostic()
       const content = dedent`
