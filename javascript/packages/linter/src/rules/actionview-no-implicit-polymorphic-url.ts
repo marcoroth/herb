@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor, isPrismNodeType, locationFromByteOffset, substringFromByteOffset, getHelperEntries } from "@herb-tools/core"
+import { PrismVisitor, SourceOffsets, isPrismNodeType, getHelperEntries } from "@herb-tools/core"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -108,7 +108,7 @@ function routeParts(node: PrismNode): PrismNode[] {
   return elements.filter(element => !isPrismNodeType(element, "NilNode"))
 }
 
-function routeCallForArray(elements: PrismNode[], source: string): string | null {
+function routeCallForArray(elements: PrismNode[], offsets: SourceOffsets): string | null {
   const segments: string[] = []
   const routeArguments: string[] = []
 
@@ -130,7 +130,7 @@ function routeCallForArray(elements: PrismNode[], source: string): string | null
 
     if (isModelReaderCall(element)) {
       segments.push(element.name)
-      routeArguments.push(substringFromByteOffset(source, element.location.startOffset, element.location.length))
+      routeArguments.push(offsets.substringFromByteOffset(element.location.startOffset, element.location.length))
       continue
     }
 
@@ -143,7 +143,7 @@ function routeCallForArray(elements: PrismNode[], source: string): string | null
 class ImplicitPolymorphicURLCollector extends PrismVisitor {
   public readonly urls: ImplicitPolymorphicURL[] = []
 
-  constructor(private readonly source: string) {
+  constructor(private readonly offsets: SourceOffsets) {
     super()
   }
 
@@ -160,11 +160,11 @@ class ImplicitPolymorphicURLCollector extends PrismVisitor {
     if (url && isPrismNodeType(argument, "ArrayNode")) {
       const parts = routeParts(argument)
 
-      this.urls.push({ ...url, routeCall: parts.length === 0 ? null : routeCallForArray(parts, this.source), routable: parts.length > 0 })
+      this.urls.push({ ...url, routeCall: parts.length === 0 ? null : routeCallForArray(parts, this.offsets), routable: parts.length > 0 })
     }
 
     if (url && isModelReaderCall(argument)) {
-      const reader = substringFromByteOffset(this.source, argument.location.startOffset, argument.location.length)
+      const reader = this.offsets.substringFromByteOffset(argument.location.startOffset, argument.location.length)
 
       this.urls.push({ ...url, routeCall: routeCall(`${argument.name}_path`, [reader]), routable: true })
     }
@@ -198,14 +198,15 @@ export class ActionViewNoImplicitPolymorphicURLRule extends ParserRule {
 
     if (!prismNode || !source) return []
 
-    const collector = new ImplicitPolymorphicURLCollector(source)
+    const offsets = new SourceOffsets(source)
+    const collector = new ImplicitPolymorphicURLCollector(offsets)
 
     collector.visit(prismNode)
 
     return collector.urls.map(({ argument, helperName, routeCall, routable }) => {
       const { startOffset, length } = argument.location
-      const location = locationFromByteOffset(source, startOffset, length)
-      const value = substringFromByteOffset(source, startOffset, length)
+      const location = offsets.locationFromByteOffset(startOffset, length)
+      const value = offsets.substringFromByteOffset(startOffset, length)
       const suggestion = routeCall ? `an explicit route helper like \`${routeCall}\`` : "an explicit route helper"
 
       if (!routable) {

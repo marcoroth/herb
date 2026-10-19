@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "../utils/rule-utils.js"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { Visitor, PrismVisitor, hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName, isPrismNodeType, isRubyParameterNode, offsetFromPosition, stringIndexFromByteOffset } from "@herb-tools/core"
+import { Visitor, PrismVisitor, hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, isRubyLiteralNode, isHTMLElementNode, isKnownHTMLElement, getTagName, getTagLocalName, isPrismNodeType, isRubyParameterNode, SourceOffsets } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 import type { ParseResult, DocumentNode, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions, PrismNode, PrismNodes } from "@herb-tools/core"
@@ -38,13 +38,13 @@ const IMPLICIT_BLOCK_PARAMETERS = ["it", "_1", "_2", "_3", "_4", "_5", "_6", "_7
 class IterationBlockCollector extends Visitor {
   readonly parametersByOpening = new Map<number, string[]>()
 
-  constructor(private readonly source: string) {
+  constructor(private readonly offsets: SourceOffsets) {
     super()
   }
 
   visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
     const opening = node.block_opening?.location?.start
-    const offset = opening ? offsetFromPosition(this.source, opening) : null
+    const offset = opening ? this.offsets.stringIndexFromPosition(opening) : null
 
     if (offset !== null) this.parametersByOpening.set(offset, this.parameterNames(node))
 
@@ -66,7 +66,7 @@ class LoopVaryingReadCollector extends PrismVisitor {
 
   private readonly scopes: Set<string>[] = []
 
-  constructor(private readonly source: string, private readonly parametersByOpening: Map<number, string[]>) {
+  constructor(private readonly offsets: SourceOffsets, private readonly parametersByOpening: Map<number, string[]>) {
     super()
   }
 
@@ -77,7 +77,7 @@ class LoopVaryingReadCollector extends PrismVisitor {
   }
 
   visitBlockNode(node: PrismNodes.BlockNode): void {
-    const parameters = this.parametersByOpening.get(stringIndexFromByteOffset(this.source, node.openingLoc.startOffset))
+    const parameters = this.parametersByOpening.get(this.offsets.stringIndexFromByteOffset(node.openingLoc.startOffset))
 
     if (!parameters) {
       this.visitChildNodes(node)
@@ -125,7 +125,7 @@ class LoopVaryingReadCollector extends PrismVisitor {
   }
 
   private read(name: string, offset: number): void {
-    if (this.currentScope?.has(name)) this.readOffsets.push(stringIndexFromByteOffset(this.source, offset))
+    if (this.currentScope?.has(name)) this.readOffsets.push(this.offsets.stringIndexFromByteOffset(offset))
   }
 
   private assign(names: string[], value: PrismNode, replaces: boolean): void {
@@ -160,7 +160,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   private currentBranchIds: Set<string> = new Set<string>()
   private controlFlowIds: Set<string> = new Set<string>()
   private iterationDepth = 0
-  private source: string | null = null
+  private offsets: SourceOffsets | null = null
   private loopVaryingReads: number[] | null = null
 
   collectLoopVaryingReads(document: DocumentNode): void {
@@ -169,12 +169,14 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
     if (!source || !program) return
 
-    this.source = source
+    const offsets = new SourceOffsets(source)
 
-    const iterationBlocks = new IterationBlockCollector(source)
+    this.offsets = offsets
+
+    const iterationBlocks = new IterationBlockCollector(offsets)
     iterationBlocks.visit(document)
 
-    const reads = new LoopVaryingReadCollector(source, iterationBlocks.parametersByOpening)
+    const reads = new LoopVaryingReadCollector(offsets, iterationBlocks.parametersByOpening)
     reads.visit(program)
 
     this.loopVaryingReads = reads.readOffsets
@@ -233,17 +235,17 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   }
 
   private variesPerIteration(attributeNode: HTMLAttributeNode): boolean {
-    const source = this.source
+    const offsets = this.offsets
     const reads = this.loopVaryingReads
 
-    if (!source || !reads) return true
+    if (!offsets || !reads) return true
 
     return (attributeNode.value?.children ?? []).some(child => {
       if (!isERBOutputNode(child) && !isRubyLiteralNode(child)) return false
       if (!child.location) return false
 
-      const start = offsetFromPosition(source, child.location.start)
-      const end = offsetFromPosition(source, child.location.end)
+      const start = offsets.stringIndexFromPosition(child.location.start)
+      const end = offsets.stringIndexFromPosition(child.location.end)
 
       if (start === null || end === null) return false
 
