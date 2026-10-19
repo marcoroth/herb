@@ -96,6 +96,7 @@ function isNonModelReceiver(node: PrismNode): boolean {
 function isModelReaderCall(node: PrismNode): boolean {
   if (!isPrismNodeType(node, "CallNode")) return false
   if (!node.receiver || node.arguments_ || node.block) return false
+  if (node.name === "to_s" || node.name === "to_str") return false
   if (!IDENTIFIER.test(node.name) || isURLLikeName(node.name)) return false
 
   return !isNonModelReceiver(node.receiver)
