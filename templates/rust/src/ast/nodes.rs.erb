@@ -233,10 +233,7 @@ pub(crate) unsafe fn convert_node(node_pointer: *const c_void, source: &std::syn
         Some(std::slice::from_raw_parts((*c_node_pointer).<%= field.name %>.data, (*c_node_pointer).<%= field.name %>.length).to_vec())
       },
       <%- when Herb::Template::PrismNodeField -%>
-      <%= field.name %>: crate::prism::serialize(
-        (*c_node_pointer).<%= field.name %>.node,
-        (*c_node_pointer).<%= field.name %>.parser,
-      ),
+      <%= field.name %>: crate::prism::serialize((*c_node_pointer).<%= field.name %>),
       source: Some(std::sync::Arc::clone(source)),
       #[cfg(feature = "prism")]
       prism_cache: std::sync::OnceLock::new(),

@@ -2,7 +2,7 @@
 source: "Engine::Slots::StatesTest#test_0108_the seeds marker survives a value containing a comment terminator"
 input: "states_test-41"
 ---
-<!--herb-region:app/views/test.html.erb:b72c4265:0-->false
+<!--herb-region:app/views/test.html.erb:b72c4265:0-->
 
 <!--herb-seeds:{"open":false,"label":"a-\u002d>b"}--><div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->Closed<!--/herb-slot:0--></div>
 <ul>

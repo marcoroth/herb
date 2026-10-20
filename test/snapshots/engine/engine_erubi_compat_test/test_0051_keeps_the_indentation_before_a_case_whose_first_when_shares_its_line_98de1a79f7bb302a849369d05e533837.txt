@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0051_keeps the indentation before a case whose first when shares its line"
+input: "{source: \"<p></p>\\n  <% case r %><% when :a %>A<% end %>\", locals: {r: :a}, options: {}}"
+---
+<p></p>
+  A

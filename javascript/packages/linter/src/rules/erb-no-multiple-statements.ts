@@ -1,4 +1,4 @@
-import { PrismVisitor, isPrismNodeType, locationFromByteOffset, stringIndexFromByteOffset, HTML_WHITESPACE_PRESERVING_ELEMENTS } from "@herb-tools/core"
+import { PrismVisitor, SourceOffsets, isPrismNodeType, HTML_WHITESPACE_PRESERVING_ELEMENTS } from "@herb-tools/core"
 
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { ElementStackVisitor } from "../utils/rule-utils.js"
@@ -106,14 +106,15 @@ class StatementsCollector extends PrismVisitor {
 class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatementsAutofixContext> {
   private readonly scopes: StatementsScope[]
   private readonly clauses: Clause[]
-  private readonly source: string
+  private readonly offsets: SourceOffsets
+  private lines: string[] | null = null
 
-  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], clauses: Clause[], source: string) {
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], clauses: Clause[], offsets: SourceOffsets) {
     super(ruleName, context)
 
     this.scopes = scopes
     this.clauses = clauses
-    this.source = source
+    this.offsets = offsets
   }
 
   visitERBIfNode(node: ERBIfNode): void {
@@ -169,7 +170,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
 
       this.addOffense(
         `Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.`,
-        locationFromByteOffset(this.source, startOffset, length),
+        this.offsets.locationFromByteOffset(startOffset, length),
         autofixContext,
       )
     }
@@ -193,7 +194,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
 
       this.addOffense(
         `Avoid multiple Ruby statements in a single-line ERB tag. Move this statement into its own ERB tag for better readability.`,
-        locationFromByteOffset(this.source, startOffset, length),
+        this.offsets.locationFromByteOffset(startOffset, length),
         autofixContext,
       )
     }
@@ -275,7 +276,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     const start = node.tag_opening?.location.start ?? node.location.start
     const end = node.tag_closing?.location.end ?? node.location.end
 
-    const lines = this.source.split("\n")
+    const lines = this.sourceLines()
     const startLine = lines[start.line - 1]
     const endLine = lines[end.line - 1]
 
@@ -289,8 +290,16 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     return before
   }
 
+  private sourceLines(): string[] {
+    if (this.lines === null) {
+      this.lines = this.offsets.source.split("\n")
+    }
+
+    return this.lines
+  }
+
   private stringIndex(byteOffset: number): number {
-    return stringIndexFromByteOffset(this.source, byteOffset)
+    return this.offsets.stringIndexFromByteOffset(byteOffset)
   }
 
   private clauseStatementsIn(from: number, to: number): PrismNodes.Node[] {
@@ -366,7 +375,7 @@ export class ERBNoMultipleStatementsRule extends ParserRule<MultipleStatementsAu
 
     if (collector.scopes.length === 0) return []
 
-    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes, collector.clauses, source)
+    const visitor = new NoMultipleStatementsVisitor(this.ruleName, context, collector.scopes, collector.clauses, new SourceOffsets(source))
 
     visitor.visit(result.value)
 

@@ -186,6 +186,57 @@ module Dev
       Herb.reset_configuration!
     end
 
+    class TerminalOutput < StringIO
+      def tty?
+        true
+      end
+    end
+
+    def index_on_terminal(process_name)
+      directory = Dir.mktmpdir("herb_dev_runner_test")
+
+      File.write(File.join(directory, "index.html.erb"), "<div>Hello</div>\n")
+
+      config = Herb::Configuration.load(directory)
+      watcher = Herb::Dev::Watcher.new(config: config, root: directory) { |event| event }
+      pipeline = Herb::Dev::Pipeline.new(server: FakeWebSocket.new, compiler: -> {})
+
+      with_process_name(process_name) do
+        on_terminal { Herb::Dev::Runner.new(path: directory).send(:index_files, watcher, pipeline) }
+      end
+    ensure
+      FileUtils.rm_rf(directory)
+      Herb.reset_configuration!
+    end
+
+    def on_terminal
+      previous_stdout = $stdout
+      $stdout = TerminalOutput.new
+
+      yield
+
+      $stdout.string
+    ensure
+      $stdout = previous_stdout
+    end
+
+    def with_process_name(process_name)
+      previous = ENV.fetch("PS", nil)
+      process_name ? ENV["PS"] = process_name : ENV.delete("PS")
+
+      yield
+    ensure
+      previous ? ENV["PS"] = previous : ENV.delete("PS")
+    end
+
+    test "indexing rewrites its placeholder line on a terminal of its own" do
+      assert_equal "  Indexing files...\n\e[1A\e[2K  Files:     1 template indexed\n", index_on_terminal(nil)
+    end
+
+    test "indexing writes no cursor escapes on a terminal shared through a process manager" do
+      assert_equal "  Files:     1 template indexed\n", index_on_terminal("herb")
+    end
+
     def paint_error(previous, current, broken: [])
       runner = Herb::Dev::Runner.new
       runner.instance_variable_set(:@broken_files, Set.new(broken))

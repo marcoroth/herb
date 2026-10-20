@@ -107,6 +107,12 @@ describe("ERBClosingTagIndentRule", () => {
       expectNoOffenses("<%\n  # pick the current page\n  page = current_page\n  %>")
     })
 
+    test("checks a tag when only another tag carries a comment", () => {
+      expectError("Put the tag on one line as `<%= ... %>`. It holds a single line of Ruby, so the newlines inside it make it read as a multi-line block.")
+
+      assertOffenses("<%= title # the page title\n%>\n<%=\n  subtitle\n%>")
+    })
+
     test("ignores a `=begin` block comment delimiter", () => {
       expectNoOffenses("<%\n=begin\n%>\n<p>Commented out</p>\n<%\n=end\n%>")
     })

@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0055_keeps the indentation before adjacent statement tags"
+input: "{source: \"<p></p>\\n  <% x = 1 %><% y = 2 %>Z\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p></p>
+  '.freeze;   x = 1 ; y = 2 ; _buf << 'Z'.freeze;
+_buf.to_s

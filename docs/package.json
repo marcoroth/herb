@@ -28,6 +28,6 @@
   "devDependencies": {
     "@shikijs/vitepress-twoslash": "^4.4.3",
     "vitepress": "^2.0.0-alpha.20",
-    "vitepress-plugin-group-icons": "^1.7.6"
+    "vitepress-plugin-group-icons": "^1.7.7"
   }
 }

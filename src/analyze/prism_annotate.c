@@ -170,6 +170,7 @@ static token_T* get_content_token(const AST_NODE_T* node) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: return ((AST_ERB_CONTENT_NODE_T*) node)->content;
     case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->content;
+    case AST_ERB_YIELD_NODE: return ((AST_ERB_YIELD_NODE_T*) node)->content;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->content;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->content;
     case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->content;
@@ -188,6 +189,7 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: ((AST_ERB_CONTENT_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_RENDER_NODE: ((AST_ERB_RENDER_NODE_T*) node)->prism_node = prism_ref; break;
+    case AST_ERB_YIELD_NODE: ((AST_ERB_YIELD_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_IF_NODE: ((AST_ERB_IF_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_BLOCK_NODE: ((AST_ERB_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_ITERATION_BLOCK_NODE: ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
@@ -200,6 +202,12 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
     case AST_ERB_UNLESS_NODE: ((AST_ERB_UNLESS_NODE_T*) node)->prism_node = prism_ref; break;
     default: break;
   }
+}
+
+static size_t prism_node_start(pm_parser_t* parser, hb_narray_T* node_list, size_t index) {
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, index);
+
+  return (size_t) (prism_node->location.start - parser->start);
 }
 
 static herb_prism_node_T find_prism_node_for_herb_node(
@@ -215,16 +223,28 @@ static herb_prism_node_T find_prism_node_for_herb_node(
   uint32_t content_from = content->range.from;
   uint32_t content_to = content->range.to;
 
-  for (size_t i = 0; i < hb_narray_size(node_list); i++) {
-    pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, i);
-    size_t prism_start = (size_t) (prism_node->location.start - parser->start);
+  size_t low = 0;
+  size_t high = hb_narray_size(node_list);
 
-    if (prism_start >= content_from && prism_start < content_to) {
-      result.node = prism_node;
-      result.parser = parser;
-      break;
+  while (low < high) {
+    size_t middle = low + (high - low) / 2;
+
+    if (prism_node_start(parser, node_list, middle) < content_from) {
+      low = middle + 1;
+    } else {
+      high = middle;
     }
   }
+
+  if (low >= hb_narray_size(node_list) || prism_node_start(parser, node_list, low) >= content_to) { return result; }
+
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, low);
+  size_t prism_end = (size_t) (prism_node->location.end - parser->start);
+
+  result.node = prism_node;
+  result.parser = parser;
+  result.source_start = content_from;
+  result.source_end = prism_end > content_to ? (uint32_t) prism_end : content_to;
 
   return result;
 }
@@ -237,7 +257,8 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
   pm_parser_t* parser;
   hb_narray_T* node_list;
 
-  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || context->prism_nodes_deep) {
+  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || node->type == AST_ERB_YIELD_NODE
+      || context->prism_nodes_deep) {
     parser = context->parser;
     node_list = context->node_list;
   } else {
@@ -253,7 +274,9 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
 }
 
 static bool collect_content_ranges_visitor(const AST_NODE_T* node, void* data) {
-  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE) { return true; }
+  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE && node->type != AST_ERB_YIELD_NODE) {
+    return true;
+  }
 
   hb_narray_T* ranges = (hb_narray_T*) data;
   token_T* content = get_content_token(node);
