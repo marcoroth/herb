@@ -335,7 +335,7 @@ export class CompletionProvider {
 
     if (attribute === HERB_ATTRIBUTES.toggle || attribute === HERB_ATTRIBUTES.increment || attribute === HERB_ATTRIBUTES.decrement || attribute === HERB_ATTRIBUTES.reset) {
       const wanted = attribute === HERB_ATTRIBUTES.toggle ? "boolean" : attribute === HERB_ATTRIBUTES.reset ? null : "integer"
-      const token = currentToken(valueText, [",", " ", ">"])
+      const token = currentToken(valueText, [" ", ">"])
       const names = [...kinds.entries()].filter(([, kind]) => wanted === null || kind === wanted || kind === "bare").map(([name]) => name)
 
       return this.herbItems(names, token, position, CompletionItemKind.Variable, "state", name => kinds.get(name) ?? "")
@@ -343,7 +343,7 @@ export class CompletionProvider {
 
     if (attribute === HERB_ATTRIBUTES.set) {
       const clause = valueText.split(" ").pop() ?? ""
-      const piece = clause.slice(clause.lastIndexOf(">") + 1).split(",").pop() ?? ""
+      const piece = clause.slice(clause.lastIndexOf(">") + 1)
       const separator = piece.indexOf("=")
 
       if (separator !== -1) {

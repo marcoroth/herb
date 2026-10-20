@@ -6,7 +6,7 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HerbStateValidActionsRule)
 
 describe("HerbStateValidActionsRule", () => {
-  test("a trailing comma lists several assignments in one clause", () => {
+  test("flags a trailing comma after an assignment", () => {
     expectError('`data-herb-set` lists several assignments in one clause. A clause takes one assignment, so separate the clauses with spaces, like `data-herb-set="open=true"`.')
 
     assertOffenses(dedent`

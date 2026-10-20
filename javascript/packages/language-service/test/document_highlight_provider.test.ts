@@ -93,6 +93,18 @@ describe("DocumentHighlightProvider", () => {
 
       expect(texts(highlights)).toEqual(["attempts", "attempts", "attempts", "0"])
     })
+
+    it("skips a comma list the client ignores", () => {
+      const commas = dedent`
+        <%# herb:state (open: false, attempts: 0) %>
+        <button data-herb-set="open=true,attempts=0">Both</button>
+        <button data-herb-reset="open,attempts">Reset</button>
+      `
+      const lines = commas.split("\n")
+      const highlights = getHighlights(commas, 0, 17)
+
+      expect(highlights.map(highlight => lines[highlight.range.start.line].slice(highlight.range.start.character, highlight.range.end.character))).toEqual(["open", "false"])
+    })
   })
 
   describe("slot names", () => {

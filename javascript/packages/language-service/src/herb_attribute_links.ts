@@ -113,26 +113,18 @@ function stateNamesIn(content: string, action: ActionName): { name: string, offs
     const restOffset = arrow === -1 ? partOffset : partOffset + arrow + 2
     const rest = arrow === -1 ? part : part.slice(arrow + 2)
 
-    let nameCursor = restOffset
-
-    for (const piece of splitOutsideQuotes(rest, ",")) {
-      const separator = piece.indexOf("=")
-      const raw = action === "set" ? (separator === -1 ? piece : piece.slice(0, separator)) : piece
-      const name = raw.trim()
-
-      if (name !== "" && /^[a-z_][a-zA-Z0-9_]*$/.test(name)) {
-        const offset = content.indexOf(name, nameCursor)
-
-        if (offset !== -1) {
-          found.push({ name, offset })
-          nameCursor = offset + name.length
-        }
-      } else {
-        nameCursor += piece.length + 1
-      }
-    }
-
     cursor = partOffset + part.length
+
+    if (splitOutsideQuotes(rest, ",").length > 1) continue
+
+    const separator = rest.indexOf("=")
+    const name = (action === "set" && separator !== -1 ? rest.slice(0, separator) : rest).trim()
+
+    if (name === "" || !/^[a-z_][a-zA-Z0-9_]*$/.test(name)) continue
+
+    const offset = content.indexOf(name, restOffset)
+
+    if (offset !== -1) found.push({ name, offset })
   }
 
   return found
