@@ -31,7 +31,7 @@ import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
 import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker, slotOpenIndex } from "../markup/markers"
-import { adoptedInto, blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
+import { adoptedInto, unwrapForeign, blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
 import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
@@ -121,7 +121,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
       template.innerHTML = markup
 
-      this.statics.push(identity, key, template.content)
+      this.statics.push(identity, key, unwrapForeign(template.content))
       parked += 1
     }
 

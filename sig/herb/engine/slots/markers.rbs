@@ -14,14 +14,28 @@ module Herb
 
         COMMENT: Regexp
 
+        FOREIGN_ATTRIBUTE: String
+
+        FOREIGN_ROOTS: Hash[Symbol, String]
+
+        SVG_INTEGRATION_POINTS: Array[String]
+
+        MATH_INTEGRATION_POINTS: Array[String]
+
         # : (String) -> bool
         def self.marker?: (String) -> bool
 
         # : (String) -> String
         def self.seeds_expression: (String) -> String
 
+        # : (Symbol, String) -> Symbol
+        def self.namespace_within: (Symbol, String) -> Symbol
+
         # : (Integer, Symbol) -> String
         def slot_open: (Integer, Symbol) -> String
+
+        # : (String, Symbol) -> String
+        def foreign: (String, Symbol) -> String
 
         # : (Array[[Integer, Symbol, String?]]) -> String
         def element_anchors: (Array[[ Integer, Symbol, String? ]]) -> String

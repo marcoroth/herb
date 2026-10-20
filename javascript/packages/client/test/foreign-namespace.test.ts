@@ -134,3 +134,93 @@ describe("a conditional branch built from payload statics", () => {
     expect(namespaces("rect")).toEqual([SVG_NAMESPACE])
   })
 })
+
+const WRAPPED_ROW_STATICS =
+  `<!--herb-branch:0:item--><svg data-herb-foreign><!--herb-item:0:--><g herb-key="" data-herb-slot="1:attribute:herb-key"><circle r="4"/><title>label</title><image href="dot.png"/></g><!--/herb-item:0--></svg>`
+
+const WRAPPED_BRANCH_STATICS = `<!--herb-branch:0:0--><svg data-herb-foreign><circle r="4"/><rect width="10" height="10"/></svg>`
+
+const WRAPPED_MATH_STATICS =
+  `<!--herb-branch:0:item--><math data-herb-foreign><!--herb-item:0:--><mi herb-key="" data-herb-slot="1:attribute:herb-key">x</mi><mspace width="1em"/><!--/herb-item:0--></math>`
+
+function rowShape(): string[] {
+  return [...document.querySelectorAll("g")].map((group) =>
+    [...group.childNodes].map((node) => `${(node as Element).localName}:${(node as Element).namespaceURI === SVG_NAMESPACE ? "svg" : "other"}`).join(","),
+  )
+}
+
+describe("statics wrapped in a foreign root", () => {
+  beforeEach(() => {
+    slots = new Slots()
+  })
+
+  test("keep self-closing siblings, title and image as SVG in payload statics", () => {
+    document.body.innerHTML = page(`<svg><!--herb-slot:0:collection--><!--/herb-slot:0--></svg>`)
+    slots.scan(document.body)
+
+    const report = applyItems(slots, WRAPPED_ROW_STATICS, ["a", "b"])
+
+    expect(report.deferred).toEqual([])
+    expect(rowShape()).toEqual(["circle:svg,title:svg,image:svg", "circle:svg,title:svg,image:svg"])
+    expect(document.querySelector("[data-herb-foreign]")).toBeNull()
+  })
+
+  test("keep item markers tracked so rows can be removed", () => {
+    document.body.innerHTML = page(`<svg><!--herb-slot:0:collection--><!--/herb-slot:0--></svg>`)
+    slots.scan(document.body)
+
+    applyItems(slots, WRAPPED_ROW_STATICS, ["a", "b"])
+    applyItems(slots, WRAPPED_ROW_STATICS, ["b"])
+
+    expect([...document.querySelectorAll("g")].map((group) => group.getAttribute("herb-key"))).toEqual(["b"])
+    expect(document.querySelector("[data-herb-foreign]")).toBeNull()
+  })
+
+  test("keep self-closing siblings as SVG in statics parked in the page", () => {
+    document.body.innerHTML =
+      page(`<svg><!--herb-slot:0:collection--><!--/herb-slot:0--></svg>`) +
+      `<template data-herb-region="${FILE}:${VERSION}">${WRAPPED_ROW_STATICS}</template>`
+    slots.scan(document.body)
+
+    const report = slots.apply({
+      template: FILE,
+      version: VERSION,
+      occurrence: 0,
+      slots: { 0: { items: { a: { 1: "a" } }, order: ["a"] } },
+    })
+
+    expect(report.deferred).toEqual([])
+    expect(rowShape()).toEqual(["circle:svg,title:svg,image:svg"])
+    expect(document.querySelector("g")?.parentElement?.localName).toBe("svg")
+    expect(document.querySelector("[data-herb-foreign]")).toBeNull()
+  })
+
+  test("build a branch with self-closing siblings", () => {
+    document.body.innerHTML = page(`<svg><!--herb-slot:0:conditional--><!--/herb-slot:0--></svg>`)
+    slots.scan(document.body)
+
+    slots.apply({
+      template: FILE,
+      version: VERSION,
+      occurrence: 0,
+      slots: { 0: { branch: 0, statics: WRAPPED_BRANCH_STATICS } },
+    })
+
+    expect([...document.querySelector("svg")!.children].map((element) => `${element.localName}:${element.namespaceURI}`)).toEqual([
+      `circle:${SVG_NAMESPACE}`,
+      `rect:${SVG_NAMESPACE}`,
+    ])
+  })
+
+  test("keep self-closing MathML siblings as MathML", () => {
+    document.body.innerHTML = page(`<math><mrow><!--herb-slot:0:collection--><!--/herb-slot:0--></mrow></math>`)
+    slots.scan(document.body)
+
+    applyItems(slots, WRAPPED_MATH_STATICS, ["a"])
+
+    expect([...document.querySelector("mrow")!.children].map((element) => `${element.localName}:${element.namespaceURI}`)).toEqual([
+      `mi:${MATHML_NAMESPACE}`,
+      `mspace:${MATHML_NAMESPACE}`,
+    ])
+  })
+})

@@ -529,16 +529,17 @@ module Herb
         # : (untyped) -> String?
         def attribute_expression_for: (untyped) -> String?
 
-        def insert_markers: (untyped node) -> untyped
+        # : (untyped, ?Symbol) -> untyped
+        def insert_markers: (untyped, ?Symbol) -> untyped
 
         # : (untyped) -> Integer?
         def content_anchor_index: (untyped) -> Integer?
 
-        # : (untyped, Integer?) -> void
-        def mark_branches: (untyped, Integer?) -> void
+        # : (untyped, Integer?, ?Symbol) -> void
+        def mark_branches: (untyped, Integer?, ?Symbol) -> void
 
-        # : (String, Array[untyped]) -> void
-        def park_branch: (String, Array[untyped]) -> void
+        # : (String, String, Array[untyped], Symbol) -> void
+        def park_branch: (String, String, Array[untyped], Symbol) -> void
 
         # : (Herb::AST::DocumentNode) -> void
         def append_statics: (Herb::AST::DocumentNode) -> void
@@ -561,25 +562,25 @@ module Herb
         # : (untyped) -> Array[Array[Herb::AST::Node]]
         def branch_bodies: (untyped) -> Array[Array[Herb::AST::Node]]
 
-        # : (Herb::AST::Node, Integer?) -> void
-        def wrap_items: (Herb::AST::Node, Integer?) -> void
+        # : (Herb::AST::Node, Integer?, ?Symbol) -> void
+        def wrap_items: (Herb::AST::Node, Integer?, ?Symbol) -> void
 
         # : (untyped) -> Array[String]?
         def attribute_segments: (untyped) -> Array[String]?
 
-        # : (Integer, untyped) -> void
-        def park_keyed: (Integer, untyped) -> void
+        # : (Integer, untyped, Symbol) -> void
+        def park_keyed: (Integer, untyped, Symbol) -> void
 
-        # : (untyped, untyped) -> Array[untyped]?
-        def park_item: (untyped, untyped) -> Array[untyped]?
+        # : (untyped, untyped, Symbol) -> Array[untyped]?
+        def park_item: (untyped, untyped, Symbol) -> Array[untyped]?
 
         def anchor_attributes: (untyped node, ?untyped content_index) -> untyped
 
         # : (Slot) -> String?
         def anchor_name_for: (Slot) -> String?
 
-        # : (Herb::AST::Node) { (Array[untyped]) -> void } -> void
-        def each_child_array: (Herb::AST::Node) { (Array[untyped]) -> void } -> void
+        # : (Herb::AST::Node, ?Symbol) { (Array[untyped]) -> void } -> void
+        def each_child_array: (Herb::AST::Node, ?Symbol) { (Array[untyped]) -> void } -> void
 
         # : (Herb::AST::DocumentNode) -> void
         def wrap_region: (Herb::AST::DocumentNode) -> void

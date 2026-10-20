@@ -1,4 +1,5 @@
 import { asList } from "../shared/arrays"
+import { HERB_ATTRIBUTES } from "../grammar/attributes"
 import { branchKey, branchOf, isItemClose, isItemOpen, parseMarker, slotOpenIndex } from "./markers"
 import { anchoredSlots, closingFor, markers, slotOpeners } from "./anchors"
 
@@ -270,6 +271,10 @@ export function parkedBranches(element: HTMLTemplateElement): FragmentMap {
     current?.append(node)
   }
 
+  for (const fragment of branches.values()) {
+    unwrapForeign(fragment)
+  }
+
   return branches
 }
 
@@ -378,6 +383,16 @@ function markup(value: string, text: boolean): string {
   }
 
   return value
+}
+
+export function unwrapForeign(fragment: DocumentFragment): DocumentFragment {
+  for (const element of [...fragment.children]) {
+    if (element.hasAttribute(HERB_ATTRIBUTES.foreign)) {
+      element.replaceWith(...element.childNodes)
+    }
+  }
+
+  return fragment
 }
 
 export function adoptedInto(fragment: DocumentFragment, parent: Node | null): DocumentFragment {
