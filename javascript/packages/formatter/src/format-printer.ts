@@ -3,6 +3,7 @@ import { TextFlowEngine } from "./text-flow-engine.js"
 import { AttributeRenderer } from "./attribute-renderer.js"
 import { SpacingAnalyzer } from "./spacing-analyzer.js"
 import { HerbDisableCollector } from "./herb-disable-collector.js"
+import { HerbDisablePositions } from "./herb-disable-positions.js"
 
 import { isTextFlowNode, hasFlowContentBefore, hasFlowContentAfter } from "./text-flow-helpers.js"
 import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
@@ -182,6 +183,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private attributeRenderer: AttributeRenderer
   private spacingAnalyzer: SpacingAnalyzer
   private collectedHerbDisable: CollectedHerbDisable[] = []
+  private herbDisablePositions = new HerbDisablePositions()
   private sourceLines: string[] | null = null
   private herb?: HerbBackend
   private erbBlockTagNameCache = new Map<Node, string | null>()
@@ -206,6 +208,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const collector = new HerbDisableCollector()
     collector.visit(node)
     this.collectedHerbDisable = collector.collected
+    this.herbDisablePositions = new HerbDisablePositions(collector.collected)
 
     this.lines = []
     this.indentLevel = 0
@@ -289,21 +292,32 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   private spliceHerbDisableComments(): void {
-    const documentRootComments: string[] = []
+    const isDocumentRoot = (entry: CollectedHerbDisable) => !entry.anchor && isNode(entry.parentNode, DocumentNode)
+    const documentRootComments = this.collectedHerbDisable.filter(isDocumentRoot).map(entry => entry.commentText)
+    const anchored = this.lines.length > 0 ? this.collectedHerbDisable.filter(entry => !isDocumentRoot(entry)) : []
+    const lastLine = this.lines.length - 1
 
-    for (const entry of this.collectedHerbDisable) {
-      if (!entry.anchor && isNode(entry.parentNode, DocumentNode)) {
-        documentRootComments.push(entry.commentText)
-        continue
-      }
+    const placements = anchored.map(entry => {
+      const { line, column } = this.herbDisablePositions.positionFor(entry) ?? { line: lastLine, column: this.lines[lastLine].length }
+      const lineBreak = this.lines[line].indexOf("\n", column)
 
-      const outputLine = this.findOutputLineForHerbDisable(entry)
+      return { entry, line, insertAt: lineBreak >= 0 ? lineBreak : this.lines[line].length }
+    })
 
-      if (outputLine >= 0 && outputLine < this.lines.length) {
-        const currentLine = this.lines[outputLine].trimEnd()
-        const separator = currentLine.endsWith(" ") ? "" : " "
-        this.lines[outputLine] = currentLine + separator + entry.commentText
-      }
+    // Splice back to front so each insertion leaves the positions still to come intact. Comments
+    // sharing a spot go in last-to-first, which leaves them in source order.
+    placements.sort((a, b) =>
+      b.line - a.line ||
+      b.insertAt - a.insertAt ||
+      b.entry.node.location.start.line - a.entry.node.location.start.line ||
+      b.entry.node.location.start.column - a.entry.node.location.start.column
+    )
+
+    for (const { entry, line, insertAt } of placements) {
+      const before = this.lines[line].slice(0, insertAt).trimEnd()
+      const separator = before.endsWith(" ") ? "" : " "
+
+      this.lines[line] = before + separator + entry.commentText + this.lines[line].slice(insertAt)
     }
 
     if (documentRootComments.length > 0) {
@@ -311,82 +325,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     }
   }
 
-  private findOutputLineForHerbDisable(entry: CollectedHerbDisable): number {
-    if (isNode(entry.anchor, HTMLOpenTagNode) && isNode(entry.parentNode, HTMLElementNode)) {
-      const tagSearch = `<${getTagName(entry.anchor)}`
+  visit(node: Node | null | undefined): void {
+    super.visit(node)
 
-      for (let index = 0; index < this.lines.length; index++) {
-        if (this.lines[index].includes(tagSearch)) {
-          if (this.lines[index].includes("\n")) {
-            const subLines = this.lines[index].split("\n")
-            const commentText = entry.commentText
-            const firstLine = subLines[0].trimEnd()
-            const separator = firstLine.endsWith(" ") ? "" : " "
-            subLines[0] = firstLine + separator + commentText
-            this.lines[index] = subLines.join("\n")
-
-            return -1
-          }
-
-          const analysis = this.elementFormattingAnalysis.get(entry.parentNode)
-          const openTagIsMultiline = analysis ? !analysis.openTagInline : true
-
-          if (openTagIsMultiline) {
-            for (let forward = index + 1; forward < this.lines.length; forward++) {
-              if (this.lines[forward].trim() === ">") return forward
-            }
-          }
-
-          return index
-        }
-      }
-    }
-
-    const searchContent = this.getSearchableContentForNode(entry.anchor) ?? this.getSearchableContentForNode(entry.parentNode)
-
-    if (searchContent) {
-      for (let index = 0; index < this.lines.length; index++) {
-        if (this.lines[index].includes(searchContent)) return index
-      }
-    }
-
-    return this.lines.length > 0 ? this.lines.length - 1 : 0
+    if (node) this.markOutputEnd(node)
   }
 
-  private getSearchableContentForNode(node: Node | null): string | null {
-    if (!node) return null
-
-    if (isNode(node, HTMLOpenTagNode)) {
-      return `<${getTagName(node)}`
-    }
-
-    if (isNode(node, HTMLElementNode)) {
-      if (node.close_tag) {
-        return `</${getTagName(node)}`
-      }
-
-      return `<${getTagName(node)}`
-    }
-
-    if (isNode(node, HTMLCloseTagNode)) {
-      return `</${getTagName(node)}`
-    }
-
-    if (isNode(node, HTMLAttributeNode) && isNode(node.name, HTMLAttributeNameNode)) {
-      return getCombinedAttributeName(node.name)
-    }
-
-    if (isNode(node, HTMLTextNode)) {
-      const firstWord = node.content.trim().split(/\s+/)[0]
-
-      return firstWord || null
-    }
-
-    if (isNode(node, ERBContentNode)) {
-      return IdentityPrinter.print(node).trim()
-    }
-
-    return null
+  markOutputEnd(target: Node | Token): void {
+    this.herbDisablePositions.mark(target, this.lines)
   }
 
   /**
@@ -412,6 +358,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     } else {
       this.lines.push(text)
     }
+
+    this.herbDisablePositions.resolvePending(this.lines)
   }
 
   /**
@@ -425,11 +373,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     this.lines = []
     this.stringLineCount = 0
+    this.herbDisablePositions.enterCapture()
 
     try {
       callback()
       return this.lines
     } finally {
+      this.herbDisablePositions.exitCapture()
       this.lines = previousLines
       this.inlineMode = previousInlineMode
       this.stringLineCount = previousStringLineCount
@@ -459,10 +409,12 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const originalPush = this.push.bind(this)
     const originalPushToLastLine = this.pushToLastLine.bind(this)
     const originalVisit = this.visit.bind(this)
+    const originalMarkOutputEnd = this.markOutputEnd.bind(this)
 
     this.lines = []
     this.push = () => {}
     this.pushToLastLine = () => {}
+    this.markOutputEnd = () => {}
 
     this.visit = (node: Node) => {
       capturedNodes.push(node)
@@ -478,6 +430,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       this.inlineMode = previousInlineMode
       this.push = originalPush
       this.pushToLastLine = originalPushToLastLine
+      this.markOutputEnd = originalMarkOutputEnd
       this.visit = originalVisit
     }
   }
@@ -488,6 +441,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   push(line: string) {
     this.lines.push(line)
     this.stringLineCount++
+    this.herbDisablePositions.resolvePending(this.lines)
   }
 
   /**
@@ -581,14 +535,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Render multiline attributes for a tag
    */
-  private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
+  private renderMultilineAttributes(node: HTMLOpenTagNode, isSelfClosing: boolean = false) {
+    const tagName = getTagName(node)
+
     this.pushWithIndent(`<${tagName}`)
+    if (node.tag_name) this.markOutputEnd(node.tag_name)
 
     this.withIndent(() => {
       this.attributeRenderer.indentLevel = this.indentLevel
-      allChildren.forEach(child => {
+      node.children.forEach(child => {
         if (isNode(child, HTMLAttributeNode)) {
           this.pushWithIndent(this.attributeRenderer.renderAttribute(child, tagName))
+          this.markOutputEnd(child)
         } else if (!isNode(child, WhitespaceNode)) {
           this.visit(child)
         }
@@ -877,6 +835,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
         if (shouldAddSpacing) {
           this.lines.splice(childStartLine, 0, "")
+          this.herbDisablePositions.shiftFrom(childStartLine)
           this.stringLineCount++
         }
       }
@@ -940,7 +899,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         this.push(this.inlineMode ? inline : this.indent + inline)
         return
       } else {
-        this.renderMultilineAttributes(getTagName(node), node.children, isSelfClosing)
+        this.renderMultilineAttributes(node, isSelfClosing)
 
         return
       }
@@ -962,7 +921,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (shouldKeepInline) {
       this.push(this.inlineMode ? inline : this.indent + inline)
     } else {
-      this.renderMultilineAttributes(getTagName(node), node.children, isSelfClosing)
+      this.renderMultilineAttributes(node, isSelfClosing)
     }
   }
 
