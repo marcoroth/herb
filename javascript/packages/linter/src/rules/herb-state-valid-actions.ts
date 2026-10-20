@@ -98,10 +98,23 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
       return
     }
 
+    const parts = splitOutsideQuotes(clause.rest, ",")
+
+    if (parts.length > 1) {
+      const what = schema.operation === "set" ? "assignment" : "name"
+      const event = clause.event === null ? "" : `${clause.event}->`
+      const separated = parts.map((part) => part.trim()).filter((part) => part !== "").map((part) => `${event}${part}`).join(" ")
+
+      this.addOffense(
+        `\`${name}\` lists several ${what}s in one clause. A clause takes one ${what}, so separate the clauses with spaces, like \`${name}="${separated}"\`.`,
+        attribute.location,
+      )
+
+      return
+    }
+
     if (schema.operation === "set") {
-      for (const assignment of splitOutsideQuotes(clause.rest, ",")) {
-        this.checkAssignment(attribute, assignment)
-      }
+      this.checkAssignment(attribute, clause.rest)
 
       return
     }
@@ -148,15 +161,6 @@ class StateValidActionsVisitor extends BaseRuleVisitor {
 
   private checkAssignment(attribute: HTMLAttributeNode, assignment: string): void {
     const separator = assignment.indexOf("=")
-
-    if (assignment.trim() === "") {
-      this.addOffense(
-        "`data-herb-set` has an empty clause. Remove the stray comma or space, since every clause has to be a `state=value` pair.",
-        attribute.location,
-      )
-
-      return
-    }
 
     if (separator < 1) {
       this.addOffense(
