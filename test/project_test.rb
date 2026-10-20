@@ -4,6 +4,7 @@ require_relative "test_helper"
 
 require "tmpdir"
 require "fileutils"
+require "stringio"
 
 class ProjectTest < Minitest::Spec
   def setup
@@ -73,5 +74,29 @@ class ProjectTest < Minitest::Spec
 
   test "finds no templates in an empty project" do
     assert_empty files_for(@project_path)
+  end
+
+  test "analyze honors the custom erb openers in the config" do
+    write_config("parser:\n  erb_openers:\n    - graphql\n")
+    write("app/views/posts/index.html.erb", <<~ERB)
+      <%graphql
+        fragment Post on Post {
+          ...Avatar
+          author: user { name }
+        }
+      %>
+      <p><%= post.title %></p>
+    ERB
+
+    project = Herb::Project.new(@project_path)
+    project.no_log_file = true
+    project.no_timing = true
+
+    stdout = $stdout
+    $stdout = StringIO.new
+    issues = project.analyze!
+    $stdout = stdout
+
+    refute issues
   end
 end
