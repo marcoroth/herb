@@ -1,4 +1,4 @@
-import { fillSlots } from "../markup/fragments"
+import { adoptedInto, fillSlots } from "../markup/fragments"
 
 import type { PartsResolver, SlotValues } from "../types"
 
@@ -18,9 +18,10 @@ export function buildSubtree({ template, target, values = {}, text = false, reso
 
   fillSlots(copy, values, text, resolve)
 
-  const added = [...copy.childNodes]
+  const adopted = adoptedInto(copy, target.parentNode)
+  const added = [...adopted.childNodes]
 
-  target.parentNode?.insertBefore(copy, target)
+  target.parentNode?.insertBefore(adopted, target)
 
   return added
 }
