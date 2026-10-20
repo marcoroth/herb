@@ -332,7 +332,7 @@ module Herb
       return unless issue_type[:key] == :invalid_ruby && file_content
 
       begin
-        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [])
+        engine = Herb::Engine.new(file_content, filename: file_path, escape: true, parser_options: engine_parser_options, visitors: [])
         puts ""
         puts "**Compiled Ruby:**"
         puts "```ruby"
@@ -344,6 +344,16 @@ module Herb
     end
 
     private
+
+    #: () -> Hash[Symbol, untyped]
+    def parser_options
+      @parser_options ||= configuration.parser_options
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def engine_parser_options
+      @engine_parser_options ||= configuration.engine_option("parser_options", {}).transform_keys(&:to_sym).merge(parser_options)
+    end
 
     def process_file(file_path)
       isolate ? process_file_isolated(file_path) : process_file_direct(file_path)
@@ -362,7 +372,7 @@ module Herb
       end
 
       Timeout.timeout(file_timeout) do
-        parse_result = Herb.parse(file_content)
+        parse_result = Herb.parse(file_content, **parser_options)
 
         if parse_result.failed?
           result[:file_content] = file_content
@@ -401,7 +411,7 @@ module Herb
           $stderr.reopen(stderr_file.path, "w")
 
           begin
-            parse_result = Herb.parse(file_content)
+            parse_result = Herb.parse(file_content, **parser_options)
             exit!(parse_result.failed? ? 2 : 0)
           rescue StandardError => e
             warn "Ruby exception: #{e.class}: #{e.message}"
@@ -457,7 +467,7 @@ module Herb
     end
 
     def classify_parse_errors(file_path, file_content)
-      default_result = Herb.parse(file_content)
+      default_result = Herb.parse(file_content, **parser_options)
 
       diagnostics = if default_result.respond_to?(:errors) && default_result.errors.any?
                       default_result.errors.map do |error|
@@ -470,8 +480,8 @@ module Herb
                       end
                     end
 
-      no_strict_result = Herb.parse(file_content, strict: false)
-      no_analyze_result = Herb.parse(file_content, analyze: false)
+      no_strict_result = Herb.parse(file_content, **parser_options, strict: false)
+      no_analyze_result = Herb.parse(file_content, **parser_options, analyze: false)
 
       if no_strict_result.success?
         { status: :strict_parse_error, diagnostics: diagnostics,
@@ -496,6 +506,7 @@ module Herb
         file_content,
         filename: file_path,
         escape: true,
+        parser_options: engine_parser_options,
         validate_ruby: validate_ruby,
         visitors: Herb::Engine::Validators.all
       )
@@ -514,7 +525,7 @@ module Herb
 
       # Retry without validators
       begin
-        Herb::Engine.new(file_content, filename: file_path, escape: true, visitors: [], validate_ruby: validate_ruby)
+        Herb::Engine.new(file_content, filename: file_path, escape: true, parser_options: engine_parser_options, visitors: [], validate_ruby: validate_ruby)
         error_name = e.is_a?(Herb::Engine::SecurityError) ? "SecurityError" : "ValidationError"
         return { status: :validation_error, file_content: file_content,
                  compilation_error: compilation_error,
@@ -526,7 +537,7 @@ module Herb
 
       # Retry without strict mode
       begin
-        Herb::Engine.new(file_content, filename: file_path, escape: true, strict: false, validate_ruby: validate_ruby)
+        Herb::Engine.new(file_content, filename: file_path, escape: true, parser_options: engine_parser_options, strict: false, validate_ruby: validate_ruby)
         return { status: :strict_compilation_failed, file_content: file_content,
                  compilation_error: compilation_error,
                  diagnostics: [{ name: "CompilationError", message: "#{e.message} (strict mode)" }],
