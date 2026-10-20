@@ -1217,6 +1217,7 @@ module Herb
             @states.check_state_assignment(child)
 
             @path.push(index)
+            record_slot(child, :child) if child.is_a?(Herb::AST::RubyLiteralNode)
             visit(child)
             @path.pop
           end
