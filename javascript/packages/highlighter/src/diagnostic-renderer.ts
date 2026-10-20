@@ -11,6 +11,7 @@ import type { Diagnostic } from "@herb-tools/core"
 
 export interface DiagnosticRenderOptions {
   contextLines?: number
+  showDiagnostic?: boolean
   showLineNumbers?: boolean
   optimizeHighlighting?: boolean
   wrapLines?: boolean
@@ -22,9 +23,9 @@ export interface DiagnosticRenderOptions {
 }
 
 export class DiagnosticRenderer {
-  private syntaxRenderer: SyntaxRenderer
+  private syntaxRenderer?: SyntaxRenderer
 
-  constructor(syntaxRenderer: SyntaxRenderer) {
+  constructor(syntaxRenderer?: SyntaxRenderer) {
     this.syntaxRenderer = syntaxRenderer
   }
 
@@ -137,6 +138,7 @@ export class DiagnosticRenderer {
   ): string {
     const {
       contextLines = 2,
+      showDiagnostic = true,
       showLineNumbers = true,
       optimizeHighlighting = true,
       wrapLines = true,
@@ -177,12 +179,12 @@ export class DiagnosticRenderer {
       }
 
       const relevantContent = relevantLines.join("\n")
-      const highlightedContent = this.syntaxRenderer.highlight(relevantContent)
+      const highlightedContent = this.syntaxRenderer?.highlight(relevantContent) ?? relevantContent
 
       lines = highlightedContent.split("\n")
       lineOffset = startLine - 1
     } else {
-      const highlightedContent = this.syntaxRenderer.highlight(content)
+      const highlightedContent = this.syntaxRenderer?.highlight(content) ?? content
       lines = highlightedContent.split("\n")
       lineOffset = 0
     }
@@ -244,10 +246,8 @@ export class DiagnosticRenderer {
     const { suffix } = options
     const suffixText = suffix ? ` ${suffix}` : ""
     const header = showLineNumbers ? `${fileHeader}\n\n` : ""
+    const diagnosticHeader = showDiagnostic ? `[${text}] ${highlightedMessage} (${diagnosticId})${suffixText}\n\n` : ""
 
-    return `[${text}] ${highlightedMessage} (${diagnosticId})${suffixText}
-
-${header}${contextOutput.trimEnd()}
-`
+    return `${diagnosticHeader}${header}${contextOutput.trimEnd()}\n`
   }
 }
