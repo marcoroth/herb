@@ -1,0 +1,11 @@
+---
+source: "Engine::Slots::VisitorTest#test_0080_keeps an expression in a lowered helper's attribute an attribute slot"
+input: "<%= link_to \"Static\", @path, title: @title %>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: d0732eb9
+
+slots:
+  index=0  type=attribute  node_path=[0]  expression="@title"  attribute="title"
+  index=1  type=attribute  node_path=[0]  expression="url_for(@path)"  attribute="href"
