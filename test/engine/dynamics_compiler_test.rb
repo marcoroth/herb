@@ -347,6 +347,19 @@ module Engine
       test "leaves the slots after it addressable" do
         assert_equal "A", dynamics(%(<div><%= render "card" %><%= @after %></div>), after: "A")[1]
       end
+
+      test "keeps the partial's own values when a tag that takes a block renders it" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><% end %>)
+
+        assert_equal({ template: "app/views/card.html.erb", version: PARTIAL_VERSION, occurrence: 0, slots: { 0 => "inner" } },
+                     dynamics(source)[1])
+      end
+
+      test "leaves the slots after a block that renders a partial addressable" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><%= f.label %><% end %><%= @after %>)
+
+        assert_equal({ 2 => "Name", 3 => "A" }, dynamics(source, after: "A").slice(2, 3))
+      end
     end
 
     describe "what it compiles to" do
