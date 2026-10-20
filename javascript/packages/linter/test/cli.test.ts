@@ -312,9 +312,7 @@ describe("CLI Output Formatting", () => {
     test("formats JUnit output with a passing testcase for a clean file", () => {
       const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit")
 
-      expect(output).toContain(`<testsuites name="herb-lint" tests="1" failures="0" errors="0">`)
-      expect(output).toContain(`<testcase classname="test/fixtures/clean-file.html.erb" name="test/fixtures/clean-file.html.erb" file="test/fixtures/clean-file.html.erb" time="0"/>`)
-      expect(output).not.toContain("Using Herb config file")
+      expect(output).toMatchSnapshot()
       expect(exitCode).toBe(0)
     })
 
@@ -328,35 +326,28 @@ describe("CLI Output Formatting", () => {
     test.each([["--format", "junit"], ["--json"]])("keeps GitHub Actions annotations detected from the environment out of %s on stdout", (...args) => {
       const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args, { GITHUB_ACTIONS: "true" })
 
-      if (args[0] === "--json") {
-        expect(JSON.parse(stdout).summary.totalErrors).toBe(2)
-      } else {
-        expect(stdout).toMatch(/^<\?xml[^]*<\/testsuites>\n$/)
-        expect(stdout).not.toContain("::error")
-      }
-
+      expect(stdout).toBe(runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args).stdout)
       expect(status).toBe(1)
     })
 
     test("fails offenses that fail the run even when --log-level hides them", () => {
       const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error")
 
-      expect(output).toContain(`<testsuites name="herb-lint" tests="1" failures="1" errors="0">`)
-      expect(output).toContain(`name="html-img-require-alt:3:3"`)
+      expect(output).toMatchSnapshot()
       expect(exitCode).toBe(1)
     })
 
     test("reports a pattern without matching files as an error", () => {
       const { output, exitCode } = runLinter("does-not-exist-*.html.erb", "--format", "junit")
 
-      expect(output).toContain(`<error message="✗ No files found matching pattern: test/fixtures/does-not-exist-*.html.erb">`)
+      expect(output).toMatchSnapshot()
       expect(exitCode).toBe(1)
     })
 
     test("reports a missing config file as an error", () => {
       const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", "does-not-exist/.herb.yml")
 
-      expect(output).toMatch(/<error message="✗ Config file not found: .*does-not-exist\/\.herb\.yml">/)
+      expect(output).toMatchSnapshot()
       expect(exitCode).toBe(1)
     })
 
@@ -369,7 +360,7 @@ describe("CLI Output Formatting", () => {
 
       const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", configFile)
 
-      expect(output).toContain(`<skipped message="Linter is disabled in .herb.yml configuration. Use --force to lint anyway.">`)
+      expect(output).toMatchSnapshot()
       expect(exitCode).toBe(0)
     })
 
@@ -393,11 +384,12 @@ describe("CLI Output Formatting", () => {
       const junitPath = join(directory, "herb-lint.xml")
       const jsonPath = join(directory, "herb-lint.json")
 
-      const { exitCode } = runLinter("test-file-with-errors.html.erb", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error", "--format", "junit", "-o", junitPath, "--format", "json", "-o", jsonPath)
+      const args = ["test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error"]
+      const { status } = runSeparately(...args, "--format", "junit", "-o", junitPath, "--format", "json", "-o", jsonPath)
 
-      expect(readFileSync(junitPath, "utf-8")).toContain(`<testsuites name="herb-lint" tests="1" failures="1" errors="0">`)
-      expect(JSON.parse(readFileSync(jsonPath, "utf-8")).offenses).toEqual([])
-      expect(exitCode).toBe(1)
+      expect(readFileSync(junitPath, "utf-8")).toBe(runSeparately(...args, "--format", "junit").stdout)
+      expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(JSON.parse(runSeparately(...args, "--json").stdout))
+      expect(status).toBe(1)
     })
   })
 

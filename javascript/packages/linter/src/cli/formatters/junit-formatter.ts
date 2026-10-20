@@ -10,24 +10,21 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
 
 const SUITE_NAME = "herb-lint"
+const XML_DECLARATION = `<?xml version="1.0" encoding="UTF-8"?>`
+
+// oxlint-disable-next-line no-control-regex
+const ANSI_SEQUENCES = /\u001B\[[0-?]*[ -/]*[@-~]|\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)/g
+
+// oxlint-disable-next-line no-control-regex
+const INVALID_XML_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu
 
 interface JUnitFormatOptions {
   files: string[]
   failLevel: DiagnosticSeverity
   projectPath?: string
-  /** Duration of the run in milliseconds */
   duration?: number
 }
 
-/**
- * Renders lint results as JUnit XML, so CI systems can report offenses as test failures.
- *
- * Every linted file becomes a <testsuite>, and every reported offense becomes a <testcase>
- * (classname = file, name = rule:line:column, with #2, #3, etc. for collisions).
- * A file without reported offenses gets one passing testcase. Offenses below the fail level
- * are reported in <system-out> of a passing testcase. Fixing an offense removes its
- * testcase rather than turning it green; moving it changes its testcase name.
- */
 export class JUnitFormatter {
   render(offenses: ProcessedFile[], { files, failLevel, projectPath, duration }: JUnitFormatOptions): string {
     const offensesByFile = new Map<string, ProcessedFile[]>(files.map(file => [file, []]))
@@ -53,9 +50,7 @@ export class JUnitFormatter {
       if (content === undefined && fileOffenses.length > 0) {
         try {
           content = readFileSync(resolve(projectPath ?? "", filename), "utf-8")
-        } catch {
-          // Source may no longer be available; retain the diagnostic without a frame.
-        }
+        } catch {}
       }
 
       if (fileOffenses.length === 0) {
@@ -78,13 +73,13 @@ export class JUnitFormatter {
           failures++
           testcases.push(
             `    <testcase ${attributes}>\n` +
-            `      <failure type="${escapeAttribute(offense.severity)}">${escape(`${offense.message}\n\n${details}\n\n${ruleDocumentationUrl(rule)}`)}</failure>\n` +
+            `      <failure type="${escapeAttribute(offense.severity)}">${escapeText(`${offense.message}\n\n${details}\n\n${ruleDocumentationUrl(rule)}`)}</failure>\n` +
             `    </testcase>`
           )
         } else {
           testcases.push(
             `    <testcase ${attributes}>\n` +
-            `      <system-out>${escape(details)}</system-out>\n` +
+            `      <system-out>${escapeText(details)}</system-out>\n` +
             `    </testcase>`
           )
         }
@@ -108,20 +103,12 @@ export class JUnitFormatter {
       : `${XML_DECLARATION}\n${open}\n${suites.join("\n")}\n</testsuites>`
   }
 
-  /**
-   * Renders a run that failed before linting (e.g. an invalid configuration) as a single
-   * erroring testcase, so CI still gets a report explaining why.
-   */
   renderError(message: string): string {
-    return this.renderSingle(`<error message="${escapeAttribute(message)}">${escape(message)}</error>`, { errors: 1, skipped: 0 })
+    return this.renderSingle(`<error message="${escapeAttribute(message)}">${escapeText(message)}</error>`, { errors: 1, skipped: 0 })
   }
 
-  /**
-   * Renders a run that had nothing to lint (e.g. the linter is disabled) as a single skipped
-   * testcase, since some CI systems reject a report without any testcases.
-   */
   renderSkipped(message: string): string {
-    return this.renderSingle(`<skipped message="${escapeAttribute(message)}">${escape(message)}</skipped>`, { errors: 0, skipped: 1 })
+    return this.renderSingle(`<skipped message="${escapeAttribute(message)}">${escapeText(message)}</skipped>`, { errors: 0, skipped: 1 })
   }
 
   private renderSingle(element: string, { errors, skipped }: { errors: number, skipped: number }): string {
@@ -155,25 +142,14 @@ export class JUnitFormatter {
   }
 }
 
-const XML_DECLARATION = `<?xml version="1.0" encoding="UTF-8"?>`
-
-// Terminal colors (CSI sequences) and hyperlinks (OSC 8 sequences) from colorized messages
-// oxlint-disable-next-line no-control-regex
-const ANSI_SEQUENCES = /\u001B\[[0-?]*[ -/]*[@-~]|\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)/g
-
-// Characters that XML 1.0 doesn't allow at all, even escaped
-// oxlint-disable-next-line no-control-regex
-const INVALID_XML_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu
-
-function escape(value: string): string {
+function escapeText(value: string): string {
   return escapeHTML(value
     .replace(ANSI_SEQUENCES, "")
     .replace(INVALID_XML_CHARACTERS, ""))
 }
 
 function escapeAttribute(value: string): string {
-  // XML parsers normalize literal attribute whitespace to spaces, changing test identities.
-  return escape(value)
+  return escapeText(value)
     .replace(/\t/g, "&#9;")
     .replace(/\n/g, "&#10;")
     .replace(/\r/g, "&#13;")

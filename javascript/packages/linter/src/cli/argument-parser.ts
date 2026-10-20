@@ -160,18 +160,14 @@ export class ArgumentParser {
     const stdoutOutput = outputs.find(output => output.path === undefined)
     const formatOption = (stdoutOutput ?? outputs[0]).format
 
-    let useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+    const structuredStdoutFormat = stdoutOutput && isStructuredFormat(stdoutOutput.format) ? stdoutOutput.format : undefined
 
-    if (useGitHubActions && stdoutOutput && isStructuredFormat(stdoutOutput.format)) {
-      if (values.github) {
-        console.error(`Error: --github cannot be used with --format ${stdoutOutput.format} on stdout. Use --output-file to write the report to a file.`)
-
-        process.exit(1)
-      }
-
-      // Annotations detected from GITHUB_ACTIONS would end up in the middle of the structured output
-      useGitHubActions = false
+    if (values.github && !values["no-github"] && structuredStdoutFormat) {
+      console.error(`Error: --github cannot be used with --format ${structuredStdoutFormat} on stdout. Use --output-file to write the report to a file.`)
+      process.exit(1)
     }
+
+    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"] && !structuredStdoutFormat
 
     if (values["no-color"]) {
       process.env.NO_COLOR = "1"

@@ -74,7 +74,6 @@ export class OutputManager {
       const failLevel = options.failLevel ?? "error"
       const logLevel = options.logLevel ?? "hint"
 
-      // Offenses that fail the run are always included, even below --log-level, so the report agrees with the exit code
       const offenses = results.allOffenses.filter(({ offense }) =>
         meetsSeverityThreshold(offense.severity, logLevel) || meetsSeverityThreshold(offense.severity, failLevel)
       )
@@ -196,10 +195,6 @@ export class OutputManager {
    * Output informational message (like "no files found")
    */
   outputInfo(message: string, options: OutputOptions): void {
-    const render = (format: StructuredFormat): string => format === "junit"
-      ? new JUnitFormatter().renderSkipped(message)
-      : this.renderJSON(this.infoJSON(message, options))
-
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
@@ -207,33 +202,41 @@ export class OutputManager {
     } else if (!stdoutFormat) {
       console.error(message)
     } else if (isStructuredFormat(stdoutFormat)) {
-      console.log(render(stdoutFormat))
+      console.log(this.renderInfo(stdoutFormat, message, options))
     } else {
       console.log(message)
     }
 
-    this.writeOutputFiles(options, render)
+    this.writeOutputFiles(options, format => this.renderInfo(format, message, options))
   }
 
   /**
    * Output error message
    */
   outputError(message: string, options: OutputOptions): void {
-    const render = (format: StructuredFormat): string => format === "junit"
-      ? new JUnitFormatter().renderError(message)
-      : this.renderJSON(this.errorJSON(message))
-
     const stdoutFormat = this.stdoutFormat(options)
 
     if (options.useGitHubActions) {
       console.log(`::error::${message}`)
     } else if (stdoutFormat && isStructuredFormat(stdoutFormat)) {
-      console.log(render(stdoutFormat))
+      console.log(this.renderError(stdoutFormat, message))
     } else {
       console.error(message)
     }
 
-    this.writeOutputFiles(options, render)
+    this.writeOutputFiles(options, format => this.renderError(format, message))
+  }
+
+  private renderInfo(format: StructuredFormat, message: string, options: OutputOptions): string {
+    if (format === "junit") return new JUnitFormatter().renderSkipped(message)
+
+    return this.renderJSON(this.infoJSON(message, options))
+  }
+
+  private renderError(format: StructuredFormat, message: string): string {
+    if (format === "junit") return new JUnitFormatter().renderError(message)
+
+    return this.renderJSON(this.errorJSON(message))
   }
 
   private infoJSON(message: string, options: OutputOptions): JSONOutput {

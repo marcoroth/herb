@@ -41,12 +41,7 @@ describe("DiagnosticRenderer", () => {
         suffix: "Diagnostic suffix",
       }))
 
-      expect(result).toContain("view.html.erb:2:1")
-      expect(result).toContain("Test error message")
-      expect(result).toContain("test-rule")
-      expect(result).toContain("Diagnostic suffix")
-      expect(result).toContain("→   2 │ <img>")
-      expect(result).toContain("│  ~~~")
+      expect(result).toMatchSnapshot()
     })
 
     it.each([true, false])("renders a source frame without a syntax renderer or diagnostic header (optimizeHighlighting: %s)", (optimizeHighlighting) => {
@@ -60,16 +55,7 @@ describe("DiagnosticRenderer", () => {
         suffix: "Diagnostic suffix",
       }))
 
-      expect(result).toContain("view.html.erb:4:1")
-      expect(result).toContain("3 │ third")
-      expect(result).toContain("→   4 │ <img>")
-      expect(result).toContain("│  ~~~")
-      expect(result).toContain("5 │ fifth")
-      expect(result).not.toContain("first")
-      expect(result).not.toContain("sixth")
-      expect(result).not.toContain("Test error message")
-      expect(result).not.toContain("test-rule")
-      expect(result).not.toContain("Diagnostic suffix")
+      expect(result).toMatchSnapshot()
     })
 
     it("should render a single error diagnostic", () => {
