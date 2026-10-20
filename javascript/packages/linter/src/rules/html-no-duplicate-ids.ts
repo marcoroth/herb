@@ -61,10 +61,16 @@ class IterationBlockCollector extends Visitor {
   }
 }
 
+interface ScopeFrame {
+  readonly varying: Set<string>
+  readonly loop: boolean
+  readonly outerVarying: Set<string>
+}
+
 class LoopVaryingReadCollector extends PrismVisitor {
   readonly readOffsets: number[] = []
 
-  private readonly scopes: Set<string>[] = []
+  private readonly frames: ScopeFrame[] = []
 
   constructor(private readonly offsets: SourceOffsets, private readonly parametersByOpening: Map<number, string[]>) {
     super()
@@ -76,82 +82,126 @@ class LoopVaryingReadCollector extends PrismVisitor {
     super.visit(node)
   }
 
+  visitProgramNode(node: PrismNodes.ProgramNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
+  }
+
   visitBlockNode(node: PrismNodes.BlockNode): void {
     const parameters = this.parametersByOpening.get(this.offsets.stringIndexFromByteOffset(node.openingLoc.startOffset))
 
-    if (!parameters) {
-      this.visitChildNodes(node)
-
-      return
+    if (parameters) {
+      this.withFrame(new Set(parameters), true, () => this.visit(node.body))
+    } else {
+      this.withFrame(new Set(), false, () => this.visitChildNodes(node))
     }
+  }
 
-    this.scopes.push(new Set(parameters))
-    this.visit(node.body)
-    this.scopes.pop()
+  visitLambdaNode(node: PrismNodes.LambdaNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
+  }
+
+  visitDefNode(node: PrismNodes.DefNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
+  }
+
+  visitClassNode(node: PrismNodes.ClassNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
+  }
+
+  visitModuleNode(node: PrismNodes.ModuleNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
+  }
+
+  visitSingletonClassNode(node: PrismNodes.SingletonClassNode): void {
+    this.withFrame(new Set(), false, () => this.visitChildNodes(node))
   }
 
   visitLocalVariableReadNode(node: PrismNodes.LocalVariableReadNode): void {
-    this.read(node.name, node.location.startOffset)
+    this.read(node.name, node.depth, node.location.startOffset)
   }
 
   visitItLocalVariableReadNode(node: PrismNodes.ItLocalVariableReadNode): void {
-    this.read("it", node.location.startOffset)
+    this.read("it", 0, node.location.startOffset)
   }
 
   visitLocalVariableWriteNode(node: PrismNodes.LocalVariableWriteNode): void {
-    this.assign([node.name], node.value, true)
+    this.assign([{ name: node.name, depth: node.depth }], node.value, true)
   }
 
   visitLocalVariableOperatorWriteNode(node: PrismNodes.LocalVariableOperatorWriteNode): void {
-    this.assign([node.name], node.value, false)
+    this.assign([{ name: node.name, depth: node.depth }], node.value, false)
   }
 
   visitLocalVariableOrWriteNode(node: PrismNodes.LocalVariableOrWriteNode): void {
-    this.assign([node.name], node.value, false)
+    this.assign([{ name: node.name, depth: node.depth }], node.value, false)
   }
 
   visitLocalVariableAndWriteNode(node: PrismNodes.LocalVariableAndWriteNode): void {
-    this.assign([node.name], node.value, false)
+    this.assign([{ name: node.name, depth: node.depth }], node.value, false)
   }
 
   visitMultiWriteNode(node: PrismNodes.MultiWriteNode): void {
     const targets = [...node.lefts, node.rest, ...node.rights]
 
-    this.assign(targets.flatMap(target => this.targetNames(target)), node.value, true)
+    this.assign(targets.flatMap(target => this.targets(target)), node.value, true)
   }
 
-  private get currentScope(): Set<string> | undefined {
-    return this.scopes[this.scopes.length - 1]
+  private withFrame(varying: Set<string>, loop: boolean, visitChildren: () => void): void {
+    this.frames.push({ varying, loop, outerVarying: new Set() })
+    visitChildren()
+    this.frames.pop()
   }
 
-  private read(name: string, offset: number): void {
-    if (this.currentScope?.has(name)) this.readOffsets.push(this.offsets.stringIndexFromByteOffset(offset))
+  private get innermostLoopIndex(): number {
+    for (let index = this.frames.length - 1; index >= 0; index--) {
+      if (this.frames[index].loop) return index
+    }
+
+    return -1
   }
 
-  private assign(names: string[], value: PrismNode, replaces: boolean): void {
+  private read(name: string, depth: number, offset: number): void {
+    const loopIndex = this.innermostLoopIndex
+    if (loopIndex === -1) return
+
+    const frameIndex = this.frames.length - 1 - depth
+    const varies = frameIndex < loopIndex
+      ? this.frames[loopIndex].outerVarying.has(`${frameIndex}:${name}`)
+      : this.frames[frameIndex]?.varying.has(name)
+
+    if (varies) this.readOffsets.push(this.offsets.stringIndexFromByteOffset(offset))
+  }
+
+  private assign(targets: { name: string, depth: number }[], value: PrismNode, replaces: boolean): void {
     const readsBefore = this.readOffsets.length
 
     this.visit(value)
 
-    const scope = this.currentScope
-    if (!scope) return
-
     const varies = this.readOffsets.length > readsBefore
+    const loopIndex = this.innermostLoopIndex
 
-    for (const name of names) {
+    for (const { name, depth } of targets) {
+      const frameIndex = this.frames.length - 1 - depth
+      const frame = this.frames[frameIndex]
+      if (!frame) continue
+
+      const outer = loopIndex !== -1 && frameIndex < loopIndex ? this.frames[loopIndex].outerVarying : null
+
       if (varies) {
-        scope.add(name)
+        frame.varying.add(name)
+        outer?.add(`${frameIndex}:${name}`)
       } else if (replaces) {
-        scope.delete(name)
+        frame.varying.delete(name)
+        outer?.delete(`${frameIndex}:${name}`)
       }
     }
   }
 
-  private targetNames(node: PrismNode | null): string[] {
+  private targets(node: PrismNode | null): { name: string, depth: number }[] {
     if (!node) return []
-    if (isPrismNodeType(node, "LocalVariableTargetNode")) return [node.name]
+    if (isPrismNodeType(node, "LocalVariableTargetNode")) return [{ name: node.name, depth: node.depth }]
 
-    return node.childNodes().flatMap((child: PrismNode | null) => this.targetNames(child))
+    return node.childNodes().flatMap((child: PrismNode | null) => this.targets(child))
   }
 }
 
