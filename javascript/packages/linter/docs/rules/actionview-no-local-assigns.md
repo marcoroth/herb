@@ -4,7 +4,7 @@
 
 ## Description
 
-Detects `local_assigns` reads in a template that has no `<%# locals: (...) %>` declaration, and suggests declaring the locals the template takes instead.
+Detects every `local_assigns` read in a template and suggests reading locals from a `<%# locals: (...) %>` declaration instead.
 
 ## Rationale
 
@@ -12,7 +12,17 @@ Detects `local_assigns` reads in a template that has no `<%# locals: (...) %>` d
 
 A strict locals declaration replaces those reads with one list at the top of the file. Optional locals get a default value, so `local_assigns.fetch(:alerts, [])` becomes `alerts: []` in the declaration and a plain `alerts` in the body. Rails then raises when a caller passes a local the declaration does not list, which turns a silent typo into an error at the call site.
 
-Templates that already have a declaration are not checked. The `local_assigns` reads left in those are either redundant, which [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) reports, or the few patterns a declaration cannot express. Telling an omitted local apart from one passed as `nil` with `local_assigns.key?`, and forwarding every local with `**local_assigns`, both still need `local_assigns`.
+Templates that already have a declaration are checked as well. A lookup that the declaration makes redundant, a required local or a name the declaration does not list, is left to [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) in partials, so the same read is not reported twice. This rule reports the rest, such as a value lookup of an optional local, which reads the same as the local itself once its default matches.
+
+A few patterns still need `local_assigns` with a declaration. Telling an omitted local apart from one passed as `nil` with `local_assigns.key?` and forwarding every local with `**local_assigns` have no replacement, so keep them with a `herb:disable` comment where the template relies on them.
+
+```erb
+<%# locals: (size: nil) %>
+
+<% if local_assigns.key?(:size) %> <%# herb:disable actionview-no-local-assigns %>
+  <span><%= size %></span>
+<% end %>
+```
 
 ## Examples
 
@@ -33,7 +43,7 @@ Templates that already have a declaration are not checked. The `local_assigns` r
 
 <h1><%= title %></h1>
 
-<% if local_assigns.key?(:size) %>
+<% if size %>
   <span><%= size %></span>
 <% end %>
 ```
@@ -50,6 +60,13 @@ Templates that already have a declaration are not checked. The `local_assigns` r
 
 ```erb
 <%= render "row", **local_assigns %>
+```
+
+```erb
+<%# locals: (title:, size: nil) %>
+
+<h1><%= title %></h1>
+<span><%= local_assigns[:size] %></span>
 ```
 
 ## Configuration

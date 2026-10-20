@@ -13,31 +13,18 @@ const readMessage = (code: string, declared: string, replacement: string) =>
 const presenceMessage = (code: string, name: string) =>
   `\`${code}\` checks for a local the template does not declare. Declare \`${name}: nil\` in a ${DECLARATION}, and keep the check only if it needs to tell an omitted \`${name}\` from one passed as \`nil\`.`
 
+const declaredPresenceMessage = (code: string, name: string) =>
+  `\`${code}\` checks whether a caller passed strict local \`${name}\`, which the declaration cannot express. Check \`${name}\` itself when an omitted \`${name}\` and one passed as \`nil\` can be treated the same, or keep it with a \`herb:disable\` comment if the template needs to tell them apart.`
+
+const declaredBareMessage =
+  "`local_assigns` is used next to a strict locals declaration. Read the declared locals by name, or keep it with a `herb:disable` comment where it forwards every local on purpose."
+
 const bareMessage =
   `\`local_assigns\` is used in a template without a strict locals declaration. Declare the locals the template takes in a ${DECLARATION}, so Rails raises when a caller passes one it does not list.`
 
 describe("actionview-no-local-assigns", () => {
   test("passes for a template without local_assigns", () => {
     expectNoOffenses(`<h1><%= title %></h1>`, { fileName: "_card.html.erb" })
-  })
-
-  test("passes for a template with a strict locals declaration", () => {
-    expectNoOffenses(dedent`
-      <%# locals: (title:, size: nil) %>
-
-      <h1><%= title %></h1>
-      <% if local_assigns.key?(:size) %>
-        <span><%= size %></span>
-      <% end %>
-    `, { fileName: "_card.html.erb" })
-  })
-
-  test("passes for a template with an empty strict locals declaration", () => {
-    expectNoOffenses(dedent`
-      <%# locals: () %>
-
-      <%= local_assigns.inspect %>
-    `, { fileName: "_card.html.erb" })
   })
 
   test("passes for a local variable named local_assigns", () => {
@@ -190,5 +177,89 @@ describe("actionview-no-local-assigns", () => {
       <% # locals: (title:) %>
       <%= local_assigns[:title] %>
     `, { fileName: "_card.html.erb" })
+  })
+
+  describe("with a strict locals declaration", () => {
+    test("leaves lookups of required locals to actionview-no-redundant-local-assigns", () => {
+      expectNoOffenses(dedent`
+        <%# locals: (title:) %>
+
+        <h1><%= local_assigns[:title] %></h1>
+        <% if local_assigns.key?(:title) %><span></span><% end %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("leaves lookups of undeclared locals to actionview-no-redundant-local-assigns", () => {
+      expectNoOffenses(dedent`
+        <%# locals: (title:) %>
+
+        <%= local_assigns[:subtitle] %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for a value lookup of an optional local", () => {
+      expectInfo("`local_assigns[:size]` reads strict local `size` through `local_assigns`. Read `size` instead, which uses the declared default when a caller omits `size`.", [3, 4])
+
+      assertOffenses(dedent`
+        <%# locals: (size: nil) %>
+
+        <%= local_assigns[:size] %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for a presence check of an optional local", () => {
+      expectInfo(declaredPresenceMessage("local_assigns.key?(:size)", "size"))
+
+      assertOffenses(dedent`
+        <%# locals: (title:, size: nil) %>
+
+        <h1><%= title %></h1>
+        <% if local_assigns.key?(:size) %>
+          <span><%= size %></span>
+        <% end %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for a lookup of an undeclared local when the declaration has keyword rest", () => {
+      expectInfo("`local_assigns[:extra]` reads a local the template does not declare. Declare `extra: nil` in the template's `locals:` declaration and read `extra` instead.")
+
+      assertOffenses(dedent`
+        <%# locals: (title:, **) %>
+
+        <%= local_assigns[:extra] %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for forwarding local_assigns", () => {
+      expectInfo(declaredBareMessage, [3, 20])
+
+      assertOffenses(dedent`
+        <%# locals: (user:, **) %>
+
+        <%= render "row", **local_assigns %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for local_assigns next to an empty declaration", () => {
+      expectInfo(declaredBareMessage)
+
+      assertOffenses(dedent`
+        <%# locals: () %>
+
+        <%= local_assigns.inspect %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("fails for lookups of required locals in templates that are not partials", () => {
+      expectInfo("`local_assigns[:title]` reads strict local `title` through `local_assigns`. Read `title` instead.")
+      expectInfo("`local_assigns.key?(:title)` checks for strict local `title`, which is required, so the check is always `true`. Remove the condition, or give `title` a default value to make it optional.")
+
+      assertOffenses(dedent`
+        <%# locals: (title:) %>
+
+        <h1><%= local_assigns[:title] %></h1>
+        <% if local_assigns.key?(:title) %><span></span><% end %>
+      `, { fileName: "app/views/posts/show.html.erb" })
+    })
   })
 })
