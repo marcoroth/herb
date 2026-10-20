@@ -1,18 +1,24 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor, Visitor } from "@herb-tools/core"
+import { PrismVisitor, SourceOffsets, Visitor } from "@herb-tools/core"
 
-import { isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
+import { isPrismNodeType } from "@herb-tools/core"
 
 import type { ERBStrictLocalsNode, ParseResult, ParserOptions, PrismNodes } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const LOCAL_ASSIGNS = "local_assigns"
-const LOOKUPS = ["[]", "fetch", "dig", "key?", "has_key?", "include?", "member?"]
+const DECLARATION = "`<%# locals: (...) %>`"
+
+const VALUE_LOOKUPS = ["[]", "dig"]
+const PRESENCE_LOOKUPS = ["key?", "has_key?", "include?", "member?"]
+const FETCH = "fetch"
+
+type ReadKind = "value" | "fetch" | "presence" | "other"
 
 interface LocalAssignsRead {
+  kind: ReadKind
+  node: PrismNodes.CallNode
   name: string | null
-  startOffset: number
-  length: number
 }
 
 class StrictLocalsDeclarationCollector extends Visitor {
@@ -29,27 +35,42 @@ class LocalAssignsReadCollector extends PrismVisitor {
   private readonly lookedUp = new Set<PrismNodes.CallNode>()
 
   override visitCallNode(node: PrismNodes.CallNode): void {
-    const name = this.lookupName(node)
+    const lookup = this.lookupFor(node)
 
-    if (name) {
+    if (lookup) {
       this.lookedUp.add(node.receiver as PrismNodes.CallNode)
-      this.reads.push({ name, startOffset: node.location.startOffset, length: node.location.length })
+      this.reads.push(lookup)
     } else if (this.isLocalAssigns(node) && !this.lookedUp.has(node)) {
-      this.reads.push({ name: null, startOffset: node.location.startOffset, length: node.location.length })
+      this.reads.push({ kind: "other", node, name: null })
     }
 
     this.visitChildNodes(node)
   }
 
-  private lookupName(node: PrismNodes.CallNode): string | null {
-    if (!LOOKUPS.includes(node.name)) return null
+  private lookupFor(node: PrismNodes.CallNode): LocalAssignsRead | null {
     if (!this.isLocalAssigns(node.receiver)) return null
+
+    const kind = this.kindOf(node.name)
+
+    if (!kind) return null
 
     const [first] = node.arguments_?.arguments_ ?? []
 
     if (!isPrismNodeType(first, "SymbolNode")) return null
 
-    return first.unescaped?.value || null
+    const name = first.unescaped?.value
+
+    if (!name) return null
+
+    return { kind, node, name }
+  }
+
+  private kindOf(method: string): ReadKind | null {
+    if (VALUE_LOOKUPS.includes(method)) return "value"
+    if (PRESENCE_LOOKUPS.includes(method)) return "presence"
+    if (method === FETCH) return "fetch"
+
+    return null
   }
 
   private isLocalAssigns(node: PrismNodes.Node | null): node is PrismNodes.CallNode {
@@ -98,18 +119,65 @@ export class ActionViewNoLocalAssignsRule extends ParserRule {
 
     collector.visit(program)
 
-    return collector.reads.map(read => {
-      const location = locationFromByteOffset(source, read.startOffset, read.length)
+    const offsets = new SourceOffsets(source)
 
-      return this.createOffense(this.messageFor(read), location)
+    return collector.reads.map(read => {
+      const { startOffset, length } = read.node.location
+      const location = offsets.locationFromByteOffset(startOffset, length)
+
+      return this.createOffense(this.messageFor(read, offsets), location)
     })
   }
 
-  private messageFor(read: LocalAssignsRead): string {
-    if (read.name) {
-      return `Declare \`${read.name}\` in a \`<%# locals: (...) %>\` declaration and read it by name instead of through \`${LOCAL_ASSIGNS}\`. A declaration documents which locals the template takes, and Rails raises when a caller passes one it does not list.`
+  private messageFor(read: LocalAssignsRead, offsets: SourceOffsets): string {
+    const code = this.codeOf(read.node, offsets)
+
+    if (!read.name) {
+      return `\`${code}\` is used in a template without a strict locals declaration. Declare the locals the template takes in a ${DECLARATION} declaration at the top of the template, so Rails raises when a caller passes one it does not list.`
     }
 
-    return `Declare the template's locals in a \`<%# locals: (...) %>\` declaration and read them by name instead of through \`${LOCAL_ASSIGNS}\`. A declaration documents which locals the template takes, and Rails raises when a caller passes one it does not list.`
+    const declared = this.declaredLocal(read, offsets)
+    const declare = declared ? `Declare \`${declared}\`` : `Declare \`${read.name}\` with that default value`
+
+    if (read.kind === "presence") {
+      return `\`${code}\` checks for a local the template does not declare. ${declare} in a ${DECLARATION} declaration at the top of the template, and keep the check only if it needs to tell an omitted \`${read.name}\` from one passed as \`nil\`.`
+    }
+
+    return `\`${code}\` reads a local the template does not declare. ${declare} in a ${DECLARATION} declaration at the top of the template and read \`${this.replacementFor(read, offsets)}\` instead.`
+  }
+
+  private declaredLocal(read: LocalAssignsRead, offsets: SourceOffsets): string | null {
+    if (read.kind !== "fetch") return `${read.name}: nil`
+    if (read.node.block) return null
+
+    const [, fallback, ...rest] = read.node.arguments_?.arguments_ ?? []
+
+    if (!fallback) return `${read.name}:`
+    if (rest.length > 0) return null
+
+    const value = offsets.substringFromByteOffset(fallback.location.startOffset, fallback.location.length)
+
+    if (value.includes("\n")) return null
+
+    return `${read.name}: ${value}`
+  }
+
+  private replacementFor(read: LocalAssignsRead, offsets: SourceOffsets): string {
+    const [first, ...rest] = read.node.arguments_?.arguments_ ?? []
+
+    if (read.node.name !== "dig" || rest.length === 0 || !first) return read.name ?? LOCAL_ASSIGNS
+
+    const lastArgument = rest[rest.length - 1]
+    const start = rest[0].location.startOffset
+    const end = lastArgument.location.startOffset + lastArgument.location.length
+    const keys = offsets.substringFromByteOffset(start, end - start)
+
+    return `${read.name}&.dig(${keys})`
+  }
+
+  private codeOf(node: PrismNodes.CallNode, offsets: SourceOffsets): string {
+    const code = offsets.substringFromByteOffset(node.location.startOffset, node.location.length)
+
+    return code.includes("\n") ? LOCAL_ASSIGNS : code
   }
 }

@@ -5,11 +5,16 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectInfo, assertOffenses } = createLinterTest(ActionViewNoLocalAssignsRule)
 
-const keyedMessage = (name: string) =>
-  `Declare \`${name}\` in a \`<%# locals: (...) %>\` declaration and read it by name instead of through \`local_assigns\`. A declaration documents which locals the template takes, and Rails raises when a caller passes one it does not list.`
+const DECLARATION = "`<%# locals: (...) %>` declaration at the top of the template"
+
+const readMessage = (code: string, declared: string, replacement: string) =>
+  `\`${code}\` reads a local the template does not declare. Declare \`${declared}\` in a ${DECLARATION} and read \`${replacement}\` instead.`
+
+const presenceMessage = (code: string, name: string) =>
+  `\`${code}\` checks for a local the template does not declare. Declare \`${name}: nil\` in a ${DECLARATION}, and keep the check only if it needs to tell an omitted \`${name}\` from one passed as \`nil\`.`
 
 const bareMessage =
-  "Declare the template's locals in a `<%# locals: (...) %>` declaration and read them by name instead of through `local_assigns`. A declaration documents which locals the template takes, and Rails raises when a caller passes one it does not list."
+  `\`local_assigns\` is used in a template without a strict locals declaration. Declare the locals the template takes in a ${DECLARATION}, so Rails raises when a caller passes one it does not list.`
 
 describe("actionview-no-local-assigns", () => {
   test("passes for a template without local_assigns", () => {
@@ -55,24 +60,61 @@ describe("actionview-no-local-assigns", () => {
   })
 
   test("fails for a lookup with a Symbol key", () => {
-    expectInfo(keyedMessage("title"), [1, 4])
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"), [1, 4])
 
     assertOffenses(`<%= local_assigns[:title] %>`, { fileName: "_card.html.erb" })
   })
 
-  test("fails for every lookup method with a Symbol key", () => {
-    expectInfo(keyedMessage("alerts"))
-    expectInfo(keyedMessage("user"))
-    expectInfo(keyedMessage("size"))
-    expectInfo(keyedMessage("admin"))
-    expectInfo(keyedMessage("footer"))
-    expectInfo(keyedMessage("header"))
+  test("fails for fetch with a default and names it in the declaration", () => {
+    expectInfo(readMessage("local_assigns.fetch(:alerts, [])", "alerts: []", "alerts"))
 
     assertOffenses(dedent`
       <% local_assigns.fetch(:alerts, []).each do |alert| %>
         <p><%= alert %></p>
       <% end %>
+    `, { fileName: "_card.html.erb" })
+  })
+
+  test("fails for fetch without a default and declares the local as required", () => {
+    expectInfo(readMessage("local_assigns.fetch(:user)", "user:", "user"))
+
+    assertOffenses(`<%= local_assigns.fetch(:user).name %>`, { fileName: "_card.html.erb" })
+  })
+
+  test("fails for fetch with a block default without quoting the block", () => {
+    expectInfo("`local_assigns.fetch(:alerts) { [] }` reads a local the template does not declare. Declare `alerts` with that default value in a `<%# locals: (...) %>` declaration at the top of the template and read `alerts` instead.")
+
+    assertOffenses(`<%= local_assigns.fetch(:alerts) { [] } %>`, { fileName: "_card.html.erb" })
+  })
+
+  test("fails for fetch with a multi-line default without quoting it", () => {
+    expectInfo("`local_assigns` reads a local the template does not declare. Declare `alerts` with that default value in a `<%# locals: (...) %>` declaration at the top of the template and read `alerts` instead.")
+
+    assertOffenses(dedent`
+      <% alerts = local_assigns.fetch(:alerts, Alert.where(
+        active: true
+      )) %>
+      <%= alerts.size %>
+    `, { fileName: "_card.html.erb" })
+  })
+
+  test("fails for dig and keeps the remaining keys", () => {
+    expectInfo(readMessage("local_assigns.dig(:user, :name)", "user: nil", "user&.dig(:name)"))
+    expectInfo(readMessage("local_assigns.dig(:user)", "user: nil", "user"))
+
+    assertOffenses(dedent`
       <%= local_assigns.dig(:user, :name) %>
+      <%= local_assigns.dig(:user) %>
+    `, { fileName: "_card.html.erb" })
+  })
+
+  test("fails for presence checks without telling to read the local", () => {
+    expectInfo(presenceMessage("local_assigns.key?(:size)", "size"))
+    expectInfo(presenceMessage("local_assigns.has_key?(:admin)", "admin"))
+    expectInfo(presenceMessage("local_assigns.include?(:footer)", "footer"))
+    expectInfo(presenceMessage("local_assigns.member?(:header)", "header"))
+
+    assertOffenses(dedent`
       <% if local_assigns.key?(:size) %><span></span><% end %>
       <% if local_assigns.has_key?(:admin) %><span></span><% end %>
       <% if local_assigns.include?(:footer) %><span></span><% end %>
@@ -118,8 +160,8 @@ describe("actionview-no-local-assigns", () => {
   })
 
   test("fails once per read", () => {
-    expectInfo(keyedMessage("title"), [1, 4])
-    expectInfo(keyedMessage("title"), [2, 4])
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"), [1, 4])
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"), [2, 4])
     expectInfo(bareMessage, [3, 4])
 
     assertOffenses(dedent`
@@ -130,19 +172,19 @@ describe("actionview-no-local-assigns", () => {
   })
 
   test("fails in templates that are not partials", () => {
-    expectInfo(keyedMessage("title"))
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"))
 
     assertOffenses(`<%= local_assigns[:title] %>`, { fileName: "app/views/posts/show.html.erb" })
   })
 
   test("fails in layouts", () => {
-    expectInfo(keyedMessage("title"))
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"))
 
     assertOffenses(`<title><%= local_assigns[:title] %></title>`, { fileName: "app/views/layouts/application.html.erb" })
   })
 
   test("fails for a declaration written as a plain ERB comment", () => {
-    expectInfo(keyedMessage("title"))
+    expectInfo(readMessage("local_assigns[:title]", "title: nil", "title"))
 
     assertOffenses(dedent`
       <% # locals: (title:) %>
