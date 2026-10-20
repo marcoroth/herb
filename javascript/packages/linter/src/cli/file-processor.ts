@@ -4,7 +4,7 @@ import { Config } from "@herb-tools/config"
 import { Worker } from "node:worker_threads"
 
 import { rules } from "../rules.js"
-import { loadCustomRules } from "../loader.js"
+import { loadCustomRules, customRulesBaseDir } from "../loader.js"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -110,7 +110,7 @@ export class FileProcessor {
 
     try {
       const result = await loadCustomRules({
-        baseDir: context.projectPath,
+        baseDir: customRulesBaseDir(context.projectPath, context.configPath),
         silent: formatOption === 'json'
       })
 
