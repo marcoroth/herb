@@ -7,6 +7,8 @@ import { ANCHOR_ATTRIBUTE, NAME_ATTRIBUTE } from "./anchors"
 
 import type { AnchorEntry, AttributeParts, FragmentMap, NameMap, PartsResolver, SlotValue, SlotValues } from "../types"
 
+const HTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
+
 const HTML_ESCAPE_PATTERN = /[&<>"']/g
 const HTML_ENTITY_PATTERN = /&(amp|lt|gt|quot|apos|#39|#x27);/g
 
@@ -376,4 +378,24 @@ function markup(value: string, text: boolean): string {
   }
 
   return value
+}
+
+export function adoptedInto(fragment: DocumentFragment, parent: Node | null): DocumentFragment {
+  if (!(parent instanceof Element) || parent.namespaceURI === HTML_NAMESPACE) {
+    return fragment
+  }
+
+  if (![...fragment.querySelectorAll("*")].some((element) => element.namespaceURI === HTML_NAMESPACE)) {
+    return fragment
+  }
+
+  const holder = document.createElement("template")
+
+  holder.content.append(fragment)
+
+  const range = document.createRange()
+
+  range.selectNodeContents(parent)
+
+  return range.createContextualFragment(holder.innerHTML)
 }

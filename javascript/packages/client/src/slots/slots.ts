@@ -31,7 +31,7 @@ import { applyPayload } from "./apply"
 
 import { ancestorsOf, descendantsOf } from "./tree"
 import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker, slotOpenIndex } from "../markup/markers"
-import { blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
+import { adoptedInto, blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
 import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
 
 import type { StateManifest } from "../state/types"
@@ -379,10 +379,11 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
   }
 
   private rewrite(range: Range, source: DocumentFragment, context: ScanContext): ScanResult {
-    const added = [...source.childNodes]
+    const adopted = adoptedInto(source, range.startContainer)
+    const added = [...adopted.childNodes]
 
     range.deleteContents()
-    range.insertNode(source)
+    range.insertNode(adopted)
 
     return this.scan(added, context)
   }
