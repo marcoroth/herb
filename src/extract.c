@@ -1,9 +1,12 @@
 #include "include/herb.h"
+#include "include/lexer/lexer.h"
+#include "include/lexer/token.h"
 #include "include/lib/hb_allocator.h"
 #include "include/lib/hb_array.h"
 #include "include/lib/hb_buffer.h"
 #include "include/lib/hb_string.h"
 #include "include/lib/string.h"
+#include "include/util/util.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -16,192 +19,250 @@ const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicol
                                                                         .erb_openers = NULL,
                                                                         .erb_opener_count = 0 };
 
+typedef struct {
+  herb_extract_ruby_options_T options;
+  hb_buffer_T* output;
+  bool skip_erb_content;
+  bool is_comment_tag;
+  bool is_erb_comment_tag;
+  bool need_newline;
+} extract_ruby_state_T;
+
+static void extract_ruby_data(extract_ruby_state_T* state, const char* data, uint32_t from, uint32_t to) {
+  uint32_t run_start = from;
+
+  for (uint32_t position = from; position < to; position++) {
+    if (!is_newline(data[position])) { continue; }
+
+    if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, position - run_start); }
+
+    hb_buffer_append_char(state->output, data[position]);
+    state->need_newline = false;
+    run_start = position + 1;
+  }
+
+  if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, to - run_start); }
+}
+
+static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token, const token_T* next) {
+  switch (token->type) {
+    case TOKEN_NEWLINE: {
+      hb_buffer_append_string(state->output, token->value);
+      state->need_newline = false;
+      break;
+    }
+
+    case TOKEN_ERB_START: {
+      state->is_erb_comment_tag = hb_string_equals(token->value, hb_string("<%#"));
+
+      if (state->is_erb_comment_tag) {
+        if (state->options.comments) {
+          state->skip_erb_content = false;
+          state->is_comment_tag = false;
+
+          if (state->options.preserve_positions) {
+            bool is_multiline = false;
+
+            if (next && next->type == TOKEN_ERB_CONTENT && !hb_string_is_null(next->value)
+                && memchr(next->value.data, '\n', next->value.length) != NULL) {
+              is_multiline = true;
+            }
+
+            if (is_multiline) {
+              hb_buffer_append_char(state->output, '#');
+              hb_buffer_append_whitespace(state->output, 2);
+            } else {
+              hb_buffer_append_whitespace(state->output, 2);
+              hb_buffer_append_char(state->output, '#');
+            }
+          } else {
+            if (state->need_newline) { hb_buffer_append_char(state->output, '\n'); }
+            hb_buffer_append_char(state->output, '#');
+            state->need_newline = true;
+          }
+        } else {
+          state->skip_erb_content = true;
+          state->is_comment_tag = true;
+          if (state->options.preserve_positions) {
+            hb_buffer_append_whitespace(state->output, range_length(token->range));
+          }
+        }
+      } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
+                 || (erb_opening_is_custom(token->value) && !state->options.custom_tags)) {
+        state->skip_erb_content = true;
+        state->is_comment_tag = false;
+        if (state->options.preserve_positions) {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        }
+      } else {
+        state->skip_erb_content = false;
+        state->is_comment_tag = false;
+
+        if (state->options.preserve_positions) {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        } else if (state->need_newline) {
+          hb_buffer_append_char(state->output, '\n');
+          state->need_newline = false;
+        }
+      }
+
+      break;
+    }
+
+    case TOKEN_ERB_CONTENT: {
+      if (state->skip_erb_content == false) {
+        bool is_inline_comment = false;
+
+        if (!state->options.comments && !state->is_comment_tag && !hb_string_is_empty(token->value)) {
+          hb_string_T trimmed = hb_string_trim_start(token->value);
+
+          if (!hb_string_is_empty(trimmed) && trimmed.data[0] == '#'
+              && token->location.start.line == token->location.end.line) {
+            state->is_comment_tag = true;
+            is_inline_comment = true;
+          }
+        }
+
+        if (is_inline_comment) {
+          if (state->options.preserve_positions) {
+            hb_buffer_append_whitespace(state->output, range_length(token->range));
+          }
+        } else if (state->is_erb_comment_tag && !hb_string_is_null(token->value)) {
+          const char* content = token->value.data;
+          size_t content_remaining = token->value.length;
+
+          while (content_remaining > 0) {
+            if (*content == '\n') {
+              hb_buffer_append_char(state->output, '\n');
+              content++;
+              content_remaining--;
+
+              if (content_remaining > 0 && state->options.preserve_positions && *content == ' ') {
+                content++;
+                content_remaining--;
+              }
+
+              hb_buffer_append_char(state->output, '#');
+            } else {
+              hb_buffer_append_char(state->output, *content);
+              content++;
+              content_remaining--;
+            }
+          }
+
+          if (!state->options.preserve_positions) { state->need_newline = true; }
+        } else {
+          hb_buffer_append_string(state->output, token->value);
+
+          if (!state->options.preserve_positions) { state->need_newline = true; }
+        }
+      } else {
+        if (state->is_erb_comment_tag && state->options.preserve_positions && !hb_string_is_null(token->value)) {
+          const char* content = token->value.data;
+          size_t content_remaining = token->value.length;
+
+          while (content_remaining > 0) {
+            if (*content == '\n') {
+              hb_buffer_append_char(state->output, '\n');
+            } else {
+              hb_buffer_append_char(state->output, ' ');
+            }
+
+            content++;
+            content_remaining--;
+          }
+        } else if (state->options.preserve_positions) {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        }
+      }
+
+      break;
+    }
+
+    case TOKEN_ERB_END: {
+      bool was_comment = state->is_comment_tag;
+      bool was_erb_comment = state->is_erb_comment_tag;
+      state->skip_erb_content = false;
+      state->is_comment_tag = false;
+      state->is_erb_comment_tag = false;
+
+      if (state->options.preserve_positions) {
+        if (was_comment) {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        } else if (was_erb_comment && state->options.comments) {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        } else if (state->options.semicolons) {
+          size_t length = range_length(token->range);
+
+          if (length >= 2) { hb_buffer_append_char(state->output, ' '); }
+          if (length >= 1) { hb_buffer_append_char(state->output, ';'); }
+          if (length >= 2) { hb_buffer_append_whitespace(state->output, length - 2); }
+        } else {
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
+        }
+      }
+
+      break;
+    }
+
+    default: {
+      if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, range_length(token->range)); }
+    }
+  }
+}
+
 void herb_extract_ruby_to_buffer_with_options(
   const char* source,
   hb_buffer_T* output,
   const herb_extract_ruby_options_T* options,
   hb_allocator_T* allocator
 ) {
-  herb_extract_ruby_options_T extract_options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  extract_ruby_state_T state = {
+    .options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS,
+    .output = output,
+    .skip_erb_content = false,
+    .is_comment_tag = false,
+    .is_erb_comment_tag = false,
+    .need_newline = false,
+  };
 
   parser_options_T lex_options = HERB_DEFAULT_PARSER_OPTIONS;
-  lex_options.erb_openers = extract_options.erb_openers;
-  lex_options.erb_opener_count = extract_options.erb_opener_count;
+  lex_options.erb_openers = state.options.erb_openers;
+  lex_options.erb_opener_count = state.options.erb_opener_count;
 
-  hb_array_T* tokens = herb_lex_with_options(source, &lex_options, allocator);
-  bool skip_erb_content = false;
-  bool is_comment_tag = false;
-  bool is_erb_comment_tag = false;
-  bool need_newline = false;
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source ? source : "", allocator);
+  lexer_apply_erb_openers(&lexer, &lex_options);
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
-    const token_T* token = hb_array_get(tokens, i);
+  const char* data = lexer.source.data;
+  uint32_t length = (uint32_t) lexer.source.length;
+  token_T* pending = NULL;
 
-    switch (token->type) {
-      case TOKEN_NEWLINE: {
-        hb_buffer_append_string(output, token->value);
-        need_newline = false;
-        break;
+  while (true) {
+    if (!pending && lexer.state == STATE_DATA) {
+      uint32_t position = lexer.current_position;
+
+      while (position < length && !(data[position] == '<' && data[position + 1] == '%')) {
+        position++;
       }
 
-      case TOKEN_ERB_START: {
-        is_erb_comment_tag = hb_string_equals(token->value, hb_string("<%#"));
-
-        if (is_erb_comment_tag) {
-          if (extract_options.comments) {
-            skip_erb_content = false;
-            is_comment_tag = false;
-
-            if (extract_options.preserve_positions) {
-              bool is_multiline = false;
-
-              if (i + 1 < hb_array_size(tokens)) {
-                const token_T* next = hb_array_get(tokens, i + 1);
-
-                if (next->type == TOKEN_ERB_CONTENT && !hb_string_is_null(next->value)
-                    && memchr(next->value.data, '\n', next->value.length) != NULL) {
-                  is_multiline = true;
-                }
-              }
-
-              if (is_multiline) {
-                hb_buffer_append_char(output, '#');
-                hb_buffer_append_whitespace(output, 2);
-              } else {
-                hb_buffer_append_whitespace(output, 2);
-                hb_buffer_append_char(output, '#');
-              }
-            } else {
-              if (need_newline) { hb_buffer_append_char(output, '\n'); }
-              hb_buffer_append_char(output, '#');
-              need_newline = true;
-            }
-          } else {
-            skip_erb_content = true;
-            is_comment_tag = true;
-            if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
-          }
-        } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
-                   || (erb_opening_is_custom(token->value) && !extract_options.custom_tags)) {
-          skip_erb_content = true;
-          is_comment_tag = false;
-          if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
-        } else {
-          skip_erb_content = false;
-          is_comment_tag = false;
-
-          if (extract_options.preserve_positions) {
-            hb_buffer_append_whitespace(output, range_length(token->range));
-          } else if (need_newline) {
-            hb_buffer_append_char(output, '\n');
-            need_newline = false;
-          }
-        }
-
-        break;
-      }
-
-      case TOKEN_ERB_CONTENT: {
-        if (skip_erb_content == false) {
-          bool is_inline_comment = false;
-
-          if (!extract_options.comments && !is_comment_tag && !hb_string_is_empty(token->value)) {
-            hb_string_T trimmed = hb_string_trim_start(token->value);
-
-            if (!hb_string_is_empty(trimmed) && trimmed.data[0] == '#'
-                && token->location.start.line == token->location.end.line) {
-              is_comment_tag = true;
-              is_inline_comment = true;
-            }
-          }
-
-          if (is_inline_comment) {
-            if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
-          } else if (is_erb_comment_tag && !hb_string_is_null(token->value)) {
-            const char* content = token->value.data;
-            size_t content_remaining = token->value.length;
-
-            while (content_remaining > 0) {
-              if (*content == '\n') {
-                hb_buffer_append_char(output, '\n');
-                content++;
-                content_remaining--;
-
-                if (content_remaining > 0 && extract_options.preserve_positions && *content == ' ') {
-                  content++;
-                  content_remaining--;
-                }
-
-                hb_buffer_append_char(output, '#');
-              } else {
-                hb_buffer_append_char(output, *content);
-                content++;
-                content_remaining--;
-              }
-            }
-
-            if (!extract_options.preserve_positions) { need_newline = true; }
-          } else {
-            hb_buffer_append_string(output, token->value);
-
-            if (!extract_options.preserve_positions) { need_newline = true; }
-          }
-        } else {
-          if (is_erb_comment_tag && extract_options.preserve_positions && !hb_string_is_null(token->value)) {
-            const char* content = token->value.data;
-            size_t content_remaining = token->value.length;
-
-            while (content_remaining > 0) {
-              if (*content == '\n') {
-                hb_buffer_append_char(output, '\n');
-              } else {
-                hb_buffer_append_char(output, ' ');
-              }
-
-              content++;
-              content_remaining--;
-            }
-          } else if (extract_options.preserve_positions) {
-            hb_buffer_append_whitespace(output, range_length(token->range));
-          }
-        }
-
-        break;
-      }
-
-      case TOKEN_ERB_END: {
-        bool was_comment = is_comment_tag;
-        bool was_erb_comment = is_erb_comment_tag;
-        skip_erb_content = false;
-        is_comment_tag = false;
-        is_erb_comment_tag = false;
-
-        if (extract_options.preserve_positions) {
-          if (was_comment) {
-            hb_buffer_append_whitespace(output, range_length(token->range));
-          } else if (was_erb_comment && extract_options.comments) {
-            hb_buffer_append_whitespace(output, range_length(token->range));
-          } else if (extract_options.semicolons) {
-            size_t length = range_length(token->range);
-
-            if (length >= 2) { hb_buffer_append_char(output, ' '); }
-            if (length >= 1) { hb_buffer_append_char(output, ';'); }
-            if (length >= 2) { hb_buffer_append_whitespace(output, length - 2); }
-          } else {
-            hb_buffer_append_whitespace(output, range_length(token->range));
-          }
-        }
-
-        break;
-      }
-
-      default: {
-        if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
-      }
+      extract_ruby_data(&state, data, lexer.current_position, position);
+      lexer_skip_data_to(&lexer, position);
     }
-  }
 
-  herb_free_tokens(&tokens, allocator);
+    token_T* token = pending ? pending : lexer_next_token(&lexer);
+    pending = NULL;
+
+    if (token->type == TOKEN_EOF) {
+      token_free(token, allocator);
+      break;
+    }
+
+    if (token->type == TOKEN_ERB_START) { pending = lexer_next_token(&lexer); }
+
+    extract_ruby_token(&state, token, pending);
+    token_free(token, allocator);
+  }
 }
 
 void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output, hb_allocator_T* allocator) {

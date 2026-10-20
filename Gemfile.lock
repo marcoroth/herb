@@ -323,12 +323,12 @@ GEM
     useragent (0.16.11)
     webrick (1.9.2)
     websocket (1.2.11)
-    yerba (0.9.0-aarch64-linux-gnu)
-    yerba (0.9.0-aarch64-linux-musl)
-    yerba (0.9.0-arm64-darwin)
-    yerba (0.9.0-x86_64-darwin)
-    yerba (0.9.0-x86_64-linux-gnu)
-    yerba (0.9.0-x86_64-linux-musl)
+    yerba (0.10.0-aarch64-linux-gnu)
+    yerba (0.10.0-aarch64-linux-musl)
+    yerba (0.10.0-arm64-darwin)
+    yerba (0.10.0-x86_64-darwin)
+    yerba (0.10.0-x86_64-linux-gnu)
+    yerba (0.10.0-x86_64-linux-musl)
     zeitwerk (2.7.5)
 
 PLATFORMS
@@ -374,7 +374,7 @@ DEPENDENCIES
   turbo-rails (~> 2.0)
   webrick (~> 1.9)
   websocket (~> 1.2)
-  yerba (~> 0.9)
+  yerba (~> 0.10)
 
 BUNDLED WITH
    2.7.2

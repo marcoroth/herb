@@ -1,4 +1,4 @@
-import { PrismVisitor, PrismNodes , locationFromByteOffset } from "@herb-tools/core"
+import { PrismVisitor, PrismNodes, SourceOffsets } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
 import { isPartialFile } from "../utils/file-utils.js"
@@ -90,8 +90,10 @@ export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
 
     collector.visit(prismNode)
 
+    const offsets = new SourceOffsets(source)
+
     return collector.instanceVariables.map(ivar => {
-      const location = locationFromByteOffset(source, ivar.startOffset, ivar.length)
+      const location = offsets.locationFromByteOffset(ivar.startOffset, ivar.length)
       const local = ivar.name.replace(/^@/, "")
       const message = ivar.usage === "read"
         ? `Avoid using instance variables in partials. Use the local variable \`${local}\` instead of \`${ivar.name}\` and pass it in via \`locals\`.`

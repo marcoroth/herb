@@ -468,6 +468,22 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for hash pattern keys in rightward pattern matching", () => {
+    expectNoOffenses(dedent`
+      <% summary => { diff_count:, coding_import_form_result_id: } %>
+      <% summary => { name: String => name, tags: [first, *] } %>
+      <% summary in { diff_count: } %>
+    `)
+  })
+
+  test("fails for a literal value in rightward pattern matching", () => {
+    expectError('Avoid using silent ERB tags for literals. `"a"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% "a" => { size: } %>
+    `)
+  })
+
   test("passes for literal receivers in modifier predicates", () => {
     expectNoOffenses(dedent`
       <% l = "i" unless %w[a b].include?(l) %>

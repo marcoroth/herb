@@ -5,6 +5,29 @@
 #include "../lib/hb_string.h"
 
 #include <prism.h>
+#include <stdbool.h>
+
+typedef enum {
+  CONTROL_TYPE_IF,
+  CONTROL_TYPE_ELSIF,
+  CONTROL_TYPE_ELSE,
+  CONTROL_TYPE_END,
+  CONTROL_TYPE_CASE,
+  CONTROL_TYPE_CASE_MATCH,
+  CONTROL_TYPE_WHEN,
+  CONTROL_TYPE_IN,
+  CONTROL_TYPE_BEGIN,
+  CONTROL_TYPE_RESCUE,
+  CONTROL_TYPE_ENSURE,
+  CONTROL_TYPE_UNLESS,
+  CONTROL_TYPE_WHILE,
+  CONTROL_TYPE_UNTIL,
+  CONTROL_TYPE_FOR,
+  CONTROL_TYPE_BLOCK,
+  CONTROL_TYPE_BLOCK_CLOSE,
+  CONTROL_TYPE_YIELD,
+  CONTROL_TYPE_UNKNOWN
+} control_type_t;
 
 typedef struct ANALYZED_RUBY_STRUCT {
   pm_parser_t parser;
@@ -31,6 +54,8 @@ typedef struct ANALYZED_RUBY_STRUCT {
   int yield_node_count;
   int then_keyword_count;
   int unclosed_control_flow_count;
+  control_type_t control_type;
+  bool control_type_detected;
 } analyzed_ruby_T;
 
 analyzed_ruby_T* init_analyzed_ruby(hb_string_T source);

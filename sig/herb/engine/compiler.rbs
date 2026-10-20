@@ -107,9 +107,9 @@ module Herb
 
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
-      def case_parts: (untyped node) -> untyped
+      def visit_erb_case_parts: (untyped node) -> untyped
 
-      def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
+      def visit_erb_control_with_parts: (untyped node, *untyped parts) ?{ (?) -> untyped } -> untyped
 
       private
 
@@ -206,6 +206,15 @@ module Herb
 
       # : (bool) -> void
       def settle_pending_trim_newline!: (bool) -> void
+
+      # : (Array[untyped]) -> void
+      def skip_case_children: (Array[untyped]) -> void
+
+      # : (untyped) -> bool
+      def follows_trimmed_statement_tag?: (untyped) -> bool
+
+      # : () -> void
+      def drop_pending_trim_newline!: () -> void
 
       def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
 

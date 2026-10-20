@@ -426,5 +426,47 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true, enforce_actionview_erubi_equality: false)
     end
+
+    test "keeps the indentation before a case whose first when shares its line" do
+      template = "<p></p>\n  <% case r %><% when :a %>A<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { r: :a }, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation before a case with several whens on one line" do
+      template = "  <% case r %><% when :a %>A<% when :b %>B<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { r: :b }, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation before a false if followed by a statement tag" do
+      template = "<p></p>\n  <% if false %><% x = 1 %>B<% end %>C"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "emits the indentation before a loop followed by a statement tag once" do
+      template = "<p></p>\n  <% [1, 2].each do |i| %><% x = i %>B<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "keeps the indentation before adjacent statement tags" do
+      template = "<p></p>\n  <% x = 1 %><% y = 2 %>Z"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "trims indented lines that only hold a statement tag" do
+      template = "<div>\n  <% if a %>\n    A\n  <% end %>\n</div>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { a: true }, enforce_erubi_equality: true)
+    end
   end
 end

@@ -7,5 +7,6 @@
 void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator);
 token_T* lexer_next_token(lexer_T* lexer);
 token_T* lexer_error(lexer_T* lexer, const char* message);
+void lexer_skip_data_to(lexer_T* lexer, uint32_t position);
 
 #endif
