@@ -238,6 +238,10 @@ module Herb
         process_erb_tag(node)
       end
 
+      def visit_erb_strict_locals_node(node)
+        process_erb_tag(node)
+      end
+
       def visit_erb_control_node(node, &)
         if node.content
           if node.tag_opening && erb_escaped?(node.tag_opening.value)
