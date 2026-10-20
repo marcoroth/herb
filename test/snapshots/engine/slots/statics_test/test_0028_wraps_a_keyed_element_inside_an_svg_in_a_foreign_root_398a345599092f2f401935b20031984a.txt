@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::StaticsTest#test_0028_wraps a keyed element inside an svg in a foreign root"
+input: "{source: \"<%# herb:slots %>\\n<svg><g herb-key=\\\"<%= @id %>\\\"><circle r=\\\"4\\\"/><text><%= @name %></text></g></svg>\", locals: {\"@id\" => \"a\", \"@name\" => \"Marco\"}, options: {visitors: [#<Herb::Engine::Slots::Visitor client>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:c5d95f21:0-->
+<svg><!--herb-slot:0:keyed:a--><g><circle r="4"/><text data-herb-slot="1:child">Marco</text></g><!--/herb-slot:0--></svg><!--/herb-region:app/views/test.html.erb--><template data-herb-region="app/views/test.html.erb:c5d95f21"><!--herb-branch:0:item--><svg data-herb-foreign><g><circle r="4"/><text data-herb-slot="1:child"></text></g></svg></template>
