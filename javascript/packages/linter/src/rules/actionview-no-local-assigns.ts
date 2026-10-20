@@ -72,8 +72,8 @@ class LocalAssignsReadCollector extends PrismVisitor {
 
 export class ActionViewNoLocalAssignsRule extends ParserRule {
   static ruleName = "actionview-no-local-assigns"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.1")
+  static defaultEnabledIn = this.version("0.11.1")
 
   get defaultConfig(): FullRuleConfig {
     return {
