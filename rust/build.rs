@@ -79,7 +79,6 @@ fn main() {
       .define("HERB_EXCLUDE_PRETTYPRINT", None)
       .define("PRISM_EXCLUDE_JSON", None)
       .define("PRISM_EXCLUDE_PACK", None)
-      .define("PRISM_EXCLUDE_SERIALIZATION", None)
       .include(&include_dir)
       .include(&prism_include)
       .files(&c_sources);

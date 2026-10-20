@@ -204,6 +204,12 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
   }
 }
 
+static size_t prism_node_start(pm_parser_t* parser, hb_narray_T* node_list, size_t index) {
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, index);
+
+  return (size_t) (prism_node->location.start - parser->start);
+}
+
 static herb_prism_node_T find_prism_node_for_herb_node(
   pm_parser_t* parser,
   hb_narray_T* node_list,
@@ -217,16 +223,28 @@ static herb_prism_node_T find_prism_node_for_herb_node(
   uint32_t content_from = content->range.from;
   uint32_t content_to = content->range.to;
 
-  for (size_t i = 0; i < hb_narray_size(node_list); i++) {
-    pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, i);
-    size_t prism_start = (size_t) (prism_node->location.start - parser->start);
+  size_t low = 0;
+  size_t high = hb_narray_size(node_list);
 
-    if (prism_start >= content_from && prism_start < content_to) {
-      result.node = prism_node;
-      result.parser = parser;
-      break;
+  while (low < high) {
+    size_t middle = low + (high - low) / 2;
+
+    if (prism_node_start(parser, node_list, middle) < content_from) {
+      low = middle + 1;
+    } else {
+      high = middle;
     }
   }
+
+  if (low >= hb_narray_size(node_list) || prism_node_start(parser, node_list, low) >= content_to) { return result; }
+
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, low);
+  size_t prism_end = (size_t) (prism_node->location.end - parser->start);
+
+  result.node = prism_node;
+  result.parser = parser;
+  result.source_start = content_from;
+  result.source_end = prism_end > content_to ? (uint32_t) prism_end : content_to;
 
   return result;
 }

@@ -244,3 +244,94 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
 
   return location;
 }
+
+static size_t newline_index_for_offset(const pm_newline_list_t* newlines, size_t offset) {
+  size_t low = 0;
+  size_t high = newlines->size;
+
+  while (low < high) {
+    size_t middle = low + (high - low) / 2;
+
+    if (newlines->offsets[middle] <= offset) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+
+  return low > 0 ? low - 1 : 0;
+}
+
+void herb_prism_node_serialize(herb_prism_node_T prism_node, pm_buffer_t* buffer) {
+  if (!prism_node.node || !prism_node.parser) { return; }
+
+  pm_parser_t* parser = prism_node.parser;
+
+  if (prism_node.source_end == 0 || parser->newline_list.size == 0) {
+    pm_serialize(parser, prism_node.node, buffer);
+    return;
+  }
+
+  const pm_newline_list_t* newlines = &parser->newline_list;
+  size_t first_line = newline_index_for_offset(newlines, prism_node.source_start);
+  size_t last_line = newline_index_for_offset(newlines, prism_node.source_end);
+  size_t line_count = last_line - first_line + 1;
+
+  if (last_line + 1 < newlines->size) { line_count++; }
+
+  pm_parser_t view = *parser;
+
+  view.newline_list.offsets = newlines->offsets + first_line;
+  view.newline_list.size = line_count;
+  view.newline_list.capacity = line_count;
+  view.start_line = parser->start_line + (int32_t) first_line;
+
+  memset(&view.magic_comment_list, 0, sizeof(pm_list_t));
+  memset(&view.error_list, 0, sizeof(pm_list_t));
+  memset(&view.warning_list, 0, sizeof(pm_list_t));
+  memset(&view.comment_list, 0, sizeof(pm_list_t));
+
+  size_t comment_count = 0;
+
+  for (pm_list_node_t* entry = parser->comment_list.head; entry; entry = entry->next) {
+    pm_comment_t* comment = (pm_comment_t*) entry;
+    size_t start = (size_t) (comment->location.start - parser->start);
+
+    if (start >= prism_node.source_start && start < prism_node.source_end) { comment_count++; }
+  }
+
+  pm_comment_t* comments = NULL;
+
+  if (comment_count > 0) {
+    comments = malloc(comment_count * sizeof(pm_comment_t));
+
+    if (!comments) {
+      pm_serialize(parser, prism_node.node, buffer);
+      return;
+    }
+
+    size_t index = 0;
+
+    for (pm_list_node_t* entry = parser->comment_list.head; entry; entry = entry->next) {
+      pm_comment_t* comment = (pm_comment_t*) entry;
+      size_t start = (size_t) (comment->location.start - parser->start);
+
+      if (start < prism_node.source_start || start >= prism_node.source_end) { continue; }
+
+      comments[index] = *comment;
+      comments[index].node.next = NULL;
+
+      if (index > 0) { comments[index - 1].node.next = &comments[index].node; }
+
+      index++;
+    }
+
+    view.comment_list.size = comment_count;
+    view.comment_list.head = &comments[0].node;
+    view.comment_list.tail = &comments[comment_count - 1].node;
+  }
+
+  pm_serialize(&view, prism_node.node, buffer);
+
+  free(comments);
+}
