@@ -1202,6 +1202,11 @@ module Herb
           )
         end
 
+        #: (Array[untyped], Integer) -> String
+        def attribute_spacing(children, position)
+          position.positive? && children[position - 1].is_a?(Herb::AST::WhitespaceNode) ? "" : " "
+        end
+
         private
 
         def visit_children_with_paths(children)
@@ -1521,7 +1526,7 @@ module Herb
         def convert_helper_boolean_attribute(node)
           open_tag = @current_open_tag
 
-          return nil unless @in_open_tag && open_tag.is_a?(Herb::AST::ERBOpenTagNode)
+          return nil unless @in_open_tag && (open_tag.is_a?(Herb::AST::ERBOpenTagNode) || open_tag.is_a?(Herb::AST::HTMLOpenTagNode))
           return nil if continuation?(node)
           return nil unless node.respond_to?(:subsequent) && node.subsequent.nil?
 
@@ -1540,7 +1545,7 @@ module Herb
           return nil unless name && Herb::HTML::Util.boolean_attribute?(name)
 
           condition = @states.condition_expression(node)
-          replacement = erb_output_node(%[(" #{name}" if #{condition})])
+          replacement = erb_output_node(%[("#{attribute_spacing(children, position)}#{name}" if #{condition})])
 
           children[position] = replacement
           record_slot(replacement, :attribute)

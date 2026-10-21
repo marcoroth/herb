@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, expect, beforeAll, afterAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import dedent from "dedent"
 
@@ -31,6 +31,37 @@ describe("CLI Output Formatting", () => {
 
       return { output: combined || stderr || stdout, exitCode: error.status }
     }
+  }
+
+  function runSeparately(...args: (string | Record<string, string>)[]): { stdout: string, stderr: string, status: number | null } {
+    const { spawnSync } = require("child_process")
+    const env = typeof args[args.length - 1] === "object" ? args.pop() as Record<string, string> : {}
+
+    const { stdout, stderr, status } = spawnSync("bin/herb-lint", [...args as string[], "--no-timing"], {
+      encoding: "utf-8",
+      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined, ...env }
+    })
+
+    return { stdout, stderr, status }
+  }
+
+  const outputDirectories: string[] = []
+
+  afterAll(() => {
+    const { rmSync } = require("fs")
+
+    for (const directory of outputDirectories) rmSync(directory, { recursive: true, force: true })
+  })
+
+  function outputDirectory(): string {
+    const { mkdtempSync } = require("fs")
+    const { join } = require("path")
+    const { tmpdir } = require("os")
+
+    const directory = mkdtempSync(join(tmpdir(), "herb-lint-"))
+    outputDirectories.push(directory)
+
+    return directory
   }
 
   function firstOffense(output: string): string {
@@ -270,6 +301,168 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  describe("Multiple outputs", () => {
+    const { readFileSync, writeFileSync } = require("fs")
+    const { join } = require("path")
+
+    function report(path: string): unknown {
+      return JSON.parse(readFileSync(path, "utf-8"))
+    }
+
+    function jsonOnStdout(...args: string[]): unknown {
+      return JSON.parse(runSeparately(...args, "--json").stdout)
+    }
+
+    function unwritablePath(): string {
+      const blocker = join(outputDirectory(), "not-a-directory")
+      writeFileSync(blocker, "")
+
+      return join(blocker, "herb-lint.json")
+    }
+
+    test("writes structured formats to files while printing the human format to stdout", () => {
+      const jsonPath = join(outputDirectory(), "reports", "herb-lint.json")
+
+      const simple = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--simple")
+      const combined = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "simple", "--format", "json", "--output-file", jsonPath)
+
+      expect(combined.stdout).toBe(simple.stdout)
+      expect(combined.status).toBe(1)
+
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
+    })
+
+    test.each([
+      [["--format=json", "--output-file=PATH"]],
+      [["--json", "-oPATH"]],
+    ])("accepts the inline option syntax %j", (args) => {
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args.map(arg => arg.replace("PATH", jsonPath)))
+
+      expect(stdout).toBe("")
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
+      expect(status).toBe(1)
+    })
+
+    test("prints nothing to stdout when every format is written to a file", () => {
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "json", "-o", jsonPath)
+
+      expect(stdout).toBe("")
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
+      expect(status).toBe(1)
+    })
+
+    test("prints only GitHub Actions annotations when every format is written to a file", () => {
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "json", "-o", jsonPath, { GITHUB_ACTIONS: "true" })
+
+      expect(stdout).toMatchSnapshot()
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
+      expect(status).toBe(1)
+    })
+
+    test("writes the error to structured output files when the run fails early", () => {
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-altt", "--format", "simple", "--format", "json", "-o", jsonPath)
+
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-altt"))
+      expect(status).toBe(1)
+    })
+
+    test.each([
+      [["-o", "herb-lint.json"], "Error: --output-file must come after the --format it applies to (e.g., --format json --output-file herb-lint.json)."],
+      [["--format", "detailed", "-o", "herb-lint.txt"], "Error: --output-file only supports the json format, but it follows --format detailed."],
+      [["--format", "jsonn", "-o", "herb-lint.json"], "Error: --output-file only supports the json format, but it follows --format jsonn."],
+      [["--format", "json", "-o", "a.json", "-o", "b.json"], "Error: --format json can only be written to one --output-file. Pass --format json again for another file."],
+      [["--format", "json", "-o", "herb-lint.json", "--json", "-o", "./herb-lint.json"], "Error: --output-file ./herb-lint.json is used for more than one format."],
+      [["--format", "json", "-o", '""'], `Error: --output-file needs a file path, but got "". Leave out --output-file to write to stdout.`],
+      [["--format", "json", "-o", "-"], `Error: --output-file needs a file path, but got "-". Leave out --output-file to write to stdout.`],
+      [["--format=json", "--output-file="], `Error: --output-file needs a file path, but got "". Leave out --output-file to write to stdout.`],
+    ])("rejects %j", (args, message) => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", ...args)
+
+      expect(output).toBe(message)
+      expect(exitCode).toBe(1)
+    })
+
+    test.each([
+      [["--format", "detailed", "--json"], "json"],
+      [["--json", "--simple"], "json"],
+      [["--format", "json", "--simple"], "simple"],
+      [["--format", "json", "--format", "simple"], "simple"],
+    ])("keeps the existing precedence when %j are all left on stdout", (args, format) => {
+      const { output } = runLinter("test-file-with-errors.html.erb", ...args)
+
+      expect(output).toBe(runLinter("test-file-with-errors.html.erb", `--${format}`).output)
+    })
+
+    test("reports an output file that can't be written without losing the other outputs", () => {
+      const brokenPath = unwritablePath()
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { stdout, stderr, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", "--format", "simple", "--format", "json", "-o", brokenPath, "--format", "json", "-o", jsonPath)
+
+      expect(stdout).toBe(runSeparately("test/fixtures/test-file-with-errors.html.erb", "--simple").stdout)
+      expect(stderr).toContain(`✗ Could not write --output-file ${brokenPath}:`)
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/test-file-with-errors.html.erb"))
+      expect(status).toBe(1)
+    })
+
+    test("fails an otherwise clean run when an output file can't be written", () => {
+      const brokenPath = unwritablePath()
+
+      const { stderr, status } = runSeparately("test/fixtures/clean-file.html.erb", "--format", "json", "-o", brokenPath)
+
+      expect(stderr).toContain(`✗ Could not write --output-file ${brokenPath}:`)
+      expect(status).toBe(1)
+    })
+
+    test("writes reports and keeps stdout empty when the linter is disabled", () => {
+      const directory = outputDirectory()
+      const configFile = join(directory, ".herb.yml")
+      const jsonPath = join(directory, "herb-lint.json")
+
+      writeFileSync(configFile, "linter:\n  enabled: false\n")
+
+      const { stdout, stderr, status } = runSeparately("test/fixtures/clean-file.html.erb", "--config-file", configFile, "--format", "json", "-o", jsonPath)
+
+      expect(stdout).toBe("")
+      expect(stderr).toBe("Linter is disabled in .herb.yml configuration. Use --force to lint anyway.\n")
+      expect(report(jsonPath)).toEqual(jsonOnStdout("test/fixtures/clean-file.html.erb", "--config-file", configFile))
+      expect(status).toBe(0)
+    })
+
+    test("fails a run with nothing to lint when an output file can't be written", () => {
+      const directory = outputDirectory()
+      const configFile = join(directory, ".herb.yml")
+
+      writeFileSync(configFile, "linter:\n  enabled: false\n")
+
+      const { stderr, status } = runSeparately("test/fixtures/clean-file.html.erb", "--config-file", configFile, "--format", "json", "-o", unwritablePath())
+
+      expect(stderr).toContain("✗ Could not write --output-file")
+      expect(status).toBe(1)
+    })
+
+    test.each([
+      [["test/fixtures/clean-file.html.erb", "--config-file", "does-not-exist/.herb.yml"]],
+      [["test/fixtures/does-not-exist-*.html.erb"]],
+    ])("writes an error report next to the human output for %j", (args) => {
+      const jsonPath = join(outputDirectory(), "herb-lint.json")
+
+      const { stderr, status } = runSeparately(...args, "--format", "detailed", "--format", "json", "-o", jsonPath)
+
+      expect(stderr).toMatchSnapshot()
+      expect(report(jsonPath)).toEqual(jsonOnStdout(...args))
+      expect(status).toBe(1)
+    })
+  })
+
   test("--no-github disables GitHub Actions annotations", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-github", { GITHUB_ACTIONS: "true" })
 
@@ -417,6 +610,37 @@ describe("CLI Output Formatting", () => {
         expect(output).toContain("Forcing linter on excluded file")
         expect(output).toContain("Missing required")
         expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("keeps excluded file notices out of JSON on stdout and writes a report for a skipped file", () => {
+      const { readFileSync } = require("fs")
+      const { join } = require("path")
+
+      const run = (...args: string[]) => runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args)
+
+      try {
+        writeFileSync(configPath, dedent`
+          framework: ruby
+
+          linter:
+            exclude:
+              - "test-file-with-errors.html.erb"
+        `)
+
+        const forced = run("--force", "--json")
+
+        expect(JSON.parse(forced.stdout)).toMatchSnapshot()
+        expect(forced.stderr).toMatchSnapshot()
+
+        const jsonPath = join(outputDirectory(), "herb-lint.json")
+        const skipped = run("--format", "simple", "--format", "json", "-o", jsonPath)
+
+        expect(skipped.stdout).toMatchSnapshot()
+        expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(JSON.parse(run("--json").stdout))
+        expect(skipped.status).toBe(0)
       } finally {
         try { unlinkSync(configPath) } catch {}
       }

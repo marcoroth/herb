@@ -18,6 +18,7 @@
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/extract.h"
+#include "../include/extract_internal.h"
 #include "../include/lexer/token_struct.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
@@ -37,31 +38,11 @@
 static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
 
-  pm_visit_node(analyzed->root, search_if_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_block_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_case_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_case_match_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_while_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_for_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_until_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_begin_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_unless_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_when_nodes, analyzed);
-  pm_visit_node(analyzed->root, search_in_nodes, analyzed);
+  if (analyzed->valid) { return analyzed; }
 
-  search_unexpected_elsif_nodes(analyzed);
-  search_unexpected_else_nodes(analyzed);
-  search_unexpected_end_nodes(analyzed);
-  search_unexpected_when_nodes(analyzed);
-  search_unexpected_in_nodes(analyzed);
-
-  search_unexpected_rescue_nodes(analyzed);
-  search_unexpected_ensure_nodes(analyzed);
-  search_yield_nodes(analyzed->root, analyzed);
-  search_then_keywords(analyzed->root, analyzed);
-  search_unexpected_block_closing_nodes(analyzed);
-
-  if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
+  pm_visit_node(analyzed->root, search_control_flow_nodes, analyzed);
+  search_unexpected_keyword_errors(analyzed);
+  pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed);
 
   return analyzed;
 }
@@ -1200,7 +1181,7 @@ static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocato
     .preserve_positions = true,
   };
 
-  herb_extract_ruby_to_buffer_with_options(source, &scope->buffer, &extract_options, allocator);
+  herb_extract_ruby_to_buffer_with_options_preserving_bytes(source, &scope->buffer, &extract_options, allocator);
 
   if (!scope->buffer.value || scope->buffer.length == 0) {
     hb_buffer_free(&scope->buffer);

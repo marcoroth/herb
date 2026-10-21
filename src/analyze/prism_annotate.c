@@ -2,6 +2,7 @@
 #include "../include/ast/ast_node.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/extract.h"
+#include "../include/extract_internal.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_narray.h"
@@ -170,6 +171,7 @@ static token_T* get_content_token(const AST_NODE_T* node) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: return ((AST_ERB_CONTENT_NODE_T*) node)->content;
     case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->content;
+    case AST_ERB_YIELD_NODE: return ((AST_ERB_YIELD_NODE_T*) node)->content;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->content;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->content;
     case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->content;
@@ -188,6 +190,7 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: ((AST_ERB_CONTENT_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_RENDER_NODE: ((AST_ERB_RENDER_NODE_T*) node)->prism_node = prism_ref; break;
+    case AST_ERB_YIELD_NODE: ((AST_ERB_YIELD_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_IF_NODE: ((AST_ERB_IF_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_BLOCK_NODE: ((AST_ERB_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_ITERATION_BLOCK_NODE: ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
@@ -237,7 +240,8 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
   pm_parser_t* parser;
   hb_narray_T* node_list;
 
-  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || context->prism_nodes_deep) {
+  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || node->type == AST_ERB_YIELD_NODE
+      || context->prism_nodes_deep) {
     parser = context->parser;
     node_list = context->node_list;
   } else {
@@ -253,7 +257,9 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
 }
 
 static bool collect_content_ranges_visitor(const AST_NODE_T* node, void* data) {
-  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE) { return true; }
+  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE && node->type != AST_ERB_YIELD_NODE) {
+    return true;
+  }
 
   hb_narray_T* ranges = (hb_narray_T*) data;
   token_T* content = get_content_token(node);
@@ -301,7 +307,7 @@ void herb_annotate_prism_nodes(
     .erb_opener_count = options->erb_opener_count,
   };
 
-  herb_extract_ruby_to_buffer_with_options(source, &context->ruby_buf, &extract_options, allocator);
+  herb_extract_ruby_to_buffer_with_options_preserving_bytes(source, &context->ruby_buf, &extract_options, allocator);
 
   if (!context->ruby_buf.value || context->ruby_buf.length == 0) {
     hb_buffer_free(&context->ruby_buf);

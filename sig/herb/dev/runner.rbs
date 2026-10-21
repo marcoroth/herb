@@ -36,6 +36,9 @@ module Herb
       # : () -> bool
       def interactive?: () -> bool
 
+      # : () -> bool
+      def process_manager?: () -> bool
+
       # : (String) -> void
       def terminal: (String) -> void
 

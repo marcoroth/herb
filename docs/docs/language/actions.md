@@ -23,14 +23,14 @@ Actions are HTML attributes that write a [state](/language/state) when an event 
 | `data-herb-reset`     | the declared default                       | any             |
 | `data-herb-action`    | runs a built-in action                     | none            |
 
-Each takes a comma-separated list, so one click can write several states as a single update.
+Each takes a space-separated list of clauses with one state per clause, so one click can write several states as a single update.
 
 ::: code-group
 ```erb [app/views/messages/_composer.html.erb]
 <%# herb:slots client %>
 <%# herb:state (pending: false, failed: false, attempts: 0, draft: "") %>
 
-<button data-herb-set="pending=false,failed=true">Retry</button>
+<button data-herb-set="pending=false failed=true">Retry</button>
 <button data-herb-increment="attempts" data-herb-by="2">More</button>
 <button data-herb-decrement="attempts">Fewer</button>
 <button data-herb-reset="draft">Clear</button>
@@ -50,11 +50,11 @@ Sets one or more states to a value.
 
 ```erb notwoslash
 data-herb-set="name=value"
-data-herb-set="name=value,name=value"
+data-herb-set="name=value name=value"
 data-herb-set="event->name=value"
 ```
 
-The value is read as the state's [kind](/language/state#kinds), so `pending=true` sets a Boolean and `draft=true` sets the String `"true"`. Quote a String value that holds a comma or a space, as in `draft='hello, world'`.
+The value is read as the state's [kind](/language/state#kinds), so `pending=true` sets a Boolean and `draft=true` sets the String `"true"`. Quote a String value that holds a comma or a space, as in `draft='hello, world'`. Outside quotes a space starts a new [clause](#events), and a comma is an error since a clause takes one assignment.
 
 `$value` stands for the value of the element the event fired on, and it is the only interpolation. A set with no value, such as `data-herb-set="open"`, is reported by the linter and by the client in debug mode.
 

@@ -26,6 +26,16 @@ module Extractor
       assert_equal "    \n     RUBY_VERSION  ;\n     \n", actual
     end
 
+    test "preserves Unicode character positions" do
+      source = "<p>Café <%= x=1 %></p>"
+      ruby = Herb.extract_ruby(source)
+
+      assert_equal "            x=1  ;    ", ruby
+      assert_equal source.length, ruby.length
+      assert_equal source.index("x"), ruby.index("x")
+      assert_equal " x=1 ", Herb.extract_ruby(source, preserve_positions: false)
+    end
+
     test "nested" do
       actual = Herb.extract_ruby(<<~HTML)
         <% array = [1, 2, 3] %>

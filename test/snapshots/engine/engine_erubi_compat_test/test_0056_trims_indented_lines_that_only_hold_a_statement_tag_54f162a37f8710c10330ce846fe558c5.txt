@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0056_trims indented lines that only hold a statement tag"
+input: "{source: \"<div>\\n  <% if a %>\\n    A\\n  <% end %>\\n</div>\", locals: {a: true}, options: {}}"
+---
+<div>
+    A
+</div>

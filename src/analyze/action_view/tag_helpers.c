@@ -132,6 +132,50 @@ static bool build_scope_options_from_context(
   return built;
 }
 
+static bool symbol_node_equals(pm_node_t* node, const char* name) {
+  if (!node || node->type != PM_SYMBOL_NODE) { return false; }
+
+  pm_symbol_node_t* symbol = (pm_symbol_node_t*) node;
+  size_t length = pm_string_length(&symbol->unescaped);
+
+  return length == strlen(name) && strncmp((const char*) pm_string_source(&symbol->unescaped), name, length) == 0;
+}
+
+static bool asset_tag_resolves_at_render_time(pm_call_node_t* call_node, const char* helper_name) {
+  bool is_stylesheet_link_tag = string_equals(helper_name, "stylesheet_link_tag");
+
+  if (!is_stylesheet_link_tag && !string_equals(helper_name, "javascript_include_tag")) { return false; }
+  if (!call_node || !call_node->arguments) { return false; }
+
+  pm_node_list_t* arguments = &call_node->arguments->arguments;
+
+  for (size_t i = 0; i < arguments->size; i++) {
+    pm_node_t* argument = arguments->nodes[i];
+
+    if (argument->type == PM_SPLAT_NODE || argument->type == PM_ARRAY_NODE) { return true; }
+
+    if (is_stylesheet_link_tag && i == 0
+        && (symbol_node_equals(argument, "all") || symbol_node_equals(argument, "app"))) {
+      return true;
+    }
+
+    if (argument->type != PM_KEYWORD_HASH_NODE) { continue; }
+
+    pm_keyword_hash_node_t* hash = (pm_keyword_hash_node_t*) argument;
+
+    for (size_t j = 0; j < hash->elements.size; j++) {
+      pm_node_t* element = hash->elements.nodes[j];
+      if (element->type != PM_ASSOC_NODE) { continue; }
+
+      pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
+
+      if (symbol_node_equals(assoc->key, "integrity") && assoc->value->type != PM_STRING_NODE) { return true; }
+    }
+  }
+
+  return false;
+}
+
 static tag_helper_parse_context_T* parse_tag_helper_content(
   const char* content_string,
   const char* original_source,
@@ -181,7 +225,8 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
                                       .found = false };
   pm_visit_node(parse_context->root, search_tag_helper_node, &search);
 
-  if (!search.found) {
+  if (!search.found
+      || asset_tag_resolves_at_render_time(parse_context->info->call_node, search.matched_handler->name)) {
     tag_helper_info_free(&parse_context->info);
     pm_node_destroy(&parse_context->parser, parse_context->root);
     pm_parser_free(&parse_context->parser);
@@ -252,13 +297,17 @@ position_T byte_offset_to_position(const char* source, size_t offset) {
 
   if (!source) { return position; }
 
-  for (size_t i = 0; i < offset && source[i] != '\0'; i++) {
-    if (source[i] == '\n') {
-      position.line++;
-      position.column = 1;
-    } else if (!utf8_is_valid_continuation_byte((unsigned char) source[i])) {
-      position.column++;
-    }
+  const char* cursor = source;
+  const char* end = source + strnlen(source, offset);
+  const char* newline = NULL;
+
+  while ((newline = memchr(cursor, '\n', (size_t) (end - cursor))) != NULL) {
+    position.line++;
+    cursor = newline + 1;
+  }
+
+  for (; cursor < end; cursor++) {
+    if (!utf8_is_valid_continuation_byte((unsigned char) *cursor)) { position.column++; }
   }
 
   return position;
@@ -277,33 +326,40 @@ position_T prism_location_to_position_with_offset(
   size_t offset_in_erb = (size_t) (pm_location->start - erb_content_source);
   size_t total_offset = erb_content_offset + offset_in_erb;
 
-  size_t source_length = strlen(original_source);
-  if (total_offset > source_length) { return byte_offset_to_position(original_source, erb_content_offset); }
+  if (strnlen(original_source, total_offset) < total_offset) {
+    return byte_offset_to_position(original_source, erb_content_offset);
+  }
 
   return byte_offset_to_position(original_source, total_offset);
 }
 
 size_t calculate_byte_offset_from_position(const char* source, position_T position) {
   if (!source) { return 0; }
+  if (position.line == 0) { return strlen(source); }
 
-  size_t offset = 0;
-  uint32_t line = 1;
+  const char* line_start = source;
+
+  for (uint32_t line = 1; line < position.line; line++) {
+    const char* newline = strchr(line_start, '\n');
+
+    if (!newline) { return (size_t) (line_start - source) + strlen(line_start); }
+
+    line_start = newline + 1;
+  }
+
+  size_t offset = (size_t) (line_start - source);
   uint32_t column = 1;
 
   while (source[offset] != '\0') {
-    if (line == position.line && column == position.column) { return offset; }
+    if (column == position.column) { return offset; }
+    if (source[offset] == '\n') { break; }
 
-    if (source[offset] == '\n') {
-      line++;
-      column = 1;
-    } else if (!utf8_is_valid_continuation_byte((unsigned char) source[offset])) {
-      column++;
-    }
+    if (!utf8_is_valid_continuation_byte((unsigned char) source[offset])) { column++; }
 
     offset++;
   }
 
-  return offset;
+  return offset + strlen(source + offset);
 }
 
 static void prism_node_location_to_positions(

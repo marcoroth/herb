@@ -80,6 +80,19 @@ public class HerbTest {
   }
 
   @Test
+  void testExtractRubyPreservesUnicodeCharacterPositions() {
+    String source = "<p>Café <%= x=1 %></p>";
+    String ruby = Herb.extractRuby(source);
+
+    assertEquals("            x=1  ;    ", ruby);
+    assertEquals(source.codePointCount(0, source.length()), ruby.codePointCount(0, ruby.length()));
+    assertEquals(source.indexOf("x"), ruby.indexOf("x"));
+
+    String compact = Herb.extractRuby(source, ExtractRubyOptions.create().preservePositions(false));
+    assertEquals(" x=1 ", compact);
+  }
+
+  @Test
   void testExtractHTML() {
     String html = Herb.extractHTML("<div><%= foo %></div>");
 

@@ -8,6 +8,24 @@ fn test_extract_ruby_default() {
 }
 
 #[test]
+fn test_extract_ruby_preserves_unicode_character_positions() {
+  let source = "<p>Café <%= x=1 %></p>";
+  let result = extract_ruby(source).unwrap();
+  let source_column = source[..source.find('x').unwrap()].chars().count();
+  let result_column = result[..result.find('x').unwrap()].chars().count();
+
+  assert_eq!(result, "            x=1  ;    ");
+  assert_eq!(result.chars().count(), source.chars().count());
+  assert_eq!(result_column, source_column);
+
+  let options = ExtractRubyOptions {
+    preserve_positions: false,
+    ..Default::default()
+  };
+  assert_eq!(extract_ruby_with_options(source, &options).unwrap(), " x=1 ");
+}
+
+#[test]
 fn test_extract_ruby_without_semicolons() {
   let source = "<% x = 1 %> <% y = 2 %>";
   let options = ExtractRubyOptions {

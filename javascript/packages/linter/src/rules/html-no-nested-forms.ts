@@ -1,14 +1,24 @@
 import { ElementStackVisitor } from "../utils/rule-utils.js"
-import { getHelpersForTag, getTagLocalName, isERBOutputNode, isHTMLOpenTagNode, PrismVisitor } from "@herb-tools/core"
+import { getHelpersForTag, getTagLocalName, isERBBlockNode, isERBOutputNode, isHTMLOpenTagNode, isPrismNodeType, PrismVisitor } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ERBBlockNode, ERBContentNode, ParseResult, ParserOptions, PrismNode, Location } from "@herb-tools/core"
+import type { HTMLElementNode, ERBBlockNode, ERBContentNode, ParseResult, ParserOptions, PrismNode, PrismNodes, Location } from "@herb-tools/core"
 
 const FORM_HELPERS = new Set(getHelpersForTag("form").filter(helper => !helper.supported).flatMap(helper => [helper.name, ...helper.aliases]))
 
 class FormHelperCallCollector extends PrismVisitor {
   public helperName: string | null = null
+
+  constructor(private readonly ignoredBlock: PrismNode | null = null) {
+    super()
+  }
+
+  visitBlockNode(node: PrismNodes.BlockNode): void {
+    if (node === this.ignoredBlock) return
+
+    this.visitChildNodes(node)
+  }
 
   visitCallNode(node: PrismNode): void {
     if (this.helperName) return
@@ -117,7 +127,8 @@ class NestedFormVisitor extends ElementStackVisitor {
     const prismNode = node.prismNode
     if (!prismNode) return null
 
-    const collector = new FormHelperCallCollector()
+    const ignoredBlock = isERBBlockNode(node) && isPrismNodeType(prismNode.block, "BlockNode") ? prismNode.block : null
+    const collector = new FormHelperCallCollector(ignoredBlock)
     collector.visit(prismNode)
 
     return collector.helperName

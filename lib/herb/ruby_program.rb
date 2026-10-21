@@ -5,8 +5,8 @@ require "prism"
 
 module Herb
   # Answers what Ruby a span of a template holds, out of the one Prism program the parser built
-  # for the whole document. `extract_ruby` blanks the HTML in place, so a Prism byte offset and a
-  # template byte offset are the same number, which is what lets a `Herb::Location` address Ruby.
+  # for the whole document. The parser uses internal byte-preserving extraction, so a Prism byte
+  # offset and a template byte offset are the same number, which lets a `Herb::Location` address Ruby.
   #
   #     program = Herb::RubyProgram.for(document)
   #     program.resolve(node.content.location)&.nodes #=> [#<Prism::CallNode>]

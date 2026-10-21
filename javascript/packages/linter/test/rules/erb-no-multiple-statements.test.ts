@@ -202,6 +202,60 @@ describe("erb-no-multiple-statements", () => {
     `)
   })
 
+  test("passes for parentheses in an if and an elsif condition", () => {
+    expectNoOffenses(dedent`
+      <% if a || (b && c) %>
+        <span>A</span>
+      <% elsif b || (c && d) %>
+        <span>B</span>
+      <% elsif (e = f) %>
+        <span>E</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for parentheses in an unless, when, in and rescue condition", () => {
+    expectNoOffenses(dedent`
+      <% unless (a && b) %>
+        <span>A</span>
+      <% end %>
+      <% case status %>
+      <% when (ok ? "ok" : "fine") %>
+        <span>OK</span>
+      <% end %>
+      <% case value %>
+      <% in Integer if (value > 0) %>
+        <span>Positive</span>
+      <% end %>
+      <% begin %>
+        <span>Body</span>
+      <% rescue *(errors) %>
+        <span>Failed</span>
+      <% end %>
+    `)
+  })
+
+  test("passes for a block in an elsif condition", () => {
+    expectNoOffenses(dedent`
+      <% if a %>
+        <span>A</span>
+      <% elsif items.any? { |item| item.ready?; item.valid? } %>
+        <span>Ready</span>
+      <% end %>
+    `)
+  })
+
+  test("reports a statement sharing a tag with elsif", () => {
+    expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [3, 19])
+
+    assertOffenses(dedent`
+      <% if a %>
+        <span>A</span>
+      <% elsif (b && c); d = 1 %>
+      <% end %>
+    `)
+  })
+
   test("reports a statement sharing a tag with else", () => {
     expectWarning("Avoid Ruby statements in a control-flow ERB tag. Move this statement into its own ERB tag for better readability.", [4, 2])
 

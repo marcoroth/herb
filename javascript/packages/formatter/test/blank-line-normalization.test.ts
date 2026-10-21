@@ -69,4 +69,38 @@ describe("Blank line normalization", () => {
 
     expect(twice).toEqual(once)
   })
+
+  test("keeps a blank run after a comment that follows a text flow run", () => {
+    const source = `<% if a %>\n  <%= x %> /\n  <%# note %>\n\n\n  <%= y %>\n<% end %>`
+
+    expect(formatter.format(source)).toEqual(`<% if a %>\n  <%= x %> / <%# note %>\n\n\n  <%= y %>\n<% end %>`)
+  })
+
+  test("a blank run after a comment that follows a text flow run is idempotent", () => {
+    const source = `<% if a %>\n  <%= x %> /\n  <%# note %>\n\n\n  <%= y %>\n<% end %>`
+    const once = formatter.format(source)
+    const twice = formatter.format(once)
+
+    expect(twice).toEqual(once)
+  })
+
+  test("keeps a blank run after a text flow run that ends in an ERB output tag", () => {
+    const source = `<div>\n  Available on <%= provider %>\n\n\n  <% if x %>\n    y\n  <% end %>\n</div>`
+
+    expect(formatter.format(source)).toEqual(source)
+  })
+
+  test("keeps a single blank line after a text flow run that ends in an ERB output tag", () => {
+    const source = `<div>\n  Available on <%= provider %>\n\n  <% if x %>\n    y\n  <% end %>\n</div>`
+
+    expect(formatter.format(source)).toEqual(source)
+  })
+
+  test("a blank run after a text flow run that ends in an ERB output tag is idempotent", () => {
+    const source = `<div>\n  Available on <%= provider %>\n\n\n  <% if x %>\n    y\n  <% end %>\n</div>`
+    const once = formatter.format(source)
+    const twice = formatter.format(once)
+
+    expect(twice).toEqual(once)
+  })
 })

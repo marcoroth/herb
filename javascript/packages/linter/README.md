@@ -170,6 +170,9 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 
 # Combine GitHub Actions output with detailed format (explicit)
 npx @herb-tools/linter template.html.erb --format=detailed --github
+
+# Print the detailed format and also write a JSON report to a file
+npx @herb-tools/linter --format detailed --format json --output-file herb-lint.json
 ```
 
 **Display Options:**
@@ -473,6 +476,22 @@ JSON output fields:
 - `completed`: Whether the linter ran successfully on files
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
+
+#### Multiple Outputs <Badge type="info" text="v0.11.1+" />
+
+`--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the `json` format right before it to a file instead of stdout.
+
+This makes it possible to keep readable output in your CI logs while also producing a machine-readable report as an artifact:
+
+```bash
+npx @herb-tools/linter --format detailed --format json -o tmp/herb-lint.json
+```
+
+Only one format is printed. If several are left without an `--output-file`, `--json` wins over `--simple`, which wins over the last `--format`. When every format goes to a file, stdout only gets GitHub Actions annotations, if they're enabled.
+
+Missing parent directories of an output file are created. If a file can't be written, the error is printed to stderr and `herb-lint` exits with an error, while the other outputs are still produced.
+
+Output files are written even when the run stops before linting, for example because of an invalid configuration, a pattern without matching files, an excluded file, or an unknown rule passed to `--only`. A CI step that uploads the report always finds one explaining what happened. `--json` on stdout reports these cases as JSON too, instead of printing a message to stderr.
 
 ### Disabling Rules Inline <Badge type="info" text="v0.8.0+" />
 
