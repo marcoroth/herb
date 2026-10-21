@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 import { resolve } from "path"
 
 import { Project } from "stimulus-parser"
-import { CLI as HerbLinterCLI, FileProcessor } from "@herb-tools/linter/cli"
+import { CLI as HerbLinterCLI, FileProcessor, isStructuredFormat } from "@herb-tools/linter/cli"
 import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "@herb-tools/highlighter"
 
@@ -153,17 +153,17 @@ export class CLI extends HerbLinterCLI {
     try {
       this.stimulusProject = new Project(this.projectPath)
 
-      console.log(`Analyzing Stimulus Project at ${this.projectPath}...`)
+      console.error(`Analyzing Stimulus Project at ${this.projectPath}...`)
 
       await this.stimulusProject.initialize()
       await this.stimulusProject.analyze()
 
       controllerCount = this.stimulusProject.registeredControllers.length
-      console.log(`Found ${controllerCount} Stimulus controllers`)
+      console.error(`Found ${controllerCount} Stimulus controllers`)
 
       this.fileProcessor = new StimulusFileProcessor(this.fileProcessor, this.stimulusProject)
     } catch (_error) {
-      console.log("No Stimulus project found, running without controller validation")
+      console.error("No Stimulus project found, running without controller validation")
       this.stimulusProject = undefined
 
       this.fileProcessor = new StimulusFileProcessor(this.fileProcessor, this.stimulusProject)
@@ -177,7 +177,7 @@ export class CLI extends HerbLinterCLI {
   }
 
   private displayStimulusSummary(results: any, outputOptions: any): void {
-    if (outputOptions.formatOption === 'json') {
+    if (isStructuredFormat(outputOptions.formatOption)) {
       return
     }
 

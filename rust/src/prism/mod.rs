@@ -84,17 +84,17 @@ impl PrismNode {
 
 /// # Safety
 ///
-/// `node` and `parser` must either be null or point at a live prism node and
-/// the parser that produced it. The pointers are only read for the duration of
-/// the call.
-pub unsafe fn serialize(node: *const pm_node_t, parser: *const pm_parser_t) -> Option<Vec<u8>> {
-  if node.is_null() || parser.is_null() {
+/// `prism_node` must either have null pointers or point at a live prism node
+/// and the parser that produced it. The pointers are only read for the
+/// duration of the call.
+pub unsafe fn serialize(prism_node: herb_prism_node_T) -> Option<Vec<u8>> {
+  if prism_node.node.is_null() || prism_node.parser.is_null() {
     return None;
   }
 
   let mut buffer: pm_buffer_t = std::mem::zeroed();
 
-  pm_serialize(parser as *mut _, node as *mut _, &mut buffer);
+  herb_prism_node_serialize(prism_node, &mut buffer);
 
   let output = if buffer.length > 0 && !buffer.value.is_null() {
     Some(std::slice::from_raw_parts(buffer.value as *const u8, buffer.length).to_vec())

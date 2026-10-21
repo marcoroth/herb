@@ -290,15 +290,107 @@ describe("CLI Output Formatting", () => {
   test("rejects --github with --json format", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
 
-    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(output).toBe("Error: --github cannot be used with --format json on stdout. Use --output-file to write the report to a file.")
     expect(exitCode).toBe(1)
   })
 
   test("rejects --github with --format=json", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format=json", "--github")
 
-    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(output).toBe("Error: --github cannot be used with --format json on stdout. Use --output-file to write the report to a file.")
     expect(exitCode).toBe(1)
+  })
+
+  describe("JUnit output", () => {
+    test("formats JUnit output with a testcase per offense, failing only at the fail level", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(1)
+    })
+
+    test("formats JUnit output with a passing testcase for a clean file", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(0)
+    })
+
+    test("rejects --github with --format junit on stdout", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", "--github")
+
+      expect(output).toBe("Error: --github cannot be used with --format junit on stdout. Use --output-file to write the report to a file.")
+      expect(exitCode).toBe(1)
+    })
+
+    test.each([["--format", "junit"], ["--json"]])("keeps GitHub Actions annotations detected from the environment out of %s on stdout", (...args) => {
+      const { stdout, status } = runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args, { GITHUB_ACTIONS: "true" })
+
+      expect(stdout).toBe(runSeparately("test/fixtures/test-file-with-errors.html.erb", ...args).stdout)
+      expect(status).toBe(1)
+    })
+
+    test("fails offenses that fail the run even when --log-level hides them", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format", "junit", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a pattern without matching files as an error", () => {
+      const { output, exitCode } = runLinter("does-not-exist-*.html.erb", "--format", "junit")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a missing config file as an error", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", "does-not-exist/.herb.yml")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(1)
+    })
+
+    test("reports a disabled linter as a skipped testcase", () => {
+      const { writeFileSync } = require("fs")
+      const { join } = require("path")
+
+      const configFile = join(outputDirectory(), ".herb.yml")
+      writeFileSync(configFile, "linter:\n  enabled: false\n")
+
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--format", "junit", "--config-file", configFile)
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(0)
+    })
+
+    test("writes a JUnit report to a file next to the human output", () => {
+      const { readFileSync } = require("fs")
+      const { join } = require("path")
+
+      const junitPath = join(outputDirectory(), "herb-lint.xml")
+      const combined = runLinter("test-file-with-errors.html.erb", "--format", "simple", "--format", "junit", "-o", junitPath)
+
+      expect(combined.output).toBe(runLinter("test-file-with-errors.html.erb", "--simple").output)
+      expect(readFileSync(junitPath, "utf-8")).toBe(`${runLinter("test-file-with-errors.html.erb", "--format", "junit").output}\n`)
+      expect(combined.exitCode).toBe(1)
+    })
+
+    test("fails the JUnit report on offenses the JSON report leaves out below --log-level", () => {
+      const { readFileSync } = require("fs")
+      const { join } = require("path")
+
+      const directory = outputDirectory()
+      const junitPath = join(directory, "herb-lint.xml")
+      const jsonPath = join(directory, "herb-lint.json")
+
+      const args = ["test/fixtures/test-file-with-errors.html.erb", "--only", "html-img-require-alt", "--fail-level", "warning", "--log-level", "error"]
+      const { status } = runSeparately(...args, "--format", "junit", "-o", junitPath, "--format", "json", "-o", jsonPath)
+
+      expect(readFileSync(junitPath, "utf-8")).toBe(runSeparately(...args, "--format", "junit").stdout)
+      expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(JSON.parse(runSeparately(...args, "--json").stdout))
+      expect(status).toBe(1)
+    })
   })
 
   describe("Multiple outputs", () => {
@@ -376,8 +468,8 @@ describe("CLI Output Formatting", () => {
 
     test.each([
       [["-o", "herb-lint.json"], "Error: --output-file must come after the --format it applies to (e.g., --format json --output-file herb-lint.json)."],
-      [["--format", "detailed", "-o", "herb-lint.txt"], "Error: --output-file only supports the json format, but it follows --format detailed."],
-      [["--format", "jsonn", "-o", "herb-lint.json"], "Error: --output-file only supports the json format, but it follows --format jsonn."],
+      [["--format", "detailed", "-o", "herb-lint.txt"], "Error: --output-file only supports the json and junit formats, but it follows --format detailed."],
+      [["--format", "jsonn", "-o", "herb-lint.json"], "Error: --output-file only supports the json and junit formats, but it follows --format jsonn."],
       [["--format", "json", "-o", "a.json", "-o", "b.json"], "Error: --format json can only be written to one --output-file. Pass --format json again for another file."],
       [["--format", "json", "-o", "herb-lint.json", "--json", "-o", "./herb-lint.json"], "Error: --output-file ./herb-lint.json is used for more than one format."],
       [["--format", "json", "-o", '""'], `Error: --output-file needs a file path, but got "". Leave out --output-file to write to stdout.`],
@@ -2375,7 +2467,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)
@@ -2401,7 +2493,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)
@@ -2451,7 +2543,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)
@@ -2501,7 +2593,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)
@@ -2547,7 +2639,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)
@@ -2582,7 +2674,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.11.0
+          version: 0.11.1
           linter:
             enabled: true
         `)

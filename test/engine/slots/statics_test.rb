@@ -196,6 +196,34 @@ module Engine
 
         assert_snapshot_matches(evaluate_herb_source(source, { "@a" => false }), "rendered with no delivery asked for")
       end
+
+      test "wraps a branch inside an svg in a foreign root, so the client parses it as SVG" do
+        assert_evaluated_snapshot(%(<svg><% if @a %><circle r="4"/><title>t</title><% end %></svg>), { "@a" => false }, options)
+      end
+
+      test "wraps a keyed collection's item template inside an svg in a foreign root" do
+        assert_evaluated_snapshot(
+          %(<svg><g><% @items.each do |item| %><circle id="<%= item %>" r="4"/><% end %></g></svg>),
+          { "@items" => [] },
+          options
+        )
+      end
+
+      test "wraps a keyed element inside an svg in a foreign root" do
+        assert_evaluated_snapshot(%(<%# herb:slots %>\n<svg><g herb-key="<%= @id %>"><circle r="4"/><text><%= @name %></text></g></svg>), { "@id" => "a", "@name" => "Marco" }, options)
+      end
+
+      test "wraps a branch inside a math element in a foreign root" do
+        assert_evaluated_snapshot(%(<math><mrow><% if @a %><mi>x</mi><mspace/><% end %></mrow></math>), { "@a" => false }, options)
+      end
+
+      test "does not wrap a branch inside a foreignObject, which holds HTML" do
+        assert_evaluated_snapshot(%(<svg><foreignObject><% if @a %><b>x</b><% end %></foreignObject></svg>), { "@a" => false }, options)
+      end
+
+      test "does not wrap a branch inside an HTML integration point of MathML" do
+        assert_evaluated_snapshot(%(<math><mtext><% if @a %><b>x</b><% end %></mtext></math>), { "@a" => false }, options)
+      end
     end
   end
 end

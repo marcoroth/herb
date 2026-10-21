@@ -55,7 +55,7 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>, cons
   <%- when Herb::Template::PrismNodeField -%>
   if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
     pm_buffer_t pm_buffer = { 0 };
-    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, &pm_buffer);
 
     if (pm_buffer.length > 0) {
       val view = val(typed_memory_view(pm_buffer.length, (const uint8_t*) pm_buffer.value));

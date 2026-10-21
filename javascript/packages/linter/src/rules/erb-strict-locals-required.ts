@@ -16,11 +16,6 @@ interface StrictLocalsRequiredAutofixContext extends BaseAutofixContext {
   declaration: string
 }
 
-interface BodyLocals {
-  names: string[]
-  usesLocalAssigns: boolean
-}
-
 class ERBStrictLocalsRequiredVisitor extends BaseRuleVisitor {
   foundStrictLocals: boolean = false
 
@@ -29,15 +24,10 @@ class ERBStrictLocalsRequiredVisitor extends BaseRuleVisitor {
   }
 }
 
-function localsUsedInBody(document: DocumentNode): BodyLocals {
+function localsUsedInBody(document: DocumentNode): string[] {
   const program = document.prismNode
 
-  if (!program) {
-    return {
-      names: [],
-      usesLocalAssigns: false
-    }
-  }
+  if (!program) return []
 
   const collector = new RubyReferenceCollector()
 
@@ -46,15 +36,8 @@ function localsUsedInBody(document: DocumentNode): BodyLocals {
   const bound = new Set(collector.localBindings.map(binding => binding.name))
   const names: string[] = []
 
-  let usesLocalAssigns = false
-
   for (const call of collector.bareCalls) {
-    if (call.name === LOCAL_ASSIGNS) {
-      usesLocalAssigns = true
-
-      continue
-    }
-
+    if (call.name === LOCAL_ASSIGNS) continue
     if (bound.has(call.name)) continue
     if (!isProbableLocal(call.name)) continue
     if (names.includes(call.name)) continue
@@ -62,7 +45,7 @@ function localsUsedInBody(document: DocumentNode): BodyLocals {
     names.push(call.name)
   }
 
-  return { names, usesLocalAssigns }
+  return names
 }
 
 function mergeLocals(fromCallSites: StrictLocal[], fromBody: string[]): StrictLocal[] {
@@ -133,13 +116,12 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
   }
 
   private declarationFor(document: DocumentNode, context?: Partial<LintContext>): string {
-    const body = localsUsedInBody(document)
     const signature = this.signatureFor(context)
 
     return strictLocalsDeclaration({
-      locals: mergeLocals(signature?.locals ?? [], body.names),
+      locals: mergeLocals(signature?.locals ?? [], localsUsedInBody(document)),
       callSiteCount: signature?.callSiteCount ?? 0,
-      keywordRest: (signature?.keywordRest ?? true) || body.usesLocalAssigns
+      keywordRest: false
     })
   }
 

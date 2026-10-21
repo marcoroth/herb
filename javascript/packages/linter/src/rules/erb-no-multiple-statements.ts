@@ -107,6 +107,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
   private readonly scopes: StatementsScope[]
   private readonly clauses: Clause[]
   private readonly offsets: SourceOffsets
+  private lines: string[] | null = null
 
   constructor(ruleName: string, context: Partial<LintContext> | undefined, scopes: StatementsScope[], clauses: Clause[], offsets: SourceOffsets) {
     super(ruleName, context)
@@ -275,7 +276,7 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     const start = node.tag_opening?.location.start ?? node.location.start
     const end = node.tag_closing?.location.end ?? node.location.end
 
-    const lines = this.offsets.source.split("\n")
+    const lines = this.sourceLines()
     const startLine = lines[start.line - 1]
     const endLine = lines[end.line - 1]
 
@@ -287,6 +288,14 @@ class NoMultipleStatementsVisitor extends ElementStackVisitor<MultipleStatements
     if (!WHITESPACE_ONLY.test(before) || !WHITESPACE_ONLY.test(after)) return null
 
     return before
+  }
+
+  private sourceLines(): string[] {
+    if (this.lines === null) {
+      this.lines = this.offsets.source.split("\n")
+    }
+
+    return this.lines
   }
 
   private stringIndex(byteOffset: number): number {

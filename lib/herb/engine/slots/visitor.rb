@@ -1217,6 +1217,7 @@ module Herb
             @states.check_state_assignment(child)
 
             @path.push(index)
+            record_slot(child, :child) if child.is_a?(Herb::AST::RubyLiteralNode)
             visit(child)
             @path.pop
           end
@@ -1869,23 +1870,25 @@ module Herb
           outputs.fetch(0).content&.value&.strip
         end
 
-        def insert_markers(node)
+        #: (untyped, ?Symbol) -> untyped
+        def insert_markers(node, namespace = :html)
           anchored = content_anchor_index(node)
+          namespace = Markers.namespace_within(namespace, node.tag_name&.value&.downcase.to_s) if node.is_a?(Herb::AST::HTMLElementNode)
 
-          each_child_array(node) do |array|
+          each_child_array(node, namespace) do |array|
             index = 0
 
             while index < array.size
               child = array[index]
               slot_index = @standing[child]&.survivor&.index
 
-              insert_markers(child)
-              wrap_items(child, slot_index)
-              mark_branches(child, slot_index)
+              insert_markers(child, namespace)
+              wrap_items(child, slot_index, namespace)
+              mark_branches(child, slot_index, namespace)
 
               if slot_index && slot_index != anchored
                 if @slots[slot_index].type == :keyed
-                  park_keyed(slot_index, child)
+                  park_keyed(slot_index, child, namespace)
 
                   array.insert(
                     index,
@@ -1926,27 +1929,29 @@ module Herb
           annotation.index
         end
 
-        #: (untyped, Integer?) -> void
-        def mark_branches(node, slot_index)
+        #: (untyped, Integer?, ?Symbol) -> void
+        def mark_branches(node, slot_index, namespace = :html)
           return unless slot_index
           return unless @slots[slot_index].type == :conditional
 
           branch_bodies(node).each_with_index do |body, branch_index|
-            body.unshift(text_node(@markers.branch(slot_index, branch_index)))
+            marker = @markers.branch(slot_index, branch_index)
 
-            park_branch(@markers.statics_key(slot_index, branch_index), body)
+            park_branch(@markers.statics_key(slot_index, branch_index), marker, body, namespace)
+
+            body.unshift(text_node(marker))
           end
         end
 
-        #: (String, Array[untyped]) -> void
-        def park_branch(key, body)
+        #: (String, String, Array[untyped], Symbol) -> void
+        def park_branch(key, marker, body, namespace)
           statics = @statics
           return unless statics
 
           markup = Statics.new(@standing).markup(body)
           return unless markup
 
-          statics[key] = markup
+          statics[key] = "#{marker}#{@markers.foreign(markup, namespace)}"
         end
 
         #: (Herb::AST::DocumentNode) -> void
@@ -2067,8 +2072,8 @@ module Herb
           bodies
         end
 
-        #: (Herb::AST::Node, Integer?) -> void
-        def wrap_items(node, slot_index)
+        #: (Herb::AST::Node, Integer?, ?Symbol) -> void
+        def wrap_items(node, slot_index, namespace = :html)
           return unless slot_index
 
           slot = @slots[slot_index]
@@ -2081,7 +2086,7 @@ module Herb
             next unless body.is_a?(Array) && !body.empty?
 
             key = @markers.item_statics_key(slot_index)
-            parked = park_item(key, body)
+            parked = park_item(key, body, namespace)
 
             body.unshift(
               text_node(@markers.item_open_prefix(slot_index)),
@@ -2117,19 +2122,19 @@ module Herb
           segments.size > 1 ? segments : nil
         end
 
-        #: (Integer, untyped) -> void
-        def park_keyed(slot_index, element)
+        #: (Integer, untyped, Symbol) -> void
+        def park_keyed(slot_index, element, namespace)
           statics = @statics
           return unless statics
 
           markup = Statics.new(@standing).markup([element.open_tag, *element.body, element.close_tag].compact)
           return unless markup
 
-          statics[@markers.item_statics_key(slot_index)] = "#{@markers.branch(slot_index, Markers::ITEM_STATICS)}#{markup}"
+          statics[@markers.item_statics_key(slot_index)] = "#{@markers.branch(slot_index, Markers::ITEM_STATICS)}#{@markers.foreign(markup, namespace)}"
         end
 
-        #: (untyped, untyped) -> Array[untyped]?
-        def park_item(key, body)
+        #: (untyped, untyped, Symbol) -> Array[untyped]?
+        def park_item(key, body, namespace)
           statics = @statics
           return unless statics
 
@@ -2137,13 +2142,14 @@ module Herb
           markup = Statics.new(@standing).markup(body)
           return unless markup
 
-          statics[key] = [
-            @markers.branch(slot_index, Markers::ITEM_STATICS),
+          item = [
             @markers.item_open_prefix(slot_index),
             @markers.item_open_suffix,
             markup,
             @markers.item_close(slot_index)
           ].join
+
+          statics[key] = "#{@markers.branch(slot_index, Markers::ITEM_STATICS)}#{@markers.foreign(item, namespace)}"
         end
 
         def anchor_attributes(node, content_index = nil)
@@ -2178,8 +2184,8 @@ module Herb
           name
         end
 
-        #: (Herb::AST::Node) { (Array[untyped]) -> void } -> void
-        def each_child_array(node)
+        #: (Herb::AST::Node, ?Symbol) { (Array[untyped]) -> void } -> void
+        def each_child_array(node, namespace = :html)
           BRANCH_BODY_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
 
@@ -2191,7 +2197,7 @@ module Herb
             next unless node.respond_to?(property)
 
             child = node.send(property)
-            insert_markers(child) if child
+            insert_markers(child, namespace) if child
           end
         end
 

@@ -11,6 +11,7 @@ import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
 import { loadCustomRules as loadCustomRulesFromDisk } from "./loader.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
+import { isStructuredFormat } from "./cli/output-format.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 import { version } from "../package.json"
@@ -149,7 +150,7 @@ export class CLI {
     const supported = files.filter(file => config.isPathIncludedForTool(file, 'linter'))
     const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'linter'))
 
-    if (unsupported.length > 0 && formatOption !== 'json') {
+    if (unsupported.length > 0 && !isStructuredFormat(formatOption)) {
       console.error(`⚠️  Skipped ${unsupported.length} ${unsupported.length === 1 ? 'file' : 'files'} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
 
       for (const file of unsupported) {
@@ -483,7 +484,7 @@ export class CLI {
       process.exit(0)
     }
 
-    const silent = formatOption === 'json'
+    const silent = isStructuredFormat(formatOption)
     const writesReport = silent || outputs.some(output => output.path !== undefined)
     let config: Config
 
@@ -568,7 +569,7 @@ export class CLI {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
-      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+      if (files.length > 1 && !isStructuredFormat(formatOption) && !useGitHubActions) {
         console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
       }
 
@@ -626,7 +627,7 @@ export class CLI {
         logLevelLoweredBy: lowered?.flag
       })
 
-      const showTips = formatOption !== 'json' && !useGitHubActions
+      const showTips = !isStructuredFormat(formatOption) && !useGitHubActions
 
       if (!Config.exists(this.projectPath) && showTips) {
         console.log("")

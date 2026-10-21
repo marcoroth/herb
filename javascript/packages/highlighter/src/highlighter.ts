@@ -9,6 +9,7 @@ import { resolveTheme } from "./themes.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
+import type { DiagnosticRenderOptions } from "./diagnostic-renderer.js"
 import type { DiffRenderOptions } from "./diff-renderer.js"
 import type { DiffHunk } from "./diff-computer.js"
 
@@ -28,17 +29,7 @@ export interface HighlightOptions {
   suffixBuilder?: (diagnostic: Diagnostic) => string | undefined
 }
 
-export interface HighlightDiagnosticOptions {
-  contextLines?: number
-  showLineNumbers?: boolean
-  optimizeHighlighting?: boolean
-  wrapLines?: boolean
-  maxWidth?: number
-  truncateLines?: boolean
-  codeUrl?: string
-  fileUrl?: string
-  suffix?: string
-}
+export type HighlightDiagnosticOptions = DiagnosticRenderOptions
 
 export class Highlighter {
   private syntaxRenderer: SyntaxRenderer
