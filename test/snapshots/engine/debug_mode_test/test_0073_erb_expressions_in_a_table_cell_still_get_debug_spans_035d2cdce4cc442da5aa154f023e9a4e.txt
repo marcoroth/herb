@@ -1,0 +1,7 @@
+---
+source: "Engine::DebugModeTest#test_0073_erb expressions in a table cell still get debug spans"
+input: "{source: \"<table><tbody><tr><td><%= cell %></td></tr></tbody></table>\\n\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<table data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown"><tbody><tr><td><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= cell %&gt;" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="23" style="display: contents;">'.freeze; _buf << (cell).to_s; _buf << '</span></td></tr></tbody></table>
+'.freeze;
+_buf.to_s
