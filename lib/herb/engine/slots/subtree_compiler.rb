@@ -186,7 +186,7 @@ module Herb
 
           #: (*untyped) { () -> void } -> void
           def indexing(*arrays)
-            marked = arrays.select { |array| array.is_a?(Array) }
+            marked = arrays.grep(Array)
             marked.each { |array| @indexed[array] = true }
 
             yield
