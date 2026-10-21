@@ -31,8 +31,7 @@ module RuboCop
       def self.extract_ruby(processed_source)
         return unless processed_source.path&.end_with?(".erb", ".herb")
 
-        template = processed_source.raw_source
-        code = position_preserving_ruby(template)
+        code = ::Herb.extract_ruby(processed_source.raw_source)
         return [] if code.strip.empty?
 
         source = build_processed_source(code, original: processed_source)
@@ -53,20 +52,7 @@ module RuboCop
         end
       end
 
-      def self.position_preserving_ruby(template)
-        extracted = ::Herb.extract_ruby(template)
-        return extracted if extracted.length == template.length
-
-        byte_offset = 0
-        template.each_char.map do |character|
-          extracted_character = extracted.byteslice(byte_offset, character.bytesize)
-          byte_offset += character.bytesize
-
-          extracted_character == character ? character : extracted_character.each_char.first
-        end.join
-      end
-
-      private_class_method :build_processed_source, :position_preserving_ruby
+      private_class_method :build_processed_source
 
       EXTRACT_RUBY = method(:extract_ruby)
     end
