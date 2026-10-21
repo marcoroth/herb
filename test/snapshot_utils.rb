@@ -168,7 +168,7 @@ module SnapshotUtils
 
   def snapshot_changed?(content, source, options = {})
     if snapshot_file(source, options).exist?
-      previous_full_snapshot = snapshot_file(source, options).read
+      previous_full_snapshot = read_snapshot(source, options)
       current_full_snapshot = format_snapshot_with_metadata(content, source, options)
 
       if previous_full_snapshot == current_full_snapshot
@@ -207,7 +207,7 @@ module SnapshotUtils
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source, options)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source, options).dirname)
-      snapshot_file(source, options).write(format_snapshot_with_metadata(content, source, options))
+      snapshot_file(source, options).binwrite(format_snapshot_with_metadata(content, source, options))
 
       puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file(source, options)}\n"
     else
@@ -219,7 +219,7 @@ module SnapshotUtils
     assert snapshot_file(source, options).exist?,
            "Expected snapshot file to exist: \n#{snapshot_file(source, options).to_path}"
 
-    expected_full_snapshot = snapshot_file(source, options).read
+    expected_full_snapshot = read_snapshot(source, options)
     actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
 
     assert_equal expected_full_snapshot, actual_full_snapshot
@@ -228,7 +228,7 @@ module SnapshotUtils
 
     raise unless snapshot_file(source, options).exist?
 
-    expected_full_snapshot = snapshot_file(source, options).read
+    expected_full_snapshot = read_snapshot(source, options)
     actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
 
     if expected_full_snapshot != actual_full_snapshot
@@ -252,6 +252,12 @@ module SnapshotUtils
         \e[0m
       MESSAGE
     end
+  end
+
+  # Snapshots are read (and written) in binary mode, so that CRLF line endings
+  # in a snapshot are not converted to LF by text mode reads on Windows.
+  def read_snapshot(source, options = {})
+    snapshot_file(source, options).read(mode: "rb:UTF-8")
   end
 
   def snapshot_file(source, options = {})

@@ -55,6 +55,7 @@ jobs:
           - arm-linux-musl
           - x86-linux-gnu
           - x86-linux-musl
+          - x64-mingw-ucrt
 
     runs-on: ubuntu-latest
     timeout-minutes: 20
