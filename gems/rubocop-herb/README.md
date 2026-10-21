@@ -23,4 +23,14 @@ bundle exec rubocop -a app/views
 bundle exec rubocop -A app/views
 ```
 
-The plugin honors the project's RuboCop configuration, including custom cops, inherited configuration, target Ruby versions, file exclusions, and autocorrection. Cops that depend on physical Ruby file contents or layout are [excluded for template files by default](config/default.yml).
+The plugin honors the project's RuboCop configuration, including custom cops, inherited configuration, target Ruby versions, file exclusions, and autocorrection. Cops that depend on physical Ruby file contents or layout, or that misread template control flow, are [excluded for template files by default](config/default.yml).
+
+Offenses are only reported for Ruby inside ERB tags, and autocorrections that would touch markup are discarded, so `rubocop -a` and `rubocop -A` never rewrite HTML or ERB delimiters.
+
+Every `.erb` and `.herb` file is inspected, including non-HTML templates. To skip some of them, exclude them in `.rubocop.yml`:
+
+```yaml
+AllCops:
+  Exclude:
+    - "**/*.yml.erb"
+```

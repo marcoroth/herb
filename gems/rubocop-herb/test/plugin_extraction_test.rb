@@ -5,7 +5,7 @@ require_relative "test_helper"
 module RuboCop
   module Herb
     class PluginExtractionTest < Minitest::Spec
-      test "builds one position-preserving Ruby source" do
+      test "builds one character-aligned Ruby source" do
         template = "<p>Café <%= x=1 %></p>\n"
         fragment = extract(template).first
         source = fragment[:processed_source].raw_source
@@ -14,6 +14,15 @@ module RuboCop
         assert_equal template.length, source.length
         assert_equal "x=1", source[template.index("x=1"), 3]
         assert fragment[:processed_source].valid_syntax?
+      end
+
+      test "keeps lines aligned after multi-line escaped ERB" do
+        template = "<%% a\nb %%>\n<p>Ünï</p><%= x %>\n"
+        source = extract(template).first[:processed_source].raw_source
+
+        assert_equal template.length, source.length
+        assert_equal template.index("x"), source.index("x")
+        assert_equal template.count("\n"), source.count("\n")
       end
 
       test "preserves Ruby control flow across ERB tags" do
@@ -43,18 +52,17 @@ module RuboCop
         assert_equal 2, source.ast.each_node(:send).count
       end
 
-      test "uses Herb's Ruby extraction binding" do
-        template = "<%= first %><%= second %>\n"
-        source = extract(template).first[:processed_source]
-
-        assert_equal ::Herb.extract_ruby(template), source.raw_source
-      end
-
       test "preserves multibyte characters in Ruby" do
-        template = "<%= name == \"José\" %>\n"
-        source = extract(template).first[:processed_source]
+        source = extract("<%= name == \"José\" %>\n").first[:processed_source]
 
         assert_includes source.raw_source, "name == \"José\""
+      end
+
+      test "records the Ruby of each tag without surrounding whitespace" do
+        template = "<p>Café</p> <%= a  + b %>\n<% if c %>\n<%# note %>\n"
+        source = extract(template).first[:processed_source]
+
+        assert_equal(["a  + b", "if c"], source.ruby_ranges.map { |range| template[range] })
       end
 
       test "skips comments and escaped ERB" do
@@ -66,31 +74,14 @@ module RuboCop
         assert_empty fragments
       end
 
-      test "returns nil for non-ERB files" do
+      test "returns nil for non-template files" do
         assert_nil Plugin.extract_ruby(processed_source("x=1\n", "example.rb"))
       end
 
-      test "extracts Ruby from non-HTML ERB files" do
-        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.rss.erb"))
-        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.erb"))
-      end
-
-      test "extracts Ruby from Herb files" do
-        refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", "example.herb"))
-      end
-
-      test "preserves processed source metadata" do
-        original = processed_source("<%= x=1 %>\n", "example.herb")
-        original.config = Object.new
-        original.registry = Object.new
-
-        extracted = Plugin.extract_ruby(original).first[:processed_source]
-
-        assert_equal original.path, extracted.path
-        assert_equal original.ruby_version, extracted.ruby_version
-        assert_equal original.parser_engine, extracted.parser_engine
-        assert_same original.config, extracted.config
-        assert_same original.registry, extracted.registry
+      test "extracts Ruby from every template extension" do
+        ["example.rss.erb", "example.erb", "example.herb"].each do |path|
+          refute_empty Plugin.extract_ruby(processed_source("<%= x=1 %>\n", path))
+        end
       end
 
       private

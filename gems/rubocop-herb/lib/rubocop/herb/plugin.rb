@@ -15,7 +15,8 @@ module RuboCop
       end
 
       def rules(_context)
-        RuboCop::Runner.ruby_extractors.unshift(EXTRACT_RUBY)
+        extractors = RuboCop::Runner.ruby_extractors
+        extractors.unshift(EXTRACT_RUBY) unless extractors.include?(EXTRACT_RUBY)
 
         LintRoller::Rules.new(
           config_format: :rubocop,
@@ -29,30 +30,13 @@ module RuboCop
       end
 
       def self.extract_ruby(processed_source)
-        return unless processed_source.path&.end_with?(".erb", ".herb")
+        return unless TemplateSource.template?(processed_source.path)
 
-        code = ::Herb.extract_ruby(processed_source.raw_source)
-        return [] if code.strip.empty?
-
-        source = build_processed_source(code, original: processed_source)
+        source = TemplateSource.from(processed_source)
         return [] if source.valid_syntax? && !source.ast
 
         [{ offset: 0, processed_source: source }]
       end
-
-      def self.build_processed_source(code, original:)
-        ::RuboCop::ProcessedSource.new(
-          code,
-          original.ruby_version,
-          original.path,
-          parser_engine: original.parser_engine
-        ).tap do |source|
-          source.config = original.config
-          source.registry = original.registry
-        end
-      end
-
-      private_class_method :build_processed_source
 
       EXTRACT_RUBY = method(:extract_ruby)
     end

@@ -8,19 +8,22 @@ AllCops:
     - '**/*.erb'
     - '**/*.herb'
 
-# These cops depend on physical Ruby file contents or layout that is obscured
-# by the position-preserving template representation.
+# These cops depend on physical Ruby file contents or layout that is obscured by the
+# position-preserving template representation, or misread markup between ERB tags as
+# empty or missing Ruby, such as the markup inside a `do` block.
 Layout/ArgumentAlignment:
   Exclude: *template_files
 Layout/ArrayAlignment:
   Exclude: *template_files
 Layout/BlockAlignment:
   Exclude: *template_files
+Layout/CaseIndentation:
+  Exclude: *template_files
 Layout/ClosingParenthesisIndentation:
   Exclude: *template_files
 Layout/CommentIndentation:
   Exclude: *template_files
-Layout/InitialIndentation:
+Layout/ElseAlignment:
   Exclude: *template_files
 Layout/EmptyLineAfterGuardClause:
   Exclude: *template_files
@@ -46,7 +49,7 @@ Layout/IndentationConsistency:
   Exclude: *template_files
 Layout/IndentationWidth:
   Exclude: *template_files
-Layout/LeadingEmptyLine:
+Layout/InitialIndentation:
   Exclude: *template_files
 Layout/LeadingEmptyLines:
   Exclude: *template_files
@@ -76,9 +79,23 @@ Layout/TrailingEmptyLines:
   Exclude: *template_files
 Layout/TrailingWhitespace:
   Exclude: *template_files
-Lint/EmptyFile:
+Lint/DuplicateBranch:
+  Exclude: *template_files
+Lint/EmptyBlock:
   Exclude: *template_files
 Lint/EmptyConditionalBody:
+  Exclude: *template_files
+Lint/EmptyEnsure:
+  Exclude: *template_files
+Lint/EmptyFile:
+  Exclude: *template_files
+Lint/EmptyInPattern:
+  Exclude: *template_files
+Lint/EmptyWhen:
+  Exclude: *template_files
+Lint/SuppressedException:
+  Exclude: *template_files
+Lint/Void:
   Exclude: *template_files
 Metrics/BlockLength:
   Exclude: *template_files
@@ -86,15 +103,21 @@ Naming/FileName:
   Exclude: *template_files
 Rails/Presence:
   Exclude: *template_files
-Style/FrozenStringLiteralComment:
+Style/BlockDelimiters:
+  Exclude: *template_files
+Style/CombinableLoops:
   Exclude: *template_files
 Style/EmptyElse:
   Exclude: *template_files
+Style/FrozenStringLiteralComment:
+  Exclude: *template_files
 Style/IdenticalConditionalBranches:
+  Exclude: *template_files
+Style/IfUnlessModifier:
   Exclude: *template_files
 Style/IfWithSemicolon:
   Exclude: *template_files
-Style/IfUnlessModifier:
+Style/MultilineIfModifier:
   Exclude: *template_files
 Style/MultilineTernaryOperator:
   Exclude: *template_files
@@ -102,7 +125,15 @@ Style/NestedTernaryOperator:
   Exclude: *template_files
 Style/Next:
   Exclude: *template_files
+Style/RedundantCondition:
+  Exclude: *template_files
+Style/SafeNavigation:
+  Exclude: *template_files
 Style/Semicolon:
+  Exclude: *template_files
+Style/SingleLineDoEndBlock:
+  Exclude: *template_files
+Style/SoleNestedConditional:
   Exclude: *template_files
 Style/WhileUntilModifier:
   Exclude: *template_files
