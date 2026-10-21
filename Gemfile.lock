@@ -24,8 +24,8 @@ PATH
 PATH
   remote: gems/rubocop-herb
   specs:
-    rubocop-herb (0.11.0)
-      herb (= 0.11.0)
+    rubocop-herb (0.11.1)
+      herb (= 0.11.1)
       lint_roller (~> 1.1)
       rubocop (>= 1.72.1, < 2)
 
