@@ -10,7 +10,7 @@ module Parser
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
-      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      timeout_errors = result.errors.grep(Herb::Errors::TimeoutError)
       assert_empty timeout_errors
     end
 
@@ -20,7 +20,7 @@ module Parser
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
-      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      timeout_errors = result.errors.grep(Herb::Errors::TimeoutError)
       assert_empty timeout_errors
     end
 
@@ -31,7 +31,7 @@ module Parser
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
-      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      timeout_errors = result.errors.grep(Herb::Errors::TimeoutError)
       assert_empty timeout_errors
     end
 
@@ -41,7 +41,7 @@ module Parser
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
-      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      timeout_errors = result.errors.grep(Herb::Errors::TimeoutError)
       refute_empty timeout_errors
     end
   end
