@@ -33,6 +33,7 @@ import { ancestorsOf, descendantsOf } from "./tree"
 import { ITEM_STATICS, branchKey, branchOf, itemStaticsKey, keyedSlotMarker, slotOpenIndex } from "../markup/markers"
 import { adoptedInto, unwrapForeign, blankSeeds, blankSlots, interpolateParts, valuesIn, withoutMarkers, fillSlots } from "../markup/fragments"
 import { anchoredSlots, currentHTML, currentText, elementOf, htmlOf, innerRange, rangeOf as rangeOfAnchor, slotOpeners } from "../markup/anchors"
+import { keepPermanent, matchesAroundPermanent } from "../markup/permanent"
 
 import type { StateManifest } from "../state/types"
 import type { BindingEntry, TemplateManifest } from "./manifests"
@@ -467,7 +468,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return false
     }
 
-    return withoutMarkers(this.current(slot)) === withoutMarkers(value)
+    return withoutMarkers(this.current(slot)) === withoutMarkers(value) || matchesAroundPermanent(slot.anchor, value, withoutMarkers)
   }
 
   holds(slot: Slot, value: SlotValue): boolean {
@@ -498,7 +499,7 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
     const attribute = this.attributeValue(slot)
 
     if (attribute === null) {
-      return this.current(slot) === value
+      return this.current(slot) === value || matchesAroundPermanent(slot.anchor, value)
     }
 
     return attribute === value
@@ -571,12 +572,16 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
 
     this.index.forgetChildren(slot)
 
+    const range = this.rangeOf(slot)
+    const replacement = range.createContextualFragment(html)
+    const focused = keepPermanent(slot.anchor, replacement)
+
     if (slot.anchor.kind === "element") {
-      const replacement = this.rangeOf(slot).createContextualFragment(html)
       const element = slot.anchor.element
       const parent = element.parentNode
 
       element.replaceWith(replacement)
+      focused?.focus()
       this.index.forget(slot)
 
       if (!parent) {
@@ -586,9 +591,9 @@ export class Slots implements ElementObserverDelegate, JournalDelegate, Collecti
       return this.scan([...parent.childNodes], { region: slot.region, slot: slot.parent, item: slot.item })
     }
 
-    const range = this.rangeOf(slot)
-    const result = this.rewrite(range, range.createContextualFragment(html), { region: slot.region, slot, item: slot.item })
+    const result = this.rewrite(range, replacement, { region: slot.region, slot, item: slot.item })
 
+    focused?.focus()
     this.announce(slot, "value", (delegate) => delegate.valueWritten?.(slot))
 
     return result
