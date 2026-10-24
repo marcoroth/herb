@@ -129,6 +129,18 @@ Values alone cannot do everything, and the report is the difference. `applied` c
 
 A branch the server parked is built for you, so a template in client mode toggles a conditional with no round trip. That is the same `materialize` path, taken for you.
 
+## Permanent elements
+
+A widget such as a rich text editor or a select replacement rewrites its own markup when it connects. The page then never matches what the server sent, so every payload would replace the widget and lose what the user typed. Mark the element that holds the widget with `data-herb-permanent` and give it an `id`:
+
+```html
+<div id="post_body_editor" data-herb-permanent>...</div>
+```
+
+A slot that contains a permanent element still takes the payload's markup around it. The element on the page is moved into the new markup in place of the payload's element with the same `id`, and focus inside it stays where it was. If the payload has no element with that `id`, the element is removed. A slot that differs from the payload only inside its permanent elements is not written, and a payload writes nothing inside a permanent element.
+
+Put the attribute on an element that holds everything the widget adds. Markup the widget puts next to the element is part of the slot and is replaced with the rest of it. The element is moved and not rebuilt, but it leaves the document for a moment, so a custom element gets `disconnectedCallback` and `connectedCallback` when the markup around it changes.
+
 ## Setting state
 
 `apply` answers what to do with values once you have them. `state` is how a page asks for them.
