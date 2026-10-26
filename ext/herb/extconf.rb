@@ -19,7 +19,7 @@ if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
 
       Add it to your Gemfile before the herb git reference:
 
-        gem "prism", github: "ruby/prism", tag: "v1.9.0"
+        gem "prism", github: "ruby/prism", tag: "v2.0.0"
         gem "herb", github: "...", branch: "..."
 
       Then run `bundle install` again.
@@ -55,13 +55,10 @@ $VPATH << "$(srcdir)/../../src/parser"
 $VPATH << "$(srcdir)/../../src/prism"
 $VPATH << "$(srcdir)/../../src/lib"
 $VPATH << "$(srcdir)/../../src/util"
-$VPATH << prism_src_path
-$VPATH << "#{prism_src_path}/util"
 
 $INCFLAGS << " -I#{prism_include_path}"
 $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
-$INCFLAGS << " -I#{prism_src_path}/util"
 
 $CFLAGS << " -fvisibility=hidden"
 $CFLAGS << " -DHERB_EXCLUDE_PRETTYPRINT"
@@ -71,32 +68,11 @@ $CFLAGS << " -DPRISM_EXCLUDE_PACK"
 
 herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 
-prism_main_files = [
-  "diagnostic.c",
-  "encoding.c",
-  "node.c",
-  "options.c",
-  "pack.c",
-  "prettyprint.c",
-  "prism.c",
-  "regexp.c",
-  "serialize.c",
-  "static_literals.c",
-  "token_type.c"
-]
-
-prism_util_files = [
-  "pm_buffer.c",
-  "pm_char.c",
-  "pm_constant_pool.c",
-  "pm_integer.c",
-  "pm_list.c",
-  "pm_memchr.c",
-  "pm_newline_list.c",
-  "pm_string.c",
-  "pm_strncasecmp.c",
-  "pm_strpbrk.c"
-]
+prism_src_files = Dir.glob("#{prism_src_path}/*.c").map do |file|
+  wrapper = "prism_#{File.basename(file)}"
+  File.write(wrapper, "#include \"#{file}\"\n")
+  wrapper
+end
 
 core_src_files = [
   "extension.c",
@@ -106,7 +82,7 @@ core_src_files = [
   "parser_options_helpers.c"
 ]
 
-$srcs = core_src_files + herb_src_files + prism_main_files + prism_util_files
+$srcs = core_src_files + herb_src_files + prism_src_files
 
 puts "Sources to be compiled: #{$srcs.inspect}"
 

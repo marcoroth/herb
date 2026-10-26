@@ -18,6 +18,8 @@
 #include "../../include/util/util.h"
 #include "../../include/visitor.h"
 
+#include "../../include/prism/prism_helpers.h"
+
 #include <prism.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -42,7 +44,9 @@ extern char* wrap_in_stylesheet_path(const char*, size_t, const char*, hb_alloca
 extern bool stylesheet_link_tag_source_is_url(const char*, size_t);
 
 typedef struct {
-  pm_parser_t parser;
+  pm_arena_t* arena;
+  pm_parser_t* parser;
+  pm_options_t* options;
   pm_node_t* root;
   const uint8_t* prism_source;
   char* content_string;
@@ -60,46 +64,42 @@ typedef struct {
 } local_read_search_T;
 
 static void append_local_read_constant(local_read_search_T* search, pm_constant_id_t constant_id) {
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&search->scope->parser.constant_pool, constant_id);
+  const pm_constant_t* constant = pm_parser_constant(search->scope->parser, constant_id);
 
-  if (!constant || constant->length == 0) { return; }
+  if (!constant || pm_constant_length(constant) == 0) { return; }
+
+  size_t length = pm_constant_length(constant);
 
   for (size_t index = 0; index < hb_array_size(search->constants); index++) {
-    pm_constant_t* existing = hb_array_get(search->constants, index);
+    const pm_constant_t* existing = hb_array_get(search->constants, index);
 
-    if (existing && existing->length == constant->length
-        && memcmp(existing->start, constant->start, constant->length) == 0) {
+    if (existing && pm_constant_length(existing) == length
+        && memcmp(pm_constant_start(existing), pm_constant_start(constant), length) == 0) {
       return;
     }
   }
 
-  hb_array_append(search->constants, constant);
+  hb_array_append(search->constants, (void*) constant);
 }
 
-static bool search_local_variable_reads(const pm_node_t* node, void* data) {
+static pm_visit_result_t search_local_variable_reads(const pm_node_t* node, void* data) {
   local_read_search_T* search = (local_read_search_T*) data;
-  const uint8_t* base = (const uint8_t*) search->scope->buffer.value;
 
-  size_t start = (size_t) (node->location.start - base);
-  size_t end = (size_t) (node->location.end - base);
+  size_t start = node->location.start;
+  size_t end = herb_prism_location_end(node->location);
 
-  if (end <= search->from || start >= search->to) { return false; }
+  if (end <= search->from || start >= search->to) { return PM_VISIT_SKIP; }
 
   if (PM_NODE_TYPE(node) == PM_LOCAL_VARIABLE_READ_NODE && start >= search->from && end <= search->to) {
     append_local_read_constant(search, ((pm_local_variable_read_node_t*) node)->name);
   }
 
-  return true;
+  return PM_VISIT_DESCEND;
 }
 
-static bool build_scope_options_from_context(
-  analyze_ruby_context_T* context,
-  pm_options_t* options,
-  size_t from,
-  size_t to
-) {
-  if (!context || !context->tag_helper_scope || !context->tag_helper_scope->root) { return false; }
-  if (to <= from) { return false; }
+static pm_options_t* build_scope_options_from_context(analyze_ruby_context_T* context, size_t from, size_t to) {
+  if (!context || !context->tag_helper_scope || !context->tag_helper_scope->root) { return NULL; }
+  if (to <= from) { return NULL; }
 
   local_read_search_T search = { .scope = context->tag_helper_scope,
                                  .constants = hb_array_init(4, context->allocator),
@@ -109,27 +109,33 @@ static bool build_scope_options_from_context(
   pm_visit_node(context->tag_helper_scope->root, search_local_variable_reads, &search);
 
   size_t locals_count = hb_array_size(search.constants);
-  bool built = false;
+  pm_options_t* options = NULL;
 
-  if (locals_count > 0 && pm_options_scopes_init(options, 1)) {
-    pm_options_scope_t* scope = &options->scopes[0];
+  if (locals_count > 0) {
+    options = pm_options_new();
 
-    if (pm_options_scope_init(scope, locals_count)) {
+    if (pm_options_scopes_init(options, 1)) {
+      pm_options_scope_t* scope = pm_options_scope_mut(options, 0);
+      pm_options_scope_init(scope, locals_count);
+
       for (size_t index = 0; index < locals_count; index++) {
-        pm_constant_t* constant = hb_array_get(search.constants, index);
+        const pm_constant_t* constant = hb_array_get(search.constants, index);
 
-        pm_string_constant_init(&scope->locals[index], (const char*) constant->start, constant->length);
+        pm_string_init(
+          pm_options_scope_local_mut(scope, index),
+          pm_constant_start(constant),
+          pm_constant_length(constant)
+        );
       }
-
-      built = true;
     } else {
       pm_options_free(options);
+      options = NULL;
     }
   }
 
   hb_array_free(&search.constants);
 
-  return built;
+  return options;
 }
 
 static bool symbol_node_equals(pm_node_t* node, const char* name) {
@@ -195,22 +201,18 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
 
   size_t content_length = strlen(parse_context->content_string);
 
-  pm_options_t options = { 0 };
-  bool has_scope_options =
-    build_scope_options_from_context(context, &options, erb_content_offset, erb_content_offset + content_length);
+  parse_context->options =
+    build_scope_options_from_context(context, erb_content_offset, erb_content_offset + content_length);
 
-  pm_parser_init(
-    &parse_context->parser,
-    parse_context->prism_source,
-    content_length,
-    has_scope_options ? &options : NULL
-  );
-  parse_context->root = pm_parse(&parse_context->parser);
-
-  if (has_scope_options) { pm_options_free(&options); }
+  parse_context->arena = pm_arena_new();
+  parse_context->parser =
+    pm_parser_new(parse_context->arena, parse_context->prism_source, content_length, parse_context->options);
+  parse_context->root = pm_parse(parse_context->parser);
 
   if (!parse_context->root) {
-    pm_parser_free(&parse_context->parser);
+    pm_parser_free(parse_context->parser);
+    pm_arena_free(parse_context->arena);
+    if (parse_context->options) { pm_options_free(parse_context->options); }
     hb_allocator_dealloc(allocator, parse_context->content_string);
     hb_allocator_dealloc(allocator, parse_context);
     return NULL;
@@ -220,7 +222,7 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
 
   tag_helper_search_data_T search = { .tag_helper_node = NULL,
                                       .source = parse_context->prism_source,
-                                      .parser = &parse_context->parser,
+                                      .parser = parse_context->parser,
                                       .info = parse_context->info,
                                       .found = false };
   pm_visit_node(parse_context->root, search_tag_helper_node, &search);
@@ -228,8 +230,9 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
   if (!search.found
       || asset_tag_resolves_at_render_time(parse_context->info->call_node, search.matched_handler->name)) {
     tag_helper_info_free(&parse_context->info);
-    pm_node_destroy(&parse_context->parser, parse_context->root);
-    pm_parser_free(&parse_context->parser);
+    pm_parser_free(parse_context->parser);
+    pm_arena_free(parse_context->arena);
+    if (parse_context->options) { pm_options_free(parse_context->options); }
     hb_allocator_dealloc(allocator, parse_context->content_string);
     hb_allocator_dealloc(allocator, parse_context);
     return NULL;
@@ -245,8 +248,9 @@ static void free_tag_helper_parse_context(tag_helper_parse_context_T* parse_cont
   hb_allocator_T* allocator = parse_context->info ? parse_context->info->allocator : NULL;
 
   tag_helper_info_free(&parse_context->info);
-  pm_node_destroy(&parse_context->parser, parse_context->root);
-  pm_parser_free(&parse_context->parser);
+  pm_parser_free(parse_context->parser);
+  pm_arena_free(parse_context->arena);
+  if (parse_context->options) { pm_options_free(parse_context->options); }
 
   if (allocator) {
     hb_allocator_dealloc(allocator, parse_context->content_string);
@@ -254,7 +258,7 @@ static void free_tag_helper_parse_context(tag_helper_parse_context_T* parse_cont
   }
 }
 
-bool search_tag_helper_node(const pm_node_t* node, void* data) {
+pm_visit_result_t search_tag_helper_node(const pm_node_t* node, void* data) {
   tag_helper_search_data_T* search_data = (tag_helper_search_data_T*) data;
 
   if (node->type == PM_CALL_NODE) {
@@ -280,16 +284,16 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
           search_data->info->has_block = handlers[i]->supports_block();
         }
 
-        return false;
+        return PM_VISIT_SKIP;
       }
     }
 
-    return false;
+    return PM_VISIT_SKIP;
   }
 
   pm_visit_child_nodes(node, search_tag_helper_node, search_data);
 
-  return search_data->found;
+  return search_data->found ? PM_VISIT_DESCEND : PM_VISIT_SKIP;
 }
 
 position_T byte_offset_to_position(const char* source, size_t offset) {
@@ -321,9 +325,11 @@ position_T prism_location_to_position_with_offset(
 ) {
   position_T default_position = { .line = 1, .column = 1 };
 
-  if (!pm_location || !pm_location->start || !original_source || !erb_content_source) { return default_position; }
+  if (!pm_location || !herb_prism_location_assigned(*pm_location) || !original_source || !erb_content_source) {
+    return default_position;
+  }
 
-  size_t offset_in_erb = (size_t) (pm_location->start - erb_content_source);
+  size_t offset_in_erb = pm_location->start;
   size_t total_offset = erb_content_offset + offset_in_erb;
 
   if (strnlen(original_source, total_offset) < total_offset) {
@@ -375,7 +381,7 @@ static void prism_node_location_to_positions(
     parse_context->prism_source
   );
 
-  pm_location_t end_location = { .start = location->end, .end = location->end };
+  pm_location_t end_location = { .start = herb_prism_location_end(*location), .length = 0 };
   *out_end = prism_location_to_position_with_offset(
     &end_location,
     parse_context->original_source,
@@ -394,7 +400,7 @@ static void calculate_tag_name_positions(
   *out_start = default_start;
   *out_end = default_end;
 
-  if (parse_context->info->call_node && parse_context->info->call_node->message_loc.start) {
+  if (parse_context->info->call_node && herb_prism_location_assigned(parse_context->info->call_node->message_loc)) {
     prism_node_location_to_positions(&parse_context->info->call_node->message_loc, parse_context, out_start, out_end);
   }
 }
@@ -405,6 +411,7 @@ static const char* IMAGE_TAG_PATH_OPTIONS[] = { "skip_pipeline", NULL };
 
 static char* extract_path_options_from_keyword_hash(
   pm_call_node_t* call_node,
+  const uint8_t* source,
   const char** option_names,
   hb_allocator_T* allocator
 ) {
@@ -449,12 +456,18 @@ static char* extract_path_options_from_keyword_hash(
     if (!first) { hb_buffer_append(&buffer, ", "); }
     first = false;
 
-    size_t key_source_length = assoc->key->location.end - assoc->key->location.start;
-    hb_buffer_append_with_length(&buffer, (const char*) assoc->key->location.start, key_source_length);
+    hb_buffer_append_with_length(
+      &buffer,
+      (const char*) (source + assoc->key->location.start),
+      assoc->key->location.length
+    );
     hb_buffer_append(&buffer, " ");
 
-    size_t value_source_length = assoc->value->location.end - assoc->value->location.start;
-    hb_buffer_append_with_length(&buffer, (const char*) assoc->value->location.start, value_source_length);
+    hb_buffer_append_with_length(
+      &buffer,
+      (const char*) (source + assoc->value->location.start),
+      assoc->value->location.length
+    );
   }
 
   if (first) {
@@ -512,8 +525,11 @@ static hb_array_T* prepend_stylesheet_link_tag_attributes(
     size_t length = pm_string_length(&string_node->unescaped);
     source_value = hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   } else {
-    size_t length = source_argument->location.end - source_argument->location.start;
-    source_value = hb_allocator_strndup(allocator, (const char*) source_argument->location.start, length);
+    source_value = hb_allocator_strndup(
+      allocator,
+      (const char*) (parse_context->prism_source + source_argument->location.start),
+      source_argument->location.length
+    );
   }
 
   if (!source_value) { return attributes; }
@@ -523,7 +539,7 @@ static hb_array_T* prepend_stylesheet_link_tag_attributes(
 
   size_t source_length = strlen(source_value);
   bool is_url = stylesheet_link_tag_source_is_url(source_value, source_length);
-  bool source_is_path_helper = is_route_helper_node(source_argument, &parse_context->parser);
+  bool source_is_path_helper = is_route_helper_node(source_argument, parse_context->parser);
 
   char* href_value = source_value;
 
@@ -603,6 +619,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   if (attributes && handler->name && strcmp(handler->name, "javascript_include_tag") == 0) {
     path_options = extract_path_options_from_keyword_hash(
       parse_context->info->call_node,
+      parse_context->prism_source,
       JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS,
       allocator
     );
@@ -616,6 +633,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   if (attributes && handler->name && strcmp(handler->name, "stylesheet_link_tag") == 0) {
     path_options = extract_path_options_from_keyword_hash(
       parse_context->info->call_node,
+      parse_context->prism_source,
       STYLESHEET_LINK_TAG_PATH_OPTIONS,
       allocator
     );
@@ -627,8 +645,12 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   }
 
   if (attributes && handler->name && strcmp(handler->name, "image_tag") == 0) {
-    path_options =
-      extract_path_options_from_keyword_hash(parse_context->info->call_node, IMAGE_TAG_PATH_OPTIONS, allocator);
+    path_options = extract_path_options_from_keyword_hash(
+      parse_context->info->call_node,
+      parse_context->prism_source,
+      IMAGE_TAG_PATH_OPTIONS,
+      allocator
+    );
     discard_attribute_by_name(attributes, "skip-pipeline", allocator);
 
     AST_NODE_T* size_node = remove_attribute_by_name(attributes, "size");
@@ -722,7 +744,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   bool content_is_ruby_expression = false;
 
   if (parse_context->info->call_node && handler->extract_content) {
-    helper_content = handler->extract_content(parse_context->info->call_node, &parse_context->parser, allocator);
+    helper_content = handler->extract_content(parse_context->info->call_node, parse_context->parser, allocator);
 
     if (helper_content) {
       pm_call_node_t* call = parse_context->info->call_node;
@@ -751,8 +773,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
-  if (detect_turbo_frame_tag(parse_context->info->call_node, &parse_context->parser)) {
-    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, &parse_context->parser, allocator);
+  if (detect_turbo_frame_tag(parse_context->info->call_node, parse_context->parser)) {
+    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, parse_context->parser, allocator);
 
     if (id_value) {
       if (!attributes) { attributes = hb_array_init(4, allocator); }
@@ -780,10 +802,10 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
-  if (detect_javascript_include_tag(parse_context->info->call_node, &parse_context->parser)
+  if (detect_javascript_include_tag(parse_context->info->call_node, parse_context->parser)
       && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
     char* source_value =
-      extract_javascript_include_tag_src(parse_context->info->call_node, &parse_context->parser, allocator);
+      extract_javascript_include_tag_src(parse_context->info->call_node, parse_context->parser, allocator);
 
     if (source_value) {
       if (!attributes) { attributes = hb_array_init(4, allocator); }
@@ -821,9 +843,9 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
-  if (detect_image_tag(parse_context->info->call_node, &parse_context->parser)
+  if (detect_image_tag(parse_context->info->call_node, parse_context->parser)
       && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
-    char* source_value = extract_image_tag_src(parse_context->info->call_node, &parse_context->parser, allocator);
+    char* source_value = extract_image_tag_src(parse_context->info->call_node, parse_context->parser, allocator);
 
     if (source_value) {
       if (!attributes) { attributes = hb_array_init(4, allocator); }
@@ -832,7 +854,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       position_T source_start, source_end;
       prism_node_location_to_positions(&first_argument->location, parse_context, &source_start, &source_end);
       bool source_is_string = (first_argument->type == PM_STRING_NODE);
-      bool source_is_path_helper = is_route_helper_node(first_argument, &parse_context->parser);
+      bool source_is_path_helper = is_route_helper_node(first_argument, parse_context->parser);
 
       size_t source_length = strlen(source_value);
       bool is_url = image_tag_source_is_url(source_value, source_length);
@@ -865,7 +887,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
-  if (detect_stylesheet_link_tag(parse_context->info->call_node, &parse_context->parser)
+  if (detect_stylesheet_link_tag(parse_context->info->call_node, parse_context->parser)
       && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
     pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
 
@@ -1056,8 +1078,11 @@ static AST_NODE_T* create_javascript_include_tag_element(
     size_t length = pm_string_length(&string_node->unescaped);
     source_value = hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   } else {
-    size_t source_length = source_argument->location.end - source_argument->location.start;
-    source_value = hb_allocator_strndup(allocator, (const char*) source_argument->location.start, source_length);
+    source_value = hb_allocator_strndup(
+      allocator,
+      (const char*) (parse_context->prism_source + source_argument->location.start),
+      source_argument->location.length
+    );
   }
 
   position_T source_start, source_end;
@@ -1164,8 +1189,12 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
-  char* path_options =
-    extract_path_options_from_keyword_hash(call_node, JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS, allocator);
+  char* path_options = extract_path_options_from_keyword_hash(
+    call_node,
+    parse_context->prism_source,
+    JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS,
+    allocator
+  );
   hb_array_T* elements = hb_array_init(source_count * 2, allocator);
 
   for (size_t i = 0; i < source_count; i++) {
@@ -1264,7 +1293,12 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
-  char* path_options = extract_path_options_from_keyword_hash(call_node, STYLESHEET_LINK_TAG_PATH_OPTIONS, allocator);
+  char* path_options = extract_path_options_from_keyword_hash(
+    call_node,
+    parse_context->prism_source,
+    STYLESHEET_LINK_TAG_PATH_OPTIONS,
+    allocator
+  );
   hb_array_T* elements = hb_array_init(source_count * 2, allocator);
 
   for (size_t i = 0; i < source_count; i++) {
@@ -1371,16 +1405,17 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
     resolve_nonce_attribute(attributes, allocator);
   }
 
-  if (detect_link_to(parse_context->info->call_node, &parse_context->parser)
-      && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
+  if (detect_link_to(parse_context->info->call_node, parse_context->parser) && parse_context->info->call_node->arguments
+      && parse_context->info->call_node->arguments->arguments.size >= 1) {
     pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
-    size_t source_length = first_argument->location.end - first_argument->location.start;
+    size_t source_length = first_argument->location.length;
+    const char* first_argument_source = (const char*) (parse_context->prism_source + first_argument->location.start);
     char* href = NULL;
 
-    if (first_argument->type != PM_STRING_NODE && !is_route_helper_node(first_argument, &parse_context->parser)) {
-      href = wrap_in_url_for((const char*) first_argument->location.start, source_length, allocator);
+    if (first_argument->type != PM_STRING_NODE && !is_route_helper_node(first_argument, parse_context->parser)) {
+      href = wrap_in_url_for(first_argument_source, source_length, allocator);
     } else {
-      href = hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+      href = hb_allocator_strndup(allocator, first_argument_source, source_length);
     }
 
     if (href) {
@@ -1406,8 +1441,8 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
     }
   }
 
-  if (detect_turbo_frame_tag(parse_context->info->call_node, &parse_context->parser)) {
-    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, &parse_context->parser, allocator);
+  if (detect_turbo_frame_tag(parse_context->info->call_node, parse_context->parser)) {
+    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, parse_context->parser, allocator);
 
     if (id_value) {
       if (!attributes) { attributes = hb_array_init(4, allocator); }
@@ -1575,7 +1610,7 @@ static AST_NODE_T* transform_link_to_helper(
   hb_allocator_T* allocator = context->allocator;
   tag_helper_info_T* info = parse_context->info;
 
-  char* href = extract_link_to_href(info->call_node, &parse_context->parser, allocator);
+  char* href = extract_link_to_href(info->call_node, parse_context->parser, allocator);
 
   hb_array_T* attributes = NULL;
   pm_arguments_node_t* link_arguments = info->call_node->arguments;
@@ -1603,8 +1638,12 @@ static AST_NODE_T* transform_link_to_helper(
 
     if (second_arg->type != PM_KEYWORD_HASH_NODE && second_arg->type != PM_HASH_NODE
         && second_arg->type != PM_STRING_NODE && second_arg->type != PM_SYMBOL_NODE) {
-      size_t source_length = second_arg->location.end - second_arg->location.start;
-      char* content = hb_allocator_strndup(allocator, (const char*) second_arg->location.start, source_length);
+      size_t source_length = second_arg->location.length;
+      char* content = hb_allocator_strndup(
+        allocator,
+        (const char*) (parse_context->prism_source + second_arg->location.start),
+        source_length
+      );
 
       if (content) {
         hb_buffer_T wrapped;

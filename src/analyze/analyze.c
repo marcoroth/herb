@@ -1189,14 +1189,18 @@ static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocato
     return NULL;
   }
 
-  pm_options_partial_script_set(&scope->options, true);
-  pm_parser_init(&scope->parser, (const uint8_t*) scope->buffer.value, scope->buffer.length, &scope->options);
+  scope->arena = pm_arena_new();
+  scope->options = pm_options_new();
+  pm_options_partial_script_set(scope->options, true);
+  scope->parser =
+    pm_parser_new(scope->arena, (const uint8_t*) scope->buffer.value, scope->buffer.length, scope->options);
 
-  scope->root = pm_parse(&scope->parser);
+  scope->root = pm_parse(scope->parser);
 
   if (!scope->root) {
-    pm_parser_free(&scope->parser);
-    pm_options_free(&scope->options);
+    pm_parser_free(scope->parser);
+    pm_arena_free(scope->arena);
+    pm_options_free(scope->options);
     hb_buffer_free(&scope->buffer);
     hb_allocator_dealloc(allocator, scope);
 
@@ -1209,9 +1213,9 @@ static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocato
 static void tag_helper_scope_free(tag_helper_scope_T* scope, hb_allocator_T* allocator) {
   if (!scope) { return; }
 
-  pm_node_destroy(&scope->parser, scope->root);
-  pm_parser_free(&scope->parser);
-  pm_options_free(&scope->options);
+  pm_parser_free(scope->parser);
+  pm_arena_free(scope->arena);
+  pm_options_free(scope->options);
   hb_buffer_free(&scope->buffer);
   hb_allocator_dealloc(allocator, scope);
 }

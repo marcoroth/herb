@@ -57,7 +57,12 @@ options: {prism_program: true}
                         │       ├── arguments: ∅
                         │       ├── closing_loc: ∅
                         │       ├── equal_loc: ∅
-                        │       └── block: ∅
+                        │       ├── block: ∅
+                        │       ├── call_operator: ∅
+                        │       ├── message: "admin?"
+                        │       ├── opening: ∅
+                        │       ├── closing: ∅
+                        │       └── equal: ∅
                         ├── then_keyword_loc: ∅
                         ├── statements:
                         │   └── @ StatementsNode (location: (1:19)-(1:26))
@@ -66,7 +71,10 @@ options: {prism_program: true}
                         │               ├── opening_loc: (1:19)-(1:20)
                         │               ├── content_loc: (1:20)-(1:25)
                         │               ├── closing_loc: (1:25)-(1:26)
-                        │               └── unescaped: "admin"
+                        │               ├── unescaped: "admin"
+                        │               ├── opening: "\""
+                        │               ├── content: "admin"
+                        │               └── closing: "\""
                         ├── subsequent:
                         │   └── @ ElseNode (location: (1:32)-(1:58))
                         │       ├── else_keyword_loc: (1:32)-(1:36)
@@ -77,6 +85,14 @@ options: {prism_program: true}
                         │       │               ├── opening_loc: (1:43)-(1:44)
                         │       │               ├── content_loc: (1:44)-(1:48)
                         │       │               ├── closing_loc: (1:48)-(1:49)
-                        │       │               └── unescaped: "user"
-                        │       └── end_keyword_loc: (1:55)-(1:58)
-                        └── end_keyword_loc: (1:55)-(1:58)
+                        │       │               ├── unescaped: "user"
+                        │       │               ├── opening: "\""
+                        │       │               ├── content: "user"
+                        │       │               └── closing: "\""
+                        │       ├── end_keyword_loc: (1:55)-(1:58)
+                        │       ├── else_keyword: "else"
+                        │       └── end_keyword: "end"
+                        ├── end_keyword_loc: (1:55)-(1:58)
+                        ├── if_keyword: "if"
+                        ├── then_keyword: ∅
+                        └── end_keyword: "end"

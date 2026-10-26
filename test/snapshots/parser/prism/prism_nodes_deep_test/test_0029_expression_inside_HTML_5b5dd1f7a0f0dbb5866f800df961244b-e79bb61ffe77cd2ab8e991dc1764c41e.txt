@@ -41,7 +41,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               │               ├── arguments: ∅
         │       │               │               ├── closing_loc: ∅
         │       │               │               ├── equal_loc: ∅
-        │       │               │               └── block: ∅
+        │       │               │               ├── block: ∅
+        │       │               │               ├── call_operator: ∅
+        │       │               │               ├── message: "css_class"
+        │       │               │               ├── opening: ∅
+        │       │               │               ├── closing: ∅
+        │       │               │               └── equal: ∅
         │       │               │
         │       │               ├── close_quote: """ (location: (1:28)-(1:29))
         │       │               └── quoted: true
@@ -67,7 +72,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "content"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:44)-(1:50))

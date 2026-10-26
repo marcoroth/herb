@@ -42,4 +42,9 @@ options: {erb_openers: ["graphql"], prism_program: true}
                         ├── arguments: ∅
                         ├── closing_loc: ∅
                         ├── equal_loc: ∅
-                        └── block: ∅
+                        ├── block: ∅
+                        ├── call_operator: ∅
+                        ├── message: "name"
+                        ├── opening: ∅
+                        ├── closing: ∅
+                        └── equal: ∅

@@ -9,6 +9,7 @@
 #include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
+#include <prism/internal/diagnostic.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -52,13 +53,14 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
   char* content = hb_string_to_c_string_using_malloc(content_node->content->value);
   if (!content) { return; }
 
-  pm_parser_t parser;
-  pm_options_t options = { 0, .partial_script = true };
-  pm_parser_init(&parser, (const uint8_t*) content, strlen(content), &options);
+  pm_arena_t* arena = pm_arena_new();
+  pm_options_t* options = pm_options_new();
+  pm_options_partial_script_set(options, true);
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) content, strlen(content), options);
 
-  pm_node_t* root = pm_parse(&parser);
+  pm_parse(parser);
 
-  const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head;
+  const pm_diagnostic_t* error = pm_parser_errors_first(parser);
 
   if (error != NULL) {
     RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error_with_positions(
@@ -71,9 +73,9 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
     hb_array_append_lazy(&erb_node->errors, parse_error, allocator);
   }
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
-  pm_options_free(&options);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
+  pm_options_free(options);
   free(content);
 }
 
@@ -95,19 +97,20 @@ void herb_analyze_parse_errors(
   bool strict_locals_enabled = parser_options && parser_options->strict_locals;
   bool has_anonymous_keyword_rest = strict_locals_enabled && document_has_anonymous_keyword_rest(document);
 
-  pm_parser_t parser;
-  pm_options_t options = { 0, .partial_script = true };
-  pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), &options);
+  pm_arena_t* arena = pm_arena_new();
+  pm_options_t* options = pm_options_new();
+  pm_options_partial_script_set(options, true);
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), options);
 
-  pm_node_t* root = pm_parse(&parser);
+  pm_parse(parser);
 
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
     if (should_skip_forwarding_error(error, strict_locals_enabled, has_anonymous_keyword_rest)) { continue; }
 
-    size_t error_offset = (size_t) (error->location.start - parser.start);
+    size_t error_offset = error->location.start;
 
-    if (strstr(error->message, "unexpected ';'") != NULL) {
+    if (strstr(pm_diagnostic_message(error), "unexpected ';'") != NULL) {
       if (error_offset < strlen(extracted_ruby) && extracted_ruby[error_offset] == ';') {
         if (error_offset >= strlen(source) || source[error_offset] != ';') {
           AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
@@ -120,12 +123,12 @@ void herb_analyze_parse_errors(
     }
 
     RUBY_PARSE_ERROR_T* parse_error =
-      ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser, allocator);
+      ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, parser, allocator);
     hb_array_append_lazy(&document->base.errors, parse_error, allocator);
   }
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
-  pm_options_free(&options);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
+  pm_options_free(options);
   hb_allocator_dealloc(allocator, extracted_ruby);
 }

@@ -58,6 +58,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
 AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value(
   const char* name_string,
   pm_interpolated_string_node_t* interpolated_node,
+  const uint8_t* source,
   position_T start_position,
   position_T end_position,
   hb_allocator_T* allocator

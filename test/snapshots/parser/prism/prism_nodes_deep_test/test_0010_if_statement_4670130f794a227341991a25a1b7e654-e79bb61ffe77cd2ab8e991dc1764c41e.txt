@@ -23,9 +23,15 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               ├── opening_loc: (1:17)-(1:18)
         │       │               ├── content_loc: (1:18)-(1:21)
         │       │               ├── closing_loc: (1:21)-(1:22)
-        │       │               └── unescaped: "yes"
+        │       │               ├── unescaped: "yes"
+        │       │               ├── opening: "\""
+        │       │               ├── content: "yes"
+        │       │               └── closing: "\""
         │       ├── subsequent: ∅
-        │       └── end_keyword_loc: (1:28)-(1:31)
+        │       ├── end_keyword_loc: (1:28)-(1:31)
+        │       ├── if_keyword: "if"
+        │       ├── then_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:13)-(1:25))
         │       ├── tag_opening: "<%=" (location: (1:13)-(1:16))
@@ -38,7 +44,10 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── opening_loc: (1:17)-(1:18)
         │               ├── content_loc: (1:18)-(1:21)
         │               ├── closing_loc: (1:21)-(1:22)
-        │               └── unescaped: "yes"
+        │               ├── unescaped: "yes"
+        │               ├── opening: "\""
+        │               ├── content: "yes"
+        │               └── closing: "\""
         │
         ├── subsequent: ∅
         └── end_node:

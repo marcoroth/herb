@@ -2,7 +2,7 @@ use herb::{extract_html, extract_ruby, version};
 
 #[test]
 fn test_version_functions() {
-  assert_eq!(version(), "herb rust v0.11.1, libprism v1.9.0, libherb v0.11.1 (Rust FFI)");
+  assert_eq!(version(), "herb rust v0.11.1, libprism v2.0.0, libherb v0.11.1 (Rust FFI)");
 }
 
 #[test]

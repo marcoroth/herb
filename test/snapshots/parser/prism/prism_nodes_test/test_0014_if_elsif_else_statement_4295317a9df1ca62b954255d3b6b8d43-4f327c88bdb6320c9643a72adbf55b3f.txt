@@ -23,7 +23,12 @@ options: {prism_nodes: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "a?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── then_keyword_loc: ∅
         │       ├── statements: ∅
         │       ├── subsequent:
@@ -39,16 +44,29 @@ options: {prism_nodes: true}
         │       │       │       ├── arguments: ∅
         │       │       │       ├── closing_loc: ∅
         │       │       │       ├── equal_loc: ∅
-        │       │       │       └── block: ∅
+        │       │       │       ├── block: ∅
+        │       │       │       ├── call_operator: ∅
+        │       │       │       ├── message: "b?"
+        │       │       │       ├── opening: ∅
+        │       │       │       ├── closing: ∅
+        │       │       │       └── equal: ∅
         │       │       ├── then_keyword_loc: ∅
         │       │       ├── statements: ∅
         │       │       ├── subsequent:
         │       │       │   └── @ ElseNode (location: (1:30)-(1:44))
         │       │       │       ├── else_keyword_loc: (1:30)-(1:34)
         │       │       │       ├── statements: ∅
-        │       │       │       └── end_keyword_loc: (1:41)-(1:44)
-        │       │       └── end_keyword_loc: (1:41)-(1:44)
-        │       └── end_keyword_loc: (1:41)-(1:44)
+        │       │       │       ├── end_keyword_loc: (1:41)-(1:44)
+        │       │       │       ├── else_keyword: "else"
+        │       │       │       └── end_keyword: "end"
+        │       │       ├── end_keyword_loc: (1:41)-(1:44)
+        │       │       ├── if_keyword: "elsif"
+        │       │       ├── then_keyword: ∅
+        │       │       └── end_keyword: "end"
+        │       ├── end_keyword_loc: (1:41)-(1:44)
+        │       ├── if_keyword: "if"
+        │       ├── then_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ HTMLTextNode (location: (1:11)-(1:12))
         │       └── content: "A"

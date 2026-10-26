@@ -2,51 +2,51 @@
 
 #include <prism.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static bool herb_prism_visit(const pm_node_t* node, void* data) {
+static pm_visit_result_t herb_prism_visit(const pm_node_t* node, void* data) {
   const size_t* indent = (size_t*) data;
 
   for (size_t i = 0; i < *indent * 2; i++) {
     putc(' ', stdout);
   }
 
-  printf("%s\n", pm_node_type_to_str(node->type));
+  printf("%s\n", pm_node_type(node->type));
 
   size_t next_indent = *indent + 1;
   size_t* next_data = &next_indent;
   pm_visit_child_nodes(node, herb_prism_visit, next_data);
 
-  return false;
+  return PM_VISIT_SKIP;
 }
 
 void herb_parse_ruby_to_stdout(char* source) {
   size_t length = strlen(source);
 
-  pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) source, length, NULL);
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) source, length, NULL);
 
-  pm_buffer_t buffer;
-  pm_buffer_init(&buffer);
+  pm_buffer_t* buffer = pm_buffer_new();
 
   size_t indent = 0;
-  pm_node_t* root = pm_parse(&parser);
+  pm_node_t* root = pm_parse(parser);
   size_t* data = &indent;
 
-  const char* root_type = pm_node_type_to_str(root->type);
+  const char* root_type = pm_node_type(root->type);
   printf("Root Type: %s\n", root_type);
 
   pm_visit_node(root, herb_prism_visit, data);
 
 #ifndef PRISM_EXCLUDE_PRETTYPRINT
-  pm_prettyprint(&buffer, &parser, root);
-  printf("%s\n", buffer.value);
+  pm_prettyprint(buffer, parser, root);
+  printf("%.*s\n", (int) pm_buffer_length(buffer), pm_buffer_value(buffer));
 #endif
 
-  pm_buffer_free(&buffer);
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
+  pm_buffer_free(buffer);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
 }
 
 static const char* const RUBY_FRAGMENT_PREFIXES[] = {
@@ -56,14 +56,14 @@ static const char* const RUBY_FRAGMENT_PREFIXES[] = {
 static const char* const RUBY_FRAGMENT_SUFFIXES[] = { "", "\nend", "", "\nend", "\nend", "\nend" };
 
 static bool ruby_source_parses(const char* source, size_t length) {
-  pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) source, length, NULL);
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) source, length, NULL);
 
-  pm_node_t* root = pm_parse(&parser);
-  bool parses = (parser.error_list.size == 0);
+  pm_parse(parser);
+  bool parses = (pm_parser_errors_size(parser) == 0);
 
-  if (root != NULL) { pm_node_destroy(&parser, root); }
-  pm_parser_free(&parser);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
 
   return parses;
 }

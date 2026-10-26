@@ -92,17 +92,20 @@ pub unsafe fn serialize(prism_node: herb_prism_node_T) -> Option<Vec<u8>> {
     return None;
   }
 
-  let mut buffer: pm_buffer_t = std::mem::zeroed();
+  let buffer = pm_buffer_new();
 
-  herb_prism_node_serialize(prism_node, &mut buffer);
+  herb_prism_node_serialize(prism_node, buffer);
 
-  let output = if buffer.length > 0 && !buffer.value.is_null() {
-    Some(std::slice::from_raw_parts(buffer.value as *const u8, buffer.length).to_vec())
+  let value = pm_buffer_value(buffer);
+  let length = pm_buffer_length(buffer);
+
+  let output = if length > 0 && !value.is_null() {
+    Some(std::slice::from_raw_parts(value as *const u8, length).to_vec())
   } else {
     None
   };
 
-  pm_buffer_free(&mut buffer);
+  pm_buffer_free(buffer);
 
   output
 }

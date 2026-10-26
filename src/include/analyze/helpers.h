@@ -37,13 +37,13 @@ bool control_role_split_offset(const analyzed_ruby_T* analyzed, uint32_t* offset
 
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message);
 
-bool is_do_block(pm_location_t opening_location);
-bool is_brace_block(pm_location_t opening_location);
-bool is_closing_brace(pm_location_t location);
-bool has_valid_block_closing(pm_location_t opening_loc, pm_location_t closing_loc);
+bool is_do_block(const uint8_t* source, pm_location_t opening_location);
+bool is_brace_block(const uint8_t* source, pm_location_t opening_location);
+bool is_closing_brace(const uint8_t* source, pm_location_t location);
+bool has_valid_block_closing(const uint8_t* source, pm_location_t opening_loc, pm_location_t closing_loc);
 
-bool search_control_flow_nodes(const pm_node_t* node, void* data);
-bool search_unclosed_control_flows(const pm_node_t* node, void* data);
+pm_visit_result_t search_control_flow_nodes(const pm_node_t* node, void* data);
+pm_visit_result_t search_unclosed_control_flows(const pm_node_t* node, void* data);
 void search_unexpected_keyword_errors(analyzed_ruby_T* analyzed);
 
 void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator, const parser_options_T* options);

@@ -24,14 +24,15 @@ char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser,
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&symbol_node->unescaped), length);
   }
 
-  size_t source_length = first_argument->location.end - first_argument->location.start;
-  const char* source = (const char*) first_argument->location.start;
+  size_t source_length = first_argument->location.length;
+  const char* source = (const char*) (pm_parser_start(parser) + first_argument->location.start);
 
   if (first_argument->type == PM_CALL_NODE) {
     pm_call_node_t* call = (pm_call_node_t*) first_argument;
-    pm_constant_t* call_constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call->name);
+    const pm_constant_t* call_constant = pm_parser_constant(parser, call->name);
 
-    if (call_constant && call_constant->length == 6 && strncmp((const char*) call_constant->start, "dom_id", 6) == 0) {
+    if (call_constant && pm_constant_length(call_constant) == 6
+        && strncmp((const char*) pm_constant_start(call_constant), "dom_id", 6) == 0) {
       return hb_allocator_strndup(allocator, source, source_length);
     }
   }

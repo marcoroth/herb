@@ -10,8 +10,9 @@
 
 typedef struct TAG_HELPER_SCOPE_STRUCT {
   hb_buffer_T buffer;
-  pm_options_t options;
-  pm_parser_t parser;
+  pm_arena_t* arena;
+  pm_options_t* options;
+  pm_parser_t* parser;
   pm_node_t* root;
 } tag_helper_scope_T;
 

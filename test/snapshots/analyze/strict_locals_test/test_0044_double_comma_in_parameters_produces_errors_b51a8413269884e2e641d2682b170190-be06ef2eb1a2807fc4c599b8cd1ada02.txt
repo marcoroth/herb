@@ -7,17 +7,11 @@ options: {strict_locals: true}
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBStrictLocalsNode (location: (1:0)-(1:31))
-    │   ├── errors: (7 errors)
+    │   ├── errors: (6 errors)
     │   │   ├── @ RubyParseError (location: (1:19)-(1:20))
     │   │   │   ├── message: "array_term: unexpected ','; expected a `]` to close the array"
     │   │   │   ├── error_message: "unexpected ','; expected a `]` to close the array"
     │   │   │   ├── diagnostic_id: "array_term"
-    │   │   │   └── level: "syntax"
-    │   │   │
-    │   │   ├── @ RubyParseError (location: (1:18)-(1:19))
-    │   │   │   ├── message: "parameter_wild_loose_comma: unexpected `,` in parameters"
-    │   │   │   ├── error_message: "unexpected `,` in parameters"
-    │   │   │   ├── diagnostic_id: "parameter_wild_loose_comma"
     │   │   │   └── level: "syntax"
     │   │   │
     │   │   ├── @ RubyParseError (location: (1:19)-(1:20))

@@ -20,14 +20,20 @@ options: {prism_nodes: true}
                 │       ├── opening_loc: (1:7)-(1:8)
                 │       ├── closing_loc: (1:17)-(1:18)
                 │       ├── parameters: ∅
-                │       └── body:
-                │           └── @ StatementsNode (location: (1:9)-(1:16))
-                │               └── body: (1 item)
-                │                   └── @ StringNode (location: (1:9)-(1:16))
-                │                       ├── opening_loc: (1:9)-(1:10)
-                │                       ├── content_loc: (1:10)-(1:15)
-                │                       ├── closing_loc: (1:15)-(1:16)
-                │                       └── unescaped: "hello"
+                │       ├── body:
+                │       │   └── @ StatementsNode (location: (1:9)-(1:16))
+                │       │       └── body: (1 item)
+                │       │           └── @ StringNode (location: (1:9)-(1:16))
+                │       │               ├── opening_loc: (1:9)-(1:10)
+                │       │               ├── content_loc: (1:10)-(1:15)
+                │       │               ├── closing_loc: (1:15)-(1:16)
+                │       │               ├── unescaped: "hello"
+                │       │               ├── opening: "\""
+                │       │               ├── content: "hello"
+                │       │               └── closing: "\""
+                │       ├── operator: "->"
+                │       ├── opening: "{"
+                │       └── closing: "}"
                 ├── call_operator_loc: (1:18)-(1:19)
                 ├── name: :call
                 ├── message_loc: (1:19)-(1:23)
@@ -35,4 +41,9 @@ options: {prism_nodes: true}
                 ├── arguments: ∅
                 ├── closing_loc: ∅
                 ├── equal_loc: ∅
-                └── block: ∅
+                ├── block: ∅
+                ├── call_operator: "."
+                ├── message: "call"
+                ├── opening: ∅
+                ├── closing: ∅
+                └── equal: ∅

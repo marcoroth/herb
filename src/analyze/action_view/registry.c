@@ -59,7 +59,7 @@ size_t get_tag_helper_handlers_count(void) {
   return handlers_count;
 }
 
-char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator) {
+char* extract_inline_block_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   if (!call_node || !call_node->block || call_node->block->type != PM_BLOCK_NODE) { return NULL; }
 
   pm_block_node_t* block_node = (pm_block_node_t*) call_node->block;
@@ -78,6 +78,10 @@ char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* al
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   }
 
-  size_t source_length = statement->location.end - statement->location.start;
-  return hb_allocator_strndup(allocator, (const char*) statement->location.start, source_length);
+  const uint8_t* source = pm_parser_start(parser);
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) (source + statement->location.start),
+    statement->location.length
+  );
 }

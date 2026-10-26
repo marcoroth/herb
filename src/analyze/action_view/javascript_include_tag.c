@@ -6,7 +6,6 @@
 #include <string.h>
 
 char* extract_javascript_include_tag_src(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) parser;
 
   if (!call_node || !call_node->arguments) { return NULL; }
 
@@ -22,8 +21,12 @@ char* extract_javascript_include_tag_src(pm_call_node_t* call_node, pm_parser_t*
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   }
 
-  size_t source_length = first_argument->location.end - first_argument->location.start;
-  return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+  const uint8_t* source = pm_parser_start(parser);
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) (source + first_argument->location.start),
+    first_argument->location.length
+  );
 }
 
 bool javascript_include_tag_source_is_url(const char* source, size_t length) {

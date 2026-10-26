@@ -5,7 +5,7 @@ import { PrismVisitor } from "../src/prism/index.js"
 
 import type { PrismNodes, PrismParseResult } from "../src/prism/index.js"
 
-let parse: (source: string) => PrismParseResult
+let parse: (source: Uint8Array) => PrismParseResult
 
 class CollectingVisitor extends PrismVisitor {
   public names: string[] = []
@@ -28,7 +28,7 @@ class CollectingVisitor extends PrismVisitor {
 const collect = (source: string): string[] => {
   const visitor = new CollectingVisitor()
 
-  visitor.visit(parse(source).value)
+  visitor.visit(parse(new TextEncoder().encode(source)).value)
 
   return visitor.names
 }

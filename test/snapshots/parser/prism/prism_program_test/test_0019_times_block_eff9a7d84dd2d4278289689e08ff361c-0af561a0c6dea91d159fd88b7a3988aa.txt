@@ -51,31 +51,40 @@ options: {prism_program: true}
                         ├── arguments: ∅
                         ├── closing_loc: ∅
                         ├── equal_loc: ∅
-                        └── block:
-                            └── @ BlockNode (location: (1:11)-(1:34))
-                                ├── locals: (1 item)
-                                │   └── :i
-                                ├── parameters:
-                                │   └── @ BlockParametersNode (location: (1:14)-(1:17))
-                                │       ├── parameters:
-                                │       │   └── @ ParametersNode (location: (1:15)-(1:16))
-                                │       │       ├── requireds: (1 item)
-                                │       │       │   └── @ RequiredParameterNode (location: (1:15)-(1:16))
-                                │       │       │       └── name: :i
-                                │       │       ├── optionals: []
-                                │       │       ├── rest: ∅
-                                │       │       ├── posts: []
-                                │       │       ├── keywords: []
-                                │       │       ├── keyword_rest: ∅
-                                │       │       └── block: ∅
-                                │       ├── locals: []
-                                │       ├── opening_loc: (1:14)-(1:15)
-                                │       └── closing_loc: (1:16)-(1:17)
-                                ├── body:
-                                │   └── @ StatementsNode (location: (1:24)-(1:25))
-                                │       └── body: (1 item)
-                                │           └── @ LocalVariableReadNode (location: (1:24)-(1:25))
-                                │               ├── name: :i
-                                │               └── depth: 0
-                                ├── opening_loc: (1:11)-(1:13)
-                                └── closing_loc: (1:31)-(1:34)
+                        ├── block:
+                        │   └── @ BlockNode (location: (1:11)-(1:34))
+                        │       ├── locals: (1 item)
+                        │       │   └── :i
+                        │       ├── parameters:
+                        │       │   └── @ BlockParametersNode (location: (1:14)-(1:17))
+                        │       │       ├── parameters:
+                        │       │       │   └── @ ParametersNode (location: (1:15)-(1:16))
+                        │       │       │       ├── requireds: (1 item)
+                        │       │       │       │   └── @ RequiredParameterNode (location: (1:15)-(1:16))
+                        │       │       │       │       └── name: :i
+                        │       │       │       ├── optionals: []
+                        │       │       │       ├── rest: ∅
+                        │       │       │       ├── posts: []
+                        │       │       │       ├── keywords: []
+                        │       │       │       ├── keyword_rest: ∅
+                        │       │       │       └── block: ∅
+                        │       │       ├── locals: []
+                        │       │       ├── opening_loc: (1:14)-(1:15)
+                        │       │       ├── closing_loc: (1:16)-(1:17)
+                        │       │       ├── opening: "|"
+                        │       │       └── closing: "|"
+                        │       ├── body:
+                        │       │   └── @ StatementsNode (location: (1:24)-(1:25))
+                        │       │       └── body: (1 item)
+                        │       │           └── @ LocalVariableReadNode (location: (1:24)-(1:25))
+                        │       │               ├── name: :i
+                        │       │               └── depth: 0
+                        │       ├── opening_loc: (1:11)-(1:13)
+                        │       ├── closing_loc: (1:31)-(1:34)
+                        │       ├── opening: "do"
+                        │       └── closing: "end"
+                        ├── call_operator: "."
+                        ├── message: "times"
+                        ├── opening: ∅
+                        ├── closing: ∅
+                        └── equal: ∅

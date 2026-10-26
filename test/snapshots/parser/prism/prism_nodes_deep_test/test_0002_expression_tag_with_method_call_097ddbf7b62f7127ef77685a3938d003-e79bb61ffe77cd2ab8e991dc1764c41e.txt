@@ -23,7 +23,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
                 │       ├── arguments: ∅
                 │       ├── closing_loc: ∅
                 │       ├── equal_loc: ∅
-                │       └── block: ∅
+                │       ├── block: ∅
+                │       ├── call_operator: ∅
+                │       ├── message: "user"
+                │       ├── opening: ∅
+                │       ├── closing: ∅
+                │       └── equal: ∅
                 ├── call_operator_loc: (1:8)-(1:9)
                 ├── name: :name
                 ├── message_loc: (1:9)-(1:13)
@@ -31,4 +36,9 @@ options: {prism_nodes: true, prism_nodes_deep: true}
                 ├── arguments: ∅
                 ├── closing_loc: ∅
                 ├── equal_loc: ∅
-                └── block: ∅
+                ├── block: ∅
+                ├── call_operator: "."
+                ├── message: "name"
+                ├── opening: ∅
+                ├── closing: ∅
+                └── equal: ∅
