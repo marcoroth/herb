@@ -29,6 +29,7 @@ extern char* wrap_in_url_for(const char*, size_t, hb_allocator_T*);
 extern char* extract_link_to_href(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 extern bool detect_turbo_frame_tag(pm_call_node_t*, pm_parser_t*);
 extern char* extract_turbo_frame_tag_id(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
+extern bool turbo_frame_tag_id_is_static(pm_call_node_t*);
 extern bool detect_javascript_include_tag(pm_call_node_t*, pm_parser_t*);
 extern char* extract_javascript_include_tag_src(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 extern char* wrap_in_javascript_path(const char*, size_t, const char*, hb_allocator_T*);
@@ -761,7 +762,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
       position_T id_start, id_end;
       prism_node_location_to_positions(&first_argument->location, parse_context, &id_start, &id_end);
-      bool id_is_ruby_expression = (first_argument->type != PM_STRING_NODE && first_argument->type != PM_SYMBOL_NODE);
+      bool id_is_ruby_expression = !turbo_frame_tag_id_is_static(parse_context->info->call_node);
 
       AST_HTML_ATTRIBUTE_NODE_T* id_attribute =
         id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
@@ -1416,7 +1417,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
       position_T id_start, id_end;
       prism_node_location_to_positions(&first_argument->location, parse_context, &id_start, &id_end);
-      bool id_is_ruby_expression = (first_argument->type != PM_STRING_NODE && first_argument->type != PM_SYMBOL_NODE);
+      bool id_is_ruby_expression = !turbo_frame_tag_id_is_static(parse_context->info->call_node);
 
       AST_HTML_ATTRIBUTE_NODE_T* id_attribute =
         id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
