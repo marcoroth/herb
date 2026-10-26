@@ -68,6 +68,37 @@ describe("CLI Output Formatting", () => {
     return output.split("\u23AF".repeat(10))[0].trim()
   }
 
+  test("writes complete large JSON reports to piped stdout", () => {
+    const { openSync, closeSync, readFileSync, writeFileSync } = require("fs")
+    const { join } = require("path")
+    const { spawnSync } = require("child_process")
+    const directory = outputDirectory()
+    const filename = join(directory, "large.html.erb")
+    const reportPath = join(directory, "report.json")
+
+    writeFileSync(filename, '<div id="first" id="second"></div>\n'.repeat(300))
+
+    const args = [filename, "--force", "--all-rules", "--format", "json", "--no-timing"]
+    const env = { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+    const descriptor = openSync(reportPath, "w")
+    let redirected
+
+    try {
+      redirected = spawnSync("bin/herb-lint", args, { env, stdio: ["ignore", descriptor, "pipe"] })
+    } finally {
+      closeSync(descriptor)
+    }
+
+    const expected = readFileSync(reportPath, "utf-8")
+    const piped = runSeparately(filename, "--force", "--all-rules", "--format", "json")
+
+    expect(redirected.status).toBe(1)
+    expect(piped.status).toBe(1)
+    expect(Buffer.byteLength(expected)).toBeGreaterThan(64 * 1024)
+    expect(piped.stdout.length).toBe(expected.length)
+    expect(JSON.parse(piped.stdout)).toEqual(JSON.parse(expected))
+  })
+
   test("formats detailed error output correctly", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-wrap-lines")
 

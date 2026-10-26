@@ -654,7 +654,7 @@ export class CLI {
       const shouldFail = DIAGNOSTIC_SEVERITIES.some(severity => counts[severity] > 0 && meetsSeverityThreshold(severity, effectiveFailLevel))
 
       if (shouldFail) {
-        process.exit(1)
+        process.exitCode = 1
       }
 
     } catch (error) {
