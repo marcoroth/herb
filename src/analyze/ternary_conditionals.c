@@ -8,6 +8,7 @@
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_string.h"
 #include "../include/prism/herb_prism_node.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -26,7 +27,7 @@ static pm_node_t* find_ternary_statement(analyzed_ruby_T* analyzed) {
   if (statement->type != PM_IF_NODE) { return NULL; }
   pm_if_node_t* if_node = (pm_if_node_t*) statement;
 
-  if (if_node->if_keyword_loc.start == NULL && if_node->subsequent != NULL) { return statement; }
+  if (!herb_prism_location_assigned(if_node->if_keyword_loc) && if_node->subsequent != NULL) { return statement; }
 
   return NULL;
 }
@@ -49,11 +50,11 @@ static body_info_T extract_statements_body_info(
   pm_node_t* first = statements->body.nodes[0];
   pm_node_t* last = statements->body.nodes[statements->body.size - 1];
 
-  const uint8_t* start = first->location.start;
-  const uint8_t* end = last->location.end;
+  const uint8_t* parser_start = pm_parser_start(analyzed->parser);
+  size_t source_length = (size_t) (pm_parser_end(analyzed->parser) - parser_start);
 
-  const uint8_t* parser_start = analyzed->parser.start;
-  size_t source_length = (size_t) (analyzed->parser.end - parser_start);
+  const uint8_t* start = herb_prism_location_start_pointer(parser_start, first->location);
+  const uint8_t* end = herb_prism_location_end_pointer(parser_start, last->location);
 
   if (start < parser_start || end > parser_start + source_length) { return info; }
 
@@ -83,14 +84,16 @@ static body_info_T extract_statements_body_info(
   return info;
 }
 
-static char* extract_condition_source(pm_if_node_t* if_node, hb_allocator_T* allocator) {
+static char* extract_condition_source(const uint8_t* source, pm_if_node_t* if_node, hb_allocator_T* allocator) {
   pm_node_t* predicate = if_node->predicate;
 
   if (!predicate) { return NULL; }
 
-  size_t length = (size_t) (predicate->location.end - predicate->location.start);
-
-  return hb_allocator_strndup(allocator, (const char*) predicate->location.start, length);
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) (source + predicate->location.start),
+    predicate->location.length
+  );
 }
 
 static bool append_branch_statement(
@@ -156,7 +159,8 @@ AST_NODE_T* transform_ternary_expression(
   pm_else_node_t* else_node = (pm_else_node_t*) if_node->subsequent;
   if (!else_node) { return NULL; }
 
-  char* condition_source = extract_condition_source(if_node, allocator);
+  char* condition_source =
+    extract_condition_source(pm_parser_start(erb_node->analyzed_ruby->parser), if_node, allocator);
   if (!condition_source) { return NULL; }
 
   position_T start = erb_node->base.location.start;

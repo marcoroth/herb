@@ -21,7 +21,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "items"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── call_operator_loc: (1:8)-(1:9)
         │       ├── name: :each_with_index
         │       ├── message_loc: (1:9)-(1:24)
@@ -29,37 +34,46 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       ├── arguments: ∅
         │       ├── closing_loc: ∅
         │       ├── equal_loc: ∅
-        │       └── block:
-        │           └── @ BlockNode (location: (1:25)-(1:61))
-        │               ├── locals: (2 items)
-        │               │   ├── :item
-        │               │   └── :index
-        │               ├── parameters:
-        │               │   └── @ BlockParametersNode (location: (1:28)-(1:41))
-        │               │       ├── parameters:
-        │               │       │   └── @ ParametersNode (location: (1:29)-(1:40))
-        │               │       │       ├── requireds: (2 items)
-        │               │       │       │   ├── @ RequiredParameterNode (location: (1:29)-(1:33))
-        │               │       │       │   │   └── name: :item
-        │               │       │       │   └── @ RequiredParameterNode (location: (1:35)-(1:40))
-        │               │       │       │       └── name: :index
-        │               │       │       ├── optionals: []
-        │               │       │       ├── rest: ∅
-        │               │       │       ├── posts: []
-        │               │       │       ├── keywords: []
-        │               │       │       ├── keyword_rest: ∅
-        │               │       │       └── block: ∅
-        │               │       ├── locals: []
-        │               │       ├── opening_loc: (1:28)-(1:29)
-        │               │       └── closing_loc: (1:40)-(1:41)
-        │               ├── body:
-        │               │   └── @ StatementsNode (location: (1:48)-(1:52))
-        │               │       └── body: (1 item)
-        │               │           └── @ LocalVariableReadNode (location: (1:48)-(1:52))
-        │               │               ├── name: :item
-        │               │               └── depth: 0
-        │               ├── opening_loc: (1:25)-(1:27)
-        │               └── closing_loc: (1:58)-(1:61)
+        │       ├── block:
+        │       │   └── @ BlockNode (location: (1:25)-(1:61))
+        │       │       ├── locals: (2 items)
+        │       │       │   ├── :item
+        │       │       │   └── :index
+        │       │       ├── parameters:
+        │       │       │   └── @ BlockParametersNode (location: (1:28)-(1:41))
+        │       │       │       ├── parameters:
+        │       │       │       │   └── @ ParametersNode (location: (1:29)-(1:40))
+        │       │       │       │       ├── requireds: (2 items)
+        │       │       │       │       │   ├── @ RequiredParameterNode (location: (1:29)-(1:33))
+        │       │       │       │       │   │   └── name: :item
+        │       │       │       │       │   └── @ RequiredParameterNode (location: (1:35)-(1:40))
+        │       │       │       │       │       └── name: :index
+        │       │       │       │       ├── optionals: []
+        │       │       │       │       ├── rest: ∅
+        │       │       │       │       ├── posts: []
+        │       │       │       │       ├── keywords: []
+        │       │       │       │       ├── keyword_rest: ∅
+        │       │       │       │       └── block: ∅
+        │       │       │       ├── locals: []
+        │       │       │       ├── opening_loc: (1:28)-(1:29)
+        │       │       │       ├── closing_loc: (1:40)-(1:41)
+        │       │       │       ├── opening: "|"
+        │       │       │       └── closing: "|"
+        │       │       ├── body:
+        │       │       │   └── @ StatementsNode (location: (1:48)-(1:52))
+        │       │       │       └── body: (1 item)
+        │       │       │           └── @ LocalVariableReadNode (location: (1:48)-(1:52))
+        │       │       │               ├── name: :item
+        │       │       │               └── depth: 0
+        │       │       ├── opening_loc: (1:25)-(1:27)
+        │       │       ├── closing_loc: (1:58)-(1:61)
+        │       │       ├── opening: "do"
+        │       │       └── closing: "end"
+        │       ├── call_operator: "."
+        │       ├── message: "each_with_index"
+        │       ├── opening: ∅
+        │       ├── closing: ∅
+        │       └── equal: ∅
         ├── body: (1 item)
         │   └── @ ERBContentNode (location: (1:44)-(1:55))
         │       ├── tag_opening: "<%=" (location: (1:44)-(1:47))

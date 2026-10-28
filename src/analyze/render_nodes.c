@@ -13,6 +13,8 @@
 #include "../include/lib/string.h"
 #include "../include/visitor.h"
 
+#include "../include/prism/prism_helpers.h"
+
 #include <prism.h>
 #include <stdbool.h>
 #include <string.h>
@@ -50,9 +52,10 @@ static bool is_render_call(pm_call_node_t* call_node, pm_parser_t* parser) {
   if (!call_node || !call_node->name) { return false; }
   if (call_node->receiver && call_node->receiver->type != PM_SELF_NODE) { return false; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, call_node->name);
 
-  return constant && constant->length == 6 && strncmp((const char*) constant->start, "render", 6) == 0;
+  return constant && pm_constant_length(constant) == 6
+      && strncmp((const char*) pm_constant_start(constant), "render", 6) == 0;
 }
 
 static pm_call_node_t* find_render_call(pm_node_t* node, pm_parser_t* parser) {
@@ -117,11 +120,14 @@ static char* extract_string_value(pm_node_t* node, hb_allocator_T* allocator) {
   return NULL;
 }
 
-static char* extract_source_expression(pm_node_t* node, hb_allocator_T* allocator) {
+static char* extract_source_expression(const uint8_t* erb_content_source, pm_node_t* node, hb_allocator_T* allocator) {
   if (!node) { return NULL; }
 
-  size_t length = node->location.end - node->location.start;
-  return hb_allocator_strndup(allocator, (const char*) node->location.start, length);
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) (erb_content_source + node->location.start),
+    node->location.length
+  );
 }
 
 static token_T* create_token_from_prism_node(
@@ -137,8 +143,8 @@ static token_T* create_token_from_prism_node(
   position_T end = { .line = 1, .column = 1 };
 
   if (node && source && erb_content_source) {
-    size_t start_offset_in_erb = (size_t) (node->location.start - erb_content_source);
-    size_t end_offset_in_erb = (size_t) (node->location.end - erb_content_source);
+    size_t start_offset_in_erb = node->location.start;
+    size_t end_offset_in_erb = herb_prism_location_end(node->location);
 
     size_t total_start = erb_content_offset + start_offset_in_erb;
     size_t total_end = erb_content_offset + end_offset_in_erb;
@@ -160,6 +166,7 @@ static pm_keyword_hash_node_t* find_keyword_hash(pm_arguments_node_t* arguments)
 }
 
 static keyword_result_T find_keyword_value(
+  const uint8_t* erb_content_source,
   pm_keyword_hash_node_t* keyword_hash,
   const char* key,
   hb_allocator_T* allocator
@@ -184,7 +191,7 @@ static keyword_result_T find_keyword_value(
       if (string_value) {
         result.value = string_value;
       } else {
-        result.value = extract_source_expression(assoc->value, allocator);
+        result.value = extract_source_expression(erb_content_source, assoc->value, allocator);
       }
 
       return result;
@@ -228,11 +235,12 @@ static bool extract_assoc_parts(
   AST_RUBY_LITERAL_NODE_T** value_node
 ) {
   char* name = extract_string_value(assoc->key, allocator);
-  if (!name) { name = extract_source_expression(assoc->key, allocator); }
+  if (!name) { name = extract_source_expression(erb_content_source, assoc->key, allocator); }
   if (!name) { return false; }
 
   bool shorthand = assoc->value && assoc->value->type == PM_IMPLICIT_NODE;
-  char* value = shorthand ? hb_allocator_strdup(allocator, name) : extract_source_expression(assoc->value, allocator);
+  char* value = shorthand ? hb_allocator_strdup(allocator, name)
+                          : extract_source_expression(erb_content_source, assoc->value, allocator);
 
   if (!value) {
     hb_allocator_dealloc(allocator, name);
@@ -254,8 +262,8 @@ static bool extract_assoc_parts(
   pm_node_t* spanned = shorthand ? assoc->key : assoc->value;
 
   if (spanned && source && erb_content_source) {
-    size_t start_offset = (size_t) (spanned->location.start - erb_content_source);
-    size_t end_offset = (size_t) (spanned->location.end - erb_content_source);
+    size_t start_offset = spanned->location.start;
+    size_t end_offset = herb_prism_location_end(spanned->location);
 
     if (shorthand && end_offset > start_offset && erb_content_source[end_offset - 1] == ':') { end_offset--; }
 
@@ -348,7 +356,7 @@ static token_T* extract_keyword_token(
   const uint8_t* erb_content_source,
   hb_allocator_T* allocator
 ) {
-  keyword_result_T keyword = find_keyword_value(keyword_hash, keyword_name, allocator);
+  keyword_result_T keyword = find_keyword_value(erb_content_source, keyword_hash, keyword_name, allocator);
   if (!keyword.value) { return NULL; }
 
   token_T* token = create_token_from_prism_node(
@@ -405,7 +413,7 @@ static void append_unusable_state_entry(
   hb_allocator_T* allocator
 ) {
   pm_node_t* named = element->type == PM_ASSOC_NODE ? ((pm_assoc_node_t*) element)->key : element;
-  char* name = extract_source_expression(named, allocator);
+  char* name = extract_source_expression(erb_content_source, named, allocator);
 
   if (!name) { return; }
 
@@ -423,8 +431,8 @@ static void append_unusable_state_entry(
   position_T end = start;
 
   if (source && erb_content_source) {
-    size_t start_offset = (size_t) (element->location.start - erb_content_source);
-    size_t end_offset = (size_t) (element->location.end - erb_content_source);
+    size_t start_offset = element->location.start;
+    size_t end_offset = herb_prism_location_end(element->location);
 
     start = byte_offset_to_position(source, erb_content_offset + start_offset);
     end = byte_offset_to_position(source, erb_content_offset + end_offset);
@@ -512,8 +520,8 @@ static location_T* prism_node_location(
 ) {
   if (!node || !source || !erb_content_source) { return NULL; }
 
-  size_t start_offset = (size_t) (node->location.start - erb_content_source);
-  size_t end_offset = (size_t) (node->location.end - erb_content_source);
+  size_t start_offset = node->location.start;
+  size_t end_offset = herb_prism_location_end(node->location);
 
   return location_create(
     byte_offset_to_position(source, erb_content_offset + start_offset),
@@ -595,7 +603,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         hb_allocator_dealloc(allocator, partial_string);
       }
     } else if (first_argument->type != PM_KEYWORD_HASH_NODE) {
-      char* object_string = extract_source_expression(first_argument, allocator);
+      char* object_string = extract_source_expression(erb_content_source, first_argument, allocator);
 
       if (object_string) {
         object = create_token_from_prism_node(
@@ -614,7 +622,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (keyword_hash) {
     if (has_positional_partial) {
-      keyword_result_T partial_kw = find_keyword_value(keyword_hash, "partial", allocator);
+      keyword_result_T partial_kw = find_keyword_value(erb_content_source, keyword_hash, "partial", allocator);
       if (partial_kw.value) { has_keyword_partial = true; }
 
       pm_hash_node_t* locals_hash = find_locals_hash(keyword_hash, allocator);
@@ -691,7 +699,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   hb_array_T* errors = NULL;
 
   if (!has_keyword_partial && partial && keyword_hash) {
-    keyword_result_T locals_keyword = find_keyword_value(keyword_hash, "locals", allocator);
+    keyword_result_T locals_keyword = find_keyword_value(erb_content_source, keyword_hash, "locals", allocator);
 
     if (locals_keyword.value) {
       hb_string_T partial_name = partial->value;
@@ -797,7 +805,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
   }
 
   if (has_positional_partial && has_keyword_partial && keyword_hash) {
-    keyword_result_T keyword_partial = find_keyword_value(keyword_hash, "partial", allocator);
+    keyword_result_T keyword_partial = find_keyword_value(erb_content_source, keyword_hash, "partial", allocator);
 
     append_render_conflicting_partial_error(
       partial->value,
@@ -875,7 +883,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     pm_block_node_t* inline_block = find_block_on_render_call(call_node);
 
     if (inline_block) {
-      const uint8_t* content_source = erb_content_source ? erb_content_source : (const uint8_t*) parser->start;
+      const uint8_t* content_source = erb_content_source ? erb_content_source : pm_parser_start(parser);
 
       if (inline_block->parameters && inline_block->parameters->type == PM_BLOCK_PARAMETERS_NODE) {
         pm_block_parameters_node_t* block_parameters = (pm_block_parameters_node_t*) inline_block->parameters;
@@ -893,16 +901,18 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       }
 
       if (inline_block->body) {
-        size_t body_length = (size_t) (inline_block->body->location.end - inline_block->body->location.start);
-        char* body_source =
-          hb_allocator_strndup(allocator, (const char*) inline_block->body->location.start, body_length);
+        char* body_source = hb_allocator_strndup(
+          allocator,
+          (const char*) (content_source + inline_block->body->location.start),
+          inline_block->body->location.length
+        );
 
         position_T body_start = { .line = 1, .column = 1 };
         position_T body_end = { .line = 1, .column = 1 };
 
         if (source && content_source) {
-          size_t start_offset = (size_t) (inline_block->body->location.start - content_source);
-          size_t end_offset = (size_t) (inline_block->body->location.end - content_source);
+          size_t start_offset = inline_block->body->location.start;
+          size_t end_offset = herb_prism_location_end(inline_block->body->location);
           body_start = byte_offset_to_position(source, erb_content_offset + start_offset);
           body_end = byte_offset_to_position(source, erb_content_offset + end_offset);
         }
@@ -1012,7 +1022,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_content_node(
   if (is_erb_comment_tag(erb_node->tag_opening)) { return NULL; }
   if (token_is_escaped_erb_tag_opening(erb_node->tag_opening)) { return NULL; }
 
-  pm_call_node_t* render_call = find_render_call(erb_node->analyzed_ruby->root, &erb_node->analyzed_ruby->parser);
+  pm_call_node_t* render_call = find_render_call(erb_node->analyzed_ruby->root, erb_node->analyzed_ruby->parser);
   if (!render_call) { return NULL; }
 
   size_t erb_content_offset = 0;
@@ -1021,12 +1031,12 @@ static AST_ERB_RENDER_NODE_T* try_transform_content_node(
     erb_content_offset = calculate_byte_offset_from_pos(context->source, erb_node->content->location.start);
   }
 
-  const uint8_t* erb_content_source = (const uint8_t*) erb_node->analyzed_ruby->parser.start;
+  const uint8_t* erb_content_source = pm_parser_start(erb_node->analyzed_ruby->parser);
 
   return create_render_node_from_call(
     erb_node,
     render_call,
-    &erb_node->analyzed_ruby->parser,
+    erb_node->analyzed_ruby->parser,
     context->source,
     erb_content_offset,
     erb_content_source,
@@ -1046,15 +1056,15 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   const char* ruby_source = block_node->content->value.data;
   size_t ruby_length = block_node->content->value.length;
 
-  pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) ruby_source, ruby_length, NULL);
-  pm_node_t* root = pm_parse(&parser);
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) ruby_source, ruby_length, NULL);
+  pm_node_t* root = pm_parse(parser);
 
-  pm_call_node_t* render_call = find_render_call(root, &parser);
+  pm_call_node_t* render_call = find_render_call(root, parser);
 
   if (!render_call) {
-    pm_node_destroy(&parser, root);
-    pm_parser_free(&parser);
+    pm_parser_free(parser);
+    pm_arena_free(arena);
     return NULL;
   }
 
@@ -1075,7 +1085,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
     erb_content_offset = calculate_byte_offset_from_pos(context->source, block_node->content->location.start);
   }
 
-  const uint8_t* erb_content_source = (const uint8_t*) parser.start;
+  const uint8_t* erb_content_source = pm_parser_start(parser);
 
   render_block_fields_T block_fields = {
     .block_body = block_node->body,
@@ -1089,7 +1099,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   AST_ERB_RENDER_NODE_T* render_node = create_render_node_from_call(
     &content_view,
     render_call,
-    &parser,
+    parser,
     context->source,
     erb_content_offset,
     erb_content_source,
@@ -1098,8 +1108,8 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
     context->options
   );
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
 
   return render_node;
 }

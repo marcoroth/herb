@@ -21,7 +21,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "items"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── call_operator_loc: (1:8)-(1:9)
         │       ├── name: :each
         │       ├── message_loc: (1:9)-(1:13)
@@ -29,66 +34,88 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       ├── arguments: ∅
         │       ├── closing_loc: ∅
         │       ├── equal_loc: ∅
-        │       └── block:
-        │           └── @ BlockNode (location: (1:14)-(1:79))
-        │               ├── locals: (1 item)
-        │               │   └── :item
-        │               ├── parameters:
-        │               │   └── @ BlockParametersNode (location: (1:17)-(1:23))
-        │               │       ├── parameters:
-        │               │       │   └── @ ParametersNode (location: (1:18)-(1:22))
-        │               │       │       ├── requireds: (1 item)
-        │               │       │       │   └── @ RequiredParameterNode (location: (1:18)-(1:22))
-        │               │       │       │       └── name: :item
-        │               │       │       ├── optionals: []
-        │               │       │       ├── rest: ∅
-        │               │       │       ├── posts: []
-        │               │       │       ├── keywords: []
-        │               │       │       ├── keyword_rest: ∅
-        │               │       │       └── block: ∅
-        │               │       ├── locals: []
-        │               │       ├── opening_loc: (1:17)-(1:18)
-        │               │       └── closing_loc: (1:22)-(1:23)
-        │               ├── body:
-        │               │   └── @ StatementsNode (location: (1:29)-(1:70))
-        │               │       └── body: (1 item)
-        │               │           └── @ IfNode (location: (1:29)-(1:70))
-        │               │               ├── if_keyword_loc: (1:29)-(1:31)
-        │               │               ├── predicate:
-        │               │               │   └── @ CallNode (location: (1:32)-(1:45))
-        │               │               │       ├── receiver:
-        │               │               │       │   └── @ LocalVariableReadNode (location: (1:32)-(1:36))
-        │               │               │       │       ├── name: :item
-        │               │               │       │       └── depth: 0
-        │               │               │       ├── call_operator_loc: (1:36)-(1:37)
-        │               │               │       ├── name: :visible?
-        │               │               │       ├── message_loc: (1:37)-(1:45)
-        │               │               │       ├── opening_loc: ∅
-        │               │               │       ├── arguments: ∅
-        │               │               │       ├── closing_loc: ∅
-        │               │               │       ├── equal_loc: ∅
-        │               │               │       └── block: ∅
-        │               │               ├── then_keyword_loc: ∅
-        │               │               ├── statements:
-        │               │               │   └── @ StatementsNode (location: (1:52)-(1:61))
-        │               │               │       └── body: (1 item)
-        │               │               │           └── @ CallNode (location: (1:52)-(1:61))
-        │               │               │               ├── receiver:
-        │               │               │               │   └── @ LocalVariableReadNode (location: (1:52)-(1:56))
-        │               │               │               │       ├── name: :item
-        │               │               │               │       └── depth: 0
-        │               │               │               ├── call_operator_loc: (1:56)-(1:57)
-        │               │               │               ├── name: :name
-        │               │               │               ├── message_loc: (1:57)-(1:61)
-        │               │               │               ├── opening_loc: ∅
-        │               │               │               ├── arguments: ∅
-        │               │               │               ├── closing_loc: ∅
-        │               │               │               ├── equal_loc: ∅
-        │               │               │               └── block: ∅
-        │               │               ├── subsequent: ∅
-        │               │               └── end_keyword_loc: (1:67)-(1:70)
-        │               ├── opening_loc: (1:14)-(1:16)
-        │               └── closing_loc: (1:76)-(1:79)
+        │       ├── block:
+        │       │   └── @ BlockNode (location: (1:14)-(1:79))
+        │       │       ├── locals: (1 item)
+        │       │       │   └── :item
+        │       │       ├── parameters:
+        │       │       │   └── @ BlockParametersNode (location: (1:17)-(1:23))
+        │       │       │       ├── parameters:
+        │       │       │       │   └── @ ParametersNode (location: (1:18)-(1:22))
+        │       │       │       │       ├── requireds: (1 item)
+        │       │       │       │       │   └── @ RequiredParameterNode (location: (1:18)-(1:22))
+        │       │       │       │       │       └── name: :item
+        │       │       │       │       ├── optionals: []
+        │       │       │       │       ├── rest: ∅
+        │       │       │       │       ├── posts: []
+        │       │       │       │       ├── keywords: []
+        │       │       │       │       ├── keyword_rest: ∅
+        │       │       │       │       └── block: ∅
+        │       │       │       ├── locals: []
+        │       │       │       ├── opening_loc: (1:17)-(1:18)
+        │       │       │       ├── closing_loc: (1:22)-(1:23)
+        │       │       │       ├── opening: "|"
+        │       │       │       └── closing: "|"
+        │       │       ├── body:
+        │       │       │   └── @ StatementsNode (location: (1:29)-(1:70))
+        │       │       │       └── body: (1 item)
+        │       │       │           └── @ IfNode (location: (1:29)-(1:70))
+        │       │       │               ├── if_keyword_loc: (1:29)-(1:31)
+        │       │       │               ├── predicate:
+        │       │       │               │   └── @ CallNode (location: (1:32)-(1:45))
+        │       │       │               │       ├── receiver:
+        │       │       │               │       │   └── @ LocalVariableReadNode (location: (1:32)-(1:36))
+        │       │       │               │       │       ├── name: :item
+        │       │       │               │       │       └── depth: 0
+        │       │       │               │       ├── call_operator_loc: (1:36)-(1:37)
+        │       │       │               │       ├── name: :visible?
+        │       │       │               │       ├── message_loc: (1:37)-(1:45)
+        │       │       │               │       ├── opening_loc: ∅
+        │       │       │               │       ├── arguments: ∅
+        │       │       │               │       ├── closing_loc: ∅
+        │       │       │               │       ├── equal_loc: ∅
+        │       │       │               │       ├── block: ∅
+        │       │       │               │       ├── call_operator: "."
+        │       │       │               │       ├── message: "visible?"
+        │       │       │               │       ├── opening: ∅
+        │       │       │               │       ├── closing: ∅
+        │       │       │               │       └── equal: ∅
+        │       │       │               ├── then_keyword_loc: ∅
+        │       │       │               ├── statements:
+        │       │       │               │   └── @ StatementsNode (location: (1:52)-(1:61))
+        │       │       │               │       └── body: (1 item)
+        │       │       │               │           └── @ CallNode (location: (1:52)-(1:61))
+        │       │       │               │               ├── receiver:
+        │       │       │               │               │   └── @ LocalVariableReadNode (location: (1:52)-(1:56))
+        │       │       │               │               │       ├── name: :item
+        │       │       │               │               │       └── depth: 0
+        │       │       │               │               ├── call_operator_loc: (1:56)-(1:57)
+        │       │       │               │               ├── name: :name
+        │       │       │               │               ├── message_loc: (1:57)-(1:61)
+        │       │       │               │               ├── opening_loc: ∅
+        │       │       │               │               ├── arguments: ∅
+        │       │       │               │               ├── closing_loc: ∅
+        │       │       │               │               ├── equal_loc: ∅
+        │       │       │               │               ├── block: ∅
+        │       │       │               │               ├── call_operator: "."
+        │       │       │               │               ├── message: "name"
+        │       │       │               │               ├── opening: ∅
+        │       │       │               │               ├── closing: ∅
+        │       │       │               │               └── equal: ∅
+        │       │       │               ├── subsequent: ∅
+        │       │       │               ├── end_keyword_loc: (1:67)-(1:70)
+        │       │       │               ├── if_keyword: "if"
+        │       │       │               ├── then_keyword: ∅
+        │       │       │               └── end_keyword: "end"
+        │       │       ├── opening_loc: (1:14)-(1:16)
+        │       │       ├── closing_loc: (1:76)-(1:79)
+        │       │       ├── opening: "do"
+        │       │       └── closing: "end"
+        │       ├── call_operator: "."
+        │       ├── message: "each"
+        │       ├── opening: ∅
+        │       ├── closing: ∅
+        │       └── equal: ∅
         ├── body: (1 item)
         │   └── @ ERBIfNode (location: (1:26)-(1:73))
         │       ├── tag_opening: "<%" (location: (1:26)-(1:28))
@@ -111,7 +138,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │       ├── arguments: ∅
         │       │       │       ├── closing_loc: ∅
         │       │       │       ├── equal_loc: ∅
-        │       │       │       └── block: ∅
+        │       │       │       ├── block: ∅
+        │       │       │       ├── call_operator: "."
+        │       │       │       ├── message: "visible?"
+        │       │       │       ├── opening: ∅
+        │       │       │       ├── closing: ∅
+        │       │       │       └── equal: ∅
         │       │       ├── then_keyword_loc: ∅
         │       │       ├── statements:
         │       │       │   └── @ StatementsNode (location: (1:52)-(1:61))
@@ -128,9 +160,17 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │               ├── arguments: ∅
         │       │       │               ├── closing_loc: ∅
         │       │       │               ├── equal_loc: ∅
-        │       │       │               └── block: ∅
+        │       │       │               ├── block: ∅
+        │       │       │               ├── call_operator: "."
+        │       │       │               ├── message: "name"
+        │       │       │               ├── opening: ∅
+        │       │       │               ├── closing: ∅
+        │       │       │               └── equal: ∅
         │       │       ├── subsequent: ∅
-        │       │       └── end_keyword_loc: (1:67)-(1:70)
+        │       │       ├── end_keyword_loc: (1:67)-(1:70)
+        │       │       ├── if_keyword: "if"
+        │       │       ├── then_keyword: ∅
+        │       │       └── end_keyword: "end"
         │       ├── statements: (1 item)
         │       │   └── @ ERBContentNode (location: (1:48)-(1:64))
         │       │       ├── tag_opening: "<%=" (location: (1:48)-(1:51))
@@ -151,7 +191,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               ├── arguments: ∅
         │       │               ├── closing_loc: ∅
         │       │               ├── equal_loc: ∅
-        │       │               └── block: ∅
+        │       │               ├── block: ∅
+        │       │               ├── call_operator: "."
+        │       │               ├── message: "name"
+        │       │               ├── opening: ∅
+        │       │               ├── closing: ∅
+        │       │               └── equal: ∅
         │       │
         │       ├── subsequent: ∅
         │       └── end_node:

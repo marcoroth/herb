@@ -21,7 +21,12 @@ options: {prism_nodes: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "items"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── call_operator_loc: (1:8)-(1:9)
         │       ├── name: :each
         │       ├── message_loc: (1:9)-(1:13)
@@ -29,29 +34,38 @@ options: {prism_nodes: true}
         │       ├── arguments: ∅
         │       ├── closing_loc: ∅
         │       ├── equal_loc: ∅
-        │       └── block:
-        │           └── @ BlockNode (location: (1:14)-(1:43))
-        │               ├── locals: (1 item)
-        │               │   └── :item
-        │               ├── parameters:
-        │               │   └── @ BlockParametersNode (location: (1:17)-(1:23))
-        │               │       ├── parameters:
-        │               │       │   └── @ ParametersNode (location: (1:18)-(1:22))
-        │               │       │       ├── requireds: (1 item)
-        │               │       │       │   └── @ RequiredParameterNode (location: (1:18)-(1:22))
-        │               │       │       │       └── name: :item
-        │               │       │       ├── optionals: []
-        │               │       │       ├── rest: ∅
-        │               │       │       ├── posts: []
-        │               │       │       ├── keywords: []
-        │               │       │       ├── keyword_rest: ∅
-        │               │       │       └── block: ∅
-        │               │       ├── locals: []
-        │               │       ├── opening_loc: (1:17)-(1:18)
-        │               │       └── closing_loc: (1:22)-(1:23)
-        │               ├── body: ∅
-        │               ├── opening_loc: (1:14)-(1:16)
-        │               └── closing_loc: (1:40)-(1:43)
+        │       ├── block:
+        │       │   └── @ BlockNode (location: (1:14)-(1:43))
+        │       │       ├── locals: (1 item)
+        │       │       │   └── :item
+        │       │       ├── parameters:
+        │       │       │   └── @ BlockParametersNode (location: (1:17)-(1:23))
+        │       │       │       ├── parameters:
+        │       │       │       │   └── @ ParametersNode (location: (1:18)-(1:22))
+        │       │       │       │       ├── requireds: (1 item)
+        │       │       │       │       │   └── @ RequiredParameterNode (location: (1:18)-(1:22))
+        │       │       │       │       │       └── name: :item
+        │       │       │       │       ├── optionals: []
+        │       │       │       │       ├── rest: ∅
+        │       │       │       │       ├── posts: []
+        │       │       │       │       ├── keywords: []
+        │       │       │       │       ├── keyword_rest: ∅
+        │       │       │       │       └── block: ∅
+        │       │       │       ├── locals: []
+        │       │       │       ├── opening_loc: (1:17)-(1:18)
+        │       │       │       ├── closing_loc: (1:22)-(1:23)
+        │       │       │       ├── opening: "|"
+        │       │       │       └── closing: "|"
+        │       │       ├── body: ∅
+        │       │       ├── opening_loc: (1:14)-(1:16)
+        │       │       ├── closing_loc: (1:40)-(1:43)
+        │       │       ├── opening: "do"
+        │       │       └── closing: "end"
+        │       ├── call_operator: "."
+        │       ├── message: "each"
+        │       ├── opening: ∅
+        │       ├── closing: ∅
+        │       └── equal: ∅
         ├── body: (1 item)
         │   └── @ ERBContentNode (location: (1:26)-(1:37))
         │       ├── tag_opening: "<%=" (location: (1:26)-(1:29))

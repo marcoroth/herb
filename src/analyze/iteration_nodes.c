@@ -6,6 +6,7 @@
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_string.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -20,14 +21,13 @@ static token_T* create_token_from_prism_location(
   const uint8_t* erb_content_source,
   hb_allocator_T* allocator
 ) {
-  if (location.start == NULL || location.end == NULL) { return NULL; }
+  if (!herb_prism_location_assigned(location)) { return NULL; }
   if (!source || !erb_content_source) { return NULL; }
 
-  size_t length = (size_t) (location.end - location.start);
-  char* value = hb_allocator_strndup(allocator, (const char*) location.start, length);
+  char* value = hb_allocator_strndup(allocator, (const char*) (erb_content_source + location.start), location.length);
 
-  size_t total_start = erb_content_offset + (size_t) (location.start - erb_content_source);
-  size_t total_end = erb_content_offset + (size_t) (location.end - erb_content_source);
+  size_t total_start = erb_content_offset + location.start;
+  size_t total_end = erb_content_offset + herb_prism_location_end(location);
 
   position_T start = byte_offset_to_position(source, total_start);
   position_T end = byte_offset_to_position(source, total_end);
@@ -59,15 +59,18 @@ static hb_array_T* extract_call_arguments(
     const pm_node_t* argument = call->arguments->arguments.nodes[index];
     if (!argument) { continue; }
 
-    size_t length = (size_t) (argument->location.end - argument->location.start);
-    char* value = hb_allocator_strndup(allocator, (const char*) argument->location.start, length);
+    char* value = hb_allocator_strndup(
+      allocator,
+      (const char*) (erb_content_source + argument->location.start),
+      argument->location.length
+    );
 
     position_T start = { .line = 1, .column = 1 };
     position_T end = { .line = 1, .column = 1 };
 
     if (source && erb_content_source) {
-      size_t total_start = erb_content_offset + (size_t) (argument->location.start - erb_content_source);
-      size_t total_end = erb_content_offset + (size_t) (argument->location.end - erb_content_source);
+      size_t total_start = erb_content_offset + argument->location.start;
+      size_t total_end = erb_content_offset + herb_prism_location_end(argument->location);
 
       start = byte_offset_to_position(source, total_start);
       end = byte_offset_to_position(source, total_end);
@@ -113,7 +116,9 @@ static bool is_iteration_method(const pm_constant_t* constant) {
     const char* name = ITERATION_METHODS[index];
     size_t length = strlen(name);
 
-    if (constant->length == length && memcmp(constant->start, name, length) == 0) { return true; }
+    if (pm_constant_length(constant) == length && memcmp(pm_constant_start(constant), name, length) == 0) {
+      return true;
+    }
   }
 
   return false;
@@ -125,7 +130,7 @@ static bool is_iteration_call(const pm_call_node_t* call, const pm_parser_t* par
   if (call->block == NULL || call->block->type != PM_BLOCK_NODE) { return false; }
 
   pm_constant_id_t name_id = call->name;
-  const pm_constant_t* constant = pm_constant_pool_id_to_constant(&((pm_parser_t*) parser)->constant_pool, name_id);
+  const pm_constant_t* constant = pm_parser_constant(parser, name_id);
 
   if (!constant) { return false; }
 
@@ -173,15 +178,15 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
   const char* ruby_source = block_node->content->value.data;
   size_t ruby_length = block_node->content->value.length;
 
-  pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) ruby_source, ruby_length, NULL);
-  pm_node_t* root = pm_parse(&parser);
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) ruby_source, ruby_length, NULL);
+  pm_node_t* root = pm_parse(parser);
 
-  pm_call_node_t* iteration_call = find_iteration_call(root, &parser);
+  pm_call_node_t* iteration_call = find_iteration_call(root, parser);
 
   if (!iteration_call) {
-    pm_node_destroy(&parser, root);
-    pm_parser_free(&parser);
+    pm_parser_free(parser);
+    pm_arena_free(arena);
 
     return NULL;
   }
@@ -192,7 +197,7 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
     erb_content_offset = calculate_byte_offset_from_position(context->source, block_node->content->location.start);
   }
 
-  const uint8_t* erb_content_source = (const uint8_t*) parser.start;
+  const uint8_t* erb_content_source = pm_parser_start(parser);
 
   token_T* receiver = create_token_from_prism_location(
     iteration_call->receiver->location,
@@ -260,8 +265,8 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
     allocator
   );
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
 
   return iteration_block_node;
 }

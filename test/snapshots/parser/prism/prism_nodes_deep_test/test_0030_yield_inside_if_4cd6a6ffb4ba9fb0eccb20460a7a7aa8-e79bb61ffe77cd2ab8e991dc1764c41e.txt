@@ -23,7 +23,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "show?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── then_keyword_loc: ∅
         │       ├── statements:
         │       │   └── @ StatementsNode (location: (1:18)-(1:31))
@@ -36,12 +41,21 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               │       └── arguments: (1 item)
         │       │               │           └── @ SymbolNode (location: (1:24)-(1:31))
         │       │               │               ├── opening_loc: (1:24)-(1:25)
-        │       │               │               ├── value_loc: (1:25)-(1:31)
+        │       │               │               ├── content_loc: (1:25)-(1:31)
         │       │               │               ├── closing_loc: ∅
-        │       │               │               └── unescaped: "header"
-        │       │               └── rparen_loc: ∅
+        │       │               │               ├── unescaped: "header"
+        │       │               │               ├── opening: ":"
+        │       │               │               ├── content: "header"
+        │       │               │               └── closing: ∅
+        │       │               ├── rparen_loc: ∅
+        │       │               ├── keyword: "yield"
+        │       │               ├── lparen: ∅
+        │       │               └── rparen: ∅
         │       ├── subsequent: ∅
-        │       └── end_keyword_loc: (1:37)-(1:40)
+        │       ├── end_keyword_loc: (1:37)-(1:40)
+        │       ├── if_keyword: "if"
+        │       ├── then_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBYieldNode (location: (1:14)-(1:34))
         │       ├── tag_opening: "<%=" (location: (1:14)-(1:17))
@@ -56,10 +70,16 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               │       └── arguments: (1 item)
         │               │           └── @ SymbolNode (location: (1:24)-(1:31))
         │               │               ├── opening_loc: (1:24)-(1:25)
-        │               │               ├── value_loc: (1:25)-(1:31)
+        │               │               ├── content_loc: (1:25)-(1:31)
         │               │               ├── closing_loc: ∅
-        │               │               └── unescaped: "header"
-        │               └── rparen_loc: ∅
+        │               │               ├── unescaped: "header"
+        │               │               ├── opening: ":"
+        │               │               ├── content: "header"
+        │               │               └── closing: ∅
+        │               ├── rparen_loc: ∅
+        │               ├── keyword: "yield"
+        │               ├── lparen: ∅
+        │               └── rparen: ∅
         │
         ├── subsequent: ∅
         └── end_node:

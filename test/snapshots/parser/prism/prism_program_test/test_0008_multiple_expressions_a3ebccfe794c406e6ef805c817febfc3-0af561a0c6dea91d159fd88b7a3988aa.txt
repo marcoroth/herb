@@ -34,7 +34,12 @@ options: {prism_program: true}
                     │   ├── arguments: ∅
                     │   ├── closing_loc: ∅
                     │   ├── equal_loc: ∅
-                    │   └── block: ∅
+                    │   ├── block: ∅
+                    │   ├── call_operator: ∅
+                    │   ├── message: "first"
+                    │   ├── opening: ∅
+                    │   ├── closing: ∅
+                    │   └── equal: ∅
                     └── @ CallNode (location: (1:16)-(1:22))
                         ├── receiver: ∅
                         ├── call_operator_loc: ∅
@@ -44,4 +49,9 @@ options: {prism_program: true}
                         ├── arguments: ∅
                         ├── closing_loc: ∅
                         ├── equal_loc: ∅
-                        └── block: ∅
+                        ├── block: ∅
+                        ├── call_operator: ∅
+                        ├── message: "second"
+                        ├── opening: ∅
+                        ├── closing: ∅
+                        └── equal: ∅

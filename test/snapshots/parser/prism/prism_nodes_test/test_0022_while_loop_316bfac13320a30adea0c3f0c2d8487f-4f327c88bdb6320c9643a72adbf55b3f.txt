@@ -11,9 +11,9 @@ options: {prism_nodes: true}
         ├── tag_closing: "%>" (location: (1:18)-(1:20))
         ├── prism_node:
         │   └── @ WhileNode (location: (1:3)-(1:39))
-        │       ├── keyword_loc: (1:3)-(1:8)
+        │       ├── while_keyword_loc: (1:3)-(1:8)
         │       ├── do_keyword_loc: ∅
-        │       ├── closing_loc: (1:36)-(1:39)
+        │       ├── end_keyword_loc: (1:36)-(1:39)
         │       ├── predicate:
         │       │   └── @ CallNode (location: (1:9)-(1:17))
         │       │       ├── receiver: ∅
@@ -24,8 +24,16 @@ options: {prism_nodes: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
-        │       └── statements: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "running?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
+        │       ├── statements: ∅
+        │       ├── while_keyword: "while"
+        │       ├── do_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:20)-(1:33))
         │       ├── tag_opening: "<%=" (location: (1:20)-(1:23))
@@ -43,7 +51,12 @@ options: {prism_nodes: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "status"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         └── end_node:
             └── @ ERBEndNode (location: (1:33)-(1:42))

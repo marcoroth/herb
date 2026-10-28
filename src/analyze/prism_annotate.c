@@ -204,10 +204,10 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
   }
 }
 
-static size_t prism_node_start(pm_parser_t* parser, hb_narray_T* node_list, size_t index) {
+static size_t prism_node_start(hb_narray_T* node_list, size_t index) {
   pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, index);
 
-  return (size_t) (prism_node->location.start - parser->start);
+  return prism_node->location.start;
 }
 
 static herb_prism_node_T find_prism_node_for_herb_node(
@@ -229,17 +229,17 @@ static herb_prism_node_T find_prism_node_for_herb_node(
   while (low < high) {
     size_t middle = low + (high - low) / 2;
 
-    if (prism_node_start(parser, node_list, middle) < content_from) {
+    if (prism_node_start(node_list, middle) < content_from) {
       low = middle + 1;
     } else {
       high = middle;
     }
   }
 
-  if (low >= hb_narray_size(node_list) || prism_node_start(parser, node_list, low) >= content_to) { return result; }
+  if (low >= hb_narray_size(node_list) || prism_node_start(node_list, low) >= content_to) { return result; }
 
   pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, low);
-  size_t prism_end = (size_t) (prism_node->location.end - parser->start);
+  size_t prism_end = (size_t) prism_node->location.start + prism_node->location.length;
 
   result.node = prism_node;
   result.parser = parser;
@@ -332,23 +332,20 @@ void herb_annotate_prism_nodes(
     return;
   }
 
-  memset(&context->pm_opts, 0, sizeof(pm_options_t));
-  pm_options_line_set(&context->pm_opts, 1);
-  pm_options_partial_script_set(&context->pm_opts, true);
-  pm_parser_init(
-    &context->parser,
-    (const uint8_t*) context->ruby_buf.value,
-    context->ruby_buf.length,
-    &context->pm_opts
-  );
-  context->root = pm_parse(&context->parser);
+  context->arena = pm_arena_new();
+  context->pm_opts = pm_options_new();
+  pm_options_line_set(context->pm_opts, 1);
+  pm_options_partial_script_set(context->pm_opts, true);
+  context->parser =
+    pm_parser_new(context->arena, (const uint8_t*) context->ruby_buf.value, context->ruby_buf.length, context->pm_opts);
+  context->root = pm_parse(context->parser);
 
   if (!context->root || context->root->type != PM_PROGRAM_NODE) {
-    pm_node_destroy(&context->parser, context->root);
     context->root = NULL;
 
-    pm_parser_free(&context->parser);
-    pm_options_free(&context->pm_opts);
+    pm_parser_free(context->parser);
+    pm_arena_free(context->arena);
+    pm_options_free(context->pm_opts);
 
     hb_buffer_free(&context->ruby_buf);
     hb_allocator_dealloc(allocator, context);
@@ -361,7 +358,7 @@ void herb_annotate_prism_nodes(
   if (prism_program) {
     herb_prism_node_T program_ref = {
       .node = context->root,
-      .parser = &context->parser,
+      .parser = context->parser,
     };
 
     document->prism_node = program_ref;
@@ -393,18 +390,19 @@ void herb_annotate_prism_nodes(
           }
         }
 
-        memset(&context->structural_pm_opts, 0, sizeof(pm_options_t));
-        pm_options_line_set(&context->structural_pm_opts, 1);
-        pm_options_partial_script_set(&context->structural_pm_opts, true);
+        context->structural_arena = pm_arena_new();
+        context->structural_pm_opts = pm_options_new();
+        pm_options_line_set(context->structural_pm_opts, 1);
+        pm_options_partial_script_set(context->structural_pm_opts, true);
 
-        pm_parser_init(
-          &context->structural_parser,
+        context->structural_parser = pm_parser_new(
+          context->structural_arena,
           (const uint8_t*) context->structural_buf.value,
           context->structural_buf.length,
-          &context->structural_pm_opts
+          context->structural_pm_opts
         );
 
-        context->structural_root = pm_parse(&context->structural_parser);
+        context->structural_root = pm_parse(context->structural_parser);
         context->has_structural = true;
 
         if (context->structural_root && context->structural_root->type == PM_PROGRAM_NODE) {
@@ -416,8 +414,8 @@ void herb_annotate_prism_nodes(
     }
 
     prism_annotate_context_T annotate_context = {
-      .parser = &context->parser,
-      .structural_parser = prism_nodes_deep ? &context->parser : &context->structural_parser,
+      .parser = context->parser,
+      .structural_parser = prism_nodes_deep ? context->parser : context->structural_parser,
       .node_list = &node_list,
       .structural_node_list = prism_nodes_deep ? &node_list : &structural_node_list,
       .prism_nodes_deep = prism_nodes_deep,

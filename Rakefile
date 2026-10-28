@@ -7,7 +7,8 @@ require "rake/testtask"
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
-  t.test_files = FileList["test/**/*_test.rb"]
+  # TODO: Drop the `test/rubocop` exclusion once https://github.com/rubocop/rubocop-ast/pull/420 is released and RuboCop is back in the main `Gemfile`.
+  t.test_files = FileList["test/**/*_test.rb"].exclude("test/rubocop/**/*")
 end
 
 Rake::TestTask.new("test:engine") do |t|
@@ -25,7 +26,8 @@ end
 Rake::TestTask.new("test:all") do |t|
   t.libs << "test"
   t.libs << "lib"
-  t.test_files = FileList["test/**/*_test.rb"]
+  # TODO: Drop the `test/rubocop` exclusion once https://github.com/rubocop/rubocop-ast/pull/420 is released and RuboCop is back in the main `Gemfile`.
+  t.test_files = FileList["test/**/*_test.rb"].exclude("test/rubocop/**/*")
 end
 
 task "make" do

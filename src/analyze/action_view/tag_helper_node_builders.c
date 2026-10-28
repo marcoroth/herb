@@ -304,6 +304,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
   pm_interpolated_string_node_t* interpolated_node,
+  const uint8_t* source,
   position_T start_position,
   position_T end_position,
   hb_allocator_T* allocator
@@ -338,19 +339,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
       }
     } else if (part->type == PM_EMBEDDED_STATEMENTS_NODE) {
       pm_embedded_statements_node_t* embedded = (pm_embedded_statements_node_t*) part;
-      const uint8_t* content_start;
-      const uint8_t* content_end;
+      pm_location_t content_location = embedded->statements ? embedded->statements->base.location : part->location;
 
-      if (embedded->statements) {
-        content_start = embedded->statements->base.location.start;
-        content_end = embedded->statements->base.location.end;
-      } else {
-        content_start = part->location.start;
-        content_end = part->location.end;
-      }
-
-      size_t ruby_length = content_end - content_start;
-      char* ruby_content = hb_allocator_strndup(allocator, (const char*) content_start, ruby_length);
+      char* ruby_content =
+        hb_allocator_strndup(allocator, (const char*) (source + content_location.start), content_location.length);
 
       if (ruby_content) {
         AST_RUBY_LITERAL_NODE_T* ruby_node = ast_ruby_literal_node_init(
@@ -386,6 +378,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
 AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value(
   const char* name_string,
   pm_interpolated_string_node_t* interpolated_node,
+  const uint8_t* source,
   position_T start_position,
   position_T end_position,
   hb_allocator_T* allocator
@@ -396,7 +389,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value(
     create_attribute_name_node(name_string, start_position, end_position, allocator);
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node =
-    create_interpolated_attribute_value(interpolated_node, start_position, end_position, allocator);
+    create_interpolated_attribute_value(interpolated_node, source, start_position, end_position, allocator);
 
   token_T* equals_token = create_synthetic_token(allocator, "=", TOKEN_EQUALS, start_position, end_position);
 

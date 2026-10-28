@@ -817,10 +817,10 @@
   resolved "https://registry.yarnpkg.com/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz#e3fcee093fbb5ce765e1ad088ff4de2889f6f9be"
   integrity sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==
 
-"@ruby/prism@^1.9.0":
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@ruby/prism/-/prism-1.9.0.tgz#064f599caf2288e8f0738875abbdd4bc4755df95"
-  integrity sha512-/j+JfP1eA0nCjx6c/8L6K/ENErmsqc6RMAba8rKYNz4RadrT7AW20u4WrjpWYWzdlk6k1YWHxoW9OS68w02+Vw==
+"@ruby/prism@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@ruby/prism/-/prism-2.0.0.tgz#3ac014617360879f5df43fa66d10fb58a9ff35ef"
+  integrity sha512-jEPf56svf7nwFRZ3T+3Dgvfy2RJJSwGk3kEviVEHA6HueR0NT6apbh0YdisqEYducwvzZU/3tZAjgYpqrYzLuw==
 
 "@shikijs/core@4.4.3":
   version "4.4.3"

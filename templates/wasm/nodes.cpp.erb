@@ -54,17 +54,17 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>, cons
   }
   <%- when Herb::Template::PrismNodeField -%>
   if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
-    pm_buffer_t pm_buffer = { 0 };
-    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, &pm_buffer);
+    pm_buffer_t* pm_buffer = pm_buffer_new();
+    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, pm_buffer);
 
-    if (pm_buffer.length > 0) {
-      val view = val(typed_memory_view(pm_buffer.length, (const uint8_t*) pm_buffer.value));
+    if (pm_buffer_length(pm_buffer) > 0) {
+      val view = val(typed_memory_view(pm_buffer_length(pm_buffer), (const uint8_t*) pm_buffer_value(pm_buffer)));
       result.set("<%= field.name %>", val::global("Uint8Array").new_(view));
     } else {
       result.set("<%= field.name %>", val::null());
     }
 
-    pm_buffer_free(&pm_buffer);
+    pm_buffer_free(pm_buffer);
   } else {
     result.set("<%= field.name %>", val::null());
   }

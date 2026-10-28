@@ -19,7 +19,7 @@ typedef struct {
   bool found;
 } tag_helper_search_data_T;
 
-bool search_tag_helper_node(const pm_node_t* node, void* data);
+pm_visit_result_t search_tag_helper_node(const pm_node_t* node, void* data);
 
 position_T prism_location_to_position_with_offset(
   const pm_location_t* pm_location,

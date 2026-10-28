@@ -4,10 +4,12 @@
 #include "../../include/lib/hb_array.h"
 #include "../../include/lib/hb_buffer.h"
 #include "../../include/lib/hb_string.h"
+#include "../../include/prism/prism_helpers.h"
 #include "../../include/util/html_util.h"
 #include "../../include/util/util.h"
 
 #include <prism.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,14 +41,14 @@ static void compute_position_pair(
   position_T* out_end
 ) {
   *out_start = prism_location_to_position_with_offset(location, original_source, erb_content_offset, source);
-  pm_location_t end_location = { .start = location->end, .end = location->end };
+  pm_location_t end_location = { .start = herb_prism_location_end(*location), .length = 0 };
   *out_end = prism_location_to_position_with_offset(&end_location, original_source, erb_content_offset, source);
 }
 
 static void extract_key_name_location(pm_node_t* key, pm_location_t* out_name_loc) {
   if (key->type == PM_SYMBOL_NODE) {
     pm_symbol_node_t* symbol = (pm_symbol_node_t*) key;
-    *out_name_loc = symbol->value_loc;
+    *out_name_loc = symbol->content_loc;
   } else if (key->type == PM_STRING_NODE) {
     pm_string_node_t* string_node = (pm_string_node_t*) key;
     *out_name_loc = string_node->content_loc;
@@ -69,7 +71,7 @@ static void compute_separator_info(
   *out_separator_end =
     prism_location_to_position_with_offset(&assoc->value->location, original_source, erb_content_offset, source);
 
-  if (assoc->operator_loc.start != NULL) {
+  if (herb_prism_location_assigned(assoc->operator_loc)) {
     *out_separator_string = " => ";
     *out_separator_type = TOKEN_EQUALS;
     *out_separator_start = key_end;
@@ -78,8 +80,8 @@ static void compute_separator_info(
     *out_separator_type = TOKEN_COLON;
 
     pm_location_t colon_loc = {
-      .start = assoc->key->location.end - 1,
-      .end = assoc->key->location.end - 1,
+      .start = herb_prism_location_end(assoc->key->location) - 1,
+      .length = 0,
     };
 
     *out_separator_start =
@@ -102,7 +104,7 @@ static void extract_delimited_locations(
     pm_symbol_node_t* symbol_node = (pm_symbol_node_t*) node;
     *out_opening = &symbol_node->opening_loc;
     *out_closing = &symbol_node->closing_loc;
-    *out_content = &symbol_node->value_loc;
+    *out_content = &symbol_node->content_loc;
   } else {
     *out_opening = NULL;
     *out_closing = NULL;
@@ -127,7 +129,8 @@ static void compute_value_positions(
 
   extract_delimited_locations(value_node, &opening_loc, &closing_loc, &content_loc);
 
-  if (opening_loc && opening_loc->start != NULL && closing_loc && closing_loc->start != NULL) {
+  if (opening_loc && herb_prism_location_assigned(*opening_loc) && closing_loc
+      && herb_prism_location_assigned(*closing_loc)) {
     compute_position_pair(
       &*opening_loc,
       source,
@@ -167,7 +170,7 @@ static void fill_attribute_positions(
   );
 
   position_T key_end;
-  pm_location_t key_end_loc = { .start = assoc->key->location.end, .end = assoc->key->location.end };
+  pm_location_t key_end_loc = { .start = herb_prism_location_end(assoc->key->location), .length = 0 };
   key_end = prism_location_to_position_with_offset(&key_end_loc, original_source, erb_content_offset, source);
 
   compute_separator_info(
@@ -246,6 +249,7 @@ static char* join_static_string_array(pm_array_node_t* array, hb_allocator_T* al
 static AST_NODE_T* create_attribute_from_value(
   const char* name_string,
   pm_node_t* value_node,
+  const uint8_t* source,
   attribute_positions_T* positions,
   hb_allocator_T* allocator,
   bool is_nested
@@ -281,8 +285,8 @@ static AST_NODE_T* create_attribute_from_value(
 
     return (AST_NODE_T*) create_html_attribute_node_precise(name_string, "false", positions, allocator);
   } else if (value_node->type == PM_INTEGER_NODE) {
-    size_t value_length = value_node->location.end - value_node->location.start;
-    char* value_string = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
+    char* value_string =
+      hb_allocator_strndup(allocator, (const char*) (source + value_node->location.start), value_node->location.length);
     if (!value_string) { return NULL; }
 
     AST_HTML_ATTRIBUTE_NODE_T* attribute =
@@ -294,15 +298,17 @@ static AST_NODE_T* create_attribute_from_value(
     return (AST_NODE_T*) create_html_attribute_with_interpolated_value(
       name_string,
       (pm_interpolated_string_node_t*) value_node,
+      source,
       positions->name_start,
       positions->value_end,
       allocator
     );
   } else {
-    size_t value_length = value_node->location.end - value_node->location.start;
-    char* raw_content = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
+    size_t value_length = value_node->location.length;
+    char* raw_content =
+      hb_allocator_strndup(allocator, (const char*) (source + value_node->location.start), value_length);
 
-    if (raw_content && value_node->location.start) {
+    if (raw_content && herb_prism_location_assigned(value_node->location)) {
       char* ruby_content = raw_content;
       hb_buffer_T wrapper;
       bool wrapped = false;
@@ -488,8 +494,14 @@ AST_NODE_T* extract_html_attribute_from_assoc(
   fill_attribute_positions(assoc, source, original_source, erb_content_offset, &positions);
 
   char* dashed_name = convert_underscores_to_dashes(name_string);
-  AST_NODE_T* attribute_node =
-    create_attribute_from_value(dashed_name ? dashed_name : name_string, assoc->value, &positions, allocator, false);
+  AST_NODE_T* attribute_node = create_attribute_from_value(
+    dashed_name ? dashed_name : name_string,
+    assoc->value,
+    source,
+    &positions,
+    allocator,
+    false
+  );
 
   if (dashed_name) { free(dashed_name); }
   hb_allocator_dealloc(allocator, name_string);
@@ -516,8 +528,9 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
       pm_assoc_splat_node_t* splat = (pm_assoc_splat_node_t*) element;
 
       if (splat->value) {
-        size_t value_length = splat->value->location.end - splat->value->location.start;
-        char* value_source = hb_allocator_strndup(allocator, (const char*) splat->value->location.start, value_length);
+        size_t value_length = splat->value->location.length;
+        char* value_source =
+          hb_allocator_strndup(allocator, (const char*) (source + splat->value->location.start), value_length);
 
         if (value_source) {
           hb_buffer_T wrapped;
@@ -560,9 +573,9 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
             pm_assoc_splat_node_t* splat = (pm_assoc_splat_node_t*) hash_element;
 
             if (splat->value) {
-              size_t value_length = splat->value->location.end - splat->value->location.start;
+              size_t value_length = splat->value->location.length;
               char* value_source =
-                hb_allocator_strndup(allocator, (const char*) splat->value->location.start, value_length);
+                hb_allocator_strndup(allocator, (const char*) (source + splat->value->location.start), value_length);
 
               if (value_source) {
                 hb_buffer_T wrapped;
@@ -612,8 +625,14 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
             attribute_positions_T hash_positions;
             fill_attribute_positions(hash_assoc, source, original_source, erb_content_offset, &hash_positions);
 
-            AST_NODE_T* attribute =
-              create_attribute_from_value(attribute_key_string, hash_assoc->value, &hash_positions, allocator, true);
+            AST_NODE_T* attribute = create_attribute_from_value(
+              attribute_key_string,
+              hash_assoc->value,
+              source,
+              &hash_positions,
+              allocator,
+              true
+            );
 
             if (attribute) { hb_array_append(attributes, attribute); }
             hb_allocator_dealloc(allocator, attribute_key_string);

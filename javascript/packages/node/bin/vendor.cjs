@@ -26,7 +26,6 @@ console.log(`Found Prism at: ${prismPath}`)
 const targetDir = path.resolve(__dirname, "../extension/prism")
 const targetIncludeDir = path.resolve(targetDir, "include")
 const targetSrcDir = path.resolve(targetDir, "src")
-const targetUtilDir = path.resolve(targetSrcDir, "util")
 
 function ensureDirectoryExists(dir) {
   if (!fs.existsSync(dir)) {
@@ -37,7 +36,6 @@ function ensureDirectoryExists(dir) {
 
 ensureDirectoryExists(targetIncludeDir)
 ensureDirectoryExists(targetSrcDir)
-ensureDirectoryExists(targetUtilDir)
 ensureDirectoryExists(libherbTargetDir)
 
 function safeCopyFile(sourcePath, targetPath) {

@@ -46,7 +46,7 @@ options: {prism_program: true}
             └── @ StatementsNode (location: (1:3)-(1:70))
                 └── body: (1 item)
                     └── @ UnlessNode (location: (1:3)-(1:70))
-                        ├── keyword_loc: (1:3)-(1:9)
+                        ├── unless_keyword_loc: (1:3)-(1:9)
                         ├── predicate:
                         │   └── @ CallNode (location: (1:10)-(1:16))
                         │       ├── receiver: ∅
@@ -57,7 +57,12 @@ options: {prism_program: true}
                         │       ├── arguments: ∅
                         │       ├── closing_loc: ∅
                         │       ├── equal_loc: ∅
-                        │       └── block: ∅
+                        │       ├── block: ∅
+                        │       ├── call_operator: ∅
+                        │       ├── message: "admin?"
+                        │       ├── opening: ∅
+                        │       ├── closing: ∅
+                        │       └── equal: ∅
                         ├── then_keyword_loc: ∅
                         ├── statements:
                         │   └── @ StatementsNode (location: (1:23)-(1:35))
@@ -66,7 +71,10 @@ options: {prism_program: true}
                         │               ├── opening_loc: (1:23)-(1:24)
                         │               ├── content_loc: (1:24)-(1:34)
                         │               ├── closing_loc: (1:34)-(1:35)
-                        │               └── unescaped: "restricted"
+                        │               ├── unescaped: "restricted"
+                        │               ├── opening: "\""
+                        │               ├── content: "restricted"
+                        │               └── closing: "\""
                         ├── else_clause:
                         │   └── @ ElseNode (location: (1:41)-(1:70))
                         │       ├── else_keyword_loc: (1:41)-(1:45)
@@ -77,6 +85,14 @@ options: {prism_program: true}
                         │       │               ├── opening_loc: (1:52)-(1:53)
                         │       │               ├── content_loc: (1:53)-(1:60)
                         │       │               ├── closing_loc: (1:60)-(1:61)
-                        │       │               └── unescaped: "welcome"
-                        │       └── end_keyword_loc: (1:67)-(1:70)
-                        └── end_keyword_loc: (1:67)-(1:70)
+                        │       │               ├── unescaped: "welcome"
+                        │       │               ├── opening: "\""
+                        │       │               ├── content: "welcome"
+                        │       │               └── closing: "\""
+                        │       ├── end_keyword_loc: (1:67)-(1:70)
+                        │       ├── else_keyword: "else"
+                        │       └── end_keyword: "end"
+                        ├── end_keyword_loc: (1:67)-(1:70)
+                        ├── unless_keyword: "unless"
+                        ├── then_keyword: ∅
+                        └── end_keyword: "end"

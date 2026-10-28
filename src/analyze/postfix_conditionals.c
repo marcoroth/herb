@@ -9,6 +9,7 @@
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_string.h"
 #include "../include/prism/herb_prism_node.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -27,11 +28,17 @@ static pm_node_t* find_postfix_conditional_statement(analyzed_ruby_T* analyzed) 
   if (statement->type == PM_IF_NODE) {
     pm_if_node_t* if_node = (pm_if_node_t*) statement;
 
-    if (if_node->if_keyword_loc.start != NULL && if_node->end_keyword_loc.start == NULL) { return statement; }
+    if (herb_prism_location_assigned(if_node->if_keyword_loc)
+        && !herb_prism_location_assigned(if_node->end_keyword_loc)) {
+      return statement;
+    }
   } else if (statement->type == PM_UNLESS_NODE) {
     pm_unless_node_t* unless_node = (pm_unless_node_t*) statement;
 
-    if (unless_node->keyword_loc.start != NULL && unless_node->end_keyword_loc.start == NULL) { return statement; }
+    if (herb_prism_location_assigned(unless_node->unless_keyword_loc)
+        && !herb_prism_location_assigned(unless_node->end_keyword_loc)) {
+      return statement;
+    }
   }
 
   return NULL;
@@ -55,11 +62,11 @@ static body_info_T extract_statements_body_info(
   pm_node_t* first = statements->body.nodes[0];
   pm_node_t* last = statements->body.nodes[statements->body.size - 1];
 
-  const uint8_t* start = first->location.start;
-  const uint8_t* end = last->location.end;
+  const uint8_t* parser_start = pm_parser_start(analyzed->parser);
+  size_t source_length = (size_t) (pm_parser_end(analyzed->parser) - parser_start);
 
-  const uint8_t* parser_start = analyzed->parser.start;
-  size_t source_length = (size_t) (analyzed->parser.end - parser_start);
+  const uint8_t* start = herb_prism_location_start_pointer(parser_start, first->location);
+  const uint8_t* end = herb_prism_location_end_pointer(parser_start, last->location);
 
   if (start < parser_start || end > parser_start + source_length) { return info; }
 
@@ -98,13 +105,13 @@ static body_info_T extract_body_info(
 
     hb_allocator_dealloc(allocator, (void*) info.source);
 
-    info.source = hb_allocator_strndup(allocator, (const char*) analyzed->parser.start, info.length);
+    info.source = hb_allocator_strndup(allocator, (const char*) pm_parser_start(analyzed->parser), info.length);
   }
 
   return info;
 }
 
-static char* extract_condition_source(pm_node_t* conditional_node, hb_allocator_T* allocator) {
+static char* extract_condition_source(const uint8_t* source, pm_node_t* conditional_node, hb_allocator_T* allocator) {
   pm_node_t* predicate = NULL;
 
   if (conditional_node->type == PM_IF_NODE) {
@@ -115,9 +122,11 @@ static char* extract_condition_source(pm_node_t* conditional_node, hb_allocator_
 
   if (!predicate) { return NULL; }
 
-  size_t length = (size_t) (predicate->location.end - predicate->location.start);
-
-  return hb_allocator_strndup(allocator, (const char*) predicate->location.start, length);
+  return hb_allocator_strndup(
+    allocator,
+    (const char*) (source + predicate->location.start),
+    predicate->location.length
+  );
 }
 
 static const char* condition_keyword(pm_node_t* conditional_node) {
@@ -150,7 +159,7 @@ static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
 
   pm_if_node_t* if_node = (pm_if_node_t*) body_node;
 
-  if (if_node->if_keyword_loc.start == NULL && if_node->subsequent != NULL) { return if_node; }
+  if (!herb_prism_location_assigned(if_node->if_keyword_loc) && if_node->subsequent != NULL) { return if_node; }
 
   return NULL;
 }
@@ -215,7 +224,8 @@ static AST_NODE_T* transform_conditional(
   static_output_node_type_T static_node_type,
   hb_allocator_T* allocator
 ) {
-  char* condition_source = extract_condition_source(conditional_node, allocator);
+  char* condition_source =
+    extract_condition_source(pm_parser_start(erb_node->analyzed_ruby->parser), conditional_node, allocator);
   if (!condition_source) { return NULL; }
 
   const char* keyword = condition_keyword(conditional_node);

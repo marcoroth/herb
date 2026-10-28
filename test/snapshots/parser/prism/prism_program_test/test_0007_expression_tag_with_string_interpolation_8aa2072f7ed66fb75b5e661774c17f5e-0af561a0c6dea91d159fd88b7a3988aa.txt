@@ -25,7 +25,10 @@ options: {prism_program: true}
                         │   │   ├── opening_loc: ∅
                         │   │   ├── content_loc: (1:5)-(1:11)
                         │   │   ├── closing_loc: ∅
-                        │   │   └── unescaped: "hello "
+                        │   │   ├── unescaped: "hello "
+                        │   │   ├── opening: ∅
+                        │   │   ├── content: "hello "
+                        │   │   └── closing: ∅
                         │   └── @ EmbeddedStatementsNode (location: (1:11)-(1:18))
                         │       ├── opening_loc: (1:11)-(1:13)
                         │       ├── statements:
@@ -40,6 +43,15 @@ options: {prism_program: true}
                         │       │               ├── arguments: ∅
                         │       │               ├── closing_loc: ∅
                         │       │               ├── equal_loc: ∅
-                        │       │               └── block: ∅
-                        │       └── closing_loc: (1:17)-(1:18)
-                        └── closing_loc: (1:18)-(1:19)
+                        │       │               ├── block: ∅
+                        │       │               ├── call_operator: ∅
+                        │       │               ├── message: "name"
+                        │       │               ├── opening: ∅
+                        │       │               ├── closing: ∅
+                        │       │               └── equal: ∅
+                        │       ├── closing_loc: (1:17)-(1:18)
+                        │       ├── opening: "\#{"
+                        │       └── closing: "}"
+                        ├── closing_loc: (1:18)-(1:19)
+                        ├── opening: "\""
+                        └── closing: "\""

@@ -1,8 +1,8 @@
 use super::buffer::SerializationBuffer;
 use super::PrismNode;
 
-const MAJOR_VERSION: u8 = 1;
-const MINOR_VERSION: u8 = 9;
+const MAJOR_VERSION: u8 = 2;
+const MINOR_VERSION: u8 = 0;
 const PATCH_VERSION: u8 = 0;
 
 const _: () = assert!(
@@ -22,8 +22,26 @@ include!("generated_deserialize.rs");
 
 pub fn deserialize(bytes: &[u8], source: &str) -> Option<PrismNode> {
   let (mut buffer, pool) = skip_header(SerializationBuffer::new(source.as_bytes(), bytes))?;
+  let mut stack: Vec<Option<PrismNode>> = Vec::new();
 
-  Some(read_node(&mut buffer, pool))
+  while buffer.position() < pool {
+    match buffer.read_byte() {
+      0 => stack.push(None),
+      255 => {
+        buffer.read_bytes(8);
+      }
+      type_id => {
+        let node = read_node(&mut buffer, type_id, pool, &mut stack);
+        stack.push(Some(node));
+      }
+    }
+  }
+
+  if stack.len() != 1 {
+    return None;
+  }
+
+  stack.pop().flatten()
 }
 
 fn skip_header(mut buffer: SerializationBuffer<'_>) -> Option<(SerializationBuffer<'_>, usize)> {
@@ -43,6 +61,7 @@ fn skip_header(mut buffer: SerializationBuffer<'_>) -> Option<(SerializationBuff
   buffer.read_bytes(encoding_length);
 
   buffer.read_var_int(); // start line
+  buffer.read_bytes(8); // checksum
 
   let line_offsets = buffer.read_var_int();
   for _ in 0..line_offsets {
@@ -53,6 +72,16 @@ fn skip_header(mut buffer: SerializationBuffer<'_>) -> Option<(SerializationBuff
   for _ in 0..comments {
     buffer.read_var_int();
     buffer.read_location();
+  }
+
+  let attached_nodes = buffer.read_var_int();
+  for _ in 0..attached_nodes {
+    buffer.read_var_int();
+
+    let attached_comments = buffer.read_var_int();
+    for _ in 0..attached_comments {
+      buffer.read_var_int();
+    }
   }
 
   let magic_comments = buffer.read_var_int();
@@ -75,15 +104,15 @@ fn skip_header(mut buffer: SerializationBuffer<'_>) -> Option<(SerializationBuff
     }
   }
 
+  buffer.read_byte(); // continuable
+
   let pool = buffer.read_uint32() as usize;
   buffer.read_var_int();
 
   Some((buffer, pool))
 }
 
-fn read_node(buffer: &mut SerializationBuffer, pool: usize) -> PrismNode {
-  let type_id = buffer.read_byte();
-
+fn read_node(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, stack: &mut Vec<Option<PrismNode>>) -> PrismNode {
   buffer.read_var_int(); // node id
 
   let (start_offset, length) = buffer.read_location();
@@ -101,7 +130,7 @@ fn read_node(buffer: &mut SerializationBuffer, pool: usize) -> PrismNode {
     children: Vec::new(),
   };
 
-  read_node_body(buffer, type_id, pool, &mut node);
+  read_node_body(buffer, type_id, pool, &mut node, stack);
 
   node
 }
@@ -126,25 +155,76 @@ fn newline_offsets(source: &str) -> Vec<usize> {
   source.bytes().enumerate().filter(|(_, byte)| *byte == b'\n').map(|(index, _)| index).collect()
 }
 
-fn prettyprint_node(buffer: &mut SerializationBuffer, pool: usize, output: &mut String, prefix: &mut String, newlines: &[usize]) {
-  let type_id = buffer.read_byte();
+struct PrismRecord {
+  type_id: u8,
+  offset: usize,
+  children: Vec<Option<PrismRecord>>,
+}
+
+fn index_records(buffer: &mut SerializationBuffer, pool: usize) -> Option<PrismRecord> {
+  let mut stack: Vec<Option<PrismRecord>> = Vec::new();
+
+  while buffer.position() < pool {
+    match buffer.read_byte() {
+      0 => stack.push(None),
+      255 => {
+        buffer.read_bytes(8);
+      }
+      type_id => {
+        let offset = buffer.position();
+
+        buffer.read_var_int();
+        buffer.read_location();
+
+        let count = record_child_count(buffer, type_id, pool);
+        let children = stack.split_off(stack.len().saturating_sub(count));
+
+        stack.push(Some(PrismRecord { type_id, offset, children }));
+      }
+    }
+  }
+
+  if stack.len() != 1 {
+    return None;
+  }
+
+  stack.pop().flatten()
+}
+
+fn prettyprint_record(record: PrismRecord, buffer: &mut SerializationBuffer, pool: usize, output: &mut String, prefix: &mut String, newlines: &[usize]) {
+  let resume = buffer.position();
+  buffer.set_position(record.offset);
 
   buffer.read_var_int();
 
   let (start_offset, length) = buffer.read_location();
+  let mut children = record.children.into_iter();
 
-  prettyprint_body(buffer, type_id, pool, output, prefix, start_offset, start_offset + length, newlines);
+  prettyprint_body(
+    buffer,
+    record.type_id,
+    pool,
+    output,
+    prefix,
+    start_offset,
+    start_offset + length,
+    newlines,
+    &mut children,
+  );
+
+  buffer.set_position(resume);
 }
 
 /// pm_prettyprint
 pub fn prettyprint(bytes: &[u8], source: &str) -> Option<String> {
   let (mut buffer, pool) = skip_header(SerializationBuffer::new(source.as_bytes(), bytes))?;
+  let root = index_records(&mut buffer, pool)?;
 
   let newlines = newline_offsets(source);
   let mut output = String::new();
   let mut prefix = String::new();
 
-  prettyprint_node(&mut buffer, pool, &mut output, &mut prefix, &newlines);
+  prettyprint_record(root, &mut buffer, pool, &mut output, &mut prefix, &newlines);
 
   Some(output)
 }

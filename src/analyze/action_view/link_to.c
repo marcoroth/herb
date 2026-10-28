@@ -25,9 +25,10 @@ char* wrap_in_url_for(const char* source, size_t source_length, hb_allocator_T* 
 bool detect_link_to(pm_call_node_t* call_node, pm_parser_t* parser) {
   if (!call_node || !call_node->name) { return false; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, call_node->name);
 
-  return constant && constant->length == 7 && strncmp((const char*) constant->start, "link_to", 7) == 0;
+  return constant && pm_constant_length(constant) == 7
+      && strncmp((const char*) pm_constant_start(constant), "link_to", 7) == 0;
 }
 
 bool is_route_helper_node(pm_node_t* node, pm_parser_t* parser) {
@@ -36,11 +37,11 @@ bool is_route_helper_node(pm_node_t* node, pm_parser_t* parser) {
   pm_call_node_t* call = (pm_call_node_t*) node;
   if (!call->name) { return false; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call->name);
-  if (!constant || constant->length < 5) { return false; }
+  const pm_constant_t* constant = pm_parser_constant(parser, call->name);
+  if (!constant || pm_constant_length(constant) < 5) { return false; }
 
-  const char* name = (const char*) constant->start;
-  size_t length = constant->length;
+  const char* name = (const char*) pm_constant_start(constant);
+  size_t length = pm_constant_length(constant);
 
   return (length >= 5 && strncmp(name + length - 5, "_path", 5) == 0)
       || (length >= 4 && strncmp(name + length - 4, "_url", 4) == 0);
@@ -54,11 +55,9 @@ char* extract_link_to_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, h
 }
 
 char* extract_link_to_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) parser;
-
   if (!call_node) { return NULL; }
 
-  char* block_content = extract_inline_block_content(call_node, allocator);
+  char* block_content = extract_inline_block_content(call_node, parser, allocator);
   if (block_content) { return block_content; }
 
   if (!call_node->arguments) { return NULL; }
@@ -76,7 +75,8 @@ char* extract_link_to_content(pm_call_node_t* call_node, pm_parser_t* parser, hb
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   }
 
-  size_t source_length = first_argument->location.end - first_argument->location.start;
+  const uint8_t* source = pm_parser_start(parser);
+  size_t source_length = first_argument->location.length;
 
   // Format: "<expression>.to_s"
   if (arguments->arguments.size == 1) {
@@ -85,20 +85,20 @@ char* extract_link_to_content(pm_call_node_t* call_node, pm_parser_t* parser, hb
     size_t total_length = source_length + suffix_len;
     char* ruby_expression = hb_allocator_alloc(allocator, total_length + 1);
 
-    memcpy(ruby_expression, (const char*) first_argument->location.start, source_length);
+    memcpy(ruby_expression, (const char*) (source + first_argument->location.start), source_length);
     memcpy(ruby_expression + source_length, suffix, suffix_len);
     ruby_expression[total_length] = '\0';
 
     return ruby_expression;
   }
 
-  return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+  return hb_allocator_strndup(allocator, (const char*) (source + first_argument->location.start), source_length);
 }
 
 char* extract_link_to_href(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) parser;
-
   if (!call_node || !call_node->arguments) { return NULL; }
+
+  const uint8_t* source = pm_parser_start(parser);
 
   pm_arguments_node_t* arguments = call_node->arguments;
   bool has_inline_block = call_node->block && call_node->block->type == PM_BLOCK_NODE;
@@ -112,13 +112,13 @@ char* extract_link_to_href(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
       return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
     }
 
-    size_t source_length = first_argument->location.end - first_argument->location.start;
+    size_t source_length = first_argument->location.length;
 
     if (is_route_helper_node(first_argument, parser)) {
-      return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+      return hb_allocator_strndup(allocator, (const char*) (source + first_argument->location.start), source_length);
     }
 
-    return wrap_in_url_for((const char*) first_argument->location.start, source_length, allocator);
+    return wrap_in_url_for((const char*) (source + first_argument->location.start), source_length, allocator);
   }
 
   // Format: "url_for(<expression>)"
@@ -127,13 +127,13 @@ char* extract_link_to_href(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
 
     if (first_argument->type == PM_STRING_NODE || first_argument->type == PM_NIL_NODE) { return NULL; }
 
-    size_t source_length = first_argument->location.end - first_argument->location.start;
+    size_t source_length = first_argument->location.length;
 
     if (is_route_helper_node(first_argument, parser)) {
-      return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+      return hb_allocator_strndup(allocator, (const char*) (source + first_argument->location.start), source_length);
     }
 
-    return wrap_in_url_for((const char*) first_argument->location.start, source_length, allocator);
+    return wrap_in_url_for((const char*) (source + first_argument->location.start), source_length, allocator);
   }
 
   if (arguments->arguments.size < 2) { return NULL; }
@@ -146,13 +146,13 @@ char* extract_link_to_href(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   }
 
-  size_t source_length = second_argument->location.end - second_argument->location.start;
+  size_t source_length = second_argument->location.length;
 
   if (!is_route_helper_node(second_argument, parser)) {
-    return wrap_in_url_for((const char*) second_argument->location.start, source_length, allocator);
+    return wrap_in_url_for((const char*) (source + second_argument->location.start), source_length, allocator);
   }
 
-  return hb_allocator_strndup(allocator, (const char*) second_argument->location.start, source_length);
+  return hb_allocator_strndup(allocator, (const char*) (source + second_argument->location.start), source_length);
 }
 
 bool link_to_supports_block(void) {

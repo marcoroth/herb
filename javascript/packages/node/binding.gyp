@@ -84,38 +84,42 @@
         "./extension/libherb/util/util.c",
         "./extension/libherb/visitor.c",
 
-        # Prism main source files
+        # Prism source files
+        "./extension/prism/src/arena.c",
+        "./extension/prism/src/buffer.c",
+        "./extension/prism/src/char.c",
+        "./extension/prism/src/comments.c",
+        "./extension/prism/src/constant_pool.c",
         "./extension/prism/src/diagnostic.c",
         "./extension/prism/src/encoding.c",
+        "./extension/prism/src/errors_format.c",
+        "./extension/prism/src/integer.c",
+        "./extension/prism/src/json.c",
+        "./extension/prism/src/line_offset_list.c",
+        "./extension/prism/src/list.c",
+        "./extension/prism/src/memchr.c",
         "./extension/prism/src/node.c",
         "./extension/prism/src/options.c",
-        "./extension/prism/src/pack.c",
+        "./extension/prism/src/parser.c",
         "./extension/prism/src/prettyprint.c",
         "./extension/prism/src/prism.c",
         "./extension/prism/src/regexp.c",
         "./extension/prism/src/serialize.c",
+        "./extension/prism/src/source.c",
         "./extension/prism/src/static_literals.c",
-        "./extension/prism/src/token_type.c",
-
-        # Prism util source files
-        "./extension/prism/src/util/pm_buffer.c",
-        "./extension/prism/src/util/pm_char.c",
-        "./extension/prism/src/util/pm_constant_pool.c",
-        "./extension/prism/src/util/pm_integer.c",
-        "./extension/prism/src/util/pm_list.c",
-        "./extension/prism/src/util/pm_memchr.c",
-        "./extension/prism/src/util/pm_newline_list.c",
-        "./extension/prism/src/util/pm_string.c",
-        "./extension/prism/src/util/pm_strncasecmp.c",
-        "./extension/prism/src/util/pm_strpbrk.c"
+        "./extension/prism/src/string_query.c",
+        "./extension/prism/src/stringy.c",
+        "./extension/prism/src/strncasecmp.c",
+        "./extension/prism/src/strpbrk.c",
+        "./extension/prism/src/tokens.c",
+        "./extension/prism/src/xxh3.c"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
         "./extension/libherb",
         "./extension/libherb/include",
         "./extension/prism/include",
-        "./extension/prism/src",
-        "./extension/prism/src/util"
+        "./extension/prism/src"
       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"

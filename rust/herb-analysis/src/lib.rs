@@ -20,7 +20,7 @@ pub fn prism_link_check(erb: &str, ruby: &str) -> (usize, usize) {
   let erb_children = parsed.value.children.len();
 
   let mut graph = rubydex::model::graph::Graph::new();
-  rubydex::indexing::index_source(&mut graph, "file:///link_check.rb", ruby, &rubydex::indexing::LanguageId::Ruby);
+  rubydex::indexing::index_source(&mut graph, "file:///link_check.rb".into(), ruby, &rubydex::indexing::LanguageId::Ruby);
   rubydex::resolution::Resolver::new(&mut graph).resolve();
 
   (erb_children, graph.declarations().len())

@@ -1,4 +1,5 @@
 #include <prism.h>
+#include <prism/internal/diagnostic.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -94,22 +95,21 @@ bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
 }
 
 typedef struct {
-  const uint8_t* source_start;
   uint32_t offset;
   bool found;
 } inline_condition_offset_T;
 
-static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
+static pm_visit_result_t search_inline_condition_offset(const pm_node_t* node, void* data) {
   inline_condition_offset_T* context = (inline_condition_offset_T*) data;
 
   uint32_t keyword_offset = UINT32_MAX;
 
   if (node->type == PM_WHEN_NODE) {
-    keyword_offset = (uint32_t) (((const pm_when_node_t*) node)->keyword_loc.start - context->source_start);
+    keyword_offset = ((const pm_when_node_t*) node)->when_keyword_loc.start;
   } else if (node->type == PM_IN_NODE) {
-    keyword_offset = (uint32_t) (((const pm_in_node_t*) node)->in_loc.start - context->source_start);
+    keyword_offset = ((const pm_in_node_t*) node)->in_keyword_loc.start;
   } else if (node->type == PM_MATCH_PREDICATE_NODE) {
-    keyword_offset = (uint32_t) (((const pm_match_predicate_node_t*) node)->operator_loc.start - context->source_start);
+    keyword_offset = ((const pm_match_predicate_node_t*) node)->keyword_loc.start;
   }
 
   if (keyword_offset != UINT32_MAX && (!context->found || keyword_offset < context->offset)) {
@@ -119,7 +119,7 @@ static bool search_inline_condition_offset(const pm_node_t* node, void* data) {
 
   pm_visit_child_nodes(node, search_inline_condition_offset, context);
 
-  return false;
+  return PM_VISIT_SKIP;
 }
 
 static hb_string_T control_continuation_keywords[] = HB_STRING_LIST("else", "elsif", "when", "in", "rescue", "ensure");
@@ -157,19 +157,18 @@ bool control_role_split_offset(const analyzed_ruby_T* analyzed, uint32_t* offset
   uint32_t second = UINT32_MAX;
   bool first_continues = false;
 
-  for (const pm_diagnostic_t* diagnostic = (const pm_diagnostic_t*) analyzed->parser.error_list.head;
-       diagnostic != NULL;
-       diagnostic = (const pm_diagnostic_t*) diagnostic->node.next) {
+  const uint8_t* source = pm_parser_start(analyzed->parser);
+
+  for (const pm_diagnostic_t* diagnostic = pm_parser_errors_first(analyzed->parser); diagnostic != NULL;
+       diagnostic = pm_diagnostic_next(diagnostic)) {
     if (diagnostic->diag_id != PM_ERR_UNEXPECTED_TOKEN_IGNORE) { continue; }
 
-    hb_string_T keyword = hb_string_from_data(
-      (const char*) diagnostic->location.start,
-      (size_t) (diagnostic->location.end - diagnostic->location.start)
-    );
+    hb_string_T keyword =
+      hb_string_from_data((const char*) (source + diagnostic->location.start), diagnostic->location.length);
 
     if (!is_control_role_keyword(keyword)) { continue; }
 
-    uint32_t start = (uint32_t) (diagnostic->location.start - analyzed->parser.start);
+    uint32_t start = diagnostic->location.start;
 
     if (start < first) {
       second = first;
@@ -203,7 +202,6 @@ bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* 
   if (!analyzed || !analyzed->root || !offset) { return false; }
 
   inline_condition_offset_T context = {
-    .source_start = analyzed->parser.start,
     .offset = UINT32_MAX,
     .found = false,
   };
@@ -218,89 +216,76 @@ bool inline_condition_keyword_offset(const analyzed_ruby_T* analyzed, uint32_t* 
 }
 
 bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
-    if (string_equals(error->message, message)) { return true; }
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(analyzed->parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
+    if (string_equals(pm_diagnostic_message(error), message)) { return true; }
   }
 
   return false;
 }
 
-bool is_do_block(pm_location_t opening_location) {
-  size_t length = opening_location.end - opening_location.start;
-
-  return length == 2 && opening_location.start[0] == 'd' && opening_location.start[1] == 'o';
+static bool location_matches(const uint8_t* source, pm_location_t location, const char* text, size_t length) {
+  return location.length == length && memcmp(source + location.start, text, length) == 0;
 }
 
-bool is_brace_block(pm_location_t opening_location) {
-  size_t length = opening_location.end - opening_location.start;
-
-  return length == 1 && opening_location.start[0] == '{';
+bool is_do_block(const uint8_t* source, pm_location_t opening_location) {
+  return location_matches(source, opening_location, "do", 2);
 }
 
-static bool has_location(pm_location_t location) {
-  return location.start != NULL && location.end != NULL && (location.end - location.start) > 0;
+bool is_brace_block(const uint8_t* source, pm_location_t opening_location) {
+  return location_matches(source, opening_location, "{", 1);
 }
 
-static bool is_end_keyword(pm_location_t location) {
-  if (location.start == NULL || location.end == NULL) { return false; }
-
-  size_t length = location.end - location.start;
-
-  return length == 3 && location.start[0] == 'e' && location.start[1] == 'n' && location.start[2] == 'd';
+static bool is_end_keyword(const uint8_t* source, pm_location_t location) {
+  return location_matches(source, location, "end", 3);
 }
 
-bool is_closing_brace(pm_location_t location) {
-  if (location.start == NULL || location.end == NULL) { return false; }
-
-  size_t length = location.end - location.start;
-
-  return length == 1 && location.start[0] == '}';
+bool is_closing_brace(const uint8_t* source, pm_location_t location) {
+  return location_matches(source, location, "}", 1);
 }
 
-bool has_valid_block_closing(pm_location_t opening_loc, pm_location_t closing_loc) {
-  if (is_do_block(opening_loc)) {
-    return is_end_keyword(closing_loc);
-  } else if (is_brace_block(opening_loc)) {
-    return is_closing_brace(closing_loc);
+bool has_valid_block_closing(const uint8_t* source, pm_location_t opening_loc, pm_location_t closing_loc) {
+  if (is_do_block(source, opening_loc)) {
+    return is_end_keyword(source, closing_loc);
+  } else if (is_brace_block(source, opening_loc)) {
+    return is_closing_brace(source, closing_loc);
   }
 
   return false;
 }
 
-static bool has_keyword_location(pm_location_t location) {
-  return location.start != NULL && location.end != NULL;
+static bool is_unclosed_block(const uint8_t* source, pm_location_t opening_loc, pm_location_t closing_loc) {
+  bool has_opening = is_do_block(source, opening_loc) || is_brace_block(source, opening_loc);
+
+  return has_opening && !has_valid_block_closing(source, opening_loc, closing_loc);
 }
 
-static bool is_unclosed_block(pm_location_t opening_loc, pm_location_t closing_loc) {
-  bool has_opening = is_do_block(opening_loc) || is_brace_block(opening_loc);
-
-  return has_opening && !has_valid_block_closing(opening_loc, closing_loc);
-}
-
-bool search_control_flow_nodes(const pm_node_t* node, void* data) {
+pm_visit_result_t search_control_flow_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+  const uint8_t* source = pm_parser_start(analyzed->parser);
 
   switch (node->type) {
     case PM_IF_NODE: {
       const pm_if_node_t* if_node = (const pm_if_node_t*) node;
 
-      if (has_keyword_location(if_node->if_keyword_loc) && has_keyword_location(if_node->end_keyword_loc)) {
+      if (herb_prism_location_assigned(if_node->if_keyword_loc)
+          && herb_prism_location_assigned(if_node->end_keyword_loc)) {
         analyzed->if_node_count++;
       }
 
-      if (has_keyword_location(if_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
+      if (herb_prism_location_assigned(if_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
       break;
     }
 
     case PM_UNLESS_NODE: {
       const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
 
-      if (has_keyword_location(unless_node->keyword_loc) && has_keyword_location(unless_node->end_keyword_loc)) {
+      if (herb_prism_location_assigned(unless_node->unless_keyword_loc)
+          && herb_prism_location_assigned(unless_node->end_keyword_loc)) {
         analyzed->unless_node_count++;
       }
 
-      if (has_keyword_location(unless_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
+      if (herb_prism_location_assigned(unless_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
       break;
     }
 
@@ -309,21 +294,23 @@ bool search_control_flow_nodes(const pm_node_t* node, void* data) {
 
       analyzed->when_node_count++;
 
-      if (has_keyword_location(when_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
+      if (herb_prism_location_assigned(when_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
       break;
     }
 
     case PM_BLOCK_NODE: {
       const pm_block_node_t* block_node = (const pm_block_node_t*) node;
 
-      if (is_unclosed_block(block_node->opening_loc, block_node->closing_loc)) { analyzed->block_node_count++; }
+      if (is_unclosed_block(source, block_node->opening_loc, block_node->closing_loc)) { analyzed->block_node_count++; }
       break;
     }
 
     case PM_LAMBDA_NODE: {
       const pm_lambda_node_t* lambda_node = (const pm_lambda_node_t*) node;
 
-      if (is_unclosed_block(lambda_node->opening_loc, lambda_node->closing_loc)) { analyzed->block_node_count++; }
+      if (is_unclosed_block(source, lambda_node->opening_loc, lambda_node->closing_loc)) {
+        analyzed->block_node_count++;
+      }
       break;
     }
 
@@ -351,7 +338,7 @@ bool search_control_flow_nodes(const pm_node_t* node, void* data) {
 
   pm_visit_child_nodes(node, search_control_flow_nodes, analyzed);
 
-  return false;
+  return PM_VISIT_SKIP;
 }
 
 void search_unexpected_keyword_errors(analyzed_ruby_T* analyzed) {
@@ -365,9 +352,9 @@ void search_unexpected_keyword_errors(analyzed_ruby_T* analyzed) {
   bool unexpected_rescue = false;
   bool unexpected_ensure = false;
 
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
-    const char* message = error->message;
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(analyzed->parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
+    const char* message = pm_diagnostic_message(error);
 
     if (string_equals(message, "unexpected 'elsif', ignoring it")) {
       unexpected_elsif = true;
@@ -406,16 +393,17 @@ static bool is_postfix_conditional(const pm_statements_node_t* statements, pm_lo
   return statements->base.location.start < keyword_location.start;
 }
 
-bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
+pm_visit_result_t search_unclosed_control_flows(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+  const uint8_t* source = pm_parser_start(analyzed->parser);
 
-  if (analyzed->unclosed_control_flow_count >= 2) { return false; }
+  if (analyzed->unclosed_control_flow_count >= 2) { return PM_VISIT_SKIP; }
 
   switch (node->type) {
     case PM_IF_NODE: {
       const pm_if_node_t* if_node = (const pm_if_node_t*) node;
 
-      if (has_location(if_node->if_keyword_loc) && !is_end_keyword(if_node->end_keyword_loc)) {
+      if (herb_prism_location_present(if_node->if_keyword_loc) && !is_end_keyword(source, if_node->end_keyword_loc)) {
         if (!is_postfix_conditional(if_node->statements, if_node->if_keyword_loc)) {
           analyzed->unclosed_control_flow_count++;
         }
@@ -427,8 +415,9 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_UNLESS_NODE: {
       const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
 
-      if (has_location(unless_node->keyword_loc) && !is_end_keyword(unless_node->end_keyword_loc)) {
-        if (!is_postfix_conditional(unless_node->statements, unless_node->keyword_loc)) {
+      if (herb_prism_location_present(unless_node->unless_keyword_loc)
+          && !is_end_keyword(source, unless_node->end_keyword_loc)) {
+        if (!is_postfix_conditional(unless_node->statements, unless_node->unless_keyword_loc)) {
           analyzed->unclosed_control_flow_count++;
         }
       }
@@ -439,7 +428,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_CASE_NODE: {
       const pm_case_node_t* case_node = (const pm_case_node_t*) node;
 
-      if (has_location(case_node->case_keyword_loc) && !is_end_keyword(case_node->end_keyword_loc)) {
+      if (herb_prism_location_present(case_node->case_keyword_loc)
+          && !is_end_keyword(source, case_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -449,7 +439,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_CASE_MATCH_NODE: {
       const pm_case_match_node_t* case_match_node = (const pm_case_match_node_t*) node;
 
-      if (has_location(case_match_node->case_keyword_loc) && !is_end_keyword(case_match_node->end_keyword_loc)) {
+      if (herb_prism_location_present(case_match_node->case_keyword_loc)
+          && !is_end_keyword(source, case_match_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -459,7 +450,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_WHILE_NODE: {
       const pm_while_node_t* while_node = (const pm_while_node_t*) node;
 
-      if (has_location(while_node->keyword_loc) && !is_end_keyword(while_node->closing_loc)) {
+      if (herb_prism_location_present(while_node->while_keyword_loc)
+          && !is_end_keyword(source, while_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -469,7 +461,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_UNTIL_NODE: {
       const pm_until_node_t* until_node = (const pm_until_node_t*) node;
 
-      if (has_location(until_node->keyword_loc) && !is_end_keyword(until_node->closing_loc)) {
+      if (herb_prism_location_present(until_node->until_keyword_loc)
+          && !is_end_keyword(source, until_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -479,7 +472,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_FOR_NODE: {
       const pm_for_node_t* for_node = (const pm_for_node_t*) node;
 
-      if (has_location(for_node->for_keyword_loc) && !is_end_keyword(for_node->end_keyword_loc)) {
+      if (herb_prism_location_present(for_node->for_keyword_loc)
+          && !is_end_keyword(source, for_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -489,7 +483,8 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
     case PM_BEGIN_NODE: {
       const pm_begin_node_t* begin_node = (const pm_begin_node_t*) node;
 
-      if (has_location(begin_node->begin_keyword_loc) && !is_end_keyword(begin_node->end_keyword_loc)) {
+      if (herb_prism_location_present(begin_node->begin_keyword_loc)
+          && !is_end_keyword(source, begin_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -498,9 +493,10 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
 
     case PM_BLOCK_NODE: {
       const pm_block_node_t* block_node = (const pm_block_node_t*) node;
-      bool has_opening = is_do_block(block_node->opening_loc) || is_brace_block(block_node->opening_loc);
+      bool has_opening =
+        is_do_block(source, block_node->opening_loc) || is_brace_block(source, block_node->opening_loc);
 
-      if (has_opening && !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc)) {
+      if (has_opening && !has_valid_block_closing(source, block_node->opening_loc, block_node->closing_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -509,9 +505,10 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
 
     case PM_LAMBDA_NODE: {
       const pm_lambda_node_t* lambda_node = (const pm_lambda_node_t*) node;
-      bool has_opening = is_do_block(lambda_node->opening_loc) || is_brace_block(lambda_node->opening_loc);
+      bool has_opening =
+        is_do_block(source, lambda_node->opening_loc) || is_brace_block(source, lambda_node->opening_loc);
 
-      if (has_opening && !has_valid_block_closing(lambda_node->opening_loc, lambda_node->closing_loc)) {
+      if (has_opening && !has_valid_block_closing(source, lambda_node->opening_loc, lambda_node->closing_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 
@@ -523,7 +520,7 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
 
   pm_visit_child_nodes(node, search_unclosed_control_flows, analyzed);
 
-  return false;
+  return PM_VISIT_SKIP;
 }
 
 static pm_block_node_t* find_first_block_node(pm_node_t* node) {
@@ -552,28 +549,21 @@ static pm_block_node_t* find_first_block_node(pm_node_t* node) {
   return NULL;
 }
 
-static position_T prism_to_source_position(
-  const uint8_t* prism_pointer,
-  const uint8_t* prism_source_start,
-  size_t source_base_offset,
-  const char* source
-) {
-  if (!source || !prism_source_start) { return (position_T) { .line = 1, .column = 0 }; }
+static position_T prism_to_source_position(uint32_t prism_offset, size_t source_base_offset, const char* source) {
+  if (!source) { return (position_T) { .line = 1, .column = 0 }; }
 
-  size_t prism_offset = (size_t) (prism_pointer - prism_source_start);
   return byte_offset_to_position(source, source_base_offset + prism_offset);
 }
 
 static token_T* create_parameter_name_token(
   pm_location_t location,
   const char* name,
-  const uint8_t* prism_source_start,
   size_t source_base_offset,
   const char* source,
   hb_allocator_T* allocator
 ) {
-  position_T start = prism_to_source_position(location.start, prism_source_start, source_base_offset, source);
-  position_T end = prism_to_source_position(location.end, prism_source_start, source_base_offset, source);
+  position_T start = prism_to_source_position(location.start, source_base_offset, source);
+  position_T end = prism_to_source_position(herb_prism_location_end(location), source_base_offset, source);
 
   return create_synthetic_token(allocator, name, TOKEN_IDENTIFIER, start, end);
 }
@@ -639,20 +629,21 @@ static void append_multi_target_parameters(
 
     if (splat->expression && splat->expression->type == PM_REQUIRED_PARAMETER_NODE) {
       pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) splat->expression;
-      pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
+      const pm_constant_t* constant = pm_parser_constant(parser, required->name);
 
       if (constant) {
-        char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+        char* name =
+          hb_allocator_strndup(allocator, (const char*) pm_constant_start(constant), pm_constant_length(constant));
         pm_node_t* node = splat->expression;
 
         append_parameter(
           result,
-          create_parameter_name_token(node->location, name, prism_source_start, source_base_offset, source, allocator),
+          create_parameter_name_token(node->location, name, source_base_offset, source, allocator),
           NULL,
           "rest",
           false,
-          prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source),
-          prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source),
+          prism_to_source_position(node->location.start, source_base_offset, source),
+          prism_to_source_position(herb_prism_location_end(node->location), source_base_offset, source),
           allocator
         );
 
@@ -700,19 +691,19 @@ static void append_required_positional(
   if (node->type != PM_REQUIRED_PARAMETER_NODE) { return; }
 
   pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) node;
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, required->name);
   if (!constant) { return; }
 
-  char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+  char* name = hb_allocator_strndup(allocator, (const char*) pm_constant_start(constant), pm_constant_length(constant));
 
   append_parameter(
     result,
-    create_parameter_name_token(node->location, name, prism_source_start, source_base_offset, source, allocator),
+    create_parameter_name_token(node->location, name, source_base_offset, source, allocator),
     NULL,
     "positional",
     true,
-    prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source),
-    prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source),
+    prism_to_source_position(node->location.start, source_base_offset, source),
+    prism_to_source_position(herb_prism_location_end(node->location), source_base_offset, source),
     allocator
   );
 
@@ -755,21 +746,25 @@ hb_array_T* extract_parameters_from_prism(
     if (node->type != PM_OPTIONAL_PARAMETER_NODE) { continue; }
 
     pm_optional_parameter_node_t* optional = (pm_optional_parameter_node_t*) node;
-    size_t name_length = (size_t) (optional->name_loc.end - optional->name_loc.start);
-    char* name = hb_allocator_strndup(allocator, (const char*) optional->name_loc.start, name_length);
+    size_t name_length = optional->name_loc.length;
+    char* name =
+      hb_allocator_strndup(allocator, (const char*) (prism_source_start + optional->name_loc.start), name_length);
 
-    position_T start = prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source);
-    position_T end = prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source);
+    position_T start = prism_to_source_position(node->location.start, source_base_offset, source);
+    position_T end = prism_to_source_position(herb_prism_location_end(node->location), source_base_offset, source);
 
     AST_RUBY_LITERAL_NODE_T* default_value = NULL;
 
     if (optional->value) {
-      size_t value_length = (size_t) (optional->value->location.end - optional->value->location.start);
-      char* value_string = hb_allocator_strndup(allocator, (const char*) optional->value->location.start, value_length);
-      position_T value_start =
-        prism_to_source_position(optional->value->location.start, prism_source_start, source_base_offset, source);
+      size_t value_length = optional->value->location.length;
+      char* value_string = hb_allocator_strndup(
+        allocator,
+        (const char*) (prism_source_start + optional->value->location.start),
+        value_length
+      );
+      position_T value_start = prism_to_source_position(optional->value->location.start, source_base_offset, source);
       position_T value_end =
-        prism_to_source_position(optional->value->location.end, prism_source_start, source_base_offset, source);
+        prism_to_source_position(herb_prism_location_end(optional->value->location), source_base_offset, source);
 
       default_value = ast_ruby_literal_node_init(
         hb_string_from_c_string(value_string),
@@ -783,7 +778,7 @@ hb_array_T* extract_parameters_from_prism(
 
     append_parameter(
       result,
-      create_parameter_name_token(optional->name_loc, name, prism_source_start, source_base_offset, source, allocator),
+      create_parameter_name_token(optional->name_loc, name, source_base_offset, source, allocator),
       default_value,
       "positional",
       false,
@@ -800,17 +795,17 @@ hb_array_T* extract_parameters_from_prism(
     pm_rest_parameter_node_t* rest = (pm_rest_parameter_node_t*) parameters->rest;
 
     if (rest->name) {
-      size_t name_length = (size_t) (rest->name_loc.end - rest->name_loc.start);
-      char* name = hb_allocator_strndup(allocator, (const char*) rest->name_loc.start, name_length);
+      size_t name_length = rest->name_loc.length;
+      char* name =
+        hb_allocator_strndup(allocator, (const char*) (prism_source_start + rest->name_loc.start), name_length);
 
-      position_T start =
-        prism_to_source_position(parameters->rest->location.start, prism_source_start, source_base_offset, source);
+      position_T start = prism_to_source_position(parameters->rest->location.start, source_base_offset, source);
       position_T end =
-        prism_to_source_position(parameters->rest->location.end, prism_source_start, source_base_offset, source);
+        prism_to_source_position(herb_prism_location_end(parameters->rest->location), source_base_offset, source);
 
       append_parameter(
         result,
-        create_parameter_name_token(rest->name_loc, name, prism_source_start, source_base_offset, source, allocator),
+        create_parameter_name_token(rest->name_loc, name, source_base_offset, source, allocator),
         NULL,
         "rest",
         false,
@@ -827,8 +822,8 @@ hb_array_T* extract_parameters_from_prism(
         NULL,
         "rest",
         false,
-        prism_to_source_position(parameters->rest->location.start, prism_source_start, source_base_offset, source),
-        prism_to_source_position(parameters->rest->location.end, prism_source_start, source_base_offset, source),
+        prism_to_source_position(parameters->rest->location.start, source_base_offset, source),
+        prism_to_source_position(herb_prism_location_end(parameters->rest->location), source_base_offset, source),
         allocator
       );
     }
@@ -863,21 +858,18 @@ hb_array_T* extract_parameters_from_prism(
       name_location = optional_keyword->name_loc;
 
       if (optional_keyword->value) {
-        size_t value_length =
-          (size_t) (optional_keyword->value->location.end - optional_keyword->value->location.start);
-        char* value_string =
-          hb_allocator_strndup(allocator, (const char*) optional_keyword->value->location.start, value_length);
-
-        position_T value_start = prism_to_source_position(
-          optional_keyword->value->location.start,
-          prism_source_start,
-          source_base_offset,
-          source
+        size_t value_length = optional_keyword->value->location.length;
+        char* value_string = hb_allocator_strndup(
+          allocator,
+          (const char*) (prism_source_start + optional_keyword->value->location.start),
+          value_length
         );
 
+        position_T value_start =
+          prism_to_source_position(optional_keyword->value->location.start, source_base_offset, source);
+
         position_T value_end = prism_to_source_position(
-          optional_keyword->value->location.end,
-          prism_source_start,
+          herb_prism_location_end(optional_keyword->value->location),
           source_base_offset,
           source
         );
@@ -896,17 +888,16 @@ hb_array_T* extract_parameters_from_prism(
       continue;
     }
 
-    size_t name_length = (size_t) (name_location.end - name_location.start);
-    if (name_length > 0 && name_location.start[name_length - 1] == ':') { name_length--; }
-    char* name = hb_allocator_strndup(allocator, (const char*) name_location.start, name_length);
+    size_t name_length = name_location.length;
+    if (name_length > 0 && prism_source_start[name_location.start + name_length - 1] == ':') { name_length--; }
+    char* name = hb_allocator_strndup(allocator, (const char*) (prism_source_start + name_location.start), name_length);
 
-    position_T start =
-      prism_to_source_position(keyword->location.start, prism_source_start, source_base_offset, source);
-    position_T end = prism_to_source_position(keyword->location.end, prism_source_start, source_base_offset, source);
+    position_T start = prism_to_source_position(keyword->location.start, source_base_offset, source);
+    position_T end = prism_to_source_position(herb_prism_location_end(keyword->location), source_base_offset, source);
 
     append_parameter(
       result,
-      create_parameter_name_token(name_location, name, prism_source_start, source_base_offset, source, allocator),
+      create_parameter_name_token(name_location, name, source_base_offset, source, allocator),
       default_value,
       "keyword",
       is_required,
@@ -922,30 +913,19 @@ hb_array_T* extract_parameters_from_prism(
   if (parameters->keyword_rest && parameters->keyword_rest->type == PM_KEYWORD_REST_PARAMETER_NODE) {
     pm_keyword_rest_parameter_node_t* keyword_rest = (pm_keyword_rest_parameter_node_t*) parameters->keyword_rest;
 
-    position_T start = prism_to_source_position(
-      parameters->keyword_rest->location.start,
-      prism_source_start,
-      source_base_offset,
-      source
-    );
+    position_T start = prism_to_source_position(parameters->keyword_rest->location.start, source_base_offset, source);
 
     position_T end =
-      prism_to_source_position(parameters->keyword_rest->location.end, prism_source_start, source_base_offset, source);
+      prism_to_source_position(herb_prism_location_end(parameters->keyword_rest->location), source_base_offset, source);
 
     if (keyword_rest->name) {
-      size_t name_length = (size_t) (keyword_rest->name_loc.end - keyword_rest->name_loc.start);
-      char* name = hb_allocator_strndup(allocator, (const char*) keyword_rest->name_loc.start, name_length);
+      size_t name_length = keyword_rest->name_loc.length;
+      char* name =
+        hb_allocator_strndup(allocator, (const char*) (prism_source_start + keyword_rest->name_loc.start), name_length);
 
       append_parameter(
         result,
-        create_parameter_name_token(
-          keyword_rest->name_loc,
-          name,
-          prism_source_start,
-          source_base_offset,
-          source,
-          allocator
-        ),
+        create_parameter_name_token(keyword_rest->name_loc, name, source_base_offset, source, allocator),
         NULL,
         "keyword_rest",
         false,
@@ -962,28 +942,21 @@ hb_array_T* extract_parameters_from_prism(
   }
 
   // Block: |&blk|
-  if (parameters->block) {
-    pm_block_parameter_node_t* block_param = parameters->block;
+  if (parameters->block && parameters->block->type == PM_BLOCK_PARAMETER_NODE) {
+    pm_block_parameter_node_t* block_param = (pm_block_parameter_node_t*) parameters->block;
 
     if (block_param->name) {
-      size_t name_length = (size_t) (block_param->name_loc.end - block_param->name_loc.start);
-      char* name = hb_allocator_strndup(allocator, (const char*) block_param->name_loc.start, name_length);
+      size_t name_length = block_param->name_loc.length;
+      char* name =
+        hb_allocator_strndup(allocator, (const char*) (prism_source_start + block_param->name_loc.start), name_length);
 
-      position_T start =
-        prism_to_source_position(block_param->base.location.start, prism_source_start, source_base_offset, source);
+      position_T start = prism_to_source_position(block_param->base.location.start, source_base_offset, source);
       position_T end =
-        prism_to_source_position(block_param->base.location.end, prism_source_start, source_base_offset, source);
+        prism_to_source_position(herb_prism_location_end(block_param->base.location), source_base_offset, source);
 
       append_parameter(
         result,
-        create_parameter_name_token(
-          block_param->name_loc,
-          name,
-          prism_source_start,
-          source_base_offset,
-          source,
-          allocator
-        ),
+        create_parameter_name_token(block_param->name_loc, name, source_base_offset, source, allocator),
         NULL,
         "block",
         false,
@@ -1000,8 +973,8 @@ hb_array_T* extract_parameters_from_prism(
         NULL,
         "block",
         false,
-        prism_to_source_position(block_param->base.location.start, prism_source_start, source_base_offset, source),
-        prism_to_source_position(block_param->base.location.end, prism_source_start, source_base_offset, source),
+        prism_to_source_position(block_param->base.location.start, source_base_offset, source),
+        prism_to_source_position(herb_prism_location_end(block_param->base.location), source_base_offset, source),
         allocator
       );
     }
@@ -1018,7 +991,7 @@ hb_array_T* extract_block_arguments_from_erb_node(
 ) {
   if (!erb_node || !erb_node->analyzed_ruby || !erb_node->analyzed_ruby->parsed) { return hb_array_init(0, allocator); }
 
-  pm_parser_t* parser = &erb_node->analyzed_ruby->parser;
+  pm_parser_t* parser = erb_node->analyzed_ruby->parser;
   pm_block_node_t* block_node = find_first_block_node(erb_node->analyzed_ruby->root);
 
   if (!block_node || !block_node->parameters) { return hb_array_init(0, allocator); }
@@ -1031,17 +1004,17 @@ hb_array_T* extract_block_arguments_from_erb_node(
     erb_content_offset = calculate_byte_offset_from_position(source, erb_node->content->location.start);
   }
 
-  const uint8_t* prism_source_start = (const uint8_t*) parser->start;
+  const uint8_t* prism_source_start = pm_parser_start(parser);
 
   if (errors) {
-    for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser->error_list.head; error != NULL;
-         error = (const pm_diagnostic_t*) error->node.next) {
+    for (const pm_diagnostic_t* error = pm_parser_errors_first(parser); error != NULL;
+         error = pm_diagnostic_next(error)) {
       if (error->diag_id == PM_ERR_BLOCK_TERM_END) { continue; }
       if (error->diag_id == PM_ERR_BLOCK_TERM_BRACE) { continue; }
       if (error->diag_id == PM_ERR_UNEXPECTED_TOKEN_CLOSE_CONTEXT) { continue; }
 
-      size_t error_start_offset = (size_t) (error->location.start - prism_source_start);
-      size_t error_end_offset = (size_t) (error->location.end - prism_source_start);
+      size_t error_start_offset = error->location.start;
+      size_t error_end_offset = herb_prism_location_end(error->location);
 
       position_T error_start = byte_offset_to_position(source, erb_content_offset + error_start_offset);
       position_T error_end = byte_offset_to_position(source, erb_content_offset + error_end_offset);
@@ -1100,7 +1073,7 @@ static bool is_plain_decimal_integer(hb_string_T source) {
   return true;
 }
 
-static bool prism_node_static_output(const pm_node_t* node, hb_string_T* output) {
+static bool prism_node_static_output(const uint8_t* source, const pm_node_t* node, hb_string_T* output) {
   if (!node || !output) { return false; }
 
   switch (node->type) {
@@ -1119,12 +1092,11 @@ static bool prism_node_static_output(const pm_node_t* node, hb_string_T* output)
     }
 
     case PM_INTEGER_NODE: {
-      hb_string_T source =
-        hb_string_from_data((const char*) node->location.start, (size_t) (node->location.end - node->location.start));
+      hb_string_T integer = hb_string_from_data((const char*) (source + node->location.start), node->location.length);
 
-      if (!is_plain_decimal_integer(source)) { return false; }
+      if (!is_plain_decimal_integer(integer)) { return false; }
 
-      *output = source;
+      *output = integer;
       break;
     }
 
@@ -1173,17 +1145,18 @@ bool append_static_output_node(
   if (body->body.size != 1) { return false; }
 
   const pm_node_t* literal = body->body.nodes[0];
-  const uint8_t* parser_start = analyzed->parser.start;
+  const uint8_t* parser_start = pm_parser_start(analyzed->parser);
+  size_t source_length = (size_t) (pm_parser_end(analyzed->parser) - parser_start);
 
-  if (literal->location.start < parser_start || literal->location.end > analyzed->parser.end) { return false; }
+  if (herb_prism_location_end(literal->location) > source_length) { return false; }
 
   hb_string_T content;
 
-  if (!prism_node_static_output(literal, &content)) { return false; }
+  if (!prism_node_static_output(parser_start, literal, &content)) { return false; }
   if (content.length == 0) { return true; }
 
-  size_t offset = (size_t) (literal->location.start - parser_start);
-  size_t length = (size_t) (literal->location.end - literal->location.start);
+  size_t offset = literal->location.start;
+  size_t length = literal->location.length;
 
   position_T start_position = { .line = content_start.line, .column = content_start.column + (uint32_t) offset };
   position_T end_position = { .line = content_start.line,

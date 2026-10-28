@@ -27,4 +27,9 @@ options: {prism_nodes: true}
                 │               └── value: 2
                 ├── closing_loc: ∅
                 ├── equal_loc: ∅
-                └── block: ∅
+                ├── block: ∅
+                ├── call_operator: ∅
+                ├── message: "+"
+                ├── opening: ∅
+                ├── closing: ∅
+                └── equal: ∅

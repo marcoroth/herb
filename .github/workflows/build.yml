@@ -44,8 +44,14 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
+      # TODO: Drop `BUNDLE_GEMFILE` and the separate cop test run once https://github.com/rubocop/rubocop-ast/pull/420 is released.
       - name: RuboCop
-        run: bundle exec rubocop
+        env:
+          BUNDLE_GEMFILE: gemfiles/rubocop.gemfile
+        run: |-
+          bundle install
+          bundle exec rubocop
+          bundle exec ruby test/rubocop/includes_assertion_test.rb
 
       - name: Yerba
         run: bundle exec yerba check

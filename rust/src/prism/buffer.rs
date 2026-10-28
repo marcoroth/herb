@@ -12,6 +12,14 @@ impl<'a> SerializationBuffer<'a> {
     Self { source, array, index: 0 }
   }
 
+  pub(crate) fn position(&self) -> usize {
+    self.index
+  }
+
+  pub(crate) fn set_position(&mut self, index: usize) {
+    self.index = index;
+  }
+
   pub(crate) fn read_byte(&mut self) -> u8 {
     let byte = self.array.get(self.index).copied().unwrap_or(0);
     self.index += 1;
@@ -81,42 +89,20 @@ impl<'a> SerializationBuffer<'a> {
   }
 
   pub(crate) fn read_string_field(&mut self, flags: u32) -> String {
-    match self.read_byte() {
-      1 => {
-        let start = self.read_var_int();
-        let length = self.read_var_int();
-        let end = (start + length).min(self.source.len());
-        let start = start.min(end);
+    let length = self.read_var_int();
+    let bytes = self.read_bytes(length);
 
-        decode(&self.source[start..end], flags)
-      }
-
-      2 => {
-        let length = self.read_var_int();
-        let bytes = self.read_bytes(length);
-
-        decode(bytes, flags)
-      }
-
-      other => panic!("unknown serialized string type: {other}"),
-    }
+    decode(bytes, flags)
   }
 
   pub(crate) fn scan_constant(&self, constant_pool_offset: usize, constant_index: usize) -> String {
     let offset = constant_pool_offset + constant_index * 8;
-    let mut start = self.scan_uint32(offset) as usize;
+    let start = self.scan_uint32(offset) as usize;
     let length = self.scan_uint32(offset + 4) as usize;
 
-    let bytes = if start & (1 << 31) != 0 {
-      start &= (1 << 31) - 1;
-      let end = (start + length).min(self.array.len());
-      &self.array[start.min(end)..end]
-    } else {
-      let end = (start + length).min(self.source.len());
-      &self.source[start.min(end)..end]
-    };
+    let end = (start + length).min(self.array.len());
 
-    String::from_utf8_lossy(bytes).into_owned()
+    String::from_utf8_lossy(&self.array[start.min(end)..end]).into_owned()
   }
 }
 
@@ -127,10 +113,6 @@ fn decode(bytes: &[u8], flags: u32) -> String {
 }
 
 impl SerializationBuffer<'_> {
-  pub(crate) fn peek_byte(&self) -> u8 {
-    self.array.get(self.index).copied().unwrap_or(0)
-  }
-
   pub(crate) fn read_required_constant(&mut self, pool: usize) -> String {
     let index = self.read_var_int();
     self.scan_constant(pool, index.saturating_sub(1))
