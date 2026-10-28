@@ -114,9 +114,9 @@ class Herb::CLI
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
         bundle exec herb actionview context [file]  Show what a partial is rendered inside of.
 
-        bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
-        bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
-        bundle exec herb highlight [file]           Syntax highlight templates (delegates to @herb-tools/highlighter)
+        bundle exec herb lint [patterns]            Lint templates (uses the herb-linter gem or @herb-tools/linter)
+        bundle exec herb format [patterns]          Format templates (uses the herb-formatter gem or @herb-tools/formatter)
+        bundle exec herb highlight [file]           Syntax highlight templates (uses the herb-highlighter gem or @herb-tools/highlighter)
         bundle exec herb print [file]               Print AST (delegates to @herb-tools/printer)
         bundle exec herb lsp                        Start the language server (delegates to @herb-tools/language-server)
 
@@ -219,15 +219,15 @@ class Herb::CLI
                 when "diff"
                   diff_files
                 when "lint"
-                  run_node_tool("herb-lint", "@herb-tools/linter")
+                  run_tool("herb-lint", "@herb-tools/linter", "herb-linter")
                 when "format"
-                  run_node_tool("herb-format", "@herb-tools/formatter")
+                  run_tool("herb-format", "@herb-tools/formatter", "herb-formatter")
                 when "print"
-                  run_node_tool("herb-print", "@herb-tools/printer")
+                  run_tool("herb-print", "@herb-tools/printer")
                 when "highlight"
-                  run_node_tool("herb-highlight", "@herb-tools/highlighter")
+                  run_tool("herb-highlight", "@herb-tools/highlighter", "herb-highlighter")
                 when "lsp"
-                  run_node_tool("herb-language-server", "@herb-tools/language-server")
+                  run_tool("herb-language-server", "@herb-tools/language-server")
                 when "help"
                   help
                 when "version"
@@ -388,10 +388,7 @@ class Herb::CLI
     ENV["CI"] == "true" || ENV.key?("GITHUB_ACTIONS") || ENV.key?("BUILDKITE") || ENV.key?("JENKINS_URL") || ENV.key?("CIRCLECI") || ENV.key?("TRAVIS")
   end
 
-  def find_node_binary(name)
-    local_bin = File.join(Dir.pwd, "node_modules", ".bin", name)
-    return local_bin if File.executable?(local_bin)
-
+  def find_executable_on_path(name)
     path_result = `which #{name} 2>/dev/null`.strip
     return path_result unless path_result.empty?
 
@@ -965,37 +962,64 @@ class Herb::CLI
     system("which node > /dev/null 2>&1")
   end
 
-  def run_node_tool(binary_name, package_name)
-    unless node_available?
-      warn "Error: Node.js is required to run 'herb #{@command}'."
-      warn ""
-      warn "Install the tool:"
+  def run_tool(binary_name, package_name, gem_name = nil)
+    command = tool_command(binary_name, package_name, gem_name)
+
+    unless command
+      if gem_name
+        warn "Error: 'herb #{@command}' requires the #{gem_name} gem or the #{package_name} npm package."
+        warn ""
+        warn "Install the gem (no Node.js required):"
+        warn "  bundle add #{gem_name} --group development"
+        warn ""
+        warn "Or install the npm package:"
+      else
+        warn "Error: 'herb #{@command}' requires the #{package_name} npm package."
+        warn ""
+        warn "Install the npm package:"
+      end
+
       warn "  npm install #{package_name}"
       warn "  yarn add #{package_name}"
       warn "  pnpm add #{package_name}"
       warn "  bun add #{package_name}"
-      warn ""
-      warn "Or install Node.js from https://nodejs.org"
       exit 1
     end
 
-    remaining_args = @args[1..]
-    binary = find_node_binary(binary_name)
-    node_version = `node --version 2>/dev/null`.strip
-
-    command_parts = if binary
-                      [binary, *remaining_args]
-                    else
-                      ["npx", package_name, *remaining_args]
-                    end
-
+    command_parts = [*command, *@args[1..]]
     escaped_command = command_parts.map { |arg| arg.include?(" ") ? "\"#{arg}\"" : arg }.join(" ")
 
-    warn "Node.js: #{node_version}"
     warn "Running: #{escaped_command}"
     warn ""
 
     exec(*command_parts)
+  end
+
+  # Prefers the npm package installed in the project, then the standalone executable from the
+  # tool's gem (which doesn't need Node.js), then the executable on the PATH, then npx.
+  def tool_command(binary_name, package_name, gem_name)
+    if (executable = local_executable(binary_name) || standalone_executable(gem_name, binary_name) || find_executable_on_path(binary_name))
+      [executable]
+    elsif node_available?
+      ["npx", package_name]
+    end
+  end
+
+  def local_executable(binary_name)
+    executable = File.join(Dir.pwd, "node_modules", ".bin", binary_name)
+
+    executable if File.executable?(executable)
+  end
+
+  def standalone_executable(gem_name, binary_name)
+    return unless gem_name
+
+    spec = Gem::Specification.find_by_name(gem_name)
+    executable = File.join(spec.gem_dir, "libexec", Gem.win_platform? ? "#{binary_name}.exe" : binary_name)
+
+    executable if File.executable?(executable)
+  rescue Gem::LoadError
+    nil
   end
 
   def print_error_summary(errors)

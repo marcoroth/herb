@@ -407,6 +407,9 @@ export class Config {
       ignore: prunable
     })
 
+    // Glob order depends on the filesystem and runtime, sort for deterministic output
+    files.sort()
+
     if (prunable.length === excludePatterns.length) {
       return files
     }

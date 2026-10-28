@@ -129,6 +129,9 @@ export class CLI {
       ignore: filesConfig.exclude || []
     })
 
+    // Glob order depends on the filesystem and runtime, sort for deterministic output
+    files.sort()
+
     if (explicitFile && files.length === 0) {
       if (!force) {
         this.exitWithInfo(`⚠️  File ${explicitFile} is excluded by configuration patterns. Use --force to lint it anyway.`, formatOption)

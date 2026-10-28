@@ -13,6 +13,20 @@ Perfect for format-on-save in editors and formatting verification in CI/CD pipel
 
 ## Installation
 
+### Ruby Projects
+
+The `herb-formatter` gem packages `herb-format` as a standalone executable, so it runs without Node.js:
+
+```shell
+bundle add herb-formatter --group development
+```
+
+```shell
+bundle exec herb-format
+```
+
+The `herb format` command of the `herb` gem uses it when it's installed.
+
 ### Global Installation
 
 :::code-group
