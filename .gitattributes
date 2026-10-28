@@ -16,6 +16,9 @@ sig/**/*.rbs linguist-generated
 **/snapshots/** linguist-generated
 **/__snapshots__/** linguist-generated
 
+# Snapshots are compared byte for byte, and some contain CRLF line endings on purpose
+test/snapshots/** -text
+
 # Documentation files
 *.md linguist-documentation
 docs/** linguist-documentation
