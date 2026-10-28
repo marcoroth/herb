@@ -110,6 +110,7 @@ Metrics/AbcSize:
   Exclude:
     - bench/**/*
     - bin/**/*
+    - rakelib/standalone.rake
     - lib/herb/ast/erb_render_node.rb
     - lib/herb/diagnostic/formatter.rb
     - lib/herb/ast/node.rb
@@ -165,6 +166,7 @@ Metrics/ModuleLength:
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
     - bench/**/*
+    - rakelib/standalone.rake
     - lib/herb/dev/protocol.rb
 
 Metrics/BlockLength:

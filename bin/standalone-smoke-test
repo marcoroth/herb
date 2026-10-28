@@ -1,0 +1,234 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+#
+# Smoke tests the standalone herb-lint, herb-format and herb-highlight executables from
+# the installed herb-linter, herb-formatter and herb-highlighter gems without Node.js.
+#
+#   bin/standalone-smoke-test                 # run the installed gems' executables
+#   bin/standalone-smoke-test --compare-node  # also compare their output with the npm packages in javascript/packages
+#
+
+require "fileutils"
+require "json"
+require "open3"
+require "rbconfig"
+require "tmpdir"
+
+ROOT = File.expand_path("..", __dir__)
+COMPARE_NODE = ARGV.include?("--compare-node")
+NODE_EXECUTABLES = ["node", "node.exe"].freeze
+
+TOOLS = {
+  lint: { gem: "herb-linter", executable: "herb-lint", package: "linter" },
+  format: { gem: "herb-formatter", executable: "herb-format", package: "formatter" },
+  highlight: { gem: "herb-highlighter", executable: "herb-highlight", package: "highlighter" },
+}.freeze
+
+TEMPLATES = {
+  "app/views/posts/empty_id.html.erb" => %(<div id=""></div>\n),
+  "app/views/posts/comment.html.erb" => %(<% # a comment %>\n<p>Hello</p>\n),
+  "app/views/posts/unformatted.html.erb" => %(<div><p>   Hello </p>\n      <span><%= name %></span></div>\n),
+}.freeze
+
+DIV_COUNT = 14
+
+CUSTOM_RULE = <<~JS
+  import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
+
+  class NoDivTagsVisitor extends BaseRuleVisitor {
+    visitHTMLOpenTagNode(node) {
+      if (node.tag_name?.value === "div") {
+        this.addOffense("Avoid using `<div>` tags.", node.tag_name.location)
+      }
+
+      super.visitHTMLOpenTagNode(node)
+    }
+  }
+
+  export default class NoDivTagsRule extends ParserRule {
+    static ruleName = "no-div-tags"
+
+    check(result, context) {
+      const visitor = new NoDivTagsVisitor(this.ruleName, context)
+      visitor.visit(result.value)
+      return visitor.offenses
+    }
+  }
+JS
+
+CUSTOM_REWRITER = <<~JS
+  import { StringRewriter } from "@herb-tools/rewriter"
+
+  export default class AddMarker extends StringRewriter {
+    get name() {
+      return "add-marker"
+    }
+
+    get description() {
+      return "Appends a marker comment"
+    }
+
+    rewrite(content) {
+      return content + "<%# rewritten %>\\n"
+    }
+  }
+JS
+
+CONFIG = <<~YAML
+  formatter:
+    enabled: true
+    rewriter:
+      post:
+        - add-marker
+YAML
+
+@failures = []
+
+def check(description)
+  if yield
+    puts "  ✓ #{description}"
+  else
+    puts "  ✗ #{description}"
+    @failures << description
+  end
+end
+
+def path_without_node
+  ENV["PATH"].split(File::PATH_SEPARATOR).reject do |directory|
+    NODE_EXECUTABLES.any? { |name| File.executable?(File.join(directory, name)) }
+  end.join(File::PATH_SEPARATOR)
+end
+
+def standalone_command(tool)
+  [RbConfig.ruby, Gem.bin_path(TOOLS[tool][:gem], TOOLS[tool][:executable])]
+rescue Gem::GemNotFoundException, Gem::MissingSpecError => e
+  abort "#{TOOLS[tool][:gem]} is not installed: #{e.message}"
+end
+
+def node_command(tool)
+  ["node", File.join(ROOT, "javascript", "packages", TOOLS[tool][:package], "bin", TOOLS[tool][:executable])]
+end
+
+def run(command, *, directory:, node: false)
+  environment = { "NO_COLOR" => "1" }
+  environment["PATH"] = path_without_node unless node
+
+  Open3.capture3(environment, *command, *, chdir: directory)
+end
+
+def create_project(directory)
+  TEMPLATES.each do |path, content|
+    FileUtils.mkdir_p(File.join(directory, File.dirname(path)))
+    File.write(File.join(directory, path), content)
+  end
+
+  # Enough files to exceed the linter's threshold for parallel workers
+  12.times do |index|
+    File.write(File.join(directory, "app/views/posts/partial_#{index}.html.erb"), %(<section><div id="item-#{index}">Item</div></section>\n))
+  end
+
+  FileUtils.mkdir_p(File.join(directory, ".herb", "rules"))
+  FileUtils.mkdir_p(File.join(directory, ".herb", "rewriters"))
+  File.write(File.join(directory, ".herb", "rules", "no-div-tags.mjs"), CUSTOM_RULE)
+  File.write(File.join(directory, ".herb", "rewriters", "add-marker.mjs"), CUSTOM_REWRITER)
+  File.write(File.join(directory, ".herb.yml"), CONFIG)
+
+  # The npm packages resolve the imports of custom rules and rewriters from the project's node_modules
+  File.symlink(File.join(ROOT, "node_modules"), File.join(directory, "node_modules")) if COMPARE_NODE
+end
+
+def offenses(json)
+  JSON.parse(json).fetch("offenses").map { |offense|
+    location = offense.dig("location", "start")
+    "#{offense["filename"]}:#{location["line"]}:#{location["column"]} #{offense["severity"]} #{offense["code"]}"
+  }.sort
+end
+
+def with_project
+  Dir.mktmpdir("herb-standalone-smoke-test") do |directory|
+    create_project(directory)
+    yield directory
+  end
+end
+
+puts "PATH without Node.js: #{path_without_node.split(File::PATH_SEPARATOR).size} entries"
+puts
+
+puts "herb-lint"
+
+with_project do |directory|
+  parallel_stdout, _, parallel_status = run(standalone_command(:lint), "--format", "json", directory: directory)
+  serial_stdout, _, serial_status = run(standalone_command(:lint), "--format", "json", "--jobs", "1", directory: directory)
+
+  check("exits with 1 when there are errors") { parallel_status.exitstatus == 1 && serial_status.exitstatus == 1 }
+
+  parallel = offenses(parallel_stdout)
+  serial = offenses(serial_stdout)
+
+  check("reports built-in rule offenses") { parallel.any? { |offense| offense.end_with?("html-no-empty-attributes") } }
+  check("reports custom rule offenses in parallel workers") { parallel.count { |offense| offense.end_with?("no-div-tags") } == DIV_COUNT }
+  check("reports custom rule offenses with --jobs 1") { serial.count { |offense| offense.end_with?("no-div-tags") } == DIV_COUNT }
+  check("parallel and --jobs 1 report the same offenses") { parallel == serial }
+
+  if COMPARE_NODE
+    node_stdout, node_stderr, = run(node_command(:lint), "--format", "json", directory: directory, node: true)
+    node = node_stdout.empty? ? [] : offenses(node_stdout)
+
+    check("reports the same offenses as the npm package") { parallel == node }
+
+    unless parallel == node
+      puts "    only standalone: #{(parallel - node).inspect}"
+      puts "    only npm package: #{(node - parallel).inspect}"
+      puts "    npm package stderr: #{node_stderr}" if node.empty?
+    end
+  end
+
+  run(standalone_command(:lint), "--fix", directory: directory)
+  check("--fix corrects offenses") { File.read(File.join(directory, "app/views/posts/comment.html.erb")).start_with?("<%# a comment %>") }
+end
+
+puts
+puts "herb-format"
+
+with_project do |directory|
+  file = "app/views/posts/unformatted.html.erb"
+
+  _, _, status = run(standalone_command(:format), "--check", file, directory: directory)
+  check("--check fails for unformatted files") { !status.success? }
+
+  _, _, status = run(standalone_command(:format), file, directory: directory)
+  formatted = File.read(File.join(directory, file))
+  check("formats files") { status.success? && formatted != TEMPLATES[file] }
+  check("runs custom rewriters") { formatted.include?("<%# rewritten %>") }
+
+  if COMPARE_NODE
+    File.write(File.join(directory, file), TEMPLATES[file])
+    run(node_command(:format), file, directory: directory, node: true)
+    check("formats the same as the npm package") { File.read(File.join(directory, file)) == formatted }
+  end
+end
+
+puts
+puts "herb-highlight"
+
+with_project do |directory|
+  file = "app/views/posts/unformatted.html.erb"
+  stdout, _, status = run(standalone_command(:highlight), file, directory: directory)
+
+  check("highlights files") { status.success? && stdout.include?("span") }
+
+  if COMPARE_NODE
+    node_stdout, = run(node_command(:highlight), file, directory: directory, node: true)
+    check("highlights the same as the npm package") { stdout == node_stdout }
+  end
+end
+
+puts
+
+if @failures.any?
+  puts "#{@failures.size} check(s) failed"
+  exit 1
+end
+
+puts "All checks passed"

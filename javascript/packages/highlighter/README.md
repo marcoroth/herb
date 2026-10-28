@@ -8,6 +8,22 @@ Syntax highlighter, code snippet renderer, and diagnostic renderer for HTML+ERB 
 
 ## Installation
 
+### Ruby Projects
+
+The `herb-highlighter` gem packages `herb-highlight` as a standalone executable, so it runs without Node.js:
+
+```shell
+bundle add herb-highlighter --group development
+```
+
+```shell
+bundle exec herb-highlight
+```
+
+The `herb highlight` command of the `herb` gem uses it when it's installed.
+
+### JavaScript Projects
+
 :::code-group
 
 ```shell [npm]
