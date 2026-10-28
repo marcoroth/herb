@@ -117,6 +117,7 @@ module Herb
         ITEMS_BUFFER = "__herb_items" #: String
         KEY_BUFFER = "__herb_key" #: String
         OCCURRENCE_BUFFER = "__herb_occurrence" #: String
+        RENDERED_BUFFER = "__herb_rendered" #: String
 
         BRANCHING_NODES = [
           "AST_ERB_IF_NODE",
@@ -597,6 +598,15 @@ module Herb
 
             if index && interpolated?(index)
               return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
+            end
+
+            # A partial rendered inside a block evaluates to its own values, as it does outside one,
+            # and keeps them on its slot. The block's markup is a String and cannot hold them, so the
+            # partial adds nothing to it. A render that comes back as markup is written as usual.
+            if nested
+              rendered = index ? assignment(index, value) : value
+
+              return add_block_dynamic("::Hash === (#{RENDERED_BUFFER} = (#{rendered})) ? \"\" : #{RENDERED_BUFFER}")
             end
 
             return add_block_dynamic(index ? assignment(index, value) : value)

@@ -117,6 +117,8 @@ module Herb
 
         OCCURRENCE_BUFFER: String
 
+        RENDERED_BUFFER: String
+
         BRANCHING_NODES: Array[String]
 
         class Compiler < Herb::Engine::Compiler
