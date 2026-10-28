@@ -49,6 +49,24 @@ module Engine
       test "turbo_frame_tag with data attributes" do
         assert_optimized_snapshot('<%= turbo_frame_tag "tray", data: { controller: "frame" } do %>Content<% end %>')
       end
+
+      test "turbo_frame_tag with a string id held in a local" do
+        assert_optimized_snapshot(
+          "<%= turbo_frame_tag frame_id do %>Content<% end %>",
+          { frame_id: "post_1" }
+        )
+      end
+
+      test "turbo_frame_tag with a string prefix and a string id held in a local" do
+        assert_optimized_snapshot(
+          '<%= turbo_frame_tag "notes", frame_id do %>Content<% end %>',
+          { frame_id: "post_1" }
+        )
+      end
+
+      test "turbo_frame_tag with literal ids joins them" do
+        assert_optimized_snapshot('<%= turbo_frame_tag "notes", :list %>')
+      end
     end
   end
 end
