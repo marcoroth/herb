@@ -459,7 +459,8 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
 
 export interface LexerRuleConstructor {
   type: "lexer"
-  new (): LexerRule
+  // Generic-agnostic: `TOptions` is invariant, so the constructor must accept any specialization (rule options, #1204).
+  new (): LexerRule<any, any>
   ruleName: string
   introducedIn: RuleVersion
   defaultEnabledIn?: RuleVersion
@@ -691,7 +692,8 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
 
 export interface SourceRuleConstructor {
   type: "source"
-  new (): SourceRule
+  // Generic-agnostic: `TOptions` is invariant, so the constructor must accept any specialization (rule options, #1204).
+  new (): SourceRule<any, any>
   ruleName: string
   introducedIn: RuleVersion
   defaultEnabledIn?: RuleVersion
@@ -706,8 +708,9 @@ export interface SourceRuleConstructor {
  * Type representing a parser/AST rule class constructor.
  * The Linter accepts rule classes rather than instances for better performance and memory usage.
  * Parser rules are the default and don't require static properties.
+ * Generic-agnostic constructor: `TOptions` is invariant, so this must accept any specialization (rule options, #1204).
  */
-export type ParserRuleClass = (new () => ParserRule) & {
+export type ParserRuleClass = (new () => ParserRule<any, any>) & {
   type?: "parser"
   ruleName: string
   introducedIn: RuleVersion
