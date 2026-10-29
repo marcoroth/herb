@@ -4,6 +4,8 @@ source "https://rubygems.org"
 
 gemspec
 
+gem "rubocop-herb", path: "gems/rubocop-herb"
+
 gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
 gem "actionview", "~> 8.1", require: "action_view"

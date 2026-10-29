@@ -83,7 +83,12 @@ jobs:
         run: bundle exec rake compile
 
       - name: Run Ruby Tests
-        run: bundle exec rake test:all
+        run: bundle exec rake test:all test:rubocop_herb
+
+      - name: Test minimum supported RuboCop
+        run: |
+          bundle add rubocop --version 1.92.0
+          bundle exec rake test:rubocop_herb
 
       - name: Run C tests
         run: ./run_herb_tests
