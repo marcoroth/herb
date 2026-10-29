@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "erb"
 
 class RuboCopHerbIntegrationTest < Minitest::Spec
   include RuboCopHerbTestHelpers
@@ -223,6 +224,155 @@ class RuboCopHerbIntegrationTest < Minitest::Spec
     refute_equal 0, status
     assert_empty error
     assert_includes output, "Layout/SpaceAroundOperators"
+  end
+
+  test "does not remove returns before template output" do
+    write_config(<<~YAML)
+      Style/RedundantReturn:
+        Enabled: true
+    YAML
+    template = "<% greeting = lambda do %><% return 'Hi' %>ignored<% end %><%= greeting.call %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template, read("example.html.erb")
+    assert_equal "Hi\n", ERB.new(read("example.html.erb")).result
+  end
+
+  test "still corrects redundant returns in ordinary Ruby" do
+    write_config(<<~YAML)
+      Style/RedundantReturn:
+        Enabled: true
+    YAML
+    write("example.rb", "def greeting\n  return 'Hi'\nend\n")
+
+    output, error, status = run_rubocop("-a", "example.rb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal "def greeting\n  'Hi'\nend\n", read("example.rb")
+  end
+
+  test "does not remove assignments consumed by output tags" do
+    write_config(<<~YAML)
+      Style/RedundantAssignment:
+        Enabled: true
+    YAML
+    template = "<% def greeting %><% x = 'Hi' %><%= x %><% end %><%= greeting %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template, read("example.html.erb")
+    assert_equal "HiHi\n", ERB.new(read("example.html.erb"), eoutvar: "@output").result(Object.new.instance_eval { binding })
+  end
+
+  test "does not remove begin and end across template tags" do
+    write_config(<<~YAML)
+      Style/RedundantBegin:
+        Enabled: true
+    YAML
+    template = "<% begin %>Hi<%= 'there' %><% end %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template, read("example.html.erb")
+    assert_equal "Hithere\n", ERB.new(read("example.html.erb")).result
+  end
+
+  test "honors disable and enable directives in ERB comments" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    template = <<~ERB
+      <p>Caf\u00e9</p><%# rubocop:disable Layout/SpaceAroundOperators %>
+      <%= x=1 %>
+      <%# rubocop:enable Layout/SpaceAroundOperators %>
+      <%= y=2 %>
+    ERB
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template.sub("y=2", "y = 2"), read("example.html.erb")
+  end
+
+  test "does not let a same-line directive hide later Ruby tags" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+      Style/StringLiterals:
+        Enabled: true
+    YAML
+    template = "<%# rubocop:todo Layout/SpaceAroundOperators %><%= x=1 %><%= \"hello\" %>\n<%= y=2 %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template.sub('"hello"', "'hello'").sub("y=2", "y = 2"), read("example.html.erb")
+  end
+
+  test "honors directives in Ruby comment tags" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    template = "<% # rubocop:disable Layout/SpaceAroundOperators %>\n<%= x=1 %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template, read("example.html.erb")
+  end
+
+  test "honors disable-next directives without losing the following statement" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    template = "<%# rubocop:disable-next Layout/SpaceAroundOperators %>\n<%= x=1 %>\n<%= y=2 %>\n"
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template.sub("y=2", "y = 2"), read("example.html.erb")
+  end
+
+  test "ignores directives in strings markup and escaped tags" do
+    write_config(<<~YAML)
+      Layout/SpaceAroundOperators:
+        Enabled: true
+    YAML
+    template = <<~ERB
+      <p># rubocop:disable Layout/SpaceAroundOperators</p>
+      <%%# rubocop:disable Layout/SpaceAroundOperators %>
+      <%= '# rubocop:disable Layout/SpaceAroundOperators' %>
+      <%= x=1 %>
+    ERB
+    write("example.html.erb", template)
+
+    output, error, status = run_rubocop("-a", "example.html.erb")
+
+    assert_equal 0, status, output
+    assert_empty error
+    assert_equal template.sub("x=1", "x = 1"), read("example.html.erb")
   end
 
   private

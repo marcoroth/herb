@@ -10,7 +10,8 @@ AllCops:
 
 # These cops depend on physical Ruby file contents or layout that is obscured by the
 # position-preserving template representation, or misread markup between ERB tags as
-# empty or missing Ruby, such as the markup inside a `do` block.
+# empty or missing Ruby, such as the markup inside a `do` block. Redundancy cops
+# can also mistake implicit template output for unused expressions or unreachable code.
 Layout/ArgumentAlignment:
   Exclude: *template_files
 Layout/ArrayAlignment:
@@ -125,7 +126,13 @@ Style/NestedTernaryOperator:
   Exclude: *template_files
 Style/Next:
   Exclude: *template_files
+Style/RedundantAssignment:
+  Exclude: *template_files
+Style/RedundantBegin:
+  Exclude: *template_files
 Style/RedundantCondition:
+  Exclude: *template_files
+Style/RedundantReturn:
   Exclude: *template_files
 Style/SafeNavigation:
   Exclude: *template_files

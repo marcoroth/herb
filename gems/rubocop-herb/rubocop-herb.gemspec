@@ -30,5 +30,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "herb", "= #{Herb::VERSION}"
   spec.add_dependency "lint_roller", "~> 1.1"
-  spec.add_dependency "rubocop", ">= 1.72.1", "< 2"
+  spec.add_dependency "rubocop", ">= 1.92.0", "< 2"
 end

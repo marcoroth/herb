@@ -19,6 +19,7 @@ module RuboCop
           source.config = original.config
           source.registry = original.registry
           source.ruby_ranges = ruby_ranges(template, code)
+          source.original_source = original
         end
       end
 
@@ -60,7 +61,13 @@ module RuboCop
         ranges
       end
 
-      attr_accessor :ruby_ranges
+      attr_accessor :ruby_ranges, :original_source
+
+      def comment_config
+        return super unless original_source.raw_source.include?("rubocop:")
+
+        @comment_config ||= ::RuboCop::CommentConfig.new(DirectiveSource.new(self, original_source))
+      end
 
       # Both ends of the range touch Ruby, so the offense points at code rather than at markup.
       def anchored_in_ruby?(range)
