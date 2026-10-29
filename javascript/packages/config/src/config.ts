@@ -13,7 +13,7 @@ import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
-import { HerbConfigSchema } from "./config-schema.js"
+import { HerbConfigSchema, BUILT_IN_RULE_CONFIG_KEYS } from "./config-schema.js"
 
 import type { FrameworkSchema, EnvironmentSchema, TemplateEngineSchema } from "./config-schema.js"
 
@@ -104,20 +104,10 @@ export { resolveSeverity, ALL_RULES_KEY }
 
 export type { SeverityConfig, LinterMode }
 
-/**
- * Keys under `linter.rules.<ruleName>` reserved for built-in rule behavior.
- * Everything else is a custom option owned by the rule itself (see #1204).
- */
-export const BUILT_IN_RULE_CONFIG_KEYS = [
-  "enabled",
-  "severity",
-  "frameworks",
-  "autoCorrect",
-  "include",
-  "only",
-  "exclude",
-  "environments",
-] as const
+// Defined in config-schema.ts so browser bundles can import it from the
+// browser-safe `@herb-tools/config/schema` subpath; re-exported here to keep
+// the existing API surface unchanged.
+export { BUILT_IN_RULE_CONFIG_KEYS }
 
 export type RuleConfig = {
   enabled?: boolean

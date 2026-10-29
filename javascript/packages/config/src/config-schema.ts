@@ -27,6 +27,24 @@ export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWOR
 
 export const ENVIRONMENT_NAMES = ["cli", "browser"] as const
 
+/**
+ * Keys under `linter.rules.<ruleName>` reserved for built-in rule behavior.
+ * Everything else is a custom option owned by the rule itself (see #1204).
+ *
+ * Lives here (not config.ts) so browser bundles can import it from the
+ * browser-safe `@herb-tools/config/schema` subpath.
+ */
+export const BUILT_IN_RULE_CONFIG_KEYS = [
+  "enabled",
+  "severity",
+  "frameworks",
+  "autoCorrect",
+  "include",
+  "only",
+  "exclude",
+  "environments",
+] as const
+
 // Loose so custom per-rule option keys (see #1204) pass validation alongside
 // the built-in keys, which stay validated below.
 const RuleConfigBaseSchema = z.looseObject({
