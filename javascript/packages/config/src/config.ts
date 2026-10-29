@@ -13,7 +13,7 @@ import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
-import { HerbConfigSchema } from "./config-schema.js"
+import { HerbConfigSchema, BUILT_IN_RULE_CONFIG_KEYS } from "./config-schema.js"
 
 import type { FrameworkSchema, EnvironmentSchema, TemplateEngineSchema } from "./config-schema.js"
 
@@ -104,6 +104,11 @@ export { resolveSeverity, ALL_RULES_KEY }
 
 export type { SeverityConfig, LinterMode }
 
+// Defined in config-schema.ts so browser bundles can import it from the
+// browser-safe `@herb-tools/config/schema` subpath; re-exported here to keep
+// the existing API surface unchanged.
+export { BUILT_IN_RULE_CONFIG_KEYS }
+
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
@@ -113,6 +118,7 @@ export type RuleConfig = {
   only?: string[]
   exclude?: string[]
   environments?: Environment[]
+  [option: string]: unknown
 }
 
 export type LinterConfig = {
@@ -330,6 +336,39 @@ export class Config {
    */
   public isRuleEnabled(ruleName: string): boolean {
     return !this.isRuleDisabled(ruleName)
+  }
+
+  /**
+   * The custom options configured for a rule: every key under
+   * `linter.rules.<ruleName>` that isn't one of the reserved built-in keys
+   * (`BUILT_IN_RULE_CONFIG_KEYS`). Rules validate these against their own
+   * `optionsSchema` (see #1204).
+   *
+   * @param ruleName - The name of the rule
+   * @returns The rule's custom options, `{}` when the rule isn't configured,
+   *   and always `{}` for the `all` pseudo rule, where option keys are
+   *   ignored by design
+   */
+  public getRuleOptions(ruleName: string): Record<string, unknown> {
+    if (ruleName === ALL_RULES_KEY) {
+      return {}
+    }
+
+    const ruleConfig = this.config.linter?.rules?.[ruleName]
+
+    if (!ruleConfig) {
+      return {}
+    }
+
+    const options: Record<string, unknown> = {}
+
+    for (const [key, value] of Object.entries(ruleConfig)) {
+      if (!(BUILT_IN_RULE_CONFIG_KEYS as readonly string[]).includes(key)) {
+        options[key] = value
+      }
+    }
+
+    return options
   }
 
   /**

@@ -55,3 +55,32 @@ describe("html-allowed-script-type", () => {
     expectNoOffenses('<input type="text">')
   })
 })
+
+describe("html-allowed-script-type with custom options (#1204)", () => {
+  const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAllowedScriptTypeRule, {
+    allowedTypes: ["text/javascript", "application/json"],
+    allowBlank: false,
+  })
+
+  test("permits a type from the custom allowedTypes list", () => {
+    expectNoOffenses('<script type="application/json">{ "name": "Example" }</script>')
+  })
+
+  test("flags a type outside the custom allowedTypes list", () => {
+    expectError('Avoid using `module` as the `type` attribute for the `<script>` tag. Must be one of: `text/javascript`, `application/json`.')
+
+    assertOffenses('<script type="module"></script>')
+  })
+
+  test("replaces the default allowedTypes list instead of extending it", () => {
+    expectError('Avoid using `importmap` as the `type` attribute for the `<script>` tag. Must be one of: `text/javascript`, `application/json`.')
+
+    assertOffenses('<script type="importmap"></script>')
+  })
+
+  test("allowBlank: false flags a missing type attribute", () => {
+    expectError('`type` attribute required for `<script>` tag.')
+
+    assertOffenses('<script></script>')
+  })
+})

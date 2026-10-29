@@ -140,6 +140,32 @@ export class LinterService {
     return [{ message, configPath: `${this.project.root}/.herb.yml` }]
   }
 
+  /**
+   * Reports invalid per-rule options from the config once per linter build.
+   * The CLI treats these as hard errors; in the editor they are warnings and
+   * the affected rules fall back to their default options (#1204).
+   */
+  private takeRuleOptionWarnings(config?: Config): LinterWarning[] {
+    const errors = Linter.validateRuleOptions(config, this.allRules)
+
+    if (errors.length === 0) {
+      return []
+    }
+
+    for (const { ruleName, key, message } of errors) {
+      this.connection.console.warn(`[Linter] Invalid option${key ? ` '${key}'` : ''} for rule '${ruleName}': ${message}`)
+    }
+
+    const formatError = ({ ruleName, key, message }: { ruleName?: string, key?: string, message: string }) =>
+      `rule '${ruleName}'${key ? ` option '${key}'` : ''}: ${message}`
+
+    const message = errors.length === 1
+      ? `Invalid option for linter ${formatError(errors[0])}. Using the rule's default options.`
+      : `Invalid options for linter rules (using their default options):\n${errors.map((error, i) => `${i + 1}. ${formatError(error)}`).join('\n')}`
+
+    return [{ message, configPath: `${this.project.root}/.herb.yml` }]
+  }
+
   private shouldLintFile(uri: string): boolean {
     const filePath = uri.replace(/^file:\/\//, '')
 
@@ -217,6 +243,8 @@ export class LinterService {
       await this.loadCustomRules()
 
       warnings.push(...this.takeCustomRuleWarnings())
+
+      warnings.push(...this.takeRuleOptionWarnings(projectConfig))
 
       this.linter = new Linter(Herb, this.editorRules(projectConfig), projectConfig, this.allRules)
       this.linter.mode = "editor"

@@ -65,7 +65,8 @@
     "picomatch": "^4.0.7",
     "postcss": "^8.5.29",
     "postcss-selector-parser": "^7.1.6",
-    "tinyglobby": "^0.2.15"
+    "tinyglobby": "^0.2.15",
+    "zod": "^4.6.7"
   },
   "files": [
     "package.json",

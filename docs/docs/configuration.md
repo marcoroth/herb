@@ -230,6 +230,31 @@ Each rule can be configured with the following options:
 - **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
 - **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
 
+### Custom Rule Options <Badge type="tip" text="^0.12.0" />
+
+Beyond the built-in keys, a rule can define its own custom options. They sit flat under the rule name, right next to the built-in keys:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    html-allowed-script-type:
+      enabled: true
+      allowedTypes:
+        - text/javascript
+        - application/json
+      allowBlank: false
+```
+
+Which options a rule accepts, along with their types and defaults, is documented in an "Options" section on the rule's page, for example [`html-allowed-script-type`](/linter/rules/html-allowed-script-type.md).
+
+A few details worth knowing:
+
+- **The built-in keys are reserved.** `enabled`, `severity`, `frameworks`, `autoCorrect`, `include`, `only`, `exclude`, and `environments` always keep their built-in meaning and are never passed to a rule as options.
+- **Option keys are camelCase.** Rules name their options like `allowedTypes` and `allowBlank`, matching existing options like `failLevel` and `indentWidth`.
+- **Options on `all` are ignored.** Custom option keys under the `all` pseudo rule are meaningless and silently ignored; only `enabled` and `severity` are meaningful there.
+- **Array options are replaced, not merged.** Setting `allowedTypes` replaces the rule's default list entirely, it doesn't append to it.
+- **Invalid options are reported.** The CLI prints every invalid option and exits with status code 1; the editor shows a warning diagnostic. Either way, the affected rule falls back to its default options for that run, so a bad configuration never crashes a lint.
+
 ### Setting the Default for All Rules <Badge type="tip" text="^0.11.0" />
 
 The `all` pseudo rule sets the default `enabled` state for every rule you don't list explicitly. It's the way to opt into a fully explicit rule set without having to know (and repeat) which rules are on by default:

@@ -18,7 +18,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { DEFAULT_RULE_CONFIG, DEFAULT_ENVIRONMENT } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config/schema"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework, FullRuleConfig, HerbCounterCacheEntry, HerbCounterDrift } from "./types.js"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode, Framework, FullRuleConfig, HerbCounterCacheEntry, HerbCounterDrift, RuleOptionError } from "./types.js"
 import type { DocumentNode, LexResult, HerbBackend } from "@herb-tools/core"
 import type { Environment } from "@herb-tools/config"
 import type { RuleConfig, Config } from "@herb-tools/config"
@@ -230,6 +230,59 @@ export class Linter {
     }
 
     return { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault }
+  }
+
+  /**
+   * Validates the custom options configured for every rule against its
+   * `static optionsSchema` (#1204). Instantiates each rule class, resolves
+   * the options from the config, and collects one entry per recorded
+   * `optionsErrors` entry with the rule name attached. Rules without an
+   * `optionsSchema` never produce entries, and option keys under the `all`
+   * pseudo-rule never reach a rule, so they are ignored.
+   *
+   * On validation failure the affected rule falls back to its
+   * `defaultOptions` for the run; callers decide how to surface the errors
+   * (hard error in the CLI, warning in the language server).
+   *
+   * @param config - Optional Config instance to read rule options from
+   * @param allRules - All rule classes to validate (built-in and custom)
+   * @returns Array of invalid option entries with the rule name attached
+   */
+  static validateRuleOptions(config: Config | undefined, allRules: RuleClass[]): RuleOptionError[] {
+    const errors: RuleOptionError[] = []
+
+    for (const ruleClass of allRules) {
+      const rule = new ruleClass()
+
+      // Custom rules can be plain classes that don't extend the rule base
+      // classes, so the options API may not exist on them.
+      rule.resolveOptions?.(config?.getRuleOptions?.(ruleClass.ruleName) ?? {})
+
+      for (const error of rule.optionsErrors ?? []) {
+        errors.push({ ruleName: ruleClass.ruleName, ...error })
+      }
+    }
+
+    return errors
+  }
+
+  /**
+   * Instantiates a rule class and resolves its custom options from the
+   * current config (#1204). On invalid options the rule keeps its
+   * `defaultOptions` and records the problems on `optionsErrors`.
+   *
+   * @param ruleClass - The rule class to instantiate
+   * @returns The instantiated rule with resolved options
+   */
+  private createRuleInstance(ruleClass: RuleClass): Rule {
+    const rule = new ruleClass()
+
+    // Custom rules can be plain classes that don't extend the rule base
+    // classes, and callers can hand the linter a plain config object, so
+    // both sides of the options API may not exist.
+    rule.resolveOptions?.(this.config?.getRuleOptions?.(ruleClass.ruleName) ?? {})
+
+    return rule
   }
 
   /**
@@ -618,7 +671,7 @@ export class Linter {
     ])
 
     const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
-    const regularRuleInstances = regularRules.map(ruleClass => ({ ruleClass, rule: new ruleClass() }))
+    const regularRuleInstances = regularRules.map(ruleClass => ({ ruleClass, rule: this.createRuleInstance(ruleClass) }))
 
     const [baseParserOptions, ...sharedParserOptions] = this.parseCache.share([
       {},
@@ -763,7 +816,7 @@ export class Linter {
       const deferredRuleClass = this.findRuleClass(deferredRuleName)
       if (!deferredRuleClass) continue
 
-      const deferredRule = new deferredRuleClass() as Rule
+      const deferredRule = this.createRuleInstance(deferredRuleClass)
 
       if (this.isSourceRuleClass(deferredRuleClass)) {
         const unboundOffenses = (deferredRule as SourceRule).check(source, context)
@@ -892,7 +945,7 @@ export class Linter {
     for (const ruleClass of this.rules) {
       if (!this.isParserRuleClass(ruleClass)) continue
 
-      const rule = new ruleClass() as ParserRule
+      const rule = this.createRuleInstance(ruleClass) as ParserRule
       const unboundOffenses = this.executeRule(ruleClass, rule, parseResult, null as unknown as LexResult, "", fullContext)
 
       this.offenses.push(...this.bindSeverity(unboundOffenses, ruleClass.ruleName))
@@ -1006,7 +1059,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as ParserRule
+        const rule = this.createRuleInstance(ruleClass) as ParserRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
@@ -1079,7 +1132,7 @@ export class Linter {
           continue
         }
 
-        const rule = new ruleClass() as SourceRule
+        const rule = this.createRuleInstance(ruleClass) as SourceRule
         const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
