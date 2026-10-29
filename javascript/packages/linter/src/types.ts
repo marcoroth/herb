@@ -21,7 +21,17 @@ export const DEFAULT_LINTER_PARSER_OPTIONS: Partial<ParserOptions> = {
   track_whitespace: true,
 }
 
-export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> & Omit<RuleConfig, 'enabled' | 'severity'>
+// Built-in keys are listed explicitly instead of `Omit<RuleConfig, ...>`:
+// Omit over RuleConfig's custom-option index signature (`[option: string]:
+// unknown`, #1204) collapses to `{ [x: string]: unknown }`.
+export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> & {
+  frameworks?: Framework[]
+  autoCorrect?: boolean
+  include?: string[]
+  only?: string[]
+  exclude?: string[]
+  environments?: Environment[]
+}
 
 /**
  * Automatically inferred union type of all available linter rule names.

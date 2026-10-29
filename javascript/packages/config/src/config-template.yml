@@ -85,6 +85,14 @@ linter:
   #     # Exclude still applies even with 'only'
   #     exclude:
   #       - 'app/views/admin/**/*'
+  #
+  #   # Rules can define custom options next to the built-in keys
+  #   html-allowed-script-type:
+  #     enabled: true
+  #     allowedTypes:
+  #       - text/javascript
+  #       - application/json
+  #     allowBlank: true
 
 formatter:
   enabled: false
