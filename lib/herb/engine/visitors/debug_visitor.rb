@@ -81,7 +81,7 @@ module Herb
         if !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
-          @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
+          @erb_nodes_to_wrap << node unless complex_rails_helper?(code) || include_debug_disable_comment?(code)
         end
 
         super

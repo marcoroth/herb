@@ -649,6 +649,27 @@ module Engine
       assert_snapshot_matches(compiled, "debug_mode_test-0")
     end
 
+    test "output tag with debug disable comment does NOT get debug span" do
+      template = %(<%= tag.td "Ada", id: "cell_1" # herb:debug disable %>)
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/people/_cell.html.erb")
+    end
+
+    test "output tag with debug disable comment leaves the other output tags wrapped" do
+      template = <<~ERB
+        <%= tag.tr tag.td(@name), id: "row_1" # herb:debug disable %>
+        <p><%= @name %></p>
+      ERB
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new], filename: "app/views/people/_row.html.erb")
+    end
+
+    test "output tag with debug disable comment and extra whitespace" do
+      template = %(<%= tag.td "Ada" #   herb:debug   disable %>)
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
     describe "marking which render a tag came from" do
       def visitors_for(node:, instrument: true)
         visitors = [Herb::Engine::DebugVisitor.new(node: node)]
