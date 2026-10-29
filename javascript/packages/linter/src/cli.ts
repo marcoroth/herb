@@ -541,6 +541,30 @@ export class CLI {
         }
       }
 
+      let customRulesForValidation: RuleClass[] | undefined
+
+      if (loadCustomRules) {
+        try {
+          const result = await loadCustomRulesFromDisk({ baseDir: this.projectPath, silent: true })
+          customRulesForValidation = result.rules
+        } catch {
+          // Custom rule loading failures are reported when the file processor loads them.
+        }
+      }
+
+      const allKnownRules = customRulesForValidation ? [...rules, ...customRulesForValidation] : rules
+      const ruleOptionErrors = Linter.validateRuleOptions(config, allKnownRules)
+
+      if (ruleOptionErrors.length > 0) {
+        const messages = ruleOptionErrors.map(({ ruleName, key, message }) => {
+          const optionText = key ? ` option ${colorize(key, "cyan")}` : " option"
+
+          return `✗ Invalid${optionText} for rule ${colorize(ruleName || "", "cyan")}: ${message}`
+        })
+
+        this.exitWithError(messages.join("\n"), formatOption)
+      }
+
       let files: string[]
       const explicitFiles: string[] = []
 

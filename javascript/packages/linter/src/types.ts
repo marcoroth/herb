@@ -51,6 +51,8 @@ export type RuleOptions = Record<string, unknown>
  * This is the contract `Linter.validateRuleOptions` collects (#1204).
  */
 export interface RuleOptionError {
+  /** Attached by `Linter.validateRuleOptions`; unset on a rule instance's own `optionsErrors`. */
+  ruleName?: string
   key?: string
   message: string
 }
