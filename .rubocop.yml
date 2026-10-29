@@ -268,6 +268,14 @@ Lint/UnusedMethodArgument:
   Exclude:
     - lib/herb/errors.rb
 
+Lint/InterpolationCheck:
+  Exclude:
+    - test/**/*.rb
+
+Style/OneClassPerFile:
+  Exclude:
+    - rust/herb-analysis/tests/fixtures/**/*
+
 Style/IfUnlessModifier:
   Enabled: false
 
