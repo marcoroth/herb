@@ -72,6 +72,27 @@ An exception is made for `application/ld+json`, which the HTML specification tre
 </script>
 ```
 
+## Options
+
+This rule supports custom options, configured flat under the rule name in `.herb.yml`, next to the built-in keys like `enabled` and `severity`:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allowedTypes` | `string[]` | `["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"]` | The `type` attribute values permitted on `<script>` tags. Replaces the default list entirely, it does not append to it. |
+| `allowBlank` | `boolean` | `true` | Whether a `<script>` tag without a `type` attribute is allowed. |
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    html-allowed-script-type:
+      allowedTypes:
+        - text/javascript
+        - application/json
+      allowBlank: false
+```
+
+Invalid option values are reported as errors and the rule falls back to its defaults for that run. See [Custom Rule Options](/configuration.md#custom-rule-options).
+
 ## References
 
 - [Inspiration: ERB Lint `AllowedScriptType` rule](https://github.com/Shopify/erb_lint/tree/main?tab=readme-ov-file#allowedscripttype)
