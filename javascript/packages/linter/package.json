@@ -61,7 +61,7 @@
     "@herb-tools/node-wasm": "0.11.1",
     "@herb-tools/printer": "0.11.1",
     "@herb-tools/rewriter": "0.11.1",
-    "@ruby/prism": "^1.9.0",
+    "@ruby/prism": "^2.1.0",
     "picomatch": "^4.0.7",
     "postcss": "^8.5.29",
     "postcss-selector-parser": "^7.1.6",
