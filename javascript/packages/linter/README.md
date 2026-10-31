@@ -8,6 +8,20 @@ The Herb Linter provides comprehensive HTML+ERB validation with a set of configu
 
 ## Installation
 
+### Ruby Projects
+
+The `herb-linter` gem packages `herb-lint` as a standalone executable, so it runs without Node.js:
+
+```shell
+bundle add herb-linter --group development
+```
+
+```shell
+bundle exec herb-lint
+```
+
+The `herb lint` command of the `herb` gem uses it when it's installed.
+
 ### Global Installation
 
 :::code-group

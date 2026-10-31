@@ -89,6 +89,13 @@ export interface ProcessingResult {
 const PARALLEL_FILE_THRESHOLD = 10
 
 /**
+ * Upper bound for the default number of workers. Each worker loads its own
+ * WASM parser and config, so on machines with many cores the startup cost of
+ * one worker per core outweighs the extra parallelism.
+ */
+const MAX_DEFAULT_JOBS = 8
+
+/**
  * Maximum Levenshtein distance for suggesting a rule name for an unknown rule.
  * Keeps typo suggestions while staying silent for names that aren't close to any rule.
  */
@@ -634,12 +641,12 @@ export class FileProcessor {
   }
 
   /**
-   * Returns the default number of parallel jobs based on available CPU cores.
-   * Returns 1 if parallelism detection fails.
+   * Returns the default number of parallel jobs based on available CPU cores,
+   * capped at MAX_DEFAULT_JOBS. Returns 1 if parallelism detection fails.
    */
   static defaultJobs(): number {
     try {
-      return availableParallelism()
+      return Math.min(availableParallelism(), MAX_DEFAULT_JOBS)
     } catch {
       return 1
     }

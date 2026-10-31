@@ -1,0 +1,214 @@
+name: Standalone Gems
+
+# Builds the herb-linter, herb-formatter and herb-highlighter gems, which package the
+# JavaScript tools as standalone executables (compiled with Bun) so they run without Node.js.
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+  push:
+    branches: [main]
+    paths:
+      - "javascript/packages/**"
+      - "src/**"
+      - "rakelib/standalone.rake"
+      - "rakelib/standalone/**"
+      - "bin/standalone-smoke-test"
+      - "lib/herb/version.rb"
+      - ".github/workflows/standalone-gems.yml"
+
+  pull_request:
+    paths:
+      - "javascript/packages/**"
+      - "src/**"
+      - "rakelib/standalone.rake"
+      - "rakelib/standalone/**"
+      - "bin/standalone-smoke-test"
+      - "lib/herb/version.rb"
+      - ".github/workflows/standalone-gems.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: "1.4.4"
+
+jobs:
+  build:
+    name: Build standalone gems
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NX_NO_CLOUD: "true"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: grep -v emscripten Aptfile | xargs sudo apt-get install -y --no-install-recommends
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.2
+          actions-cache-folder: emsdk-cache-standalone
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: yarn install
+        run: yarn install --frozen-lockfile
+
+      - name: Build JavaScript packages
+        env:
+          RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
+        run: yarn nx run-many -t build -p @herb-tools/linter @herb-tools/formatter @herb-tools/highlighter
+
+      - name: Install patchelf
+        run: sudo apt-get install -y --no-install-recommends patchelf
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Build gems
+        run: bundle exec rake standalone:gems
+
+      - name: Compare with the npm packages
+        run: |
+          gem install --local --no-document pkg/herb-linter-*-x86_64-linux-gnu.gem pkg/herb-formatter-*-x86_64-linux-gnu.gem pkg/herb-highlighter-*-x86_64-linux-gnu.gem
+          ruby bin/standalone-smoke-test --compare-node
+
+      - name: Upload gems
+        uses: actions/upload-artifact@v7
+        with:
+          name: standalone-gems
+          path: pkg/*.gem
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke:
+    name: Smoke test ${{ matrix.platform }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: x86_64-linux-gnu
+          - os: ubuntu-24.04-arm
+            platform: aarch64-linux-gnu
+          - os: ubuntu-latest
+            platform: x86_64-linux-musl
+            container: ruby:3.4-alpine
+          - os: ubuntu-24.04-arm
+            platform: aarch64-linux-musl
+            container: ruby:3.4-alpine
+          - os: macos-latest
+            platform: arm64-darwin
+          - os: macos-15-intel
+            platform: x86_64-darwin
+          - os: windows-latest
+            platform: x64-mingw-ucrt
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download gems
+        uses: actions/download-artifact@v8
+        with:
+          name: standalone-gems
+          path: pkg/
+
+      - name: Setup Ruby
+        if: ${{ !matrix.container }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Smoke test
+        if: ${{ !matrix.container }}
+        shell: bash
+        run: |
+          gem install --local --no-document pkg/herb-linter-*-${{ matrix.platform }}.gem pkg/herb-formatter-*-${{ matrix.platform }}.gem pkg/herb-highlighter-*-${{ matrix.platform }}.gem
+          ruby bin/standalone-smoke-test
+
+      - name: Smoke test (${{ matrix.container }})
+        if: ${{ matrix.container }}
+        run: |
+          docker run --rm -v "$PWD:/herb" -w /herb ${{ matrix.container }} sh -c '
+            ! ls /usr/lib/libstdc++.so* 2>/dev/null &&
+            gem install --local --no-document pkg/herb-linter-*-${{ matrix.platform }}.gem pkg/herb-formatter-*-${{ matrix.platform }}.gem pkg/herb-highlighter-*-${{ matrix.platform }}.gem &&
+            ruby bin/standalone-smoke-test
+          '
+
+  push:
+    name: Push gems with trusted publishing
+    if: github.event_name == 'release' && github.repository_owner == 'marcoroth'
+    needs: [build, smoke]
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Vendor the attestation patch from rubygems/release-gem
+      - name: Vendor release-gem patch
+        uses: actions/checkout@v7
+        with:
+          repository: rubygems/release-gem
+          ref: 1c162a739e8b4cb21a676e97b087e8268d8fc40b # v1.1.2
+          path: .github/_release-gem
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Download gems
+        uses: actions/download-artifact@v8
+        with:
+          name: standalone-gems
+          path: pkg/
+
+      - name: Configure trusted publishing credentials
+        uses: rubygems/configure-rubygems-credentials@v1.0.0
+
+      - name: Push gems with Sigstore attestation
+        env:
+          # Preload the attestation patch so `gem push` generates & attaches the bundle
+          RUBYOPT: "-r${{ github.workspace }}/.github/_release-gem/rubygems-attestation-patch.rb"
+        run: |
+          cd pkg
+          for gem_file in *.gem; do
+            echo "Pushing $gem_file"
+            gem push "$gem_file"
+          done

@@ -620,6 +620,6 @@ export class CLI {
       }
     }
 
-    return files
+    return files.sort()
   }
 }

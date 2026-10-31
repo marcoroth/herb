@@ -1,0 +1,16 @@
+# <%= name %>
+
+<%= tool[:description] %>
+
+This gem packages the `<%= tool[:executable] %>` command of [`@herb-tools/<%= tool[:package] %>`](https://www.npmjs.com/package/@herb-tools/<%= tool[:package] %>) as a standalone executable, so it can be used without Node.js.
+
+```bash
+bundle add <%= name %> --group development
+bundle exec <%= tool[:executable] %> --help
+```
+
+The `herb` gem's `herb <%= tool[:executable].delete_prefix("herb-") %>` command uses this executable when the gem is installed.
+
+On platforms without a standalone executable, like 32-bit ARM and x86 Linux, it runs the npm package with `npx` instead when Node.js is available.
+
+See the [documentation](https://herb-tools.dev) for more details.
