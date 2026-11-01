@@ -1353,12 +1353,19 @@
   dependencies:
     tinyrainbow "^3.1.1"
 
+"@vitest/pretty-format@5.0.5":
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/@vitest/pretty-format/-/pretty-format-5.0.5.tgz#0eb1b65ab31ee0a9bcd948591c0659d994092314"
+  integrity sha512-24sSdIlMA9DVPXnYiB9siwU0bTd887Y9jX3+vabztCSsvHwo7ipvJ/a2L3Rljw8+2rK1f5fCj3h5U9I/Jsqgbw==
+  dependencies:
+    tinyrainbow "^3.2.0"
+
 "@vitest/spy@5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@vitest/spy/-/spy-5.0.0.tgz#4ca353a880fcabae3eabf558126ae8f5542ccbfd"
   integrity sha512-uy+luWBAPw9XfthoHi5AkfHUnuPYEESjl0p/r+meoBnU8bxg5GDQ3Ey8MjcJ6sqahkL4PFyrvfMJJBw7LbU06g==
 
-"@vitest/ui@5.0.0", "@vitest/ui@^5.0.0":
+"@vitest/ui@5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@vitest/ui/-/ui-5.0.0.tgz#b48cac6f4c2fe6e283c562826f9bd212c4632f99"
   integrity sha512-h2FIFwggCY2GxUd2UdQoYNVQkOIqEQLPhNREcl3FUiRsdzQep7NWwYbSmhGEA9nFLPDq5pXzRMcBZQU8Py83sg==
@@ -1370,6 +1377,18 @@
     sirv "^3.0.2"
     tinyrainbow "^3.1.1"
 
+"@vitest/ui@^5.0.5":
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/@vitest/ui/-/ui-5.0.5.tgz#f6a65c18b19b71974db5fc04ed2abb1f6cd1bc5b"
+  integrity sha512-dCoGUOdgmCaSB2g+WQ/spPCBkytAWdNUkFSXY4z+eYp2d8JEOY8v0uDRaJTG9qf/kTlTVZ4CuYMYMz/f1HS/qQ==
+  dependencies:
+    "@vitest/utils" "5.0.5"
+    fflate "^0.8.3"
+    flatted "^3.4.4"
+    pathe "^2.0.3"
+    sirv "^3.0.2"
+    tinyrainbow "^3.2.0"
+
 "@vitest/utils@5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@vitest/utils/-/utils-5.0.0.tgz#0c6a358ce1783206505e932aad8b10430390ea2f"
@@ -1378,6 +1397,15 @@
     "@vitest/pretty-format" "5.0.0"
     convert-source-map "^2.0.0"
     tinyrainbow "^3.1.1"
+
+"@vitest/utils@5.0.5":
+  version "5.0.5"
+  resolved "https://registry.yarnpkg.com/@vitest/utils/-/utils-5.0.5.tgz#09f387421188b7ed145d238a1db8dc036a320e04"
+  integrity sha512-/rBu7gzLDQI/SC79Tn98b5DwOgaHU/Gt4I9OVeP3YofzNaYtbImRCOJQmT1S6vOJg9gEIlWC+r3QxKkjuSa1nQ==
+  dependencies:
+    "@vitest/pretty-format" "5.0.5"
+    convert-source-map "^2.0.0"
+    tinyrainbow "^3.2.0"
 
 "@volar/language-core@2.4.28":
   version "2.4.28"
@@ -1795,17 +1823,17 @@ brace-expansion@5.0.12, brace-expansion@^5.0.5, brace-expansion@^5.0.8:
     balanced-match "^4.0.2"
 
 brace-expansion@^1.1.7:
-  version "1.1.12"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.12.tgz#ab9b454466e5a8cc3a187beaad580412a9c5b843"
-  integrity sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==
+  version "1.1.21"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.21.tgz#edf4fab5c64d051aea5a8def49aba1c7522279f3"
+  integrity sha512-9zeA+KLZNNzglF2TPKRQEDyx6Yby7daAkuy8MiPzpXPsYDWi/DRM8jmwUDxokQjYqBpv5DgPiwD4h4ZZSy1Ujw==
   dependencies:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
 
 brace-expansion@^2.0.2:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.1.1.tgz#c68b1c4111c76aae3a6fba55d496cee10c39dad8"
-  integrity sha512-WR1cURNjuvBLMZBMbqM0UoE+WAfdUcEV1ccD8PVBVOI+Z3ND4+SZbN8RsfT2bMuG1qwz5RFvPukSZm5fF2D5eA==
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.1.7.tgz#14ea3836731823bb24740225ea43b941b436f9d1"
+  integrity sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==
   dependencies:
     balanced-match "^1.0.0"
 
@@ -5136,10 +5164,10 @@ postcss-selector-parser@^6.0.4, postcss-selector-parser@^6.0.5, postcss-selector
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
 
-postcss-selector-parser@^7.0.0, postcss-selector-parser@^7.1.6:
-  version "7.1.6"
-  resolved "https://registry.yarnpkg.com/postcss-selector-parser/-/postcss-selector-parser-7.1.6.tgz#45e970f2d93d4547d6754167ed1132f43012c4bf"
-  integrity sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==
+postcss-selector-parser@^7.0.0, postcss-selector-parser@^7.1.7:
+  version "7.1.7"
+  resolved "https://registry.yarnpkg.com/postcss-selector-parser/-/postcss-selector-parser-7.1.7.tgz#70e353032ced41529d70b7662227a74eb001d31b"
+  integrity sha512-wWBro/7hJ40ye6TPiXkUQoXKCw23xSsjriUvqd7Uls9Sso3oLiON1flc18cCdnjgCRXw4fBVqUJJeOdDTh3P3g==
   dependencies:
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
@@ -6092,10 +6120,10 @@ tinyglobby@^0.2.11, tinyglobby@^0.2.15, tinyglobby@^0.2.16, tinyglobby@^0.2.17:
     fdir "^6.5.0"
     picomatch "^4.0.4"
 
-tinyrainbow@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/tinyrainbow/-/tinyrainbow-3.1.1.tgz#c0168387d3d8d70b6b3c2c0936de5fee738cea20"
-  integrity sha512-yau8yJdTt989Mm0Bd/236QnzEiPf2xLLTqUZRUJOo/3CB078LSwzei343DgtJVmfJKJE3TMINY1u42SQsP6mXw==
+tinyrainbow@^3.1.1, tinyrainbow@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/tinyrainbow/-/tinyrainbow-3.2.0.tgz#f62df4fda24415b353c08b9c38934b4b13877655"
+  integrity sha512-LgO3D9yZJjApUiuUfl9iFAwrtaX4+lok3wJIqttGoKCHlWUqHqbQpnxCf82L8FjgKsh4iGo78hqJwgL8F6To2A==
 
 tmp@0.2.7:
   version "0.2.7"
