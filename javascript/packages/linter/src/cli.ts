@@ -129,6 +129,8 @@ export class CLI {
       ignore: filesConfig.exclude || []
     })
 
+    files.sort()
+
     if (explicitFile && files.length === 0) {
       if (!force) {
         this.exitWithInfo(`⚠️  File ${explicitFile} is excluded by configuration patterns. Use --force to lint it anyway.`, formatOption)

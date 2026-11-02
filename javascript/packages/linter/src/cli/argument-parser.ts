@@ -1,6 +1,5 @@
 import dedent from "dedent"
 
-import { availableParallelism } from "node:os"
 import { resolve } from "node:path"
 import { parseArgs } from "util"
 import { Herb } from "@herb-tools/node-wasm"
@@ -8,6 +7,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import { DIAGNOSTIC_SEVERITIES, isDiagnosticSeverity } from "@herb-tools/core"
 import { FORMAT_OPTIONS, isStructuredFormat } from "./output-format.js"
+import { FileProcessor } from "./file-processor.js"
 
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { DiagnosticSeverity } from "@herb-tools/core"
@@ -93,7 +93,7 @@ export class ArgumentParser {
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
-      -j, --jobs <n>                number of parallel workers for linting files [default: auto]
+      -j, --jobs <n>                number of parallel workers for linting files [default: auto, CPU cores up to 8]
                                     use "auto" to detect based on available CPU cores
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color                    disable colored output
@@ -222,7 +222,7 @@ export class ArgumentParser {
     const failLevel = this.parseSeverity(values["fail-level"], "--fail-level")
     const logLevel = this.parseSeverity(values["log-level"], "--log-level")
 
-    let jobs = availableParallelism()
+    let jobs = FileProcessor.defaultJobs()
 
     if (values.jobs && values.jobs !== "auto") {
       const parsed = parseInt(values.jobs, 10)
