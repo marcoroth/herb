@@ -129,7 +129,6 @@ export class CLI {
       ignore: filesConfig.exclude || []
     })
 
-    // Glob order depends on the filesystem and runtime, sort for deterministic output
     files.sort()
 
     if (explicitFile && files.length === 0) {
