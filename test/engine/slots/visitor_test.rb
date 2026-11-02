@@ -508,6 +508,14 @@ module Engine
       test "leaves a herb-key inside a collection body to the collection" do
         assert_slots_snapshot(%(<%# herb:slots %>\n<% @u.each do |u| %><li herb-key="<%= u.id %>">x</li><% end %>))
       end
+
+      test "gives the text of a lowered helper a child slot" do
+        assert_slots_snapshot(%(<%= link_to @label, "/profile", class: "link" %>))
+      end
+
+      test "keeps an expression in a lowered helper's attribute an attribute slot" do
+        assert_slots_snapshot(%(<%= link_to "Static", @path, title: @title %>))
+      end
     end
   end
 end

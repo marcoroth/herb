@@ -121,6 +121,38 @@ exports[`DiagnosticRenderer > multi-line diagnostics > marks every line the diag
 "
 `;
 
+exports[`DiagnosticRenderer > renderSingle > renders a source frame without a syntax renderer or diagnostic header (optimizeHighlighting: false) 1`] = `
+"view.html.erb:4:1
+
+      3 │ third
+  →   4 │ <img>
+        │  ~~~
+      5 │ fifth
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > renders a source frame without a syntax renderer or diagnostic header (optimizeHighlighting: true) 1`] = `
+"view.html.erb:4:1
+
+      3 │ third
+  →   4 │ <img>
+        │  ~~~
+      5 │ fifth
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > renders the diagnostic header by default without a syntax renderer 1`] = `
+"[error] Test error message (test-rule) Diagnostic suffix
+
+view.html.erb:2:1
+
+      1 │ first
+  →   2 │ <img>
+        │  ~~~
+      3 │ third
+"
+`;
+
 exports[`DiagnosticRenderer > renderSingle > should handle custom context lines 1`] = `
 "[error] Test error message (test-rule)
 

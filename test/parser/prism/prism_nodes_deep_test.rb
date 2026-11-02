@@ -122,6 +122,22 @@ module Parser
       test "expression inside HTML" do
         assert_parsed_snapshot(%(<div class="<%= css_class %>"><%= content %></div>), prism_nodes: true, prism_nodes_deep: true)
       end
+
+      test "yield inside if" do
+        assert_parsed_snapshot("<% if show? %><%= yield :header %><% end %>", prism_nodes: true, prism_nodes_deep: true)
+      end
+
+      test "yield inside block" do
+        assert_parsed_snapshot("<% items.each do |item| %><%= yield item %><% end %>", prism_nodes: true, prism_nodes_deep: true)
+      end
+
+      test "yield" do
+        assert_parsed_snapshot(%(<%= yield %>), prism_nodes: true, prism_nodes_deep: true)
+      end
+
+      test "yield with arguments" do
+        assert_parsed_snapshot(%(<%= yield :header, user %>), prism_nodes: true, prism_nodes_deep: true)
+      end
     end
   end
 end

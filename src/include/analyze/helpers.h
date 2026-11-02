@@ -42,29 +42,9 @@ bool is_brace_block(pm_location_t opening_location);
 bool is_closing_brace(pm_location_t location);
 bool has_valid_block_closing(pm_location_t opening_loc, pm_location_t closing_loc);
 
-bool search_begin_nodes(const pm_node_t* node, void* data);
-bool search_block_nodes(const pm_node_t* node, void* data);
-bool search_case_match_nodes(const pm_node_t* node, void* data);
-bool search_case_nodes(const pm_node_t* node, void* data);
-bool search_for_nodes(const pm_node_t* node, void* data);
-bool search_if_nodes(const pm_node_t* node, void* data);
-bool search_in_nodes(const pm_node_t* node, void* data);
-bool search_then_keywords(const pm_node_t* node, void* data);
+bool search_control_flow_nodes(const pm_node_t* node, void* data);
 bool search_unclosed_control_flows(const pm_node_t* node, void* data);
-bool search_unless_nodes(const pm_node_t* node, void* data);
-bool search_until_nodes(const pm_node_t* node, void* data);
-bool search_when_nodes(const pm_node_t* node, void* data);
-bool search_while_nodes(const pm_node_t* node, void* data);
-bool search_yield_nodes(const pm_node_t* node, void* data);
-
-bool search_unexpected_block_closing_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_else_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_elsif_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_end_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_ensure_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_in_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed);
-bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed);
+void search_unexpected_keyword_errors(analyzed_ruby_T* analyzed);
 
 void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator, const parser_options_T* options);
 

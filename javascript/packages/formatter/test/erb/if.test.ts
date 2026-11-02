@@ -466,5 +466,22 @@ describe("@herb-tools/formatter", () => {
       const output = formatter.format(input)
       expect(output).toEqual(input)
     })
+
+    test("multiline if inside nested span after text keeps its structure (#2787)", () => {
+      const input = dedent`
+        <span>
+          Count:
+          <span>
+            <% if show_count %>
+              <%= 5 %> / <%= 10 %>
+            <% else %>
+              <%= 10 %>
+            <% end %>
+          </span>
+        </span>
+      `
+      const output = formatter.format(input)
+      expect(output).toEqual(input)
+    })
   })
 })

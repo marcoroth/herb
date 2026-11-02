@@ -1,0 +1,235 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`JUnitFormatter > adds a testsuite for offenses in files outside the linted file list 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="2" failures="1" errors="0">
+  <testsuite name="app/views/index.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/index.html.erb" name="app/views/index.html.erb" file="app/views/index.html.erb" time="0"/>
+  </testsuite>
+  <testsuite name="app/views/_partial.html.erb" tests="1" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/_partial.html.erb" name="test-rule:1:0" file="app/views/_partial.html.erb" line="1" time="0">
+      <failure type="error">Test message
+
+app/views/_partial.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > distinguishes offenses at the same rule and location without changing other names 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="5" failures="4" errors="0">
+  <testsuite name="a.html.erb" tests="4" failures="3" errors="0" skipped="0" time="0">
+    <testcase classname="a.html.erb" name="test-rule:1:0" file="a.html.erb" line="1" time="0">
+      <failure type="error">First
+
+a.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="test-rule:1:0#2" file="a.html.erb" line="1" time="0">
+      <system-out>a.html.erb:1:0: warning: Warning</system-out>
+    </testcase>
+    <testcase classname="a.html.erb" name="test-rule:1:0#3" file="a.html.erb" line="1" time="0">
+      <failure type="error">Third
+
+a.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="other-rule:1:0" file="a.html.erb" line="1" time="0">
+      <failure type="error">Other rule
+
+a.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/other-rule</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="b.html.erb" tests="1" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="b.html.erb" name="test-rule:1:0" file="b.html.erb" line="1" time="0">
+      <failure type="error">Other file
+
+b.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > escapes XML and strips terminal colors, hyperlinks and characters XML can't represent 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="1" failures="1" errors="0">
+  <testsuite name="a.html.erb" tests="1" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="a.html.erb" name="test-rule:1:0" file="a.html.erb" line="1" time="0">
+      <failure type="error">Use &lt;span class=&quot;a&quot;&gt; &amp; &#39;link&#39;here😀
+
+a.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > includes XML-escaped source context and marks each offense independently 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="2" failures="2" errors="0">
+  <testsuite name="profile.html.erb" tests="2" failures="2" errors="0" skipped="0" time="0">
+    <testcase classname="profile.html.erb" name="test-rule:2:1" file="profile.html.erb" line="2" time="0">
+      <failure type="error">Test message
+
+profile.html.erb:2:1
+
+      1 │ &lt;h1&gt;Your profile&lt;/h1&gt;
+  →   2 │ &lt;img src=&quot;/avatar.png?size=small&amp;shape=square&quot;&gt;
+        │  ~~~
+      3 │ &lt;p&gt;Company&lt;/p&gt;
+      4 │ &lt;img src=&quot;/company-logo.png&quot;&gt;
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+    <testcase classname="profile.html.erb" name="test-rule:4:1" file="profile.html.erb" line="4" time="0">
+      <failure type="error">Test message
+
+profile.html.erb:4:1
+
+      2 │ &lt;img src=&quot;/avatar.png?size=small&amp;shape=square&quot;&gt;
+      3 │ &lt;p&gt;Company&lt;/p&gt;
+  →   4 │ &lt;img src=&quot;/company-logo.png&quot;&gt;
+        │  ~~~
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > keeps report paths and source frames consistent across checkout roots and invocation styles 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="2" failures="1" errors="0">
+  <testsuite name="app/views/profile.html.erb" tests="1" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/profile.html.erb" name="test-rule:1:0" file="app/views/profile.html.erb" line="1" time="0">
+      <failure type="error">Test message
+
+app/views/profile.html.erb:1:0
+
+  →   1 │ &lt;img&gt;
+        │ ~~~~~
+      2 │
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="app/views/clean.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="app/views/clean.html.erb" name="app/views/clean.html.erb" file="app/views/clean.html.erb" time="0"/>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > preserves tabs and line breaks in attribute values instead of normalizing them to spaces 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="4" failures="1" errors="0">
+  <testsuite name="views/a&#9;b.html.erb" tests="1" failures="1" errors="0" skipped="0" time="0">
+    <testcase classname="views/a&#9;b.html.erb" name="test-rule:1:0" file="views/a&#9;b.html.erb" line="1" time="0">
+      <failure type="error">Test message
+
+views/a	b.html.erb:1:0
+
+https://herb-tools.dev/linter/rules/test-rule</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="views/a&#10;b.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="views/a&#10;b.html.erb" name="views/a&#10;b.html.erb" file="views/a&#10;b.html.erb" time="0"/>
+  </testsuite>
+  <testsuite name="views/a&#13;b.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="views/a&#13;b.html.erb" name="views/a&#13;b.html.erb" file="views/a&#13;b.html.erb" time="0"/>
+  </testsuite>
+  <testsuite name="views/a b.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="views/a b.html.erb" name="views/a b.html.erb" file="views/a b.html.erb" time="0"/>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > renders a run with nothing to lint as a single skipped testcase 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="1" failures="0" errors="0" skipped="1">
+  <testsuite name="herb-lint" tests="1" failures="0" errors="0" skipped="1" time="0">
+    <testcase classname="herb-lint" name="herb-lint" time="0">
+      <skipped message="Linter is disabled in .herb.yml configuration.">Linter is disabled in .herb.yml configuration.</skipped>
+    </testcase>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > reports each offense separately with fail level error 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="5" failures="2" errors="0">
+  <testsuite name="a.html.erb" tests="4" failures="2" errors="0" skipped="0" time="0">
+    <testcase classname="a.html.erb" name="rule-a:2:0" file="a.html.erb" line="2" time="0">
+      <system-out>a.html.erb:2:0: warning: Warned</system-out>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-a:5:2" file="a.html.erb" line="5" time="0">
+      <failure type="error">First
+
+a.html.erb:5:2
+
+https://herb-tools.dev/linter/rules/rule-a</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-a:5:4" file="a.html.erb" line="5" time="0">
+      <failure type="error">Second
+
+a.html.erb:5:4
+
+https://herb-tools.dev/linter/rules/rule-a</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-b:3:0" file="a.html.erb" line="3" time="0">
+      <system-out>a.html.erb:3:0: warning: Only a warning</system-out>
+    </testcase>
+  </testsuite>
+  <testsuite name="clean.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="clean.html.erb" name="clean.html.erb" file="clean.html.erb" time="0"/>
+  </testsuite>
+</testsuites>"
+`;
+
+exports[`JUnitFormatter > reports each offense separately with fail level warning 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="herb-lint" tests="5" failures="4" errors="0">
+  <testsuite name="a.html.erb" tests="4" failures="4" errors="0" skipped="0" time="0">
+    <testcase classname="a.html.erb" name="rule-a:2:0" file="a.html.erb" line="2" time="0">
+      <failure type="warning">Warned
+
+a.html.erb:2:0
+
+https://herb-tools.dev/linter/rules/rule-a</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-a:5:2" file="a.html.erb" line="5" time="0">
+      <failure type="error">First
+
+a.html.erb:5:2
+
+https://herb-tools.dev/linter/rules/rule-a</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-a:5:4" file="a.html.erb" line="5" time="0">
+      <failure type="error">Second
+
+a.html.erb:5:4
+
+https://herb-tools.dev/linter/rules/rule-a</failure>
+    </testcase>
+    <testcase classname="a.html.erb" name="rule-b:3:0" file="a.html.erb" line="3" time="0">
+      <failure type="warning">Only a warning
+
+a.html.erb:3:0
+
+https://herb-tools.dev/linter/rules/rule-b</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="clean.html.erb" tests="1" failures="0" errors="0" skipped="0" time="0">
+    <testcase classname="clean.html.erb" name="clean.html.erb" file="clean.html.erb" time="0"/>
+  </testsuite>
+</testsuites>"
+`;

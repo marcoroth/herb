@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0053_keeps the indentation before a false if followed by a statement tag"
+input: "{source: \"<p></p>\\n  <% if false %><% x = 1 %>B<% end %>C\", locals: {}, options: {}}"
+---
+<p></p>
+  C

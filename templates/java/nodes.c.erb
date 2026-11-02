@@ -50,7 +50,7 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
   jbyteArray <%= field.name %>;
   if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
     pm_buffer_t pm_buffer = { 0 };
-    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, &pm_buffer);
     if (pm_buffer.length > 0) {
       <%= field.name %> = (*env)->NewByteArray(env, (jsize)pm_buffer.length);
       (*env)->SetByteArrayRegion(env, <%= field.name %>, 0, (jsize)pm_buffer.length, (const jbyte*)pm_buffer.value);

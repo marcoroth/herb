@@ -1,26 +1,9 @@
 <script setup>
-const companies = [
-  { login: "Light-Labs-Technologies", name: "Light Labs" },
-  { login: "renuo", name: "renuo" },
-  { login: "honestica", name: "Lifen" },
-  { login: "typesense", name: "Typesense" },
-  { login: "ventrata", name: "Ventrata" },
-  { login: "BaseSecrete", name: "Base Secrète" },
-  { login: "beflagrant", name: "Flagrant" },
-  { login: "linkanalabs", name: "Linkana" },
-  { login: "avo-hq", name: "Avo" },
-  { login: "practical-computer", name: "Practical Computer" },
-]
+  import { data as sponsors } from "../../sponsors.data"
 
-const people = [
-  "wbotelhos", "jespr", "DRBragg", "peterberkenbosch", "kcdragon", "ChaelCodes",
-  "larouxn", "lxxxvi", "williamkennedy", "janko", "irinanazarova", "gurgeous",
-  "kdaigle", "rafaelfranca", "cb341", "myabc", "ajaya", "doolin", "sobstel",
-  "apiguy", "rosa", "tysongach", "palkan", "itsameandrea", "markokajzer",
-  "chris-biagini",
-]
-
-const total = companies.length + people.length
+  const companies = sponsors.companies
+  const people = sponsors.people
+  const total = sponsors.total
 </script>
 
 <template>
@@ -231,13 +214,13 @@ const total = companies.length + people.length
       </section>
 
       <section>
-        <div class="sec-head">
+        <div class="sec-head" v-if="total">
           <h2>Supported by {{ total }} people and companies.</h2>
           <p>Herb is an independent open source project, and it relies on the companies that use it to keep going. If your team depends on Herb, consider sponsoring the project.</p>
         </div>
 
-        <p class="sponsor-label">Companies</p>
-        <ul class="orgs">
+        <p class="sponsor-label" v-if="companies.length">Companies</p>
+        <ul class="orgs" v-if="companies.length">
           <li v-for="company in companies" :key="company.login">
             <a :href="`https://github.com/${company.login}`">
               <img :src="`https://github.com/${company.login}.png?size=80`" :alt="company.name" width="28" height="28" loading="lazy" data-no-zoom>
@@ -246,11 +229,11 @@ const total = companies.length + people.length
           </li>
         </ul>
 
-        <p class="sponsor-label">People</p>
-        <ul class="people">
-          <li v-for="login in people" :key="login">
-            <a :href="`https://github.com/${login}`" :title="login">
-              <img :src="`https://github.com/${login}.png?size=80`" :alt="login" width="40" height="40" loading="lazy" data-no-zoom>
+        <p class="sponsor-label" v-if="people.length">People</p>
+        <ul class="people" v-if="people.length">
+          <li v-for="person in people" :key="person.login">
+            <a :href="`https://github.com/${person.login}`" :title="person.name">
+              <img :src="`https://github.com/${person.login}.png?size=80`" :alt="person.name" width="40" height="40" loading="lazy" data-no-zoom>
             </a>
           </li>
         </ul>

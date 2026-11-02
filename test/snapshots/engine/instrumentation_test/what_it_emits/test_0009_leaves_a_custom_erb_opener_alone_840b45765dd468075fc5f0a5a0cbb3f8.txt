@@ -1,0 +1,12 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0009_leaves a custom erb opener alone"
+input: "{source: \"<h1><%= title %></h1>\\n<%graphql\\n  fragment User on User {\\n    ...Avatar\\n  }\\n%>\\n\", options: {filename: \"app/views/test.html.erb\", parser_options: {erb_openers: [\"graphql\"]}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << '<h1>'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 4, nil, end_line: 1, end_column: 16) { title }).to_s; _buf << '</h1>
+'.freeze;
+
+
+
+
+ ensure; ::Herb::Engine::Runtime::Session.leave_render; end ;
+_buf.to_s

@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0056_trims indented lines that only hold a statement tag"
+input: "{source: \"<div>\\n  <% if a %>\\n    A\\n  <% end %>\\n</div>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div>
+'.freeze;   if a 
+ _buf << '    A
+'.freeze;   end 
+ _buf << '</div>'.freeze;
+_buf.to_s

@@ -226,23 +226,6 @@ bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {
   return false;
 }
 
-bool search_if_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_IF_NODE) {
-    const pm_if_node_t* if_node = (const pm_if_node_t*) node;
-
-    bool has_if_keyword = if_node->if_keyword_loc.start != NULL && if_node->if_keyword_loc.end != NULL;
-    bool has_end_keyword = if_node->end_keyword_loc.start != NULL && if_node->end_keyword_loc.end != NULL;
-
-    if (has_if_keyword && has_end_keyword) { analyzed->if_node_count++; }
-  }
-
-  pm_visit_child_nodes(node, search_if_nodes, analyzed);
-
-  return false;
-}
-
 bool is_do_block(pm_location_t opening_location) {
   size_t length = opening_location.end - opening_location.start;
 
@@ -285,257 +268,136 @@ bool has_valid_block_closing(pm_location_t opening_loc, pm_location_t closing_lo
   return false;
 }
 
-bool search_block_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_BLOCK_NODE) {
-    pm_block_node_t* block_node = (pm_block_node_t*) node;
-
-    bool has_opening = is_do_block(block_node->opening_loc) || is_brace_block(block_node->opening_loc);
-    bool is_unclosed = !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc);
-
-    if (has_opening && is_unclosed) { analyzed->block_node_count++; }
-  }
-
-  if (node->type == PM_LAMBDA_NODE) {
-    pm_lambda_node_t* lambda_node = (pm_lambda_node_t*) node;
-
-    bool has_opening = is_do_block(lambda_node->opening_loc) || is_brace_block(lambda_node->opening_loc);
-    bool is_unclosed = !has_valid_block_closing(lambda_node->opening_loc, lambda_node->closing_loc);
-
-    if (has_opening && is_unclosed) { analyzed->block_node_count++; }
-  }
-
-  pm_visit_child_nodes(node, search_block_nodes, analyzed);
-
-  return false;
+static bool has_keyword_location(pm_location_t location) {
+  return location.start != NULL && location.end != NULL;
 }
 
-bool search_case_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+static bool is_unclosed_block(pm_location_t opening_loc, pm_location_t closing_loc) {
+  bool has_opening = is_do_block(opening_loc) || is_brace_block(opening_loc);
 
-  if (node->type == PM_CASE_NODE) { analyzed->case_node_count++; }
-
-  pm_visit_child_nodes(node, search_case_nodes, analyzed);
-
-  return false;
+  return has_opening && !has_valid_block_closing(opening_loc, closing_loc);
 }
 
-bool search_case_match_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_CASE_MATCH_NODE) { analyzed->case_match_node_count++; }
-
-  pm_visit_child_nodes(node, search_case_match_nodes, analyzed);
-
-  return false;
-}
-
-bool search_while_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_WHILE_NODE) { analyzed->while_node_count++; }
-
-  pm_visit_child_nodes(node, search_while_nodes, analyzed);
-
-  return false;
-}
-
-bool search_for_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_FOR_NODE) { analyzed->for_node_count++; }
-
-  pm_visit_child_nodes(node, search_for_nodes, analyzed);
-
-  return false;
-}
-
-bool search_until_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_UNTIL_NODE) { analyzed->until_node_count++; }
-
-  pm_visit_child_nodes(node, search_until_nodes, analyzed);
-
-  return false;
-}
-
-bool search_begin_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_BEGIN_NODE) { analyzed->begin_node_count++; }
-
-  pm_visit_child_nodes(node, search_begin_nodes, analyzed);
-
-  return false;
-}
-
-bool search_unless_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_UNLESS_NODE) {
-    const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
-
-    bool has_if_keyword = unless_node->keyword_loc.start != NULL && unless_node->keyword_loc.end != NULL;
-    bool has_end_keyword = unless_node->end_keyword_loc.start != NULL && unless_node->end_keyword_loc.end != NULL;
-
-    if (has_if_keyword && has_end_keyword) { analyzed->unless_node_count++; }
-  }
-
-  pm_visit_child_nodes(node, search_unless_nodes, analyzed);
-
-  return false;
-}
-
-bool search_when_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_WHEN_NODE) { analyzed->when_node_count++; }
-
-  pm_visit_child_nodes(node, search_when_nodes, analyzed);
-
-  return false;
-}
-
-bool search_in_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_IN_NODE) { analyzed->in_node_count++; }
-  if (node->type == PM_CASE_MATCH_NODE) {
-    const pm_case_match_node_t* case_match_node = (const pm_case_match_node_t*) node;
-
-    if (case_match_node->predicate != NULL && case_match_node->predicate->type == PM_MATCH_PREDICATE_NODE) {
-      analyzed->in_node_count++;
-    }
-  }
-
-  pm_visit_child_nodes(node, search_in_nodes, analyzed);
-
-  return false;
-}
-
-bool search_unexpected_elsif_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'elsif', ignoring it")) {
-    analyzed->elsif_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_else_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'else', ignoring it")) {
-    analyzed->else_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_end_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'end', ignoring it")) {
-    if (has_error_message(analyzed, "unexpected '=', ignoring it")) {
-      // `=end`
-      return false;
-    }
-
-    analyzed->end_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_block_closing_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected '}', ignoring it")) {
-    analyzed->block_closing_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'when', ignoring it")) {
-    analyzed->when_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_in_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'in', ignoring it")) {
-    analyzed->in_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'rescue', ignoring it")) {
-    analyzed->rescue_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_unexpected_ensure_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'ensure', ignoring it")) {
-    analyzed->ensure_node_count++;
-    return true;
-  }
-
-  return false;
-}
-
-bool search_yield_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_YIELD_NODE) { analyzed->yield_node_count++; }
-
-  pm_visit_child_nodes(node, search_yield_nodes, analyzed);
-
-  return false;
-}
-
-bool search_then_keywords(const pm_node_t* node, void* data) {
+bool search_control_flow_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
   switch (node->type) {
     case PM_IF_NODE: {
       const pm_if_node_t* if_node = (const pm_if_node_t*) node;
-      if (if_node->then_keyword_loc.start != NULL && if_node->then_keyword_loc.end != NULL) {
-        analyzed->then_keyword_count++;
+
+      if (has_keyword_location(if_node->if_keyword_loc) && has_keyword_location(if_node->end_keyword_loc)) {
+        analyzed->if_node_count++;
       }
+
+      if (has_keyword_location(if_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
       break;
     }
 
     case PM_UNLESS_NODE: {
       const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
-      if (unless_node->then_keyword_loc.start != NULL && unless_node->then_keyword_loc.end != NULL) {
-        analyzed->then_keyword_count++;
+
+      if (has_keyword_location(unless_node->keyword_loc) && has_keyword_location(unless_node->end_keyword_loc)) {
+        analyzed->unless_node_count++;
       }
+
+      if (has_keyword_location(unless_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
       break;
     }
 
     case PM_WHEN_NODE: {
       const pm_when_node_t* when_node = (const pm_when_node_t*) node;
-      if (when_node->then_keyword_loc.start != NULL && when_node->then_keyword_loc.end != NULL) {
-        analyzed->then_keyword_count++;
+
+      analyzed->when_node_count++;
+
+      if (has_keyword_location(when_node->then_keyword_loc)) { analyzed->then_keyword_count++; }
+      break;
+    }
+
+    case PM_BLOCK_NODE: {
+      const pm_block_node_t* block_node = (const pm_block_node_t*) node;
+
+      if (is_unclosed_block(block_node->opening_loc, block_node->closing_loc)) { analyzed->block_node_count++; }
+      break;
+    }
+
+    case PM_LAMBDA_NODE: {
+      const pm_lambda_node_t* lambda_node = (const pm_lambda_node_t*) node;
+
+      if (is_unclosed_block(lambda_node->opening_loc, lambda_node->closing_loc)) { analyzed->block_node_count++; }
+      break;
+    }
+
+    case PM_CASE_MATCH_NODE: {
+      const pm_case_match_node_t* case_match_node = (const pm_case_match_node_t*) node;
+
+      analyzed->case_match_node_count++;
+
+      if (case_match_node->predicate != NULL && case_match_node->predicate->type == PM_MATCH_PREDICATE_NODE) {
+        analyzed->in_node_count++;
       }
       break;
     }
 
+    case PM_CASE_NODE: analyzed->case_node_count++; break;
+    case PM_IN_NODE: analyzed->in_node_count++; break;
+    case PM_WHILE_NODE: analyzed->while_node_count++; break;
+    case PM_FOR_NODE: analyzed->for_node_count++; break;
+    case PM_UNTIL_NODE: analyzed->until_node_count++; break;
+    case PM_BEGIN_NODE: analyzed->begin_node_count++; break;
+    case PM_YIELD_NODE: analyzed->yield_node_count++; break;
+
     default: break;
   }
 
-  pm_visit_child_nodes(node, search_then_keywords, analyzed);
+  pm_visit_child_nodes(node, search_control_flow_nodes, analyzed);
 
   return false;
+}
+
+void search_unexpected_keyword_errors(analyzed_ruby_T* analyzed) {
+  bool unexpected_elsif = false;
+  bool unexpected_else = false;
+  bool unexpected_end = false;
+  bool unexpected_equals = false;
+  bool unexpected_closing_brace = false;
+  bool unexpected_when = false;
+  bool unexpected_in = false;
+  bool unexpected_rescue = false;
+  bool unexpected_ensure = false;
+
+  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
+       error = (const pm_diagnostic_t*) error->node.next) {
+    const char* message = error->message;
+
+    if (string_equals(message, "unexpected 'elsif', ignoring it")) {
+      unexpected_elsif = true;
+    } else if (string_equals(message, "unexpected 'else', ignoring it")) {
+      unexpected_else = true;
+    } else if (string_equals(message, "unexpected 'end', ignoring it")) {
+      unexpected_end = true;
+    } else if (string_equals(message, "unexpected '=', ignoring it")) {
+      unexpected_equals = true;
+    } else if (string_equals(message, "unexpected '}', ignoring it")) {
+      unexpected_closing_brace = true;
+    } else if (string_equals(message, "unexpected 'when', ignoring it")) {
+      unexpected_when = true;
+    } else if (string_equals(message, "unexpected 'in', ignoring it")) {
+      unexpected_in = true;
+    } else if (string_equals(message, "unexpected 'rescue', ignoring it")) {
+      unexpected_rescue = true;
+    } else if (string_equals(message, "unexpected 'ensure', ignoring it")) {
+      unexpected_ensure = true;
+    }
+  }
+
+  if (unexpected_elsif) { analyzed->elsif_node_count++; }
+  if (unexpected_else) { analyzed->else_node_count++; }
+  if (unexpected_end && !unexpected_equals) { analyzed->end_count++; }
+  if (unexpected_when) { analyzed->when_node_count++; }
+  if (unexpected_in) { analyzed->in_node_count++; }
+  if (unexpected_rescue) { analyzed->rescue_node_count++; }
+  if (unexpected_ensure) { analyzed->ensure_node_count++; }
+  if (unexpected_closing_brace) { analyzed->block_closing_count++; }
 }
 
 static bool is_postfix_conditional(const pm_statements_node_t* statements, pm_location_t keyword_location) {

@@ -1,0 +1,17 @@
+---
+source: "Analyze::ActionView::AssetTagHelper::StylesheetLinkTagTest#test_0024_stylesheet_link_tag with integrity true is not transformed"
+input: |2-
+<%= stylesheet_link_tag "application", integrity: true %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:57))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " stylesheet_link_tag "application", integrity: true " (location: (1:3)-(1:55))
+    │   ├── tag_closing: "%>" (location: (1:55)-(1:57))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:57)-(2:0))
+        └── content: "\n"

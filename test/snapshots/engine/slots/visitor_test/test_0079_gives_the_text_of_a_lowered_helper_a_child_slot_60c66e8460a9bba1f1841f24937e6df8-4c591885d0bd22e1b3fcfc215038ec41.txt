@@ -1,0 +1,10 @@
+---
+source: "Engine::Slots::VisitorTest#test_0079_gives the text of a lowered helper a child slot"
+input: "<%= link_to @label, \"/profile\", class: \"link\" %>"
+options: {filename: "app/views/test.html.erb"}
+---
+file: app/views/test.html.erb
+version: 0417e5d5
+
+slots:
+  index=0  type=child  node_path=[0, 0]  expression="@label"

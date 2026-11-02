@@ -194,13 +194,7 @@ static bool erb_content_is_unterminated(const AST_ERB_CONTENT_NODE_T* erb_node) 
   return false;
 }
 
-control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
-  if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
-  if (erb_content_is_unterminated(erb_node)) { return CONTROL_TYPE_UNKNOWN; }
-
-  analyzed_ruby_T* ruby = erb_node->analyzed_ruby;
-
-  if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
+static control_type_t detect_analyzed_control_type(analyzed_ruby_T* ruby) {
   if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
 
   pm_node_t* root = ruby->root;
@@ -217,6 +211,22 @@ control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (ruby->unclosed_control_flow_count == 0 && !has_yield_node(ruby)) { return CONTROL_TYPE_UNKNOWN; }
 
   return find_earliest_control_keyword(root, ruby->parser.start);
+}
+
+control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
+  if (erb_content_is_unterminated(erb_node)) { return CONTROL_TYPE_UNKNOWN; }
+
+  analyzed_ruby_T* ruby = erb_node->analyzed_ruby;
+
+  if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
+
+  if (!ruby->control_type_detected) {
+    ruby->control_type = detect_analyzed_control_type(ruby);
+    ruby->control_type_detected = true;
+  }
+
+  return ruby->control_type;
 }
 
 bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {

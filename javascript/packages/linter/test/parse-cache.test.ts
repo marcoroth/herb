@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, vi } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { ParseCache } from "../src/parse-cache.js"
 import { Linter } from "../src/linter.js"
+import { ERBNoSleepRule, ERBNoUnusedLiteralsRule, HTMLNoSelfClosingRule, HTMLTagNameLowercaseRule } from "../src/rules/index.js"
 import { isWhitespaceNode } from "@herb-tools/core"
 import type { HTMLElementNode } from "@herb-tools/core"
 
@@ -189,6 +190,38 @@ describe("ParseCache", () => {
     })
   })
 
+  describe("share", () => {
+    test("widens options that only differ in prism_nodes and prism_program", () => {
+      const cache = new ParseCache(Herb)
+      const shared = cache.share([{}, { prism_nodes: true }, { prism_program: true }])
+
+      expect(shared.map(options => [options.prism_nodes, options.prism_program])).toEqual([
+        [true, true],
+        [true, true],
+        [true, true],
+      ])
+
+      expect(cache.get("<%= user.name %>", shared[0])).toBe(cache.get("<%= user.name %>", shared[2]))
+    })
+
+    test("keeps options that change the tree apart", () => {
+      const cache = new ParseCache(Herb)
+      const shared = cache.share([{ prism_nodes: true }, { strict_locals: true }, { strict_locals: true, prism_program: true }])
+
+      expect(shared.map(options => [options.strict_locals, options.prism_nodes, options.prism_program])).toEqual([
+        [false, true, false],
+        [true, false, true],
+        [true, false, true],
+      ])
+    })
+
+    test("leaves options alone when nothing asks for Prism nodes", () => {
+      const cache = new ParseCache(Herb)
+
+      expect(cache.share([{}, { strict: false }])).toEqual([cache.resolveOptions({}), cache.resolveOptions({ strict: false })])
+    })
+  })
+
   test("parses with track_whitespace enabled by default", () => {
     const cache = new ParseCache(Herb)
     const result = cache.get("<div></div >")
@@ -256,6 +289,21 @@ describe("ParseCache", () => {
 
       expect(second.source).toBe(first.source)
       expect(second.fixed.map(offense => offense.rule)).toEqual(first.fixed.map(offense => offense.rule))
+    })
+
+    test("parses once for rules that only differ in prism_nodes and prism_program", () => {
+      const linter = new Linter(Herb, [ERBNoSleepRule, ERBNoUnusedLiteralsRule, HTMLNoSelfClosingRule, HTMLTagNameLowercaseRule])
+      const parseSpy = vi.spyOn(Herb, "parse")
+
+      try {
+        linter.lint("<div><%= user.name %></div>", { framework: "ruby" })
+
+        expect(parseSpy.mock.calls.map(([, options]) => [options?.prism_nodes, options?.prism_program, options?.action_view_helpers])).toEqual([
+          [true, true, false],
+        ])
+      } finally {
+        parseSpy.mockRestore()
+      }
     })
 
     test("still reuses parse results across rules within a single lint()", () => {

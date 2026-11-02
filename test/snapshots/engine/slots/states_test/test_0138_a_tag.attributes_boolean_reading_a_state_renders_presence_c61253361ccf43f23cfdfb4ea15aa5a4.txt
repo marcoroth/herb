@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0138_a tag.attributes boolean reading a state renders presence"
+input: "states_test-tag-attributes-on"
+---
+<!--herb-region:app/views/test.html.erb:6697b401:0--><button id="go" disabled data-herb-slot="0:boolean_attribute:disabled">Go</button><!--/herb-region:app/views/test.html.erb-->

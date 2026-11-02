@@ -38,8 +38,8 @@ function suggestedBasename(fileName: TemplateFileName): string {
 
 export class ERBRequireTemplateFormatRule extends SourceRule {
   static ruleName = "erb-require-template-format"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.1")
+  static defaultEnabledIn = this.version("0.11.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

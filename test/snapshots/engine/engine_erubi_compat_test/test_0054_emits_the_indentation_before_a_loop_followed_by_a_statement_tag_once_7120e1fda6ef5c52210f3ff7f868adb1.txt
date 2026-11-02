@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0054_emits the indentation before a loop followed by a statement tag once"
+input: "{source: \"<p></p>\\n  <% [1, 2].each do |i| %><% x = i %>B<% end %>\", locals: {}, options: {}}"
+---
+<p></p>
+  BB

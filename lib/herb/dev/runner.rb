@@ -146,7 +146,12 @@ module Herb
 
       #: () -> bool
       def interactive?
-        $stdout.tty?
+        $stdout.tty? && !process_manager?
+      end
+
+      #: () -> bool
+      def process_manager?
+        ENV.key?("PS")
       end
 
       #: (String) -> void

@@ -35,4 +35,4 @@ gem "steep", "~> 2.1"
 gem "turbo-rails", "~> 2.0", require: false
 gem "webrick", "~> 1.9", require: false
 gem "websocket", "~> 1.2"
-gem "yerba", "~> 0.9"
+gem "yerba", "~> 0.10"

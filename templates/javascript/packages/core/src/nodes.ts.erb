@@ -13,6 +13,26 @@ import type { LocateResult } from "./locate.js"
 
 export type SerializedNodeType = string
 
+type PrismNodeCacheEntry = {
+  bytes: Uint8Array
+  source: string
+  node: PrismNode | null
+}
+
+const prismNodeCache = new WeakMap<Node, PrismNodeCacheEntry>()
+
+function cachedPrismNode(owner: Node, bytes: Uint8Array, source: string): PrismNode | null {
+  const cached = prismNodeCache.get(owner)
+
+  if (cached && cached.bytes === bytes && cached.source === source) return cached.node
+
+  const node = deserializePrismNode(bytes, source)
+
+  prismNodeCache.set(owner, { bytes, source, node })
+
+  return node
+}
+
 export interface SerializedNode {
   type: SerializedNodeType
   location: SerializedLocation
@@ -388,7 +408,7 @@ export class <%= node.name %> extends Node {
   <%- prism_field = node.fields.find { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
   get prismNode(): PrismNode | null {
     if (!this.<%= prism_field.name %> || !this.source) return null;
-    return deserializePrismNode(this.<%= prism_field.name %>, this.source);
+    return cachedPrismNode(this, this.<%= prism_field.name %>, this.source);
   }
   <%- end -%>
 

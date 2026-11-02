@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0054_emits the indentation before a loop followed by a statement tag once"
+input: "{source: \"<p></p>\\n  <% [1, 2].each do |i| %><% x = i %>B<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p></p>
+  '.freeze;   [1, 2].each do |i| ; x = i ; _buf << 'B'.freeze; end;
+_buf.to_s

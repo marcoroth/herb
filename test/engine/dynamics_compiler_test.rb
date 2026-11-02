@@ -28,6 +28,8 @@ module Engine
         View.new(inner: "inner").instance_eval(source)
       end
 
+      def url_for(path) = path
+
       def wrapper = "[#{yield}]"
 
       def helper_with_argument(value) = "helper(#{value})"
@@ -245,6 +247,38 @@ module Engine
 
       test "leaves text content to the engine's own escaping" do
         assert_equal({ 0 => "<b>" }, dynamics("<p><%= @raw %></p>", raw: "<b>"))
+      end
+    end
+
+    LINK = %(<%= link_to @label, "/profile", class: "link" %>)
+
+    describe "lowered helpers" do
+      test "collects the text of a lowered link" do
+        assert_equal({ 0 => "Alice" }, dynamics(LINK, label: "Alice"))
+      end
+
+      test "carries the version of the markup the helper stands for" do
+        assert_equal payload(%(<a class="link" href="/profile"><%= @label %></a>))[:version], payload(LINK)[:version]
+      end
+
+      test "collects a lowered attribute as an attribute value, not as text" do
+        assert_equal({ 0 => "T", 1 => "/x" }, dynamics(%(<%= link_to "Static", @path, title: @title %>), path: "/x", title: "T"))
+      end
+
+      test "collects lowered text that reads a state" do
+        assert_equal({ 0 => "Alice" }, dynamics(%(<%# herb:state (label: "Alice") %><%= link_to label, "/profile" %>)))
+      end
+
+      test "a keyed row carries its link text in its values and its statics" do
+        source = <<~ERB
+          <%# herb:slots server %>
+          <ul><% @people.each do |person| %><%# herb:key person[:id] %><li><%= link_to person[:name], person[:path], class: "link" %></li><% end %></ul>
+        ERB
+
+        entry = dynamics(source, people: [{ id: 2, name: "New person", path: "/people/2" }]).fetch(0)
+
+        assert_equal({ "2" => { 1 => "/people/2", 2 => "New person" } }, entry.fetch(:items))
+        assert_snapshot_matches(entry.fetch(:statics), "dynamics_compiler_test-lowered-link-statics")
       end
     end
 

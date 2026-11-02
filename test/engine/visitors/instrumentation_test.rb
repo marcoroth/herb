@@ -85,6 +85,24 @@ module Engine
 
         instrumented(source)
       end
+
+      test "leaves a custom erb opener alone" do
+        source = <<~ERB
+          <h1><%= title %></h1>
+          <%graphql
+            fragment User on User {
+              ...Avatar
+            }
+          %>
+        ERB
+
+        assert_compiled_snapshot(
+          source,
+          filename: FILENAME,
+          parser_options: { erb_openers: ["graphql"] },
+          visitors: [Herb::Engine::InstrumentationVisitor.new]
+        )
+      end
     end
 
     describe "what it must not change" do

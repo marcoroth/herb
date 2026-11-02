@@ -1,0 +1,55 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0037_yield inside if"
+input: "<% if show? %><%= yield :header %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:43))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:43))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if show? " (location: (1:2)-(1:12))
+        ├── tag_closing: "%>" (location: (1:12)-(1:14))
+        ├── then_keyword: ∅
+        ├── prism_node:
+        │   └── @ IfNode (location: (1:3)-(1:40))
+        │       ├── if_keyword_loc: (1:3)-(1:5)
+        │       ├── predicate:
+        │       │   └── @ CallNode (location: (1:6)-(1:11))
+        │       │       ├── receiver: ∅
+        │       │       ├── call_operator_loc: ∅
+        │       │       ├── name: :show?
+        │       │       ├── message_loc: (1:6)-(1:11)
+        │       │       ├── opening_loc: ∅
+        │       │       ├── arguments: ∅
+        │       │       ├── closing_loc: ∅
+        │       │       ├── equal_loc: ∅
+        │       │       └── block: ∅
+        │       ├── then_keyword_loc: ∅
+        │       ├── statements: ∅
+        │       ├── subsequent: ∅
+        │       └── end_keyword_loc: (1:37)-(1:40)
+        ├── statements: (1 item)
+        │   └── @ ERBYieldNode (location: (1:14)-(1:34))
+        │       ├── tag_opening: "<%=" (location: (1:14)-(1:17))
+        │       ├── content: " yield :header " (location: (1:17)-(1:32))
+        │       ├── tag_closing: "%>" (location: (1:32)-(1:34))
+        │       └── prism_node:
+        │           └── @ YieldNode (location: (1:18)-(1:31))
+        │               ├── keyword_loc: (1:18)-(1:23)
+        │               ├── lparen_loc: ∅
+        │               ├── arguments:
+        │               │   └── @ ArgumentsNode (location: (1:24)-(1:31))
+        │               │       └── arguments: (1 item)
+        │               │           └── @ SymbolNode (location: (1:24)-(1:31))
+        │               │               ├── opening_loc: (1:24)-(1:25)
+        │               │               ├── value_loc: (1:25)-(1:31)
+        │               │               ├── closing_loc: ∅
+        │               │               └── unescaped: "header"
+        │               └── rparen_loc: ∅
+        │
+        ├── subsequent: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:34)-(1:43))
+                ├── tag_opening: "<%" (location: (1:34)-(1:36))
+                ├── content: " end " (location: (1:36)-(1:41))
+                └── tag_closing: "%>" (location: (1:41)-(1:43))

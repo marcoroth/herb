@@ -63,6 +63,7 @@ A [state](/language/state) may take its starting value from a strict local, as i
 - [`actionview-strict-locals-partial-only`](/linter/rules/actionview-strict-locals-partial-only)
 - [`actionview-no-unused-strict-locals`](/linter/rules/actionview-no-unused-strict-locals)
 - [`actionview-no-redundant-local-assigns`](/linter/rules/actionview-no-redundant-local-assigns)
+- [`actionview-no-local-assigns`](/linter/rules/actionview-no-local-assigns)
 - [`actionview-no-strict-locals-error`](/linter/rules/actionview-no-strict-locals-error)
 - [`actionview-no-mistyped-locals`](/linter/rules/actionview-no-mistyped-locals)
 - [`erb-strict-locals-required`](/linter/rules/erb-strict-locals-required)

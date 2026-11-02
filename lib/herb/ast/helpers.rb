@@ -32,7 +32,7 @@ module Herb
 
         opening = erb_opening(node)
 
-        opening.start_with?("<%") && !erb_output?(opening) && !erb_comment?(opening)
+        opening.start_with?("<%") && !erb_output?(opening) && !erb_omitted?(opening)
       end
 
       #: (String) -> bool
