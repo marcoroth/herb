@@ -250,6 +250,10 @@ export class Config {
     return this.config.framework
   }
 
+  get templateEngine() {
+    return this.config.template_engine
+  }
+
   get parser() {
     return this.config.parser
   }

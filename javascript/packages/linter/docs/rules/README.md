@@ -78,6 +78,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-sleep`](./erb-no-sleep.md) - Disallow `sleep` in ERB templates
 - [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
 - [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
+- [`erb-no-trailing-comment`](./erb-no-trailing-comment.md) - Disallow Ruby comments at the end of ERB tags
 - [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
