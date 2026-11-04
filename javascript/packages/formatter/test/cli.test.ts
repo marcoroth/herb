@@ -138,6 +138,24 @@ describe("CLI Binary", () => {
     expect(result.stderr).toContain("Formatter is disabled in .herb.yml configuration.")
   })
 
+  it("should return large stdin unchanged to a pipe when formatting is disabled", async () => {
+    const configFile = "test-dir/.herb.yml"
+    const input = '<div class="test"><div><%= user.name %></div></div>\n'.repeat(4000)
+
+    await mkdir("test-dir", { recursive: true })
+    await writeFile(configFile, dedent`
+      version: 0.11.1
+      formatter:
+        enabled: false
+    `)
+
+    const result = await execBinary(["--config-file", configFile], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout.length).toBe(input.length)
+    expect(result.stdout).toBe(input)
+  })
+
   it("should format HTML/ERB from file", async () => {
     const testFile = "test-format.html.erb"
     const input = '<div class="container"><%= "Hello" %><p>World</p></div>'
