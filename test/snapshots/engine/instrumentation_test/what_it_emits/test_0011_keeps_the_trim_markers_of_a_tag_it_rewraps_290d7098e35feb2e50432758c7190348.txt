@@ -1,0 +1,8 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0011_keeps the trim markers of a tag it rewraps"
+input: "{source: \"<p>\\n  <%- total = 1 -%>\\n  <%= total -%>\\n</p>\\n\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << '<p>
+'.freeze;   ::Herb::Engine::Runtime::Session.enter("app/views/test.html.erb", 2, 2, nil, end_line: 2, end_column: 19); begin; total = 1; ensure; ::Herb::Engine::Runtime::Session.leave; end ; _buf << '  '.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 3, 2, nil, end_line: 3, end_column: 15) { total }).to_s; _buf << '</p>
+'.freeze; ensure; ::Herb::Engine::Runtime::Session.leave_render; end ;
+_buf.to_s

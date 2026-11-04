@@ -1,0 +1,6 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0010_keeps a raw output tag raw"
+input: "{source: \"<%== \\\"<b>raw</b>\\\" %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << ::Herb::Engine.h((::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 0, nil, end_line: 1, end_column: 20) { "<b>raw</b>" })); ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
+_buf.to_s
