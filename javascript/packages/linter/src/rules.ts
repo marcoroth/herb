@@ -67,6 +67,7 @@ import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-
 import { ERBNoSleepRule } from "./rules/erb-no-sleep.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
 import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
+import { ERBNoTrailingCommentRule } from "./rules/erb-no-trailing-comment.js"
 import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.js"
 import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
 import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
@@ -248,6 +249,7 @@ export const rules: RuleClass[] = [
   ERBNoSleepRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
+  ERBNoTrailingCommentRule,
   ERBNoTrailingWhitespaceRule,
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,

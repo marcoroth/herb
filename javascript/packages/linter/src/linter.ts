@@ -699,6 +699,7 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
     }
@@ -885,6 +886,7 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       environment: context?.environment ?? "browser",
       herb: context?.herb ?? this.herb
     }
@@ -966,6 +968,7 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       herb: context?.herb ?? this.herb
     }
 
