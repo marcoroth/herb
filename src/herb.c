@@ -7,6 +7,7 @@
 #include "include/lib/hb_allocator.h"
 #include "include/lib/hb_array.h"
 #include "include/parser/parser.h"
+#include "include/prism_version.h"
 #include "include/version.h"
 #include "include/visitor.h"
 
@@ -127,7 +128,7 @@ HERB_EXPORTED_FUNCTION const char* herb_version(void) {
 }
 
 HERB_EXPORTED_FUNCTION const char* herb_prism_version(void) {
-  return PRISM_VERSION;
+  return HERB_PRISM_VERSION;
 }
 
 HERB_EXPORTED_FUNCTION herb_ruby_parse_result_T* herb_parse_ruby(const char* source, size_t length) {
@@ -136,9 +137,11 @@ HERB_EXPORTED_FUNCTION herb_ruby_parse_result_T* herb_parse_ruby(const char* sou
   herb_ruby_parse_result_T* result = malloc(sizeof(herb_ruby_parse_result_T));
   if (!result) { return NULL; }
 
-  memset(&result->options, 0, sizeof(pm_options_t));
-  pm_parser_init(&result->parser, (const uint8_t*) source, length, &result->options);
-  result->root = pm_parse(&result->parser);
+  result->arena = pm_arena_new();
+  result->options = pm_options_new();
+  pm_options_line_set(result->options, 0);
+  result->parser = pm_parser_new(result->arena, (const uint8_t*) source, length, result->options);
+  result->root = pm_parse(result->parser);
 
   return result;
 }
@@ -146,9 +149,8 @@ HERB_EXPORTED_FUNCTION herb_ruby_parse_result_T* herb_parse_ruby(const char* sou
 HERB_EXPORTED_FUNCTION void herb_free_ruby_parse_result(herb_ruby_parse_result_T* result) {
   if (!result) { return; }
 
-  if (result->root) { pm_node_destroy(&result->parser, result->root); }
-
-  pm_parser_free(&result->parser);
-  pm_options_free(&result->options);
+  pm_parser_free(result->parser);
+  pm_arena_free(result->arena);
+  pm_options_free(result->options);
   free(result);
 }

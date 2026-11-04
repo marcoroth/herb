@@ -19,7 +19,9 @@ bin/leaks_parse examples/test.html.erb
 
 bin/lint
 bin/tidy
-bundle exec rubocop
+# TODO: Back to `bundle exec rubocop` once https://github.com/rubocop/rubocop-ast/pull/420 is released.
+BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle exec rubocop
+BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle exec ruby test/rubocop/includes_assertion_test.rb
 
 echo ""
 echo "Integration successful!"

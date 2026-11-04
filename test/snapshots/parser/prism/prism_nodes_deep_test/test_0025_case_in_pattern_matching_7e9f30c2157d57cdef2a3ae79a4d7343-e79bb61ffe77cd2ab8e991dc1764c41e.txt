@@ -22,7 +22,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "data"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── conditions: (1 item)
         │       │   └── @ InNode (location: (1:18)-(1:41))
         │       │       ├── pattern:
@@ -33,30 +38,40 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │       │       ├── key:
         │       │       │       │       │   └── @ SymbolNode (location: (1:23)-(1:28))
         │       │       │       │       │       ├── opening_loc: ∅
-        │       │       │       │       │       ├── value_loc: (1:23)-(1:27)
+        │       │       │       │       │       ├── content_loc: (1:23)-(1:27)
         │       │       │       │       │       ├── closing_loc: (1:27)-(1:28)
-        │       │       │       │       │       └── unescaped: "name"
+        │       │       │       │       │       ├── unescaped: "name"
+        │       │       │       │       │       ├── opening: ∅
+        │       │       │       │       │       ├── content: "name"
+        │       │       │       │       │       └── closing: ":"
         │       │       │       │       ├── value:
         │       │       │       │       │   └── @ ImplicitNode (location: (1:23)-(1:27))
         │       │       │       │       │       └── value:
         │       │       │       │       │           └── @ LocalVariableTargetNode (location: (1:23)-(1:27))
         │       │       │       │       │               ├── name: :name
         │       │       │       │       │               └── depth: 0
-        │       │       │       │       └── operator_loc: ∅
+        │       │       │       │       ├── operator_loc: ∅
+        │       │       │       │       └── operator: ∅
         │       │       │       ├── rest: ∅
         │       │       │       ├── opening_loc: (1:21)-(1:22)
-        │       │       │       └── closing_loc: (1:29)-(1:30)
+        │       │       │       ├── closing_loc: (1:29)-(1:30)
+        │       │       │       ├── opening: "{"
+        │       │       │       └── closing: "}"
         │       │       ├── statements:
         │       │       │   └── @ StatementsNode (location: (1:37)-(1:41))
         │       │       │       └── body: (1 item)
         │       │       │           └── @ LocalVariableReadNode (location: (1:37)-(1:41))
         │       │       │               ├── name: :name
         │       │       │               └── depth: 0
-        │       │       ├── in_loc: (1:18)-(1:20)
-        │       │       └── then_loc: ∅
+        │       │       ├── in_keyword_loc: (1:18)-(1:20)
+        │       │       ├── then_keyword_loc: ∅
+        │       │       ├── in_keyword: "in"
+        │       │       └── then_keyword: ∅
         │       ├── else_clause: ∅
         │       ├── case_keyword_loc: (1:3)-(1:7)
-        │       └── end_keyword_loc: (1:47)-(1:50)
+        │       ├── end_keyword_loc: (1:47)-(1:50)
+        │       ├── case_keyword: "case"
+        │       └── end_keyword: "end"
         ├── conditions: (1 item)
         │   └── @ ERBInNode (location: (1:15)-(1:33))
         │       ├── tag_opening: "<%" (location: (1:15)-(1:17))

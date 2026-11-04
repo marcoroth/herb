@@ -38,7 +38,7 @@ void tag_helper_info_free(tag_helper_info_T** info);
 const tag_helper_handler_T* const* get_tag_helper_handlers(void);
 size_t get_tag_helper_handlers_count(void);
 
-char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator);
+char* extract_inline_block_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator);
 
 struct AST_NODE_STRUCT;
 bool wrap_javascript_tag_body_visitor(const struct AST_NODE_STRUCT* node, void* data);

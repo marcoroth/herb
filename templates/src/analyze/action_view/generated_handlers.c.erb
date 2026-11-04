@@ -16,9 +16,9 @@
 bool detect_<%= helper.safe_name %>(pm_call_node_t* call_node, pm_parser_t* parser) {
   if (!call_node || !call_node->name) { return false; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, call_node->name);
 
-  return constant && constant->length == <%= helper.name.length %> && strncmp((const char*) constant->start, "<%= helper.name %>", <%= helper.name.length %>) == 0;
+  return constant && pm_constant_length(constant) == <%= helper.name.length %> && strncmp((const char*) pm_constant_start(constant), "<%= helper.name %>", <%= helper.name.length %>) == 0;
 }
 <%- elsif helper.receiver_call_detect? -%>
 
@@ -29,9 +29,9 @@ bool detect_<%= helper.safe_name %>(pm_call_node_t* call_node, pm_parser_t* pars
   pm_call_node_t* receiver_node = (pm_call_node_t*) call_node->receiver;
   if (!receiver_node->name) { return false; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, receiver_node->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, receiver_node->name);
 
-  return constant && constant->length == 3 && strncmp((const char*) constant->start, "tag", 3) == 0;
+  return constant && pm_constant_length(constant) == 3 && strncmp((const char*) pm_constant_start(constant), "tag", 3) == 0;
 }
 <%- end -%>
 <%- end -%>
@@ -79,14 +79,17 @@ extern bool is_ruby_introspection_method(hb_string_T method_name);
 static char* extract_<%= helper.safe_name %>_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   if (!call_node || !call_node->name) { return NULL; }
 
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+  const pm_constant_t* constant = pm_parser_constant(parser, call_node->name);
   if (!constant) { return NULL; }
 
-  if (is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) { return NULL; }
+  const char* constant_start = (const char*) pm_constant_start(constant);
+  size_t constant_length = pm_constant_length(constant);
 
-  char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+  if (is_ruby_introspection_method(hb_string_from_data(constant_start, constant_length))) { return NULL; }
 
-  for (size_t i = 0; i < constant->length && name[i] != '\0'; i++) {
+  char* name = hb_allocator_strndup(allocator, constant_start, constant_length);
+
+  for (size_t i = 0; i < constant_length && name[i] != '\0'; i++) {
     if (name[i] == '_') { name[i] = '-'; }
   }
 
@@ -111,9 +114,7 @@ static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* _call_node,
 }
 <%- elsif content.first_arg? -%>
 
-static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* _parser, hb_allocator_T* allocator) {
-  (void) _parser;
-
+static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   if (!call_node || !call_node->arguments) { return NULL; }
 
   pm_arguments_node_t* arguments = call_node->arguments;
@@ -131,27 +132,26 @@ static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, 
     return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
   }
 
-  size_t source_length = first_argument->location.end - first_argument->location.start;
-  return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+  const uint8_t* source = pm_parser_start(parser);
+  size_t source_length = first_argument->location.length;
+  return hb_allocator_strndup(allocator, (const char*) (source + first_argument->location.start), source_length);
 }
 <%- elsif content.block_or_arg? -%>
 
-static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* <%= helper.receiver_call_detect? ? "parser" : "_parser" %>, hb_allocator_T* allocator) {
-  (void) <%= helper.receiver_call_detect? ? "parser" : "_parser" %>;
-
+static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   if (!call_node) { return NULL; }
 
   <%- if helper.receiver_call_detect? -%>
   if (call_node->name) {
-    pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+    const pm_constant_t* constant = pm_parser_constant(parser, call_node->name);
 
-    if (constant && is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
+    if (constant && is_ruby_introspection_method(hb_string_from_data((const char*) pm_constant_start(constant), pm_constant_length(constant)))) {
       return NULL;
     }
   }
   <%- end -%>
 
-  char* block_content = extract_inline_block_content(call_node, allocator);
+  char* block_content = extract_inline_block_content(call_node, parser, allocator);
   if (block_content) { return block_content; }
 
   <%- arg_index = (content.arg_position || 1) - 1 -%>
@@ -173,7 +173,8 @@ static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, 
           return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
         }
 
-        size_t source_length = argument->location.end - argument->location.start;
+        const uint8_t* source = pm_parser_start(parser);
+        size_t source_length = argument->location.length;
 
         <%- if content.to_s_suffix_when_single -%>
         if (arguments->arguments.size == 1 && argument->type != PM_NIL_NODE) {
@@ -182,7 +183,7 @@ static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, 
           size_t total_length = source_length + suffix_length;
           char* ruby_expression = hb_allocator_alloc(allocator, total_length + 1);
 
-          memcpy(ruby_expression, (const char*) argument->location.start, source_length);
+          memcpy(ruby_expression, (const char*) (source + argument->location.start), source_length);
           memcpy(ruby_expression + source_length, suffix, suffix_length);
           ruby_expression[total_length] = '\0';
 
@@ -190,7 +191,7 @@ static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, 
         }
         <%- end -%>
 
-        return hb_allocator_strndup(allocator, (const char*) argument->location.start, source_length);
+        return hb_allocator_strndup(allocator, (const char*) (source + argument->location.start), source_length);
 
       <%- if content.skip_if_hash -%>
       }

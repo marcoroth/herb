@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# TODO: Move these gems back into the main `Gemfile` and delete this file once https://github.com/rubocop/rubocop-ast/pull/420 is released.
+
+gem "maxitest", "~> 6.0"
+gem "rubocop", "~> 1.72"
+gem "rubocop-performance", "~> 1.26.0"

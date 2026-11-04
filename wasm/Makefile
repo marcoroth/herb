@@ -11,21 +11,18 @@ C_SOURCES = $(filter-out ../src/main.c ../src/ruby_parser.c, $(shell find ../src
 
 PRISM_PATH = $(shell cd .. && bundle show prism)
 PRISM_MAIN_SOURCES = $(wildcard $(PRISM_PATH)/src/*.c)
-PRISM_UTIL_SOURCES = $(wildcard $(PRISM_PATH)/src/util/*.c)
-ALL_C_SOURCES = $(C_SOURCES) $(PRISM_MAIN_SOURCES) $(PRISM_UTIL_SOURCES)
+ALL_C_SOURCES = $(C_SOURCES) $(PRISM_MAIN_SOURCES)
 
 OBJ_DIR = obj
 C_OBJECTS = $(patsubst ../src/%.c,$(OBJ_DIR)/herb/%.o,$(C_SOURCES))
 CPP_OBJECTS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(CPP_SOURCES))
 PRISM_MAIN_OBJECTS = $(patsubst $(PRISM_PATH)/src/%.c,$(OBJ_DIR)/prism/%.o,$(PRISM_MAIN_SOURCES))
-PRISM_UTIL_OBJECTS = $(patsubst $(PRISM_PATH)/src/util/%.c,$(OBJ_DIR)/prism/util/%.o,$(PRISM_UTIL_SOURCES))
-ALL_OBJECTS = $(C_OBJECTS) $(CPP_OBJECTS) $(PRISM_MAIN_OBJECTS) $(PRISM_UTIL_OBJECTS)
+ALL_OBJECTS = $(C_OBJECTS) $(CPP_OBJECTS) $(PRISM_MAIN_OBJECTS)
 
 INCLUDE_DIR = ../include
 
 PRISM_INCLUDE = $(PRISM_PATH)/include
 PRISM_SRC = $(PRISM_PATH)/src
-PRISM_UTIL = $(PRISM_PATH)/src/util
 PRISM_EXCLUDE_FLAGS = -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_EXCLUDE_PACK
 
 HERB_EXCLUDE_FLAGS = -DHERB_EXCLUDE_PRETTYPRINT
@@ -33,7 +30,7 @@ HERB_ARENA_FLAGS = '-DHB_ALLOCATOR_DEFAULT_ARENA_SIZE=KB(16)'
 
 OPT_FLAGS = -Oz -g0 -flto -fdata-sections -ffunction-sections
 
-CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -I$(PRISM_UTIL) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static $(PRISM_EXCLUDE_FLAGS) $(HERB_EXCLUDE_FLAGS) $(HERB_ARENA_FLAGS) $(OPT_FLAGS)
+CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static $(PRISM_EXCLUDE_FLAGS) $(HERB_EXCLUDE_FLAGS) $(HERB_ARENA_FLAGS) $(OPT_FLAGS)
 WASM_FLAGS = -s WASM=1 \
              -s SINGLE_FILE=1 \
              -s EXPORT_ES6=1 \
@@ -48,7 +45,7 @@ all: $(BROWSER_WASM_OUTPUT) $(NODE_WASM_OUTPUT)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/herb
-	mkdir -p $(OBJ_DIR)/prism/util
+	mkdir -p $(OBJ_DIR)/prism
 
 $(OBJ_DIR)/herb/%.o: ../src/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
@@ -59,10 +56,6 @@ $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	em++ -std=c++17 -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)/prism/%.o: $(PRISM_PATH)/src/%.c | $(OBJ_DIR)
-	@mkdir -p $(@D)
-	emcc -c $< -o $@ $(CFLAGS)
-
-$(OBJ_DIR)/prism/util/%.o: $(PRISM_PATH)/src/util/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
 	emcc -c $< -o $@ $(CFLAGS)
 

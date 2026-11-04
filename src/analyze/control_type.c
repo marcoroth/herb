@@ -6,6 +6,8 @@
 #include "../include/errors.h"
 #include "../include/lib/hb_array.h"
 
+#include "../include/prism/prism_helpers.h"
+
 #include <prism.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,8 +31,8 @@ static bool control_type_is_yield(control_type_t type) {
   return type == CONTROL_TYPE_YIELD;
 }
 
-static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* data) {
-  if (!node) { return true; }
+static pm_visit_result_t find_earliest_control_keyword_walker(const pm_node_t* node, void* data) {
+  if (!node) { return PM_VISIT_DESCEND; }
 
   location_walker_context_T* context = (location_walker_context_T*) data;
   earliest_control_keyword_T* result = context->result;
@@ -41,50 +43,52 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
   switch (node->type) {
     case PM_IF_NODE: {
       pm_if_node_t* if_node = (pm_if_node_t*) node;
+      if (!herb_prism_location_assigned(if_node->if_keyword_loc)) { break; }
+
       current_type = CONTROL_TYPE_IF;
-      keyword_offset = (uint32_t) (if_node->if_keyword_loc.start - context->source_start);
+      keyword_offset = if_node->if_keyword_loc.start;
       break;
     }
 
     case PM_UNLESS_NODE: {
       pm_unless_node_t* unless_node = (pm_unless_node_t*) node;
       current_type = CONTROL_TYPE_UNLESS;
-      keyword_offset = (uint32_t) (unless_node->keyword_loc.start - context->source_start);
+      keyword_offset = unless_node->unless_keyword_loc.start;
       break;
     }
 
     case PM_CASE_NODE: {
       pm_case_node_t* case_node = (pm_case_node_t*) node;
       current_type = CONTROL_TYPE_CASE;
-      keyword_offset = (uint32_t) (case_node->case_keyword_loc.start - context->source_start);
+      keyword_offset = case_node->case_keyword_loc.start;
       break;
     }
 
     case PM_CASE_MATCH_NODE: {
       pm_case_match_node_t* case_match_node = (pm_case_match_node_t*) node;
       current_type = CONTROL_TYPE_CASE_MATCH;
-      keyword_offset = (uint32_t) (case_match_node->case_keyword_loc.start - context->source_start);
+      keyword_offset = case_match_node->case_keyword_loc.start;
       break;
     }
 
     case PM_WHILE_NODE: {
       pm_while_node_t* while_node = (pm_while_node_t*) node;
       current_type = CONTROL_TYPE_WHILE;
-      keyword_offset = (uint32_t) (while_node->keyword_loc.start - context->source_start);
+      keyword_offset = while_node->while_keyword_loc.start;
       break;
     }
 
     case PM_UNTIL_NODE: {
       pm_until_node_t* until_node = (pm_until_node_t*) node;
       current_type = CONTROL_TYPE_UNTIL;
-      keyword_offset = (uint32_t) (until_node->keyword_loc.start - context->source_start);
+      keyword_offset = until_node->until_keyword_loc.start;
       break;
     }
 
     case PM_FOR_NODE: {
       pm_for_node_t* for_node = (pm_for_node_t*) node;
       current_type = CONTROL_TYPE_FOR;
-      keyword_offset = (uint32_t) (for_node->for_keyword_loc.start - context->source_start);
+      keyword_offset = for_node->for_keyword_loc.start;
       break;
     }
 
@@ -92,17 +96,17 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
       pm_begin_node_t* begin_node = (pm_begin_node_t*) node;
       current_type = CONTROL_TYPE_BEGIN;
 
-      if (begin_node->begin_keyword_loc.start != NULL) {
-        keyword_offset = (uint32_t) (begin_node->begin_keyword_loc.start - context->source_start);
+      if (herb_prism_location_assigned(begin_node->begin_keyword_loc)) {
+        keyword_offset = begin_node->begin_keyword_loc.start;
       } else {
-        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+        keyword_offset = node->location.start;
       }
       break;
     }
 
     case PM_YIELD_NODE: {
       current_type = CONTROL_TYPE_YIELD;
-      keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      keyword_offset = node->location.start;
       break;
     }
 
@@ -112,12 +116,14 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
       if (call->block != NULL && call->block->type == PM_BLOCK_NODE) {
         pm_block_node_t* block_node = (pm_block_node_t*) call->block;
 
-        bool has_opening = is_do_block(block_node->opening_loc) || is_brace_block(block_node->opening_loc);
-        bool is_unclosed = !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc);
+        bool has_opening = is_do_block(context->source_start, block_node->opening_loc)
+                        || is_brace_block(context->source_start, block_node->opening_loc);
+        bool is_unclosed =
+          !has_valid_block_closing(context->source_start, block_node->opening_loc, block_node->closing_loc);
 
         if (has_opening && is_unclosed) {
           current_type = CONTROL_TYPE_BLOCK;
-          keyword_offset = (uint32_t) (node->location.start - context->source_start);
+          keyword_offset = node->location.start;
         }
       }
       break;
@@ -126,12 +132,13 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     case PM_LAMBDA_NODE: {
       pm_lambda_node_t* lambda = (pm_lambda_node_t*) node;
 
-      bool has_opening = is_do_block(lambda->opening_loc) || is_brace_block(lambda->opening_loc);
-      bool is_unclosed = !has_valid_block_closing(lambda->opening_loc, lambda->closing_loc);
+      bool has_opening = is_do_block(context->source_start, lambda->opening_loc)
+                      || is_brace_block(context->source_start, lambda->opening_loc);
+      bool is_unclosed = !has_valid_block_closing(context->source_start, lambda->opening_loc, lambda->closing_loc);
 
       if (has_opening && is_unclosed) {
         current_type = CONTROL_TYPE_BLOCK;
-        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+        keyword_offset = node->location.start;
       }
 
       break;
@@ -141,7 +148,7 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     case PM_BREAK_NODE:
     case PM_RETURN_NODE: {
       current_type = CONTROL_TYPE_UNKNOWN;
-      keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      keyword_offset = node->location.start;
       break;
     }
 
@@ -166,7 +173,7 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     }
   }
 
-  return true;
+  return PM_VISIT_DESCEND;
 }
 
 static control_type_t find_earliest_control_keyword(pm_node_t* root, const uint8_t* source_start) {
@@ -210,7 +217,7 @@ static control_type_t detect_analyzed_control_type(analyzed_ruby_T* ruby) {
 
   if (ruby->unclosed_control_flow_count == 0 && !has_yield_node(ruby)) { return CONTROL_TYPE_UNKNOWN; }
 
-  return find_earliest_control_keyword(root, ruby->parser.start);
+  return find_earliest_control_keyword(root, pm_parser_start(ruby->parser));
 }
 
 control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {

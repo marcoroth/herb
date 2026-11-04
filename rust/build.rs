@@ -135,6 +135,9 @@ fn main() {
     .allowlist_function("pm_prettyprint")
     .allowlist_function("pm_serialize")
     .allowlist_function("pm_buffer_free")
+    .allowlist_function("pm_buffer_new")
+    .allowlist_function("pm_buffer_value")
+    .allowlist_function("pm_buffer_length")
     .allowlist_var("PRISM_VERSION_.*")
     .allowlist_var("AST_.*")
     .allowlist_var("ERROR_.*")
@@ -143,6 +146,7 @@ fn main() {
     .allowlist_var("HERB_EXTRACT_.*")
     .derive_debug(true)
     .derive_default(false)
+    .generate_comments(false)
     .prepend_enum_name(false)
     .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 

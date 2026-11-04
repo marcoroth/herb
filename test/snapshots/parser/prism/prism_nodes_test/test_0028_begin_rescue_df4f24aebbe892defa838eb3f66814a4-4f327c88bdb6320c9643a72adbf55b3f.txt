@@ -21,10 +21,15 @@ options: {prism_nodes: true}
         │       │       ├── reference: ∅
         │       │       ├── then_keyword_loc: ∅
         │       │       ├── statements: ∅
-        │       │       └── subsequent: ∅
+        │       │       ├── subsequent: ∅
+        │       │       ├── keyword: "rescue"
+        │       │       ├── operator: ∅
+        │       │       └── then_keyword: ∅
         │       ├── else_clause: ∅
         │       ├── ensure_clause: ∅
-        │       └── end_keyword_loc: (1:61)-(1:64)
+        │       ├── end_keyword_loc: (1:61)-(1:64)
+        │       ├── begin_keyword: "begin"
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:11)-(1:32))
         │       ├── tag_opening: "<%=" (location: (1:11)-(1:14))
@@ -42,7 +47,12 @@ options: {prism_nodes: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "dangerous_call"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         ├── rescue_clause:
         │   └── @ ERBRescueNode (location: (1:32)-(1:58))
@@ -61,7 +71,10 @@ options: {prism_nodes: true}
         │       │               ├── opening_loc: (1:48)-(1:49)
         │       │               ├── content_loc: (1:49)-(1:54)
         │       │               ├── closing_loc: (1:54)-(1:55)
-        │       │               └── unescaped: "error"
+        │       │               ├── unescaped: "error"
+        │       │               ├── opening: "\""
+        │       │               ├── content: "error"
+        │       │               └── closing: "\""
         │       │
         │       └── subsequent: ∅
         │
