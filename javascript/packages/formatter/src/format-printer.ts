@@ -1722,6 +1722,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       }
 
+      if (isNode(child, HTMLElementNode) && !this.analyzeElementFormatting(child).elementContentInline) {
+        const [firstLine, ...remainingLines] = this.capture(() => this.visit(child))
+
+        this.pushToLastLine((hasSpaceBefore ? " " : "") + (firstLine ?? "").trimStart())
+        remainingLines.forEach(line => this.push(line))
+
+        return
+      }
+
       const inlineContent = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
       this.pushToLastLine((hasSpaceBefore ? " " : "") + inlineContent)
     }
