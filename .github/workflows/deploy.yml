@@ -27,7 +27,8 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
 
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
