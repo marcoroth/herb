@@ -195,8 +195,7 @@ void parser_append_literal_node_from_buffer(
 
   if (children != NULL) { hb_array_append(children, literal); }
 
-  hb_buffer_free(buffer);
-  hb_buffer_init(buffer, 128, parser->allocator);
+  hb_buffer_clear(buffer);
 }
 
 token_T* parser_advance(parser_T* parser) {
