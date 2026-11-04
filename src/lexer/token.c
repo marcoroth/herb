@@ -319,5 +319,5 @@ void token_free(token_T* token, hb_allocator_T* allocator) {
 
   if (token->owns_value) { hb_allocator_dealloc(allocator, (void*) token->value.data); }
 
-  hb_allocator_dealloc(allocator, token);
+  hb_allocator_dealloc_sized(allocator, token, sizeof(token_T));
 }
