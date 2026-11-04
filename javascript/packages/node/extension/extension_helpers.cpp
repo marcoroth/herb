@@ -203,6 +203,16 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_set_named_property(env, options_object, "prism_nodes", prism_nodes_value);
   napi_set_named_property(env, options_object, "prism_nodes_deep", prism_nodes_deep_value);
 
+  napi_value ruby_version_value;
+
+  if (options->ruby_version[0] != '\0') {
+    napi_create_string_utf8(env, options->ruby_version, NAPI_AUTO_LENGTH, &ruby_version_value);
+  } else {
+    napi_get_null(env, &ruby_version_value);
+  }
+
+  napi_set_named_property(env, options_object, "ruby_version", ruby_version_value);
+
   napi_set_named_property(env, result, "options", options_object);
 
   napi_value error_count_value;

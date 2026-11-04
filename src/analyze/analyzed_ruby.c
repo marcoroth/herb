@@ -1,16 +1,17 @@
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/lib/hb_string.h"
+#include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
 #include <string.h>
 
-analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
+analyzed_ruby_T* init_analyzed_ruby(hb_string_T source, const parser_options_T* options) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
 
   if (!analyzed) { return NULL; }
 
   analyzed->arena = pm_arena_new();
-  analyzed->parser = pm_parser_new(analyzed->arena, (const uint8_t*) source.data, source.length, NULL);
+  analyzed->parser = herb_prism_parser_new(analyzed->arena, (const uint8_t*) source.data, source.length, options);
 
   analyzed->root = pm_parse(analyzed->parser);
   analyzed->valid = (pm_parser_errors_size(analyzed->parser) == 0);

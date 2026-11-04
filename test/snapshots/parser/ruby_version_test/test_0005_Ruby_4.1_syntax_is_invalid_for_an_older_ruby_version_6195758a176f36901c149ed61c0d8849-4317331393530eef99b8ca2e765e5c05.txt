@@ -1,0 +1,24 @@
+---
+source: "Parser::RubyVersionTest#test_0005_Ruby 4.1 syntax is invalid for an older ruby_version"
+input: |2-
+<% def greet(name,) = name %>
+options: {ruby_version: "3.4"}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (1:17)-(1:18))
+│       ├── message: "parameter_wild_loose_comma: unexpected `,` in parameters"
+│       ├── error_message: "unexpected `,` in parameters"
+│       ├── diagnostic_id: "parameter_wild_loose_comma"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:29))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " def greet(name,) = name " (location: (1:2)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (1:29)-(2:0))
+        └── content: "\n"

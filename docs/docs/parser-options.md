@@ -44,6 +44,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | `iteration_nodes`                       | `Boolean` | `false`                                   | Represent iteration blocks (`each`, `map`, …) as dedicated nodes                                       |
 | `dot_notation_tags`                     | `Boolean` | `false`                                   | Parse dot-notation component tags (like `<Dialog.Button>`) as HTML elements                            |
 | [`erb_openers`](#erb-openers)           | `Array`   | `[]`                                      | Extra ERB tag openers to recognize, written without the leading `<%`                                   |
+| [`ruby_version`](#ruby-version)         | `String`  | `nil`/`null`                              | Ruby syntax to parse ERB content with. Defaults to the latest version Prism supports                   |
 | `prism_nodes`                           | `Boolean` | `false`                                   | Attach the Prism node for each ERB tag's Ruby code                                                     |
 | `prism_nodes_deep`                      | `Boolean` | `false`                                   | Attach Prism nodes including their full subtrees                                                       |
 | `prism_program`                         | `Boolean` | `false`                                   | Attach the full Prism `ProgramNode` to the `DocumentNode`                                              |
@@ -326,6 +327,40 @@ An opener that ends in a letter, digit, or underscore only matches on a word bou
 Configured openers never shadow the openings Herb already knows. The longest match wins, and a built-in opening wins a tie, so `erb_openers: ["="]` leaves `<%==` alone. `Herb.default_erb_openings` returns the openings that are always recognized.
 
 Every Herb tool reads this from the `parser` section of your [configuration file](/configuration#parser-configuration), so a project using such tags does not have to pass the option by hand.
+
+## `ruby_version` <Badge type="tip" text="^0.11.2" />
+
+**Type:** `String` **Default:** `nil`/`null`
+
+Herb parses the Ruby inside ERB tags with Prism, and Prism follows the syntax of the newest Ruby release it knows about unless it is told otherwise. Newer Ruby versions accept code that older ones reject. Ruby 4.1 allows a trailing comma in a parameter list, for example, so a strict locals comment written as `<%# locals: (user:,) %>` is valid for Ruby 4.1 and a syntax error for every earlier version.
+
+`ruby_version` names the version whose syntax applies. The accepted values are `"3.3"`, `"3.4"`, `"4.0"` and `"4.1"`, and a full version such as `"3.4.2"` selects the same syntax as its minor version:
+
+:::code-group
+```ruby [Ruby]
+source = "<%# locals: (user:,) %>"
+
+Herb.parse(source, strict_locals: true).errors.size
+# => 0
+
+Herb.parse(source, strict_locals: true, ruby_version: "3.4").errors.size
+# => 1
+```
+
+```js [JavaScript]
+Herb.parse(source, { strict_locals: true }).errors.length
+// => 0
+
+Herb.parse(source, { strict_locals: true, ruby_version: "3.4" }).errors.length
+// => 1
+```
+:::
+
+`ruby_version` only changes which parse errors Herb reports. The [`erb-strict-locals-comment-syntax`](/linter/rules/erb-strict-locals-comment-syntax) linter rule flags the trailing comma above for every Ruby version, so a partial keeps working on a Ruby older than the one the project is configured for.
+
+A version Prism does not support raises an `ArgumentError` in Ruby and throws an `Error` in JavaScript, instead of falling back to the latest syntax.
+
+Every Herb tool reads this from the `parser` section of your [configuration file](/configuration#ruby-version), so a project can match the Ruby version it runs on without passing the option by hand.
 
 ## Inspecting the Options Used for a Parse
 

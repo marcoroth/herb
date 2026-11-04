@@ -57,6 +57,9 @@ module Herb
     # : () -> Array[String]
     def erb_openers: () -> Array[String]
 
+    # : () -> String?
+    def ruby_version: () -> String?
+
     # : () -> Hash[Symbol, untyped]
     def parser_options: () -> Hash[Symbol, untyped]
 

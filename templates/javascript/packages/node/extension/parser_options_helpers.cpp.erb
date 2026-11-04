@@ -1,10 +1,13 @@
 #include "parser_options_helpers.h"
 
-void herb_extract_parser_options(napi_env env, napi_value options, parser_options_T* parser_options) {
+#include <cstring>
+#include <string>
+
+bool herb_extract_parser_options(napi_env env, napi_value options, parser_options_T* parser_options) {
   napi_valuetype valuetype;
   napi_typeof(env, options, &valuetype);
 
-  if (valuetype != napi_object) { return; }
+  if (valuetype != napi_object) { return true; }
 <%- parser_options.extractable_fields_for(:javascript).each do |field| -%>
 
   {
@@ -19,6 +22,35 @@ void herb_extract_parser_options(napi_env env, napi_value options, parser_option
       bool value = false;
       napi_get_value_bool(env, property, &value);
       parser_options-><%= field.c_name %> = value;
+<%- elsif field.string? -%>
+      napi_valuetype property_type;
+      napi_typeof(env, property, &property_type);
+
+      if (property_type == napi_string) {
+        size_t length = 0;
+        napi_get_value_string_utf8(env, property, nullptr, 0, &length);
+
+        std::string value(length, '\0');
+        napi_get_value_string_utf8(env, property, &value[0], length + 1, &length);
+        value.resize(length);
+
+<%- if field.validator -%>
+        if (!<%= field.validator %>(value.c_str(), value.length())) {
+          std::string message = "<%= field.snake_case %> \"" + value + "\" is not supported";
+          napi_throw_error(env, nullptr, message.c_str());
+          return false;
+        }
+<%- else -%>
+        if (value.length() >= HERB_PARSER_OPTIONS_STRING_CAPACITY) {
+          napi_throw_error(env, nullptr, "<%= field.snake_case %> is too long");
+          return false;
+        }
+<%- end -%>
+
+        memcpy(parser_options-><%= field.c_name %>, value.c_str(), value.length() + 1);
+      } else {
+        parser_options-><%= field.c_name %>[0] = '\0';
+      }
 <%- elsif field.nullable? -%>
       napi_valuetype property_type;
       napi_typeof(env, property, &property_type);
@@ -38,4 +70,6 @@ void herb_extract_parser_options(napi_env env, napi_value options, parser_option
     }
   }
 <%- end -%>
+
+  return true;
 }

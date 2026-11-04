@@ -162,7 +162,10 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
       ApplyERBOpeners(parser_options, openers);
 
-      herb_extract_parser_options(env, args[1], &parser_options);
+      if (!herb_extract_parser_options(env, args[1], &parser_options)) {
+        free(string);
+        return nullptr;
+      }
     }
   }
 

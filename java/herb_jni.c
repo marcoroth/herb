@@ -31,7 +31,10 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-  herb_extract_parser_options(env, options, &parser_options);
+  if (!herb_extract_parser_options(env, options, &parser_options)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {

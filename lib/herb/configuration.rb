@@ -100,11 +100,21 @@ module Herb
       parser["erb_openers"] || []
     end
 
+    #: () -> String?
+    def ruby_version
+      parser["ruby_version"]
+    end
+
     #: () -> Hash[Symbol, untyped]
     def parser_options
+      options = {} #: Hash[Symbol, untyped]
       openers = erb_openers
+      version = ruby_version
 
-      openers.empty? ? {} : { erb_openers: openers }
+      options[:erb_openers] = openers unless openers.empty?
+      options[:ruby_version] = version if version
+
+      options
     end
 
     def linter

@@ -62,6 +62,26 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
   }
 }
 
+fn ruby_version_buffer(ruby_version: Option<&str>) -> Result<[std::ffi::c_char; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize], String> {
+  let mut buffer = [0; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize];
+
+  let Some(version) = ruby_version else {
+    return Ok(buffer);
+  };
+
+  let supported = unsafe { crate::ffi::herb_ruby_version_supported(version.as_ptr() as *const std::ffi::c_char, version.len()) };
+
+  if !supported {
+    return Err(format!("ruby_version \"{version}\" is not supported"));
+  }
+
+  for (index, byte) in version.bytes().enumerate() {
+    buffer[index] = byte as std::ffi::c_char;
+  }
+
+  Ok(buffer)
+}
+
 pub fn parse(source: &str) -> Result<ParseResult, String> {
   parse_with_options(source, &ParserOptions::default())
 }
@@ -76,6 +96,10 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
       return Err("Failed to initialize allocator".to_string());
     }
+
+    let ruby_version = ruby_version_buffer(options.ruby_version.as_deref()).inspect_err(|_| {
+      crate::ffi::hb_allocator_destroy(&mut allocator);
+    })?;
 
     let opener_strings: Vec<&str> = options
       .erb_openers
@@ -119,6 +143,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
         std::ptr::null()
       },
       erb_opener_count: opener_items.len(),
+      ruby_version,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -383,6 +408,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       deadline_ms: 0,
       erb_openers: std::ptr::null(),
       erb_opener_count: 0,
+      ruby_version: [0; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize],
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);

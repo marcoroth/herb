@@ -12,6 +12,42 @@
 #include <stdlib.h>
 #include <string.h>
 
+bool herb_ruby_version_supported(const char* value, size_t length) {
+  if (value == NULL || length == 0 || length >= HERB_PARSER_OPTIONS_STRING_CAPACITY) { return false; }
+
+  pm_options_t* options = pm_options_new();
+  bool supported = pm_options_version_set(options, value, length);
+  pm_options_free(options);
+
+  return supported;
+}
+
+void herb_prism_options_set_ruby_version(pm_options_t* options, const parser_options_T* parser_options) {
+  if (options == NULL || parser_options == NULL || parser_options->ruby_version[0] == '\0') { return; }
+
+  const char* version = parser_options->ruby_version;
+  pm_options_version_set(options, version, strnlen(version, HERB_PARSER_OPTIONS_STRING_CAPACITY));
+}
+
+pm_parser_t* herb_prism_parser_new(
+  pm_arena_t* arena,
+  const uint8_t* source,
+  size_t length,
+  const parser_options_T* parser_options
+) {
+  if (parser_options == NULL || parser_options->ruby_version[0] == '\0') {
+    return pm_parser_new(arena, source, length, NULL);
+  }
+
+  pm_options_t* options = pm_options_new();
+  herb_prism_options_set_ruby_version(options, parser_options);
+
+  pm_parser_t* parser = pm_parser_new(arena, source, length, options);
+  pm_options_free(options);
+
+  return parser;
+}
+
 hb_string_T pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
     case PM_ERROR_LEVEL_SYNTAX: return hb_string("syntax");

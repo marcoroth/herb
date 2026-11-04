@@ -793,6 +793,24 @@ class ConfigurationTest < Minitest::Spec
     assert_equal true, config.engine_option("strict", true)
   end
 
+  test "parser_options is empty without a parser section" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({}, config.parser_options)
+  end
+
+  test "parser_options includes the configured ruby_version" do
+    write_config(<<~YAML)
+      parser:
+        ruby_version: "3.4"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "3.4", config.ruby_version
+    assert_equal({ ruby_version: "3.4" }, config.parser_options)
+  end
+
   test "engine parser_options defaults to empty hash" do
     config = Herb::Configuration.load(@temp_dir)
 

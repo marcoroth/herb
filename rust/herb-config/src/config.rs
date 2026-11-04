@@ -105,6 +105,10 @@ impl Config {
     self.config.parser.as_ref()?.erb_openers.clone()
   }
 
+  pub fn ruby_version(&self) -> Option<String> {
+    self.config.parser.as_ref()?.ruby_version.clone()
+  }
+
   pub fn to_json(&self) -> String {
     serde_json::to_string_pretty(&self.config).unwrap_or_else(|_| "{}".to_string())
   }
