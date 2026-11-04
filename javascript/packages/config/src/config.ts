@@ -407,6 +407,8 @@ export class Config {
       ignore: prunable
     })
 
+    files.sort()
+
     if (prunable.length === excludePatterns.length) {
       return files
     }
