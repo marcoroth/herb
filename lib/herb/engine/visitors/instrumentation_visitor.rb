@@ -140,6 +140,8 @@ module Herb
 
         instrument(node)
 
+        return [node] if literal?(node)
+
         if framed?(node)
           [enter_node(node), node, leave_node(node)]
         elsif erb_outputs?(node)
@@ -156,6 +158,12 @@ module Herb
         context.replacements.record(node, replacement)
 
         replacement
+      end
+
+      def literal?(node)
+        return false unless node.respond_to?(:tag_opening) && node.tag_opening
+
+        erb_escaped?(node.tag_opening.value)
       end
 
       def framed?(node)
@@ -197,9 +205,9 @@ module Herb
         body = code(node)
         call = captured?(node) ? "output" : "at"
 
-        return erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
+        return rewrapped(node, "#{SESSION}.#{call}(#{position(node)}) {\n#{body}\n}") if spans_lines?(body)
 
-        erb_node(node, "<%=", "#{SESSION}.#{call}(#{position(node)}) { #{body} }")
+        rewrapped(node, "#{SESSION}.#{call}(#{position(node)}) { #{body} }")
       end
 
       def captured?(node)
@@ -221,10 +229,10 @@ module Herb
         body = code(node)
 
         if spans_lines?(body)
-          return erb_node(node, "<%", "#{SESSION}.enter(#{position(node)}); begin\n#{body}\nensure; #{SESSION}.leave; end")
+          return rewrapped(node, "#{SESSION}.enter(#{position(node)}); begin\n#{body}\nensure; #{SESSION}.leave; end")
         end
 
-        erb_node(node, "<%", "#{SESSION}.enter(#{position(node)}); begin; #{body}; ensure; #{SESSION}.leave; end")
+        rewrapped(node, "#{SESSION}.enter(#{position(node)}); begin; #{body}; ensure; #{SESSION}.leave; end")
       end
 
       #: (String) -> bool
@@ -276,11 +284,15 @@ module Herb
         node.content&.value.to_s.strip
       end
 
-      def erb_node(node, opening, code)
+      def rewrapped(node, code)
+        erb_node(node, node.tag_opening.value, code, closing: node.tag_closing&.value || "%>")
+      end
+
+      def erb_node(node, opening, code, closing: "%>")
         Herb::AST::ERBContentNode.build(
           tag_opening: Herb::Token.from("TOKEN_ERB_START", opening),
           content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code} "),
-          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", closing),
           valid: true,
           location: node.location
         )

@@ -1,0 +1,6 @@
+---
+source: "Engine::InstrumentationTest::what it emits#test_0012_leaves a literal tag alone"
+input: "{source: \"<%% if admin? %><%= secret %><%% end %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Runtime::Session.enter_render("app/views/test.html.erb"); begin ; _buf << '<% if admin? %>'.freeze; _buf << (::Herb::Engine::Runtime::Session.at("app/views/test.html.erb", 1, 16, nil, end_line: 1, end_column: 29) { secret }).to_s; _buf << '<% end %>'.freeze; ensure; ::Herb::Engine::Runtime::Session.leave_render; end;
+_buf.to_s
