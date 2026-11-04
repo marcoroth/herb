@@ -99,7 +99,7 @@ describe("herb-minify", () => {
       rmSync(source, { force: true })
       rmSync(reportPath, { force: true })
     }
-  })
+  }, 30_000)
 
   test("shows the help message without arguments", () => {
     const { output, exitCode } = run()

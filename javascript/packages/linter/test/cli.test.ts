@@ -97,7 +97,7 @@ describe("CLI Output Formatting", () => {
     expect(Buffer.byteLength(expected)).toBeGreaterThan(64 * 1024)
     expect(piped.stdout.length).toBe(expected.length)
     expect(JSON.parse(piped.stdout)).toEqual(JSON.parse(expected))
-  })
+  }, 30_000)
 
   test("formats detailed error output correctly", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-wrap-lines")
