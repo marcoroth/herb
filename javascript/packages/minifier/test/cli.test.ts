@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest"
-import { execSync } from "child_process"
-import { readFileSync, writeFileSync, rmSync } from "fs"
+import { execSync, spawnSync } from "child_process"
+import { readFileSync, writeFileSync, rmSync, openSync, closeSync } from "fs"
 
 function run(...args: string[]): { output: string, exitCode: number } {
   try {
@@ -69,6 +69,37 @@ describe("herb-minify", () => {
     expect(exitCode).toBe(1)
     expect(output).toContain("Failed")
   })
+
+  test("writes large output completely to piped stdout", () => {
+    const source = "test/fixtures/tmp-large.html.erb"
+    const reportPath = "test/fixtures/tmp-large-redirected.html.erb"
+    const env = { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined }
+
+    try {
+      writeFileSync(source, '<div class="container">\n  <p>  Hello   <%= name %>  </p>\n</div>\n'.repeat(4000))
+
+      const descriptor = openSync(reportPath, "w")
+      let redirected
+
+      try {
+        redirected = spawnSync("node", ["bin/herb-minify", source], { env, stdio: ["ignore", descriptor, "pipe"] })
+      } finally {
+        closeSync(descriptor)
+      }
+
+      const piped = spawnSync("node", ["bin/herb-minify", source], { env, encoding: "utf-8", maxBuffer: 16 * 1024 * 1024 })
+      const expected = readFileSync(reportPath, "utf-8")
+
+      expect(redirected.status).toBe(0)
+      expect(piped.status).toBe(0)
+      expect(Buffer.byteLength(expected)).toBeGreaterThan(64 * 1024)
+      expect(piped.stdout.length).toBe(expected.length)
+      expect(piped.stdout).toBe(expected)
+    } finally {
+      rmSync(source, { force: true })
+      rmSync(reportPath, { force: true })
+    }
+  }, 30_000)
 
   test("shows the help message without arguments", () => {
     const { output, exitCode } = run()

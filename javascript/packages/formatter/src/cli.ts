@@ -232,7 +232,7 @@ export class CLI {
           process.stdout.write(await this.readStdin())
         }
 
-        process.exit(0)
+        return
       }
 
       if (isForceMode && hasConfigFile && formatterConfig.enabled === false) {
