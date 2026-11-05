@@ -1722,6 +1722,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       }
 
+      if (isNode(child, HTMLElementNode) && !this.analyzeElementFormatting(child).elementContentInline) {
+        const [firstLine, ...remainingLines] = this.capture(() => this.visit(child))
+
+        this.pushToLastLine((hasSpaceBefore ? " " : "") + (firstLine ?? "").trimStart())
+        remainingLines.forEach(line => this.push(line))
+
+        return
+      }
+
       const inlineContent = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
       this.pushToLastLine((hasSpaceBefore ? " " : "") + inlineContent)
     }
@@ -1738,12 +1747,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const tagClosing = getOpenTagClosing(element)
 
     if (element.is_void || tagClosing?.value === "/>") {
-      const attributes = filterNodes(getOpenTagChildren(element), HTMLAttributeNode)
-      this.attributeRenderer.indentLevel = this.indentLevel
-      const attributesString = this.attributeRenderer.renderAttributesString(attributes, tagName)
+      const children = getOpenTagChildren(element)
+      const attributes = filterNodes(children, HTMLAttributeNode)
       const isSelfClosing = tagClosing?.value === "/>"
 
-      return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
+      return this.renderInlineOpen(tagName, attributes, isSelfClosing, this.extractInlineNodes(children), children)
     }
 
     const childInline = this.tryRenderInlineFull(element, tagName,

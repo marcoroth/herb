@@ -21,7 +21,8 @@ jobs:
       NX_NO_CLOUD: "true"
       # NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
 
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7

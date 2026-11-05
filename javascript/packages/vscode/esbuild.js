@@ -1,5 +1,4 @@
 const esbuild = require("esbuild")
-const { copy } = require("esbuild-plugin-copy")
 
 const production = process.argv.includes('--production')
 const watch = process.argv.includes('--watch')
@@ -55,11 +54,23 @@ async function main() {
     },
     plugins: [
       esbuildProblemMatcherPlugin,
-      copy({
-        assets: [
-          { from: '../language-server/dist/herb-language-server.js', to: ['herb-language-server.js'] },
-        ],
-      })
+    ],
+  })
+
+  const serverCtx = await esbuild.context({
+    entryPoints: ['../language-server/dist/herb-language-server.js'],
+    bundle: true,
+    format: 'cjs',
+    minify: production,
+    keepNames: true,
+    sourcemap: !production,
+    sourcesContent: false,
+    platform: 'node',
+    mainFields: ['module', 'main'],
+    outfile: 'dist/herb-language-server.js',
+    logLevel: 'silent',
+    plugins: [
+      esbuildProblemMatcherPlugin,
     ],
   })
 
@@ -85,11 +96,14 @@ async function main() {
 
   if (watch) {
     await ctx.watch()
+    await serverCtx.watch()
     await workerCtx.watch()
   } else {
     await ctx.rebuild()
+    await serverCtx.rebuild()
     await workerCtx.rebuild()
     await ctx.dispose()
+    await serverCtx.dispose()
     await workerCtx.dispose()
   }
 }

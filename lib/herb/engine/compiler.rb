@@ -875,10 +875,8 @@ module Herb
           @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
           @trim_next_whitespace = true
 
-          if right_space.end_with?(" \n")
-            @pending_trim_newline_index = @tokens.length - 1
-            @pending_trim_owns_next_whitespace = true
-          end
+          @pending_trim_newline_index = @tokens.length - 1 if right_space.end_with?(" \n")
+          @pending_trim_owns_next_whitespace = true if right_space.end_with?(" \n") || without_source?(node)
         else
           @tokens << [:code, code, current_context]
         end
@@ -911,17 +909,16 @@ module Herb
       #: (bool) -> void
       def settle_pending_trim_newline!(keep)
         index = @pending_trim_newline_index
-
-        return unless index
-
         owned = @pending_trim_owns_next_whitespace
+
+        return unless index || owned
 
         @pending_trim_newline_index = nil
         @pending_trim_owns_next_whitespace = false
 
         return if keep
 
-        @tokens[index][1] = @tokens[index][1].chomp
+        @tokens[index][1] = @tokens[index][1].chomp if index
         @trim_next_whitespace = false if owned
       end
 

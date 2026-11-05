@@ -5,7 +5,7 @@ import type { DiagnosticTag, HerbError, SourcePath } from "@herb-tools/core"
 import type { HerbBackend, Node, ParserOptions } from "@herb-tools/core"
 import type { AncestorChain, RenderGraph, PartialIndex } from "@herb-tools/analysis"
 import type { DOMNodeLike } from "./browser/dom-to-ast.js"
-import type { Framework, Environment, RuleConfig } from "@herb-tools/config"
+import type { Framework, Environment, RuleConfig, TemplateEngine } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
@@ -328,6 +328,7 @@ export interface LintContext {
   indentWidth: number | undefined
   indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
+  templateEngine: TemplateEngine | undefined
   environment: Environment | undefined
   partials: PartialIndex | undefined
   partialCallers: RenderGraph | undefined
@@ -353,6 +354,7 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   indentWidth: undefined,
   indentStyle: undefined,
   framework: undefined,
+  templateEngine: undefined,
   environment: undefined,
   partials: undefined,
   partialCallers: undefined,

@@ -19,7 +19,8 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -206,7 +207,8 @@ jobs:
   performance:
     name: Engine Compilation Performance
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -425,7 +427,8 @@ jobs:
 
   allocations:
     name: Allocations
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -490,7 +493,8 @@ jobs:
 
   minifier:
     name: Minifier Equivalence
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -549,7 +553,8 @@ jobs:
 
   printer:
     name: Printer Roundtrip
-    runs-on: ubuntu-latest
+    # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     # Comparing the Rust and JavaScript printers against each other only needs

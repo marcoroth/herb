@@ -139,7 +139,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   position_T start = parser->current_token->location.start;
 
   hb_buffer_T comment;
-  hb_buffer_init(&comment, 512, parser->allocator);
+  hb_buffer_init(&comment, 64, parser->allocator);
 
   token_T* comment_end = NULL;
 
@@ -376,7 +376,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
   position_T start = parser->current_token->location.start;
 
   hb_buffer_T content;
-  hb_buffer_init(&content, 2048, parser->allocator);
+  hb_buffer_init(&content, 64, parser->allocator);
 
   while (token_is_none_of(
     parser,
@@ -553,7 +553,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   hb_array_T** errors
 ) {
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 512, parser->allocator);
+  hb_buffer_init(&buffer, 64, parser->allocator);
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
   position_T start = parser->current_token->location.start;
 
@@ -816,7 +816,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 
     if (has_equals) {
       hb_buffer_T equals_buffer;
-      hb_buffer_init(&equals_buffer, 256, parser->allocator);
+      hb_buffer_init(&equals_buffer, 16, parser->allocator);
       position_T equals_start = { 0 };
       position_T equals_end = { 0 };
       uint32_t range_start = 0;
@@ -1640,13 +1640,12 @@ static void parser_append_foreign_content_from_buffer(
     ast_html_text_node_init(content, start, parser->current_token->location.start, NULL, parser->allocator)
   );
 
-  hb_buffer_free(buffer);
-  hb_buffer_init(buffer, 128, parser->allocator);
+  hb_buffer_clear(buffer);
 }
 
 static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children, hb_array_T** errors) {
   hb_buffer_T content;
-  hb_buffer_init(&content, 1024, parser->allocator);
+  hb_buffer_init(&content, 64, parser->allocator);
   position_T start = parser->current_token->location.start;
   bool has_closing_tag = !hb_string_is_empty(parser->foreign_content_tag_name);
 
