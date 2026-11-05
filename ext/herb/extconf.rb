@@ -32,7 +32,11 @@ if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
   Herb::Bootstrap.generate_templates
 
   root_path = Herb::Bootstrap::ROOT_PATH
-  sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
+  sha = begin
+    IO.popen(["git", "-C", root_path, "rev-parse", "--short", "HEAD"], err: File::NULL, &:read).strip
+  rescue SystemCallError
+    ""
+  end
 
   $CFLAGS << " -DHERB_GIT_BUILD"
   $CFLAGS << " -DHERB_GIT_SHA=\\\"#{sha}\\\"" unless sha.empty?
@@ -55,21 +59,26 @@ $VPATH << "$(srcdir)/../../src/parser"
 $VPATH << "$(srcdir)/../../src/prism"
 $VPATH << "$(srcdir)/../../src/lib"
 $VPATH << "$(srcdir)/../../src/util"
-$VPATH << prism_src_path
-$VPATH << "#{prism_src_path}/util"
+$VPATH << "$(srcdir)/../../vendor/prism/src"
+$VPATH << "$(srcdir)/../../vendor/prism/src/util"
 
-$INCFLAGS << " -I#{prism_include_path}"
-$INCFLAGS << " -I#{include_path}"
-$INCFLAGS << " -I#{prism_src_path}"
-$INCFLAGS << " -I#{prism_src_path}/util"
+$INCFLAGS << " -I#{prism_include_path.quote}"
+$INCFLAGS << " -I#{include_path.quote}"
+$INCFLAGS << " -I#{prism_src_path.quote}"
+$INCFLAGS << " -I#{File.join(prism_src_path, "util").quote}"
 
-$CFLAGS << " -fvisibility=hidden"
+# MSVC needs C11 mode, the standard conforming preprocessor for the variadic macros in hb_foreach.h,
+# and UTF-8 string literals (it defaults to the system code page).
+$CFLAGS << ($mswin ? " -std:c11 -Zc:preprocessor -execution-charset:utf-8" : " -fvisibility=hidden")
+
 $CFLAGS << " -DHERB_EXCLUDE_PRETTYPRINT"
 $CFLAGS << " -DPRISM_EXCLUDE_PRETTYPRINT"
 $CFLAGS << " -DPRISM_EXCLUDE_JSON"
 $CFLAGS << " -DPRISM_EXCLUDE_PACK"
 
-herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
+# src/main.c is the entry point of the `herb` executable, not part of the library.
+herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").reject { |file| File.basename(file) == "main.c" }
+herb_src_files = herb_src_files.map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 
 prism_main_files = [
   "diagnostic.c",

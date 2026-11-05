@@ -85,6 +85,7 @@ tmp/*
 vendor/*
 vendor/bundle/*
 vendor/cache/*
+gemfiles/*.lock
 
 # Prism Vendor
 vendor/prism/*

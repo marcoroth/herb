@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #define MAX_CONSECUTIVE_ERRORS 10
 static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, hb_array_T** errors);

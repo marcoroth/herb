@@ -55,6 +55,7 @@ jobs:
           - arm-linux-musl
           - x86-linux-gnu
           - x86-linux-musl
+          - x64-mingw-ucrt
 
     # TODO: Go back to ubuntu-latest once ruby/setup-ruby ships Ruby 4.0.2 for ubuntu-26.04
     runs-on: ubuntu-24.04

@@ -5,7 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <strings.h>
+
+#ifndef _MSC_VER
+#  include <strings.h>
+#endif
 
 #include "hb_allocator.h"
 #include "hb_foreach.h"
@@ -22,10 +25,14 @@ typedef struct HB_STRING_STRUCT {
 
 #define HB_STRING_LIST(...) { HB_FOR_EACH(HB_STRING_LITERAL, __VA_ARGS__) }
 
-#define hb_string(string)                                                                                              \
-  (__builtin_constant_p(string)                                                                                        \
-     ? ((hb_string_T) { .data = (char*) (string), .length = (uint32_t) __builtin_strlen(string) })                     \
-     : hb_string_from_c_string(string))
+#ifdef _MSC_VER
+#  define hb_string(string) hb_string_from_c_string(string)
+#else
+#  define hb_string(string)                                                                                            \
+    (__builtin_constant_p(string)                                                                                      \
+       ? ((hb_string_T) { .data = (char*) (string), .length = (uint32_t) __builtin_strlen(string) })                   \
+       : hb_string_from_c_string(string))
+#endif
 
 hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
 
@@ -56,7 +63,11 @@ static inline bool hb_string_equals(hb_string_T a, hb_string_T b) {
 static inline bool hb_string_equals_case_insensitive(hb_string_T a, hb_string_T b) {
   if (a.length != b.length) { return false; }
 
+#ifdef _MSC_VER
+  return _strnicmp(a.data, b.data, a.length) == 0;
+#else
   return strncasecmp(a.data, b.data, a.length) == 0;
+#endif
 }
 
 static inline bool hb_string_contains_character(hb_string_T string, char character) {

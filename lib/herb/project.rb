@@ -230,7 +230,10 @@ module Herb
 
         ensure_parallel!
 
-        file_results = Parallel.map(files, in_processes: Parallel.processor_count, finish: finish_hook) do |file_path|
+        # Without fork (e.g. on Windows) Parallel would warn and fall back to running in this process anyway.
+        workers = Process.respond_to?(:fork) ? { in_processes: Parallel.processor_count } : { in_threads: 0 }
+
+        file_results = Parallel.map(files, **workers, finish: finish_hook) do |file_path|
           process_file(file_path)
         end
 

@@ -43,7 +43,7 @@ module CLI
       ]
 
       output, status = Open3.capture2e(
-        { "NO_COLOR" => "1", "BUNDLE_GEMFILE" => File.join(REPOSITORY_ROOT, "Gemfile") },
+        { "NO_COLOR" => "1", "BUNDLE_GEMFILE" => ENV.fetch("BUNDLE_GEMFILE", File.join(REPOSITORY_ROOT, "Gemfile")) },
         *command,
         chdir: @project_path
       )

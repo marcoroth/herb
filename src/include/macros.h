@@ -2,7 +2,9 @@
 #define HERB_MACROS_H
 
 #ifndef HERB_EXPORTED_FUNCTION
-#  ifdef HERB_EXPORT_SYMBOLS
+#  if defined(HERB_EXPORT_SYMBOLS) && defined(_MSC_VER)
+#    define HERB_EXPORTED_FUNCTION __declspec(dllexport) extern
+#  elif defined(HERB_EXPORT_SYMBOLS)
 #    define HERB_EXPORTED_FUNCTION __attribute__((__visibility__("default"))) extern
 #  else
 #    define HERB_EXPORTED_FUNCTION
@@ -17,6 +19,10 @@
 
 #define MB(mb) (1024 * KB(mb))
 
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#ifdef _MSC_VER
+#  define unlikely(x) (x)
+#else
+#  define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
 
 #endif

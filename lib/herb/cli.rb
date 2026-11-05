@@ -268,7 +268,11 @@ class Herb::CLI
       end
 
       parser.on("--isolate", "Fork each file into its own process for crash isolation (slower)") do
-        self.isolate = true
+        if Process.respond_to?(:fork)
+          self.isolate = true
+        else
+          warn "Warning: --isolate needs Process.fork, which this platform does not support. Ignoring it."
+        end
       end
 
       parser.on("--timeout SECONDS", Float, "Per-file timeout for parse + compile (for analyze command) (default: #{Herb::Project::DEFAULT_FILE_TIMEOUT})") do |seconds|

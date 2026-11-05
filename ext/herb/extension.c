@@ -579,7 +579,7 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
   return rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);
 }
 
-__attribute__((__visibility__("default"))) void Init_herb(void) {
+RUBY_FUNC_EXPORTED void Init_herb(void) {
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
   cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
