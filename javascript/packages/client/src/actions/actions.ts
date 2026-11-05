@@ -466,7 +466,25 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       return null
     }
 
+    if (kind === "seeded") {
+      return { value: this.seededLiteral(name, scope, raw) }
+    }
+
     return { value: coerceState(raw, kind) }
+  }
+
+  private seededLiteral(name: string, scope: StateScope, raw: string): StateValue {
+    const current = this.state.getState(name, { scope })
+
+    if (typeof current === "number" && /^-?\d+$/.test(raw)) {
+      return Number(raw)
+    }
+
+    if (typeof current === "boolean" && (raw === "true" || raw === "false")) {
+      return raw === "true"
+    }
+
+    return raw
   }
 
   private toggle(element: Element, rest: string): void {
