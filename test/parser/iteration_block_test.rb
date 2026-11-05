@@ -589,5 +589,77 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "form builder select with a positional argument is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= form.select :status do %>
+          <option>One</option>
+        <% end %>
+      HTML
+    end
+
+    test "form builder select with parenthesized arguments is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= f.select(:status, class: "input") do %>
+          <option>One</option>
+        <% end %>
+      HTML
+    end
+
+    test "tag builder select is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= tag.select do %>
+          <option>One</option>
+        <% end %>
+      HTML
+    end
+
+    test "tag builder select with attributes is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= tag.select class: "input" do %>
+          <option>One</option>
+        <% end %>
+      HTML
+    end
+
+    test "tag builder map is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= tag.map do %>
+          <area>
+        <% end %>
+      HTML
+    end
+
+    test "tag builder select through helpers is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%= helpers.tag.select do %>
+          <option>One</option>
+        <% end %>
+      HTML
+    end
+
+    test "each on a receiver named tag is still transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% tag.each do |item| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "select on a collection named after a form builder is still transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% forms.select do |form| %>
+          <%= form %>
+        <% end %>
+      HTML
+    end
+
+    test "each with a call argument is still transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @users.each(batch: 2) do |user| %>
+          <%= user %>
+        <% end %>
+      HTML
+    end
   end
 end
