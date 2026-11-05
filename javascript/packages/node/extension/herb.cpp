@@ -341,17 +341,17 @@ napi_value Herb_parse_ruby(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  pm_buffer_t buffer = { 0 };
-  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+  pm_buffer_t* buffer = pm_buffer_new();
+  pm_serialize(parse_result->parser, parse_result->root, buffer);
 
   napi_value result = nullptr;
 
-  if (buffer.length > 0) {
+  if (pm_buffer_length(buffer) > 0) {
     void* data;
-    napi_create_buffer_copy(env, buffer.length, buffer.value, &data, &result);
+    napi_create_buffer_copy(env, pm_buffer_length(buffer), pm_buffer_value(buffer), &data, &result);
   }
 
-  pm_buffer_free(&buffer);
+  pm_buffer_free(buffer);
   herb_free_ruby_parse_result(parse_result);
   free(string);
 

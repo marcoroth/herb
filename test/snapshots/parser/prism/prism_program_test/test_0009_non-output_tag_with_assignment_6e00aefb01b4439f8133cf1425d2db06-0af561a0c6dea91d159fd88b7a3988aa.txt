@@ -26,4 +26,5 @@ options: {prism_program: true}
                         ├── value:
                         │   └── @ IntegerNode (location: (1:7)-(1:8))
                         │       └── value: 1
-                        └── operator_loc: (1:5)-(1:6)
+                        ├── operator_loc: (1:5)-(1:6)
+                        └── operator: "="

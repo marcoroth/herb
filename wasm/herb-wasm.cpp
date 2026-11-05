@@ -188,17 +188,17 @@ val Herb_parse_ruby(const std::string& source) {
 
   if (!parse_result) { return val::null(); }
 
-  pm_buffer_t buffer = { 0 };
-  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+  pm_buffer_t* buffer = pm_buffer_new();
+  pm_serialize(parse_result->parser, parse_result->root, buffer);
 
   val result = val::null();
 
-  if (buffer.length > 0) {
-    result = val(typed_memory_view(buffer.length, (const uint8_t*) buffer.value));
+  if (pm_buffer_length(buffer) > 0) {
+    result = val(typed_memory_view(pm_buffer_length(buffer), (const uint8_t*) pm_buffer_value(buffer)));
     result = val::global("Uint8Array").new_(result);
   }
 
-  pm_buffer_free(&buffer);
+  pm_buffer_free(buffer);
   herb_free_ruby_parse_result(parse_result);
 
   return result;

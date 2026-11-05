@@ -153,18 +153,21 @@ pub struct RubyParseResult {
 impl RubyParseResult {
   pub fn prettyprint(&self) -> String {
     unsafe {
-      let mut buffer: crate::ffi::pm_buffer_t = std::mem::zeroed();
+      let buffer = crate::ffi::pm_buffer_new();
 
-      crate::ffi::pm_prettyprint(&mut buffer, &(*self.pointer).parser, (*self.pointer).root);
+      crate::ffi::pm_prettyprint(buffer, (*self.pointer).parser, (*self.pointer).root);
 
-      let output = if !buffer.value.is_null() && buffer.length > 0 {
-        let slice = std::slice::from_raw_parts(buffer.value as *const u8, buffer.length);
+      let value = crate::ffi::pm_buffer_value(buffer);
+      let length = crate::ffi::pm_buffer_length(buffer);
+
+      let output = if !value.is_null() && length > 0 {
+        let slice = std::slice::from_raw_parts(value as *const u8, length);
         String::from_utf8_lossy(slice).into_owned()
       } else {
         String::new()
       };
 
-      crate::ffi::pm_buffer_free(&mut buffer);
+      crate::ffi::pm_buffer_free(buffer);
 
       crate::nodes::prettify_prism_tree(&output)
     }

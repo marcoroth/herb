@@ -14,4 +14,7 @@ options: {prism_nodes: true}
                 ├── keyword_loc: (1:4)-(1:9)
                 ├── lparen_loc: ∅
                 ├── arguments: ∅
-                └── rparen_loc: ∅
+                ├── rparen_loc: ∅
+                ├── keyword: "yield"
+                ├── lparen: ∅
+                └── rparen: ∅

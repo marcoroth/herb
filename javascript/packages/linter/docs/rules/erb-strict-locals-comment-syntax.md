@@ -162,7 +162,9 @@ Single splat argument:
 
 Note: Double-splat (`**attributes`) IS supported for optional keyword arguments.
 
-#### Invalid Ruby syntax
+#### Extra commas
+
+Ruby 4.1 accepts a trailing comma in a parameter list, but every earlier version rejects it. The rule flags it regardless of the Ruby version, so the declaration keeps working on any Ruby the partial is rendered with.
 
 Trailing comma:
 

@@ -24,7 +24,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               ├── arguments: ∅
         │       │               ├── closing_loc: ∅
         │       │               ├── equal_loc: ∅
-        │       │               └── block: ∅
+        │       │               ├── block: ∅
+        │       │               ├── call_operator: ∅
+        │       │               ├── message: "risky"
+        │       │               ├── opening: ∅
+        │       │               ├── closing: ∅
+        │       │               └── equal: ∅
         │       ├── rescue_clause:
         │       │   └── @ RescueNode (location: (1:26)-(1:53))
         │       │       ├── keyword_loc: (1:26)-(1:32)
@@ -50,8 +55,16 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │               ├── arguments: ∅
         │       │       │               ├── closing_loc: ∅
         │       │       │               ├── equal_loc: ∅
-        │       │       │               └── block: ∅
-        │       │       └── subsequent: ∅
+        │       │       │               ├── block: ∅
+        │       │       │               ├── call_operator: "."
+        │       │       │               ├── message: "message"
+        │       │       │               ├── opening: ∅
+        │       │       │               ├── closing: ∅
+        │       │       │               └── equal: ∅
+        │       │       ├── subsequent: ∅
+        │       │       ├── keyword: "rescue"
+        │       │       ├── operator: "=>"
+        │       │       └── then_keyword: ∅
         │       ├── else_clause: ∅
         │       ├── ensure_clause:
         │       │   └── @ EnsureNode (location: (1:59)-(1:88))
@@ -68,9 +81,18 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │               ├── arguments: ∅
         │       │       │               ├── closing_loc: ∅
         │       │       │               ├── equal_loc: ∅
-        │       │       │               └── block: ∅
-        │       │       └── end_keyword_loc: (1:85)-(1:88)
-        │       └── end_keyword_loc: (1:85)-(1:88)
+        │       │       │               ├── block: ∅
+        │       │       │               ├── call_operator: ∅
+        │       │       │               ├── message: "cleanup"
+        │       │       │               ├── opening: ∅
+        │       │       │               ├── closing: ∅
+        │       │       │               └── equal: ∅
+        │       │       ├── end_keyword_loc: (1:85)-(1:88)
+        │       │       ├── ensure_keyword: "ensure"
+        │       │       └── end_keyword: "end"
+        │       ├── end_keyword_loc: (1:85)-(1:88)
+        │       ├── begin_keyword: "begin"
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:11)-(1:23))
         │       ├── tag_opening: "<%=" (location: (1:11)-(1:14))
@@ -88,7 +110,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "risky"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         ├── rescue_clause:
         │   └── @ ERBRescueNode (location: (1:23)-(1:56))
@@ -115,7 +142,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               ├── arguments: ∅
         │       │               ├── closing_loc: ∅
         │       │               ├── equal_loc: ∅
-        │       │               └── block: ∅
+        │       │               ├── block: ∅
+        │       │               ├── call_operator: "."
+        │       │               ├── message: "message"
+        │       │               ├── opening: ∅
+        │       │               ├── closing: ∅
+        │       │               └── equal: ∅
         │       │
         │       └── subsequent: ∅
         │
@@ -142,7 +174,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │                       ├── arguments: ∅
         │                       ├── closing_loc: ∅
         │                       ├── equal_loc: ∅
-        │                       └── block: ∅
+        │                       ├── block: ∅
+        │                       ├── call_operator: ∅
+        │                       ├── message: "cleanup"
+        │                       ├── opening: ∅
+        │                       ├── closing: ∅
+        │                       └── equal: ∅
         │
         │
         └── end_node:

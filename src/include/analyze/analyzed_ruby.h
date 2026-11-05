@@ -30,7 +30,8 @@ typedef enum {
 } control_type_t;
 
 typedef struct ANALYZED_RUBY_STRUCT {
-  pm_parser_t parser;
+  pm_arena_t* arena;
+  pm_parser_t* parser;
   pm_node_t* root;
   bool valid;
   bool parsed;

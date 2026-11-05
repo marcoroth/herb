@@ -17,6 +17,7 @@
 #include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
+#include <prism/internal/diagnostic.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -152,14 +153,11 @@ hb_string_T herb_directive_kind_for_prism_node(const pm_node_t* node) {
 }
 
 typedef struct {
-  const uint8_t* synthetic_start;
   size_t signature_start;
   size_t prefix_length;
 } synthetic_mapping_T;
 
-static size_t synthetic_to_content_offset(const synthetic_mapping_T* mapping, const uint8_t* pointer) {
-  size_t offset = (size_t) (pointer - mapping->synthetic_start);
-
+static size_t synthetic_to_content_offset(const synthetic_mapping_T* mapping, uint32_t offset) {
   if (offset < mapping->prefix_length) { return mapping->signature_start; }
 
   return mapping->signature_start + offset - mapping->prefix_length;
@@ -172,7 +170,7 @@ static AST_RUBY_LITERAL_NODE_T* create_default_value_node(
   hb_allocator_T* allocator
 ) {
   size_t start = synthetic_to_content_offset(mapping, value->location.start);
-  size_t end = synthetic_to_content_offset(mapping, value->location.end);
+  size_t end = synthetic_to_content_offset(mapping, herb_prism_location_end(value->location));
 
   char* source = hb_allocator_strndup(allocator, content->bytes + start, end - start);
 
@@ -212,12 +210,12 @@ static void append_state_declaration(
   }
 
   size_t name_start = synthetic_to_content_offset(mapping, name_location.start);
-  size_t name_end = synthetic_to_content_offset(mapping, name_location.end);
+  size_t name_end = synthetic_to_content_offset(mapping, herb_prism_location_end(name_location));
 
   if (name_end > name_start && content->bytes[name_end - 1] == ':') { name_end--; }
 
   size_t declaration_start = synthetic_to_content_offset(mapping, keyword->location.start);
-  size_t declaration_end = synthetic_to_content_offset(mapping, keyword->location.end);
+  size_t declaration_end = synthetic_to_content_offset(mapping, herb_prism_location_end(keyword->location));
 
   if (!value) {
     append_herb_state_invalid_parameter_error(
@@ -257,7 +255,7 @@ static void append_invalid_parameter_error(
   if (!parameter) { return; }
 
   size_t start = synthetic_to_content_offset(mapping, parameter->location.start);
-  size_t end = synthetic_to_content_offset(mapping, parameter->location.end);
+  size_t end = synthetic_to_content_offset(mapping, herb_prism_location_end(parameter->location));
 
   append_herb_state_invalid_parameter_error(
     content_slice(content, start, end),
@@ -560,29 +558,28 @@ static AST_NODE_T* create_herb_state_directive_node(
   hb_buffer_append_with_length(&synthetic, content->bytes + signature_start, signature_length);
   hb_buffer_append(&synthetic, SYNTHETIC_SUFFIX);
 
-  pm_parser_t parser;
-  pm_options_t prism_options = { 0 };
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser =
+    pm_parser_new(arena, (const uint8_t*) hb_buffer_value(&synthetic), hb_buffer_length(&synthetic), NULL);
 
-  pm_parser_init(&parser, (const uint8_t*) hb_buffer_value(&synthetic), hb_buffer_length(&synthetic), &prism_options);
-
-  pm_node_t* root = pm_parse(&parser);
+  pm_node_t* root = pm_parse(parser);
 
   synthetic_mapping_T mapping = {
-    .synthetic_start = parser.start,
     .signature_start = signature_start,
     .prefix_length = strlen(SYNTHETIC_PREFIX),
   };
 
   bool parsed = true;
 
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
     if (error->diag_id == PM_ERR_DEF_TERM) { continue; }
 
     parsed = false;
 
     position_T error_start = content_position(content, synthetic_to_content_offset(&mapping, error->location.start));
-    position_T error_end = content_position(content, synthetic_to_content_offset(&mapping, error->location.end));
+    position_T error_end =
+      content_position(content, synthetic_to_content_offset(&mapping, herb_prism_location_end(error->location)));
 
     hb_array_append(errors, ruby_parse_error_from_prism_error_with_positions(error, error_start, error_end, allocator));
   }
@@ -591,9 +588,8 @@ static AST_NODE_T* create_herb_state_directive_node(
     parsed ? extract_state_declarations(find_parameters_node(root), content, &mapping, &errors, allocator, options)
            : hb_array_init(0, allocator);
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
-  pm_options_free(&prism_options);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
   hb_buffer_free(&synthetic);
 
   return (AST_NODE_T*) ast_herb_state_directive_node_init(

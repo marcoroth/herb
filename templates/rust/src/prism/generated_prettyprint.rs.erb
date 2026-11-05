@@ -8,14 +8,12 @@ fn prettyprint_body(
   start_offset: usize,
   end_offset: usize,
   newlines: &[usize],
+  children: &mut std::vec::IntoIter<Option<PrismRecord>>,
 ) {
   match type_id {
 <%- prism_nodes.each do |prism_node| -%>
   <%- entries = prism_node.entries -%>
     <%= prism_node.type_id %> => {
-    <%- if prism_node.name == "DefNode" -%>
-      buffer.read_uint32();
-    <%- end -%>
       #[allow(unused_variables)]
       let flags = buffer.read_var_int() as u32;
       output.push_str(&format!("@ <%= prism_node.name %> (location: {})\n", location_string(start_offset, end_offset, newlines)));
@@ -45,29 +43,18 @@ fn prettyprint_body(
 
         output.push('\n');
       }
-  <%- when "node" -%>
-      output.push('\n');
-
-      {
-        let saved = prefix.len();
-        prefix.push_str("<%= preadd %>");
-        let copy = prefix.clone();
-        output.push_str(&copy);
-        prettyprint_node(buffer, pool, output, prefix, newlines);
-        prefix.truncate(saved);
-      }
-  <%- when "node?" -%>
-      if buffer.peek_byte() == 0 {
-        buffer.read_byte();
-        output.push_str(" nil\n");
-      } else {
-        output.push('\n');
-        let saved = prefix.len();
-        prefix.push_str("<%= preadd %>");
-        let copy = prefix.clone();
-        output.push_str(&copy);
-        prettyprint_node(buffer, pool, output, prefix, newlines);
-        prefix.truncate(saved);
+  <%- when "node", "node?" -%>
+      match children.next().flatten() {
+        None => output.push_str(" nil\n"),
+        Some(child) => {
+          output.push('\n');
+          let saved = prefix.len();
+          prefix.push_str("<%= preadd %>");
+          let copy = prefix.clone();
+          output.push_str(&copy);
+          prettyprint_record(child, buffer, pool, output, prefix, newlines);
+          prefix.truncate(saved);
+        }
       }
   <%- when "node[]" -%>
       {
@@ -81,7 +68,11 @@ fn prettyprint_body(
           output.push_str(&copy);
           output.push_str("+-- ");
           prefix.push_str(if index == count - 1 { "    " } else { "|   " });
-          prettyprint_node(buffer, pool, output, prefix, newlines);
+
+          if let Some(child) = children.next().flatten() {
+            prettyprint_record(child, buffer, pool, output, prefix, newlines);
+          }
+
           prefix.truncate(saved);
         }
       }

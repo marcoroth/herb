@@ -27,16 +27,28 @@ options: {prism_nodes: true, prism_nodes_deep: true}
                 │                       ├── key:
                 │                       │   └── @ SymbolNode (location: (1:10)-(1:18))
                 │                       │       ├── opening_loc: ∅
-                │                       │       ├── value_loc: (1:10)-(1:17)
+                │                       │       ├── content_loc: (1:10)-(1:17)
                 │                       │       ├── closing_loc: (1:17)-(1:18)
-                │                       │       └── unescaped: "partial"
+                │                       │       ├── unescaped: "partial"
+                │                       │       ├── opening: ∅
+                │                       │       ├── content: "partial"
+                │                       │       └── closing: ":"
                 │                       ├── value:
                 │                       │   └── @ StringNode (location: (1:19)-(1:27))
                 │                       │       ├── opening_loc: (1:19)-(1:20)
                 │                       │       ├── content_loc: (1:20)-(1:26)
                 │                       │       ├── closing_loc: (1:26)-(1:27)
-                │                       │       └── unescaped: "header"
-                │                       └── operator_loc: ∅
+                │                       │       ├── unescaped: "header"
+                │                       │       ├── opening: "\""
+                │                       │       ├── content: "header"
+                │                       │       └── closing: "\""
+                │                       ├── operator_loc: ∅
+                │                       └── operator: ∅
                 ├── closing_loc: ∅
                 ├── equal_loc: ∅
-                └── block: ∅
+                ├── block: ∅
+                ├── call_operator: ∅
+                ├── message: "render"
+                ├── opening: ∅
+                ├── closing: ∅
+                └── equal: ∅

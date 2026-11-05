@@ -16,6 +16,7 @@
 #include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
+#include <prism/internal/diagnostic.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -211,17 +212,16 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   hb_buffer_T synthetic_buffer;
   if (!build_synthetic_ruby(params_open, params_length, &synthetic_buffer, allocator)) { return NULL; }
 
-  pm_parser_t parser;
-  pm_options_t options = { 0 };
-  pm_parser_init(
-    &parser,
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(
+    arena,
     (const uint8_t*) hb_buffer_value(&synthetic_buffer),
     hb_buffer_length(&synthetic_buffer),
-    &options
+    NULL
   );
-  pm_node_t* root = pm_parse(&parser);
+  pm_node_t* root = pm_parse(parser);
 
-  const uint8_t* synthetic_start = parser.start;
+  const uint8_t* synthetic_start = pm_parser_start(parser);
 
   pm_parameters_node_t* params_node = find_parameters_node(root);
   size_t erb_content_byte_offset = calculate_byte_offset_from_position(source, erb_node->content->location.start);
@@ -230,12 +230,12 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   size_t params_in_content = (size_t) (params_open - content_bytes);
   size_t prefix_length = strlen(SYNTHETIC_PREFIX);
 
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
     if (error->diag_id == PM_ERR_DEF_TERM) { continue; }
 
-    size_t error_start_in_synthetic = (size_t) (error->location.start - synthetic_start);
-    size_t error_end_in_synthetic = (size_t) (error->location.end - synthetic_start);
+    size_t error_start_in_synthetic = error->location.start;
+    size_t error_end_in_synthetic = herb_prism_location_end(error->location);
 
     size_t error_content_start =
       params_in_content + (error_start_in_synthetic > prefix_length ? error_start_in_synthetic - prefix_length : 0);
@@ -258,7 +258,7 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   } else {
     locals = extract_strict_locals(
       params_node,
-      &parser,
+      parser,
       source,
       erb_content_byte_offset,
       content_bytes,
@@ -270,9 +270,8 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
     );
   }
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
-  pm_options_free(&options);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
   hb_buffer_free(&synthetic_buffer);
 
   return ast_erb_strict_locals_node_init(
