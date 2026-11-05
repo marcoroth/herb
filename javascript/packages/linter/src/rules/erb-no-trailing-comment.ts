@@ -3,18 +3,21 @@ import { Location, stringIndexFromByteOffset } from "@herb-tools/core"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, LintSeverity, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBNode, ERBContentNode, HerbBackend } from "@herb-tools/core"
+import type { TemplateEngine } from "@herb-tools/config"
 
 const RUBY_OPENINGS = new Set(["<%", "<%-", "<%=", "<%=="])
+const STATEMENT_OPENINGS = new Set(["<%", "<%-"])
 
-// Tags like `<% # comment %>` are reported by `erb-comment-syntax`.
 const COMMENT_ONLY = /^ +#/
-
-// Prism reports `# ...` comments as type 0 and `=begin`/`=end` comments as type 1.
 const INLINE_COMMENT = 0
-
 const OWN_LINE = /\n[ \t]*$/
+const BLANK_BEFORE_TAG = /^[ \t]*$/
+const BLANK_AFTER_TAG = /^[ \t]*\r?$/
+
+const BREAKING_MESSAGE = "A Ruby comment at the end of an ERB tag also comments out the code that the template engine appends after the tag. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
+const FRAGILE_MESSAGE = "Avoid Ruby comments at the end of ERB tags. This tag still renders correctly, but the comment breaks the template as soon as anything else is added to this line or the template is rendered by an engine that doesn't trim it. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
 
 interface TrailingComment {
   start: number
@@ -56,8 +59,12 @@ function findTrailingComment(herb: HerbBackend, content: string): TrailingCommen
 }
 
 class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAutofixContext> {
-  constructor(ruleName: string, context: Partial<LintContext> | undefined, private herb: HerbBackend, private autofixable: boolean) {
+  private lines: string[]
+
+  constructor(ruleName: string, context: Partial<LintContext> | undefined, private herb: HerbBackend, private autofixable: boolean, source: string, private templateEngine: TemplateEngine | undefined) {
     super(ruleName, context)
+
+    this.lines = source.split("\n")
   }
 
   visitERBNode(node: ERBNode): void {
@@ -75,11 +82,30 @@ class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAu
 
     if (!comment) return
 
+    const trimmed = STATEMENT_OPENINGS.has(opening) && this.isOnTrimmedLine(node)
+    const breaks = this.templateEngine !== "herb" && !trimmed
+    const severity: LintSeverity | undefined = breaks ? undefined : "warning"
+
     this.addOffense(
-      "A Ruby comment at the end of an ERB tag also comments out the code that the template engine appends after the tag. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line.",
+      breaks ? BREAKING_MESSAGE : FRAGILE_MESSAGE,
       this.commentLocation(contentToken.location.start, content, comment),
-      this.autofixContextFor(node as ERBContentNode, content, comment),
+      this.autofixContextFor(node as ERBContentNode, content, comment, trimmed),
+      severity,
     )
+  }
+
+  private isOnTrimmedLine(node: ERBNode): boolean {
+    if (!("tag_closing" in node)) return false
+
+    const opening = node.tag_opening?.location
+    const closing = node.tag_closing?.location
+
+    if (!opening || !closing) return false
+
+    const before = Array.from(this.lines[opening.start.line - 1] ?? "").slice(0, opening.start.column).join("")
+    const after = Array.from(this.lines[closing.end.line - 1] ?? "").slice(closing.end.column).join("")
+
+    return BLANK_BEFORE_TAG.test(before) && BLANK_AFTER_TAG.test(after)
   }
 
   private commentLocation(contentStart: { line: number, column: number }, content: string, comment: TrailingComment): Location {
@@ -90,20 +116,20 @@ class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAu
     return Location.from(line, column, line, column + comment.end - comment.start)
   }
 
-  private autofixContextFor(node: ERBContentNode, content: string, comment: TrailingComment): ERBNoTrailingCommentAutofixContext | undefined {
+  private autofixContextFor(node: ERBContentNode, content: string, comment: TrailingComment, unsafe: boolean): ERBNoTrailingCommentAutofixContext | undefined {
     if (!this.autofixable) return undefined
 
     const prefix = content.slice(0, comment.start)
 
     if (prefix.trim() === "") return undefined
 
-    // Keep the line break before a comment on its own line, so a heredoc terminator stays alone on its line.
     const code = OWN_LINE.test(prefix) ? prefix : `${prefix.replace(/[ \t]+$/, "")} `
     const commentText = content.slice(comment.start + 1, comment.end)
     const trailing = content.slice(comment.end)
 
     return {
       node,
+      unsafe,
       originalContent: content,
       content: `${code}%><%#${commentText}${trailing}`,
     }
@@ -111,7 +137,7 @@ class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAu
 }
 
 export class ERBNoTrailingCommentRule extends ParserRule<ERBNoTrailingCommentAutofixContext> {
-  static unsafeAutocorrectable = true
+  static autocorrectable = true
   static autofixRequiresContext = true
   static consumesParserErrors = true
   static ruleName = "erb-no-trailing-comment"
@@ -126,12 +152,10 @@ export class ERBNoTrailingCommentRule extends ParserRule<ERBNoTrailingCommentAut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBNoTrailingCommentAutofixContext>[] {
-    if (context?.templateEngine === "herb") return []
     if (!context?.herb) return []
 
-    // The printer can't print a document with parse errors, so these offenses are reported without an autofix.
     const autofixable = result.recursiveErrors().length === 0
-    const visitor = new ERBNoTrailingCommentVisitor(this.ruleName, context, context.herb, autofixable)
+    const visitor = new ERBNoTrailingCommentVisitor(this.ruleName, context, context.herb, autofixable, result.source, context.templateEngine)
 
     visitor.visit(result.value)
 

@@ -18,12 +18,25 @@ describe("erb-no-trailing-comment autofix", () => {
     await Herb.load()
   })
 
-  test("does not fix without --fix-unsafely", () => {
-    const input = `<%= I18n.t("Hello") # comment %>`
+  test("fixes a tag that breaks rendering without --fix-unsafely", () => {
+    const result = autofix(`<%= I18n.t("Hello") # comment %>`, false)
+
+    expect(result.source).toBe(`<%= I18n.t("Hello") %><%# comment %>`)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("does not fix a tag on its own line without --fix-unsafely", () => {
+    const input = dedent`
+      <% if some_method %>
+        Hello
+      <% end # if some_method %>
+    `
+
     const result = autofix(input, false)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
   })
 
   test("moves the comment of an output tag into an ERB comment tag", () => {

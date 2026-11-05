@@ -6,9 +6,10 @@ import { Linter } from "../../src/linter.js"
 import { ERBNoTrailingCommentRule } from "../../src/rules/erb-no-trailing-comment.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoTrailingCommentRule)
+const { expectNoOffenses, expectError, expectWarning, assertOffenses } = createLinterTest(ERBNoTrailingCommentRule)
 
 const MESSAGE = "A Ruby comment at the end of an ERB tag also comments out the code that the template engine appends after the tag. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
+const FRAGILE_MESSAGE = "Avoid Ruby comments at the end of ERB tags. This tag still renders correctly, but the comment breaks the template as soon as anything else is added to this line or the template is rendered by an engine that doesn't trim it. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
 
 describe("erb-no-trailing-comment", () => {
   test("passes for tags without comments", () => {
@@ -76,8 +77,8 @@ describe("erb-no-trailing-comment", () => {
     assertOffenses(`<% if some_method # comment %><% end %>`, { allowInvalidSyntax: true })
   })
 
-  test("fails for a trailing comment in an end tag", () => {
-    expectError(MESSAGE, { line: 3, column: 7 })
+  test("warns for a trailing comment in an end tag on its own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 3, column: 7 })
 
     assertOffenses(dedent`
       <% if some_method %>
@@ -86,8 +87,8 @@ describe("erb-no-trailing-comment", () => {
     `)
   })
 
-  test("fails for a trailing comment in a block tag", () => {
-    expectError(MESSAGE, { line: 1, column: 24 })
+  test("warns for a trailing comment in a block tag on its own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 1, column: 24 })
 
     assertOffenses(dedent`
       <% items.each do |item| # loop %>
@@ -96,10 +97,88 @@ describe("erb-no-trailing-comment", () => {
     `, { allowInvalidSyntax: true })
   })
 
-  test("fails for a trailing comment with trimming tags", () => {
-    expectError(MESSAGE, { line: 1, column: 8 })
+  test("warns for a trailing comment with trimming tags on their own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 1, column: 8 })
 
     assertOffenses(`<%- foo # comment -%>`)
+  })
+
+  test("fails for a trailing comment with trimming tags followed by text", () => {
+    expectError(MESSAGE, { line: 1, column: 8 })
+
+    assertOffenses(`<%- foo # comment -%>Hello`)
+  })
+
+  test("warns for a trailing comment in an indented tag on its own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 3, column: 9 })
+
+    assertOffenses(dedent`
+      <div>
+        <% if some_method %>
+        <% end # if some_method %>
+      </div>
+    `)
+  })
+
+  test("warns for a trailing comment in a tab-indented tag on its own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 2, column: 8 })
+
+    assertOffenses(`<% if some_method %>\n\t<% end # if some_method %>\n`)
+  })
+
+  test("warns for a trailing comment in a tag followed by whitespace", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 2, column: 7 })
+
+    assertOffenses(`<% if some_method %>\n<% end # if some_method %>  \nHello`)
+  })
+
+  test("warns for a trailing comment in a tag on its own line with CRLF line endings", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 2, column: 7 })
+
+    assertOffenses(`<% if some_method %>\r\n<% end # if some_method %>\r\nHello\r\n`)
+  })
+
+  test("fails for a trailing comment in an end tag followed by text", () => {
+    expectError(MESSAGE, { line: 2, column: 7 })
+
+    assertOffenses(dedent`
+      <div><% if some_method %>
+      <% end # if some_method %></div>
+    `)
+  })
+
+  test("fails for a trailing comment in a silent tag preceded by text", () => {
+    expectError(MESSAGE, { line: 1, column: 23 })
+
+    assertOffenses(`<div><% name = "World" # comment %>\n</div>`)
+  })
+
+  test("fails for a trailing comment in a block output tag on its own line", () => {
+    expectError(MESSAGE, { line: 1, column: 24 })
+
+    assertOffenses(dedent`
+      <%= form_with do |form| # form %>
+        <%= form.text_field :name %>
+      <% end %>
+    `)
+  })
+
+  test("fails for a trailing comment in an output tag on its own line", () => {
+    expectError(MESSAGE, { line: 2, column: 10 })
+
+    assertOffenses(`<div>\n  <%= foo # comment %>\n</div>`)
+  })
+
+  test("fails for a trailing comment in a tag with non-ASCII characters followed by text", () => {
+    expectError(MESSAGE, { line: 1, column: 12 })
+
+    assertOffenses(`<% x = "😀" # comment %>Hello`)
+  })
+
+  test("warns for a trailing comment in a tag with non-ASCII characters on its own line", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 1, column: 12 })
+
+    assertOffenses(`<% x = "😀" # comment %>\nHello`)
   })
 
   test("fails for a trailing comment in a raw output tag", () => {
@@ -114,8 +193,8 @@ describe("erb-no-trailing-comment", () => {
     assertOffenses(`<%= foo # comment%>`)
   })
 
-  test("fails for a trailing comment on the last line of a multi-line tag", () => {
-    expectError(MESSAGE, { line: 3, column: 6, endLine: 3, endColumn: 15 })
+  test("warns for a trailing comment on the last line of a multi-line tag on its own lines", () => {
+    expectWarning(FRAGILE_MESSAGE, { line: 3, column: 6, endLine: 3, endColumn: 15 })
 
     assertOffenses(dedent`
       <%
@@ -158,8 +237,10 @@ describe("erb-no-trailing-comment", () => {
     `)
   })
 
-  test("passes when the template engine is herb", () => {
-    expectNoOffenses(`<%= I18n.t("Hello") # comment %>`, { templateEngine: "herb" })
+  test("warns when the template engine is herb", () => {
+    expectWarning(FRAGILE_MESSAGE)
+
+    assertOffenses(`<%= I18n.t("Hello") # comment %>`, { templateEngine: "herb" })
   })
 
   test("fails when the template engine is erb", () => {
@@ -182,11 +263,11 @@ describe("erb-no-trailing-comment", () => {
     const herbConfig = Config.fromObject({ template_engine: "herb" })
     const herbLinter = new Linter(Herb, [ERBNoTrailingCommentRule], herbConfig)
 
-    expect(herbLinter.lint(source).offenses).toHaveLength(0)
+    expect(herbLinter.lint(source).offenses.map(offense => offense.severity)).toEqual(["warning"])
 
     const erubiConfig = Config.fromObject({ template_engine: "erubi" })
     const erubiLinter = new Linter(Herb, [ERBNoTrailingCommentRule], erubiConfig)
 
-    expect(erubiLinter.lint(source).offenses).toHaveLength(1)
+    expect(erubiLinter.lint(source).offenses.map(offense => offense.severity)).toEqual(["error"])
   })
 })

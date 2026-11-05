@@ -30,11 +30,33 @@ _buf << ( I18n.t("Hello") # comment ).to_s;
 name = "World" # comment ; _buf << 'Hello, '.freeze; _buf << ( name ).to_s; _buf << '!'.freeze;
 ```
 
-`Herb::Engine` handles trailing comments when it compiles a template, so this rule does not report anything when `template_engine` is set to `herb` in `.herb.yml`.
+These offenses are reported as errors.
+
+A `<% %>` tag that is the only thing on its line is the exception. Erubi trims such a line, so the line's trailing newline becomes part of the tag's code and ends the comment before the code that follows. This is how Rails compiles templates by default, so the template below renders correctly.
+
+```erb
+<% if some_method %>
+  Hello
+<% end # if some_method %>
+Goodbye
+```
+
+```ruby
+# The newline after the comment ends it, so "Goodbye" is still rendered
+if some_method
+ _buf << '  Hello
+'.freeze; end # if some_method
+ _buf << 'Goodbye
+'.freeze;
+```
+
+The comment still breaks the template as soon as anything else is added to that line, and it breaks under an engine that doesn't trim the line. This rule reports these tags as warnings.
+
+`Herb::Engine` handles trailing comments when it compiles a template. When `template_engine` is set to `herb` in `.herb.yml`, this rule reports every trailing comment as a warning, because none of them break rendering.
 
 ## Autofix
 
-This rule provides an **unsafe** autofix that moves the comment into a separate `<%# %>` tag right after the original tag. The autofix is considered unsafe because two tags on one line are trimmed differently than a single tag: when a `<% %>` tag is the only thing on its line, Erubi removes the line's indentation and trailing newline, but it doesn't do that for a line with two tags.
+This rule provides an autofix that moves the comment into a separate `<%# %>` tag right after the original tag.
 
 ```erb
 <%= I18n.t("Hello") # comment %>
@@ -43,6 +65,8 @@ This rule provides an **unsafe** autofix that moves the comment into a separate 
 ```erb
 <%= I18n.t("Hello") %><%# comment %>
 ```
+
+The autofix is **unsafe** for a `<% %>` tag that is the only thing on its line. Erubi removes the indentation and trailing newline of such a line, but it doesn't do that for a line with two tags, so the rendered whitespace changes. For every other tag the line wasn't trimmed before the fix and isn't trimmed after it, so the autofix is safe.
 
 The autofix is not applied to templates that have parse errors, such as `<% if some_method # comment %><% end %>`, or to tags that contain only a comment.
 
@@ -71,10 +95,20 @@ The autofix is not applied to templates that have parse errors, such as `<% if s
 <% if some_method # comment %><% end %>
 ```
 
+### ⚠️ Warning
+
+```erb
+<% if some_method %>
+  Hello
+<% end # if some_method %>
+```
+
 ## Configuration
 
-This rule doesn't report anything when the project renders its templates with `Herb::Engine`:
+This rule reports every trailing comment as a warning when the project renders its templates with `Herb::Engine`:
 
 ```yaml
 template_engine: herb
 ```
+
+The rule's `severity` setting only applies to the offenses that break rendering. The other offenses are always reported as warnings.
