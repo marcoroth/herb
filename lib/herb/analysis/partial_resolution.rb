@@ -6,6 +6,7 @@ module Herb
   module Analysis
     module PartialResolution
       PARTIAL_PREFIX = "_" #: String
+      VARIANT_SEPARATOR = "+" #: String
 
       EXTENSIONS = [
         ".html.erb",
@@ -82,6 +83,32 @@ module Herb
         #: (Array[String]) -> Array[String]
         def by_precedence(files)
           files.sort { |a, b| outranks_template?(a, b) ? -1 : 1 }
+        end
+
+        #: (String?) -> String?
+        def template_variant(file)
+          return nil unless file
+
+          basename = File.basename(file)
+          start = basename.index(VARIANT_SEPARATOR)
+
+          return nil unless start
+
+          variant = basename[(start + 1)..].to_s.sub(/\..*\z/, "")
+
+          variant.empty? ? nil : variant
+        end
+
+        #: (Array[String], String?) -> String?
+        def preferred_for(files, source_file)
+          variant = template_variant(source_file)
+
+          return files.first unless variant
+
+          matching = files.select { |file| template_variant(file) == variant }
+          preferred = matching.min_by { |file| [template_rank(File.basename(file).sub("#{VARIANT_SEPARATOR}#{variant}", "")), file] }
+
+          preferred || files.first
         end
 
         #: (String, String | Pathname) -> String?

@@ -112,6 +112,74 @@ fn puts_the_preferred_variant_first_when_a_name_has_several() {
 }
 
 #[test]
+fn keeps_the_base_template_first_for_a_caller_without_a_variant() {
+  let project = Project::new("variant_base_caller");
+  project.write_source("app/views/things/_item.html+phone.erb", "<%# locals: (a:) %>\n");
+  let base = project.write_source("app/views/things/_item.html.erb", "<%# locals: (a:, b:) %>\n");
+  let caller = project.write("app/views/things/show.html.erb");
+  let mut index = project.index();
+
+  assert_eq!(index.lookup("item", Some(&caller)).expect("declaration").file, base);
+  assert_eq!(index.size(), 1);
+}
+
+#[test]
+fn looks_up_the_partial_of_the_same_variant_as_the_caller() {
+  let project = Project::new("variant_caller");
+  project.write_source("app/views/things/_item.html.erb", "<%# locals: (a:, b:) %>\n");
+  let phone = project.write_source("app/views/things/_item.html+phone.erb", "<%# locals: (a:) %>\n");
+  let caller = project.write("app/views/things/show.html+phone.erb");
+  let mut index = project.index();
+  let declaration = index.lookup("item", Some(&caller)).expect("declaration");
+
+  assert_eq!(declaration.file, phone);
+  assert_eq!(declaration.required_locals(), vec!["a"]);
+}
+
+#[test]
+fn falls_back_to_the_base_template_when_no_partial_has_the_variant_of_the_caller() {
+  let project = Project::new("variant_fallback");
+  let base = project.write("app/views/things/_item.html.erb");
+  project.write("app/views/things/_item.html+phone.erb");
+  let caller = project.write("app/views/things/show.html+tablet.erb");
+
+  assert_eq!(project.index().resolve_for_caller("item", Some(&caller)), Some(&base));
+}
+
+#[test]
+fn prefers_the_html_variant_over_the_locale_variant_of_the_same_variant() {
+  let project = Project::new("variant_locale");
+  project.write("app/views/things/_item.en.html+phone.erb");
+  let phone = project.write("app/views/things/_item.html+phone.erb");
+  let caller = project.write("app/views/things/show.html+phone.erb");
+
+  assert_eq!(project.index().resolve_for_caller("item", Some(&caller)), Some(&phone));
+}
+
+#[test]
+fn falls_back_to_the_base_template_once_the_variant_is_removed() {
+  let project = Project::new("variant_removed");
+  let base = project.write("app/views/things/_item.html.erb");
+  let phone = project.write("app/views/things/_item.html+phone.erb");
+  let caller = project.write("app/views/things/show.html+phone.erb");
+  let mut index = project.index();
+
+  index.remove(&phone);
+
+  assert_eq!(index.resolve_for_caller("item", Some(&caller)), Some(&base));
+}
+
+#[test]
+fn resolve_keeps_every_template_of_a_partial_for_a_variant_caller() {
+  let project = Project::new("variant_resolve");
+  let base = project.write("app/views/things/_item.html.erb");
+  let phone = project.write("app/views/things/_item.html+phone.erb");
+  let caller = project.write("app/views/things/show.html+phone.erb");
+
+  assert_eq!(project.index().resolve("item", Some(&caller)), &[base, phone]);
+}
+
+#[test]
 fn resolves_a_partial_named_relative_to_the_rendering_template() {
   let project = Project::new("sibling");
   let caller = project.write("app/views/posts/show.html.erb");

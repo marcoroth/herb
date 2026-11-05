@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use herb::herb::{parse_with_options, ParserOptions};
 
 use crate::partial_declaration::PartialDeclaration;
-use crate::partial_resolution::{self, by_precedence, partial_name_for, template_path, view_root_for, APPLICATION_DIRECTORY};
+use crate::partial_resolution::{self, by_precedence, partial_name_for, preferred_for, template_path, view_root_for, APPLICATION_DIRECTORY};
 
 pub struct PartialIndex {
   view_root: PathBuf,
@@ -171,8 +171,12 @@ impl PartialIndex {
     self.files_for(&format!("{}/{}", APPLICATION_DIRECTORY, partial_name))
   }
 
+  pub fn resolve_for_caller(&self, partial_name: &str, source_file: Option<&str>) -> Option<&String> {
+    preferred_for(self.resolve(partial_name, source_file), source_file)
+  }
+
   pub fn lookup(&mut self, partial_name: &str, source_file: Option<&str>) -> Option<&PartialDeclaration> {
-    let file = self.resolve(partial_name, source_file).first()?.clone();
+    let file = self.resolve_for_caller(partial_name, source_file)?.clone();
 
     self.declaration_for_file(&file)
   }

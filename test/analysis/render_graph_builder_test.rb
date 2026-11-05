@@ -35,6 +35,16 @@ class RenderGraphBuilderTest < Minitest::Spec
     [sites, collected]
   end
 
+  test "records a call site of a variant template against the partial of the same variant" do
+    write("_row.html.erb", "<tr></tr>")
+    phone = write("_row.html+phone.erb", "<tr></tr>")
+    entry = write("index.html+phone.erb", '<%= render "posts/row" %>')
+
+    sites, = collect(entry, File.read(entry))
+
+    assert_equal [phone], sites.keys
+  end
+
   test "records the ancestors a partial is rendered under" do
     write("_row.html.erb", "<tr></tr>")
     entry = write("index.html.erb", '<table><tbody><%= render "posts/row" %></tbody></table>')

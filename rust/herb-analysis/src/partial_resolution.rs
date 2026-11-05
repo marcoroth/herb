@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 pub const PARTIAL_PREFIX: &str = "_";
+pub const VARIANT_SEPARATOR: &str = "+";
 pub const VIEW_ROOT: &str = "app/views";
 pub const LAYOUTS_DIRECTORY: &str = "layouts";
 pub const APPLICATION_LAYOUT: &str = "application";
@@ -201,6 +202,37 @@ pub fn outranks_template(candidate: &str, incumbent: &str) -> bool {
   }
 
   candidate < incumbent
+}
+
+pub fn template_variant(file: &str) -> Option<String> {
+  let normalized = normalize(file);
+  let base = basename(&normalized);
+  let (_, rest) = base.split_once(VARIANT_SEPARATOR)?;
+  let variant = without_extension(rest);
+
+  if variant.is_empty() {
+    None
+  } else {
+    Some(variant.to_string())
+  }
+}
+
+pub fn preferred_for<'a>(files: &'a [String], source_file: Option<&str>) -> Option<&'a String> {
+  let Some(variant) = source_file.and_then(template_variant) else {
+    return files.first();
+  };
+
+  let marker = format!("{VARIANT_SEPARATOR}{variant}");
+
+  files
+    .iter()
+    .filter(|file| template_variant(file).as_deref() == Some(variant.as_str()))
+    .min_by_key(|file| {
+      let normalized = normalize(file);
+
+      (template_rank(&basename(&normalized).replacen(&marker, "", 1)), file.as_str())
+    })
+    .or_else(|| files.first())
 }
 
 pub fn by_precedence(files: &mut [String]) {
