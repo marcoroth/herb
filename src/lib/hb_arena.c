@@ -89,6 +89,7 @@ bool hb_arena_init(hb_arena_T* allocator, size_t default_page_size) {
   allocator->tail = NULL;
   allocator->default_page_size = default_page_size;
   allocator->allocation_count = 0;
+  memset(allocator->free_lists, 0, sizeof(allocator->free_lists));
 
   return hb_arena_append_page(allocator, default_page_size);
 }
@@ -100,6 +101,18 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   size_t required_size = hb_arena_align_size(size, 8);
 
   allocator->allocation_count++;
+
+  if (required_size <= HB_ARENA_FREE_LIST_MAX_SIZE) {
+    hb_arena_free_block_T** free_list = &allocator->free_lists[required_size / 8 - 1];
+
+    if (*free_list != NULL) {
+      hb_arena_free_block_T* block = *free_list;
+      *free_list = block->next;
+      memset(block, 0, required_size);
+
+      return block;
+    }
+  }
 
   if (hb_arena_page_has_capacity(allocator->tail, required_size)) {
     return hb_arena_page_alloc(allocator->tail, required_size);
@@ -118,6 +131,19 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   if (!allocated) { return NULL; }
 
   return hb_arena_page_alloc(allocator->tail, required_size);
+}
+
+void hb_arena_release(hb_arena_T* allocator, void* pointer, size_t size) {
+  if (pointer == NULL || size == 0) { return; }
+
+  size_t required_size = hb_arena_align_size(size, 8);
+  if (required_size > HB_ARENA_FREE_LIST_MAX_SIZE) { return; }
+
+  hb_arena_free_block_T* block = pointer;
+  hb_arena_free_block_T** free_list = &allocator->free_lists[required_size / 8 - 1];
+
+  block->next = *free_list;
+  *free_list = block;
 }
 
 size_t hb_arena_position(hb_arena_T* allocator) {
@@ -146,6 +172,8 @@ void hb_arena_reset(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
+  memset(allocator->free_lists, 0, sizeof(allocator->free_lists));
+
   hb_arena_page_T* current_page = allocator->head;
   size_t current_position = 0;
 
@@ -197,4 +225,5 @@ void hb_arena_free(hb_arena_T* allocator) {
   allocator->head = NULL;
   allocator->tail = NULL;
   allocator->default_page_size = 0;
+  memset(allocator->free_lists, 0, sizeof(allocator->free_lists));
 }
