@@ -116,9 +116,16 @@ export class Outbox {
 
   submitForm(form: HTMLFormElement): Promise<MutationResult> | null {
     const name = form.getAttribute(HERB_ATTRIBUTES.into)
-    const region = this.state.scopeFor(form)?.region
 
-    if (name === null || name === "" || !region) {
+    if (name === null || name === "") {
+      return null
+    }
+
+    // A template that declares no state has no manifest, so `scopeFor` finds nothing; the send only needs the region.
+    const placements = this.slots.placements(form)
+    const region = this.state.scopeFor(form)?.region ?? (placements.find((placement) => this.slots.slot(placement.region.file, name, placement.region.occurrence)) ?? placements[0])?.region
+
+    if (!region) {
       return null
     }
 

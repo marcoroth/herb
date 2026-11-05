@@ -105,6 +105,36 @@ describe("Outbox", () => {
     outbox.unobserve()
   })
 
+  test("a submitted form is sent from a template that declares no state", async () => {
+    document.body.innerHTML = PAGE.replace(/<template data-herb-dependencies>.*<\/template>/, "")
+    slots = new Slots()
+    slots.scan(document.body)
+    state = new State(slots, {})
+    state.adopt()
+
+    let seen: MutationRequest | null = null
+    const outbox = build((request) => {
+      seen = request
+
+      return Promise.resolve(confirmPayload("message_9", "from the server"))
+    })
+
+    outbox.observe(document)
+
+    const form = insertForm("messages")
+
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+
+    expect(document.querySelectorAll("li")).toHaveLength(2)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(seen!.url).toBe("/messages")
+    expect(document.querySelector("#message_9")?.textContent).toContain("from the server")
+
+    outbox.unobserve()
+  })
+
   test("a submitted form returns its bound states to what the server rendered", async () => {
     document.body.innerHTML = PAGE.replace(
       "</ul>",
