@@ -1513,6 +1513,13 @@ export class HerbOverlay {
     this.toggleERBOutlines(false);
     this.toggleERBHoverReveal(false);
     this.toggleTooltips(false);
+    this.toggleOutlineMetrics(false);
+    this.toggleHotReloading(false);
+    this.toggleFlashUpdates(false);
+    this.toggleSlotUpdates(false);
+    this.toggleHotReloadFlashes(false);
+    this.toggleLinter(false);
+    this.options.onRuntimePanelToggle?.(false);
 
     const toggleViewOutlinesSwitch = document.getElementById('herbToggleViewOutlines') as HTMLInputElement;
     const togglePartialOutlinesSwitch = document.getElementById('herbTogglePartialOutlines') as HTMLInputElement;
@@ -1521,6 +1528,13 @@ export class HerbOverlay {
     const toggleERBOutlinesSwitch = document.getElementById('herbToggleERBOutlines') as HTMLInputElement;
     const toggleERBHoverRevealSwitch = document.getElementById('herbToggleERBHoverReveal') as HTMLInputElement;
     const toggleTooltipsSwitch = document.getElementById('herbToggleTooltips') as HTMLInputElement;
+    const toggleOutlineMetricsSwitch = document.getElementById('herbToggleOutlineMetrics') as HTMLInputElement;
+    const toggleHotReloadingSwitch = document.getElementById('herbToggleHotReloading') as HTMLInputElement;
+    const toggleFlashUpdatesSwitch = document.getElementById('herbToggleFlashUpdates') as HTMLInputElement;
+    const toggleSlotUpdatesSwitch = document.getElementById('herbToggleSlotUpdates') as HTMLInputElement;
+    const toggleHotReloadFlashesSwitch = document.getElementById('herbToggleHotReloadFlashes') as HTMLInputElement;
+    const toggleLinterSwitch = document.getElementById('herbToggleLinter') as HTMLInputElement;
+    const toggleRuntimePanelSwitch = document.getElementById('herbToggleRuntimePanel') as HTMLInputElement;
 
     if (toggleViewOutlinesSwitch) toggleViewOutlinesSwitch.checked = false;
     if (togglePartialOutlinesSwitch) togglePartialOutlinesSwitch.checked = false;
@@ -1529,5 +1543,12 @@ export class HerbOverlay {
     if (toggleERBOutlinesSwitch) toggleERBOutlinesSwitch.checked = false;
     if (toggleERBHoverRevealSwitch) toggleERBHoverRevealSwitch.checked = false;
     if (toggleTooltipsSwitch) toggleTooltipsSwitch.checked = false;
+    if (toggleOutlineMetricsSwitch) toggleOutlineMetricsSwitch.checked = false;
+    if (toggleHotReloadingSwitch) toggleHotReloadingSwitch.checked = false;
+    if (toggleFlashUpdatesSwitch) toggleFlashUpdatesSwitch.checked = false;
+    if (toggleSlotUpdatesSwitch) toggleSlotUpdatesSwitch.checked = false;
+    if (toggleHotReloadFlashesSwitch) toggleHotReloadFlashesSwitch.checked = false;
+    if (toggleLinterSwitch) toggleLinterSwitch.checked = false;
+    if (toggleRuntimePanelSwitch) toggleRuntimePanelSwitch.checked = false;
   }
 }
