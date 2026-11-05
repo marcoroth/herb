@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
@@ -7,6 +8,7 @@ import { Linter } from "../src/linter.js"
 import { rules } from "../src/rules.js"
 
 import { ActionViewNoSilentRenderRule } from "../src/rules/actionview-no-silent-render.js"
+import { HTMLNoUnescapedEntitiesRule } from "../src/rules/html-no-unescaped-entities.js"
 
 const SILENT_RENDER = `<% render "shared/error" %>`
 
@@ -50,6 +52,20 @@ describe("framework-scoped rules", () => {
     const config = Config.fromObject({ framework: "actionview" })
 
     expect(lint(undefined, config)).toHaveLength(1)
+  })
+
+  test("parses Action View helpers when only the config names Action View", () => {
+    const source = dedent`
+      <%= javascript_tag do %>
+        if (a && b) {}
+      <% end %>
+    `
+
+    const fromContext = new Linter(Herb, [HTMLNoUnescapedEntitiesRule]).lint(source, { framework: "actionview" })
+    const fromConfig = new Linter(Herb, [HTMLNoUnescapedEntitiesRule], Config.fromObject({ framework: "actionview" })).lint(source)
+
+    expect(fromContext.offenses).toHaveLength(0)
+    expect(fromConfig.offenses).toHaveLength(0)
   })
 
   test("a rule that leaves frameworks open runs on every framework", () => {
