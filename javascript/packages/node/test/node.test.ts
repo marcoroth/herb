@@ -166,6 +166,22 @@ describe("@herb-tools/node", () => {
     expect(Herb.parse("<div>".repeat(1000), { max_errors: 5 }).errorCount).toBe(5)
   })
 
+  test("parse() uses the syntax of the given ruby_version", () => {
+    const source = "<% def greet(name,) = name %>"
+
+    expect(Herb.parse(source).options.ruby_version).toBeNull()
+    expect(Herb.parse(source).recursiveErrors()).toHaveLength(0)
+
+    const result = Herb.parse(source, { ruby_version: "3.4" })
+
+    expect(result.options.ruby_version).toBe("3.4")
+    expect(result.recursiveErrors().map(error => error.message)).toEqual(["parameter_wild_loose_comma: unexpected `,` in parameters"])
+  })
+
+  test("parse() throws for an unsupported ruby_version", () => {
+    expect(() => Herb.parse("<%= user %>", { ruby_version: "2.7" })).toThrow('ruby_version "2.7" is not supported')
+  })
+
   test("parse() tracks locations by default", () => {
     const result = Herb.parse('<div class="example">content</div>')
     const element = result.value.children[0] as any

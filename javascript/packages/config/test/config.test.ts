@@ -298,6 +298,18 @@ describe("@herb-tools/config", () => {
       expect(parsed.linter).toHaveProperty("enabled", true)
     })
 
+    test("parserOptions is empty without a parser section", () => {
+      const config = Config.fromObject({}, { projectPath: testDir })
+
+      expect(config.parserOptions).toEqual({})
+    })
+
+    test("parserOptions includes the configured ruby_version", () => {
+      const config = Config.fromObject({ parser: { ruby_version: "3.4", erb_openers: ["graphql"] } }, { projectPath: testDir })
+
+      expect(config.parserOptions).toEqual({ erb_openers: ["graphql"], ruby_version: "3.4" })
+    })
+
     test("getConfiguredSeverity returns default severity when not configured", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 

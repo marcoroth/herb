@@ -44,7 +44,12 @@ static bool should_skip_forwarding_error(
   return has_anonymous_keyword_rest;
 }
 
-static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, hb_allocator_T* allocator) {
+static void parse_erb_content_errors(
+  AST_NODE_T* erb_node,
+  const char* source,
+  const parser_options_T* parser_options,
+  hb_allocator_T* allocator
+) {
   if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
   AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
 
@@ -56,6 +61,7 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
   pm_arena_t* arena = pm_arena_new();
   pm_options_t* options = pm_options_new();
   pm_options_partial_script_set(options, true);
+  herb_prism_options_set_ruby_version(options, parser_options);
   pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) content, strlen(content), options);
 
   pm_parse(parser);
@@ -100,6 +106,7 @@ void herb_analyze_parse_errors(
   pm_arena_t* arena = pm_arena_new();
   pm_options_t* options = pm_options_new();
   pm_options_partial_script_set(options, true);
+  herb_prism_options_set_ruby_version(options, parser_options);
   pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), options);
 
   pm_parse(parser);
@@ -115,7 +122,7 @@ void herb_analyze_parse_errors(
         if (error_offset >= strlen(source) || source[error_offset] != ';') {
           AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
 
-          if (erb_node) { parse_erb_content_errors(erb_node, source, allocator); }
+          if (erb_node) { parse_erb_content_errors(erb_node, source, parser_options, allocator); }
 
           continue;
         }

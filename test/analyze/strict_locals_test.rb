@@ -391,5 +391,11 @@ module Analyze
         <%# locals: -%>
       HTML
     end
+
+    test "trailing comma in parameters produces errors before Ruby 4.1" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true, ruby_version: "4.0")
+        <%# locals: (user:,) %>
+      HTML
+    end
   end
 end

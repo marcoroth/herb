@@ -560,7 +560,7 @@ static AST_NODE_T* create_herb_state_directive_node(
 
   pm_arena_t* arena = pm_arena_new();
   pm_parser_t* parser =
-    pm_parser_new(arena, (const uint8_t*) hb_buffer_value(&synthetic), hb_buffer_length(&synthetic), NULL);
+    herb_prism_parser_new(arena, (const uint8_t*) hb_buffer_value(&synthetic), hb_buffer_length(&synthetic), options);
 
   pm_node_t* root = pm_parse(parser);
 

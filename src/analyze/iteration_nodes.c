@@ -179,7 +179,7 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
   size_t ruby_length = block_node->content->value.length;
 
   pm_arena_t* arena = pm_arena_new();
-  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) ruby_source, ruby_length, NULL);
+  pm_parser_t* parser = herb_prism_parser_new(arena, (const uint8_t*) ruby_source, ruby_length, context->options);
   pm_node_t* root = pm_parse(parser);
 
   pm_call_node_t* iteration_call = find_iteration_call(root, parser);

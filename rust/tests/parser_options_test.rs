@@ -58,3 +58,33 @@ fn test_analyze_disabled_skips_erb_node_transformation() {
   assert!(output.contains("ERBContentNode"), "Expected ERBContentNode with analyze disabled");
   assert!(!output.contains("ERBIfNode"), "Expected no ERBIfNode with analyze disabled");
 }
+
+#[test]
+fn test_ruby_version_selects_the_ruby_syntax() {
+  common::no_color();
+
+  let source = "<% def greet(name,) = name %>";
+
+  assert!(parse(source).unwrap().success());
+
+  let options = ParserOptions {
+    ruby_version: Some("3.4".to_string()),
+    ..ParserOptions::default()
+  };
+  let result = parse_with_options(source, &options).unwrap();
+  let messages: Vec<&str> = result.recursive_errors().iter().map(|error| error.message()).collect();
+
+  assert_eq!(messages, vec!["parameter_wild_loose_comma: unexpected `,` in parameters"]);
+}
+
+#[test]
+fn test_unsupported_ruby_version_is_an_error() {
+  let options = ParserOptions {
+    ruby_version: Some("2.7".to_string()),
+    ..ParserOptions::default()
+  };
+
+  let error = parse_with_options("<%= user %>", &options).err();
+
+  assert_eq!(error.as_deref(), Some("ruby_version \"2.7\" is not supported"));
+}

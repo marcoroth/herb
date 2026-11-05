@@ -759,6 +759,11 @@ parser_options:
       default: false
       description: "Whether ActionView render call detection was enabled during parsing."
 
+    - name: "ruby_version"
+      type: "string"
+      validator: "herb_ruby_version_supported"
+      description: "Ruby version whose syntax Prism parses the ERB content with, such as `\"3.4\"`. nil/null uses the latest version Prism supports."
+
     - name: "strict"
       type: "boolean"
       default: true

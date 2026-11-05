@@ -73,6 +73,7 @@ export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
 
 export const ParserConfigSchema = z.object({
   erb_openers: z.array(z.string().min(1)).optional().describe("ERB tag openers recognized in addition to the built-in ones, written without the leading `<%` (e.g., ['graphql'] makes `<%graphql ... %>` a tag whose body is not Ruby)"),
+  ruby_version: z.string().min(1).optional().describe("Ruby version whose syntax Prism parses the ERB content with (e.g., '3.4'). Defaults to the latest version Prism supports"),
 }).strict().optional()
 
 export const EngineConfigSchema = z.record(z.string(), z.unknown()).nullish()

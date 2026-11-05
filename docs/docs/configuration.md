@@ -358,6 +358,17 @@ parser:
 
 An opener ending in a letter, digit, or underscore matches only on a word boundary, so `graphql` picks up `<%graphql query %>` and leaves `<%graphql_helper %>` as ordinary Ruby. See [Parser Options](/parser-options#erb-openers) for the full behavior.
 
+### `ruby_version` <Badge type="tip" text="^0.11.2" />
+
+The Ruby version whose syntax the Ruby inside ERB tags is parsed with. By default Herb uses the newest version Prism supports, which can accept syntax that the Ruby your app runs on rejects. Set it to the version your app runs on to get the same syntax errors Ruby would report:
+
+```yaml [.herb.yml]
+parser:
+  ruby_version: "3.4"
+```
+
+Quote the version so YAML reads it as a string. The accepted values are `"3.3"`, `"3.4"`, `"4.0"` and `"4.1"`. See [Parser Options](/parser-options#ruby-version) for the full behavior.
+
 Unlike the `engine` section below, `parser` is read by every tool, since all of them have to agree on how a template is read.
 
 ## Engine Configuration <Badge type="tip" text="v0.9.0+" />

@@ -119,6 +119,27 @@ public class HerbTest {
   }
 
   @Test
+  void testParserOptionsRubyVersion() {
+    String source = "<% def greet(name,) = name %>";
+
+    ParseResult latest = Herb.parse(source);
+    ParseResult older = Herb.parse(source, ParserOptions.create().rubyVersion("3.4"));
+
+    assertEquals(0, latest.recursiveErrors().size());
+    assertEquals(1, older.recursiveErrors().size());
+  }
+
+  @Test
+  void testParserOptionsUnsupportedRubyVersion() {
+    IllegalArgumentException error = assertThrows(
+      IllegalArgumentException.class,
+      () -> Herb.parse("<%= user %>", ParserOptions.create().rubyVersion("2.7"))
+    );
+
+    assertEquals("ruby_version \"2.7\" is not supported", error.getMessage());
+  }
+
+  @Test
   void testParserOptionsTrackLocations() {
     String source = "<div class=\"example\">content</div>";
 

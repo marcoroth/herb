@@ -113,6 +113,7 @@ static pm_options_t* build_scope_options_from_context(analyze_ruby_context_T* co
 
   if (locals_count > 0) {
     options = pm_options_new();
+    herb_prism_options_set_ruby_version(options, context->options);
 
     if (pm_options_scopes_init(options, 1)) {
       pm_options_scope_t* scope = pm_options_scope_mut(options, 0);
@@ -205,8 +206,17 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
     build_scope_options_from_context(context, erb_content_offset, erb_content_offset + content_length);
 
   parse_context->arena = pm_arena_new();
-  parse_context->parser =
-    pm_parser_new(parse_context->arena, parse_context->prism_source, content_length, parse_context->options);
+  if (parse_context->options) {
+    parse_context->parser =
+      pm_parser_new(parse_context->arena, parse_context->prism_source, content_length, parse_context->options);
+  } else {
+    parse_context->parser = herb_prism_parser_new(
+      parse_context->arena,
+      parse_context->prism_source,
+      content_length,
+      context ? context->options : NULL
+    );
+  }
   parse_context->root = pm_parse(parse_context->parser);
 
   if (!parse_context->root) {

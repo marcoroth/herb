@@ -8,6 +8,7 @@
 #include "../include/parser/parser.h"
 #include "../include/prism/herb_prism_node.h"
 #include "../include/prism/prism_context.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -336,6 +337,7 @@ void herb_annotate_prism_nodes(
   context->pm_opts = pm_options_new();
   pm_options_line_set(context->pm_opts, 1);
   pm_options_partial_script_set(context->pm_opts, true);
+  herb_prism_options_set_ruby_version(context->pm_opts, options);
   context->parser =
     pm_parser_new(context->arena, (const uint8_t*) context->ruby_buf.value, context->ruby_buf.length, context->pm_opts);
   context->root = pm_parse(context->parser);
@@ -394,6 +396,7 @@ void herb_annotate_prism_nodes(
         context->structural_pm_opts = pm_options_new();
         pm_options_line_set(context->structural_pm_opts, 1);
         pm_options_partial_script_set(context->structural_pm_opts, true);
+        herb_prism_options_set_ruby_version(context->structural_pm_opts, options);
 
         context->structural_parser = pm_parser_new(
           context->structural_arena,

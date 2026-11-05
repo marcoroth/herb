@@ -26,6 +26,7 @@
 #include "../include/location/location.h"
 #include "../include/location/position.h"
 #include "../include/parser/parser.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -34,8 +35,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
-  analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
+static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source, const parser_options_T* options) {
+  analyzed_ruby_T* analyzed = init_analyzed_ruby(source, options);
 
   if (analyzed->valid) { return analyzed; }
 
@@ -62,7 +63,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     hb_string_T opening = erb_content_node->tag_opening->value;
 
     if (!erb_opening_is_custom(opening)) {
-      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
+      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value, options);
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
@@ -1002,9 +1003,10 @@ static AST_ERB_CONTENT_NODE_T* erb_content_part_node(
   token_T* tag_opening,
   token_T* content,
   token_T* tag_closing,
+  const parser_options_T* options,
   hb_allocator_T* allocator
 ) {
-  analyzed_ruby_T* analyzed = herb_analyze_ruby(content->value);
+  analyzed_ruby_T* analyzed = herb_analyze_ruby(content->value, options);
 
   position_T start_position = tag_opening ? tag_opening->location.start : content->location.start;
   position_T end_position = tag_closing ? tag_closing->location.end : content->location.end;
@@ -1024,13 +1026,18 @@ static AST_ERB_CONTENT_NODE_T* erb_content_part_node(
   );
 }
 
-static void append_control_role_parts(AST_ERB_CONTENT_NODE_T* erb_node, hb_array_T* output, hb_allocator_T* allocator) {
+static void append_control_role_parts(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  hb_array_T* output,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+) {
   token_T* tag_opening = token_copy(erb_node->tag_opening, allocator);
   token_T* content = erb_node->content;
   bool split_content = false;
 
   while (true) {
-    analyzed_ruby_T* analyzed = split_content ? herb_analyze_ruby(content->value) : erb_node->analyzed_ruby;
+    analyzed_ruby_T* analyzed = split_content ? herb_analyze_ruby(content->value, options) : erb_node->analyzed_ruby;
     uint32_t offset = 0;
     bool split = control_role_split_offset(analyzed, &offset);
 
@@ -1042,7 +1049,7 @@ static void append_control_role_parts(AST_ERB_CONTENT_NODE_T* erb_node, hb_array
 
     if (!token_split(content, offset, allocator, &head, &tail)) { break; }
 
-    hb_array_append(output, (AST_NODE_T*) erb_content_part_node(tag_opening, head, NULL, allocator));
+    hb_array_append(output, (AST_NODE_T*) erb_content_part_node(tag_opening, head, NULL, options, allocator));
 
     if (split_content) { token_free(content, allocator); }
 
@@ -1056,7 +1063,7 @@ static void append_control_role_parts(AST_ERB_CONTENT_NODE_T* erb_node, hb_array
   hb_array_append(
     output,
     (AST_NODE_T*)
-      erb_content_part_node(tag_opening, last_content, token_copy(erb_node->tag_closing, allocator), allocator)
+      erb_content_part_node(tag_opening, last_content, token_copy(erb_node->tag_closing, allocator), options, allocator)
   );
 }
 
@@ -1101,7 +1108,7 @@ static hb_array_T* split_control_role_tags(hb_array_T* array, analyze_ruby_conte
 
     AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) item;
 
-    append_control_role_parts(erb_node, split, allocator);
+    append_control_role_parts(erb_node, split, context->options, allocator);
     ast_node_free(item, allocator);
   }
 
@@ -1159,7 +1166,11 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
   return new_array;
 }
 
-static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocator_T* allocator) {
+static tag_helper_scope_T* tag_helper_scope_init(
+  const char* source,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+) {
   if (!source) { return NULL; }
 
   tag_helper_scope_T* scope = hb_allocator_alloc(allocator, sizeof(tag_helper_scope_T));
@@ -1192,6 +1203,7 @@ static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocato
   scope->arena = pm_arena_new();
   scope->options = pm_options_new();
   pm_options_partial_script_set(scope->options, true);
+  herb_prism_options_set_ruby_version(scope->options, options);
   scope->parser =
     pm_parser_new(scope->arena, (const uint8_t*) scope->buffer.value, scope->buffer.length, scope->options);
 
@@ -1260,7 +1272,7 @@ void herb_analyze_parse_tree(
   }
 
   if (options && options->action_view_helpers) {
-    context.tag_helper_scope = tag_helper_scope_init(source, allocator);
+    context.tag_helper_scope = tag_helper_scope_init(source, options, allocator);
 
     herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);
 

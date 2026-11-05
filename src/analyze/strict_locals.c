@@ -213,11 +213,11 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   if (!build_synthetic_ruby(params_open, params_length, &synthetic_buffer, allocator)) { return NULL; }
 
   pm_arena_t* arena = pm_arena_new();
-  pm_parser_t* parser = pm_parser_new(
+  pm_parser_t* parser = herb_prism_parser_new(
     arena,
     (const uint8_t*) hb_buffer_value(&synthetic_buffer),
     hb_buffer_length(&synthetic_buffer),
-    NULL
+    parser_options
   );
   pm_node_t* root = pm_parse(parser);
 

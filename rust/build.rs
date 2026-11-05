@@ -144,6 +144,7 @@ fn main() {
     .allowlist_var("ELEMENT_SOURCE_.*")
     .allowlist_var("HB_ALLOCATOR_.*")
     .allowlist_var("HERB_EXTRACT_.*")
+    .allowlist_var("HERB_PARSER_OPTIONS_.*")
     .derive_debug(true)
     .derive_default(false)
     .generate_comments(false)
