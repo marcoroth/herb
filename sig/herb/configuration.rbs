@@ -34,6 +34,14 @@ module Herb
 
     def initialize: (?untyped project_path) -> untyped
 
+    # Returns a new frozen configuration with the overrides applied, the same way `.herb.yml` is
+    # applied over the defaults, so `include` and `exclude` lists are appended to.
+    #
+    #     Herb.configuration = Herb.configuration.merge("engine" => { "debug" => true })
+    #
+    # : (Hash[untyped, untyped]) -> Configuration
+    def merge: (Hash[untyped, untyped]) -> Configuration
+
     def []: (untyped key) -> untyped
 
     def dig: (*untyped keys) -> untyped
@@ -118,6 +126,9 @@ module Herb
 
     def self.default_exclude_patterns: () -> untyped
 
+    # : (Hash[String, untyped], Hash[String, untyped]) -> Configuration
+    def with_config: (Hash[String, untyped], Hash[String, untyped]) -> Configuration
+
     private
 
     def find_config_file: () -> untyped
@@ -131,5 +142,8 @@ module Herb
     def load_user_config: () -> untyped
 
     def deep_merge: (untyped base, untyped override, ?additive_keys: untyped) -> untyped
+
+    # : (untyped) -> untyped
+    def frozen_copy: (untyped) -> untyped
   end
 end

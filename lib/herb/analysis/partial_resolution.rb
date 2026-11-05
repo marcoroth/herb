@@ -16,12 +16,12 @@ module Herb
         ".turbo_stream.herb"
       ].freeze #: Array[String]
 
-      EXTENSION_ALTERNATIVES = EXTENSIONS.map { |extension| extension.delete_prefix(".") }.join(",") #: String
+      EXTENSION_ALTERNATIVES = EXTENSIONS.map { |extension| extension.delete_prefix(".") }.join(",").freeze #: String
 
       TEMPLATE_GLOB_PATTERN = "*.{#{EXTENSION_ALTERNATIVES}}".freeze #: String
       PARTIAL_GLOB_PATTERN = "#{PARTIAL_PREFIX}#{TEMPLATE_GLOB_PATTERN}".freeze #: String
 
-      VIEW_ROOT = File.join("app", "views") #: String
+      VIEW_ROOT = File.join("app", "views").freeze #: String
 
       LAYOUTS_DIRECTORY = "layouts" #: String
       APPLICATION_LAYOUT = "application" #: String

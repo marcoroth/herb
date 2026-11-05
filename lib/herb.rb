@@ -126,13 +126,17 @@ module Herb
 
   #: () -> Array[String]
   def self.default_erb_openings
-    @default_erb_openings ||= Backend.default_erb_openings.freeze
+    DEFAULT_ERB_OPENINGS
   end
 
   def self.configuration(project_path = nil)
     require_relative "herb/configuration"
 
     @configuration ||= Configuration.load(project_path)
+  end
+
+  def self.configuration=(configuration)
+    @configuration = configuration
   end
 
   def self.configure(project_path = nil)
@@ -144,4 +148,7 @@ module Herb
   def self.reset_configuration!
     @configuration = nil
   end
+
+  DEFAULT_ERB_OPENINGS = Backend.default_erb_openings.freeze #: Array[String]
+  private_constant :DEFAULT_ERB_OPENINGS
 end

@@ -94,5 +94,7 @@ abort("could not find nodes.h (run `ruby templates/template.rb` to generate the 
 abort("could not find extension.h") unless find_header("extension.h")
 abort("could not find extension_helpers.h") unless find_header("extension_helpers.h")
 
+have_func("rb_ext_ractor_safe", "ruby.h")
+
 create_header
 create_makefile("#{extension_name}/#{extension_name}")
