@@ -84,6 +84,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         erb_openers: [],
+        ruby_version: null,
         timeout: 1000,
         max_errors: 25,
       })
@@ -132,6 +133,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         erb_openers: [],
+        ruby_version: null,
         timeout: 1000,
         max_errors: 25,
       })
@@ -158,6 +160,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         erb_openers: [],
+        ruby_version: null,
         timeout: 1000,
         max_errors: 25,
       })
@@ -184,6 +187,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         erb_openers: [],
+        ruby_version: null,
         timeout: 1000,
         max_errors: 25,
       })

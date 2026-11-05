@@ -1,5 +1,8 @@
 #include "parser_options_helpers.h"
 
+#include <cstring>
+#include <string>
+
 void herb_extract_parser_options(emscripten::val options, parser_options_T* parser_options) {
   if (options.isUndefined() || options.isNull() || options.typeOf().as<std::string>() != "object") { return; }
 
@@ -7,6 +10,29 @@ void herb_extract_parser_options(emscripten::val options, parser_options_T* pars
 <%- if field.boolean? -%>
   if (options.hasOwnProperty("<%= field.snake_case %>")) {
     parser_options-><%= field.c_name %> = options["<%= field.snake_case %>"].as<bool>();
+  }
+
+<%- elsif field.string? -%>
+  if (options.hasOwnProperty("<%= field.snake_case %>")) {
+    emscripten::val value = options["<%= field.snake_case %>"];
+
+    if (value.isString()) {
+      std::string string = value.as<std::string>();
+
+<%- if field.validator -%>
+      if (!<%= field.validator %>(string.c_str(), string.length())) {
+        emscripten::val::global("Error").new_("<%= field.snake_case %> \"" + string + "\" is not supported").throw_();
+      }
+<%- else -%>
+      if (string.length() >= HERB_PARSER_OPTIONS_STRING_CAPACITY) {
+        emscripten::val::global("Error").new_(std::string("<%= field.snake_case %> is too long")).throw_();
+      }
+<%- end -%>
+
+      memcpy(parser_options-><%= field.c_name %>, string.c_str(), string.length() + 1);
+    } else {
+      parser_options-><%= field.c_name %>[0] = '\0';
+    }
   }
 
 <%- elsif field.nullable? -%>

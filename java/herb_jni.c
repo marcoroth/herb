@@ -31,7 +31,10 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-  herb_extract_parser_options(env, options, &parser_options);
+  if (!herb_extract_parser_options(env, options, &parser_options)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
@@ -139,17 +142,18 @@ Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
     return NULL;
   }
 
-  pm_buffer_t buffer = { 0 };
-  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+  pm_buffer_t* buffer = pm_buffer_new();
+  pm_serialize(parse_result->parser, parse_result->root, buffer);
 
   jbyteArray result = NULL;
+  size_t length = pm_buffer_length(buffer);
 
-  if (buffer.length > 0) {
-    result = (*env)->NewByteArray(env, (jsize) buffer.length);
-    (*env)->SetByteArrayRegion(env, result, 0, (jsize) buffer.length, (const jbyte*) buffer.value);
+  if (length > 0) {
+    result = (*env)->NewByteArray(env, (jsize) length);
+    (*env)->SetByteArrayRegion(env, result, 0, (jsize) length, (const jbyte*) pm_buffer_value(buffer));
   }
 
-  pm_buffer_free(&buffer);
+  pm_buffer_free(buffer);
   herb_free_ruby_parse_result(parse_result);
   (*env)->ReleaseStringUTFChars(env, source, src);
 

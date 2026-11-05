@@ -25,7 +25,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "items"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── statements:
         │       │   └── @ StatementsNode (location: (1:27)-(1:31))
         │       │       └── body: (1 item)
@@ -35,7 +40,11 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       ├── for_keyword_loc: (1:3)-(1:6)
         │       ├── in_keyword_loc: (1:12)-(1:14)
         │       ├── do_keyword_loc: ∅
-        │       └── end_keyword_loc: (1:37)-(1:40)
+        │       ├── end_keyword_loc: (1:37)-(1:40)
+        │       ├── for_keyword: "for"
+        │       ├── in_keyword: "in"
+        │       ├── do_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:23)-(1:34))
         │       ├── tag_opening: "<%=" (location: (1:23)-(1:26))

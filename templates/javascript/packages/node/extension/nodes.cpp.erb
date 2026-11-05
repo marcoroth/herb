@@ -89,17 +89,17 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   <%- when Herb::Template::PrismNodeField -%>
   napi_value <%= field.name %>;
   if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
-    pm_buffer_t pm_buffer = { 0 };
-    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, &pm_buffer);
+    pm_buffer_t* pm_buffer = pm_buffer_new();
+    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, pm_buffer);
 
-    if (pm_buffer.length > 0) {
+    if (pm_buffer_length(pm_buffer) > 0) {
       void* buffer_data;
-      napi_create_buffer_copy(env, pm_buffer.length, pm_buffer.value, &buffer_data, &<%= field.name %>);
+      napi_create_buffer_copy(env, pm_buffer_length(pm_buffer), pm_buffer_value(pm_buffer), &buffer_data, &<%= field.name %>);
     } else {
       napi_get_null(env, &<%= field.name %>);
     }
 
-    pm_buffer_free(&pm_buffer);
+    pm_buffer_free(pm_buffer);
   } else {
     napi_get_null(env, &<%= field.name %>);
   }

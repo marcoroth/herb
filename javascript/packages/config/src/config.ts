@@ -94,6 +94,7 @@ export type FilesConfig = {
 
 export type ParserConfig = {
   erb_openers?: string[]
+  ruby_version?: string
 }
 
 import { resolveSeverity, ALL_RULES_KEY } from "./config-schema.js"
@@ -250,14 +251,23 @@ export class Config {
     return this.config.framework
   }
 
+  get templateEngine() {
+    return this.config.template_engine
+  }
+
   get parser() {
     return this.config.parser
   }
 
   get parserOptions(): ParseOptions {
+    const options: ParseOptions = {}
     const erbOpeners = this.config.parser?.erb_openers
+    const rubyVersion = this.config.parser?.ruby_version
 
-    return erbOpeners ? { erb_openers: erbOpeners } : {}
+    if (erbOpeners) options.erb_openers = erbOpeners
+    if (rubyVersion) options.ruby_version = rubyVersion
+
+    return options
   }
 
   get linter() {

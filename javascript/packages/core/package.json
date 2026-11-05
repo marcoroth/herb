@@ -32,7 +32,7 @@
     }
   },
   "dependencies": {
-    "@ruby/prism": "^1.9.0"
+    "@ruby/prism": "^2.1.0"
   },
   "devDependencies": {},
   "files": [

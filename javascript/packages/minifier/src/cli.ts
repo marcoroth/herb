@@ -168,7 +168,7 @@ export class CLI {
         console.error(`${result.before} → ${result.after} bytes (${percentage(result.before, result.after)} smaller)`)
       }
 
-      process.exit(0)
+      return
     }
 
     const startPath = options.input || process.cwd()

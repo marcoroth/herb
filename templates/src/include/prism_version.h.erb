@@ -1,0 +1,17 @@
+<%-
+  lockfile = File.expand_path("../../../Gemfile.lock", __dir__)
+  prism_git = File.exist?(lockfile) ? File.read(lockfile).split(/\n\n+/).find { |block| block.start_with?("GIT") && block.match?(/^\s+prism \(/) } : nil
+  prism_revision = prism_git && !prism_git.match?(/^\s+tag:/) ? prism_git[/^\s+revision: (\h{7})/, 1] : nil
+-%>
+#ifndef HERB_PRISM_VERSION_H
+#define HERB_PRISM_VERSION_H
+
+#include <prism/version.h>
+
+<%- if prism_revision -%>
+#define HERB_PRISM_VERSION PRISM_VERSION "+<%= prism_revision %>"
+<%- else -%>
+#define HERB_PRISM_VERSION PRISM_VERSION
+<%- end -%>
+
+#endif

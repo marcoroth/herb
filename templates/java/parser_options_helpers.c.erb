@@ -1,7 +1,10 @@
 #include "parser_options_helpers.h"
 
-void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options) {
-  if (options == NULL) { return; }
+#include <stdio.h>
+#include <string.h>
+
+bool herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options) {
+  if (options == NULL) { return true; }
 
   jclass optionsClass = (*env)->GetObjectClass(env, options);
 <%- parser_options.extractable_fields_for(:java).each do |field| -%>
@@ -13,6 +16,42 @@ void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T*
     if (method != NULL) {
       jboolean value = (*env)->CallBooleanMethod(env, options, method);
       parser_options-><%= field.c_name %> = (value == JNI_TRUE);
+    }
+  }
+<%- elsif field.string? -%>
+  {
+    jmethodID method = (*env)->GetMethodID(env, optionsClass, "<%= field.java_getter %>", "<%= field.java_jni_signature %>");
+
+    if (method != NULL) {
+      jstring value = (jstring) (*env)->CallObjectMethod(env, options, method);
+
+      if (value == NULL) {
+        parser_options-><%= field.c_name %>[0] = '\0';
+      } else {
+        const char* string = (*env)->GetStringUTFChars(env, value, NULL);
+        size_t length = strlen(string);
+
+<%- if field.validator -%>
+        if (!<%= field.validator %>(string, length)) {
+          char message[96];
+          snprintf(message, sizeof(message), "<%= field.snake_case %> \"%.32s\" is not supported", string);
+          (*env)->ReleaseStringUTFChars(env, value, string);
+          (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/IllegalArgumentException"), message);
+
+          return false;
+        }
+<%- else -%>
+        if (length >= HERB_PARSER_OPTIONS_STRING_CAPACITY) {
+          (*env)->ReleaseStringUTFChars(env, value, string);
+          (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/IllegalArgumentException"), "<%= field.snake_case %> is too long");
+
+          return false;
+        }
+<%- end -%>
+
+        memcpy(parser_options-><%= field.c_name %>, string, length + 1);
+        (*env)->ReleaseStringUTFChars(env, value, string);
+      }
     }
   }
 <%- elsif field.nullable? -%>
@@ -42,4 +81,6 @@ void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T*
   }
 <%- end -%>
 <%- end -%>
+
+  return true;
 }

@@ -7,9 +7,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define HERB_PARSER_OPTIONS_STRING_CAPACITY 16
+
 typedef struct PARSER_OPTIONS_STRUCT {
 <%- parser_options.all_c_fields.each do |field| -%>
+<%- if field.string? -%>
+  char <%= field.c_name %>[HERB_PARSER_OPTIONS_STRING_CAPACITY];
+<%- else -%>
   <%= field.c_type %> <%= field.c_name %>;
+<%- end -%>
 <%- if field.string_array? -%>
   size_t <%= field.count_name %>;
 <%- end -%>
@@ -17,5 +23,9 @@ typedef struct PARSER_OPTIONS_STRUCT {
 } parser_options_T;
 
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+<%- parser_options.all_c_fields.select(&:validator).each do |field| -%>
+
+bool <%= field.validator %>(const char* value, size_t length);
+<%- end -%>
 
 #endif

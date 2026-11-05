@@ -49,15 +49,15 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
   <%- elsif field.is_a?(Herb::Template::PrismNodeField) -%>
   jbyteArray <%= field.name %>;
   if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
-    pm_buffer_t pm_buffer = { 0 };
-    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, &pm_buffer);
-    if (pm_buffer.length > 0) {
-      <%= field.name %> = (*env)->NewByteArray(env, (jsize)pm_buffer.length);
-      (*env)->SetByteArrayRegion(env, <%= field.name %>, 0, (jsize)pm_buffer.length, (const jbyte*)pm_buffer.value);
+    pm_buffer_t* pm_buffer = pm_buffer_new();
+    herb_prism_node_serialize(<%= node.human %>-><%= field.name %>, pm_buffer);
+    if (pm_buffer_length(pm_buffer) > 0) {
+      <%= field.name %> = (*env)->NewByteArray(env, (jsize)pm_buffer_length(pm_buffer));
+      (*env)->SetByteArrayRegion(env, <%= field.name %>, 0, (jsize)pm_buffer_length(pm_buffer), (const jbyte*)pm_buffer_value(pm_buffer));
     } else {
       <%= field.name %> = NULL;
     }
-    pm_buffer_free(&pm_buffer);
+    pm_buffer_free(pm_buffer);
   } else {
     <%= field.name %> = NULL;
   }

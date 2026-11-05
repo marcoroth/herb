@@ -55,7 +55,7 @@ module CLI
       output
         .gsub(File.realpath(@project_path), "<project>")
         .gsub(@project_path, "<project>")
-        .gsub(/v\d+\.\d+\.\d+/, "vVERSION")
+        .gsub(/v\d+\.\d+\.\d+(\+\h+)?/, "vVERSION")
         .gsub(/\d+(\.\d+)?\s*(ms|s)\b/, "<duration>")
     end
 

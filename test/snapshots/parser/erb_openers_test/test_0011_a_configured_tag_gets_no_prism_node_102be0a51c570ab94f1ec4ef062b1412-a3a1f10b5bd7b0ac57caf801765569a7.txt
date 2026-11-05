@@ -33,7 +33,12 @@ options: {erb_openers: ["graphql"], prism_nodes: true}
     │           ├── arguments: ∅
     │           ├── closing_loc: ∅
     │           ├── equal_loc: ∅
-    │           └── block: ∅
+    │           ├── block: ∅
+    │           ├── call_operator: ∅
+    │           ├── message: "name"
+    │           ├── opening: ∅
+    │           ├── closing: ∅
+    │           └── equal: ∅
     │
     └── @ HTMLTextNode (location: (2:11)-(3:0))
         └── content: "\n"

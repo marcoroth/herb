@@ -25,7 +25,7 @@ expression: result.inspect()
         │       │   ├── block: nil
         │       ├── conditions: (length: 2)
         │       │   ├── @ WhenNode (location: (0,18)-(0,44))
-        │       │   │   ├── keyword_loc: (0,18)-(0,22) = "when"
+        │       │   │   ├── when_keyword_loc: (0,18)-(0,22) = "when"
         │       │   │   ├── conditions: (length: 1)
         │       │   │   │   └── @ StringNode (location: (0,23)-(0,30))
         │       │   │   │       ├── StringFlags: frozen
@@ -44,7 +44,7 @@ expression: result.inspect()
         │       │   │               ├── closing_loc: (0,43)-(0,44) = "\""
         │       │   │               └── unescaped: "Admin"
         │       │   └── @ WhenNode (location: (0,50)-(0,74))
-        │       │       ├── keyword_loc: (0,50)-(0,54) = "when"
+        │       │       ├── when_keyword_loc: (0,50)-(0,54) = "when"
         │       │       ├── conditions: (length: 1)
         │       │       │   └── @ StringNode (location: (0,55)-(0,61))
         │       │       │       ├── StringFlags: frozen

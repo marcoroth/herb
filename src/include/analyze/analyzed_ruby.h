@@ -3,6 +3,7 @@
 
 #include "../lib/hb_array.h"
 #include "../lib/hb_string.h"
+#include "../parser/parser_options.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -30,7 +31,8 @@ typedef enum {
 } control_type_t;
 
 typedef struct ANALYZED_RUBY_STRUCT {
-  pm_parser_t parser;
+  pm_arena_t* arena;
+  pm_parser_t* parser;
   pm_node_t* root;
   bool valid;
   bool parsed;
@@ -58,7 +60,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool control_type_detected;
 } analyzed_ruby_T;
 
-analyzed_ruby_T* init_analyzed_ruby(hb_string_T source);
+analyzed_ruby_T* init_analyzed_ruby(hb_string_T source, const parser_options_T* options);
 void free_analyzed_ruby(analyzed_ruby_T* analyzed);
 hb_string_T erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed);
 

@@ -7,8 +7,38 @@
 #include "../lib/hb_allocator.h"
 #include "../location/location.h"
 #include "../location/position.h"
+#include "../parser/parser_options.h"
 
 #include <prism.h>
+
+static inline bool herb_prism_location_present(pm_location_t location) {
+  return location.length > 0;
+}
+
+static inline bool herb_prism_location_assigned(pm_location_t location) {
+  return location.start != 0 || location.length != 0;
+}
+
+static inline uint32_t herb_prism_location_end(pm_location_t location) {
+  return location.start + location.length;
+}
+
+static inline const uint8_t* herb_prism_location_start_pointer(const uint8_t* base, pm_location_t location) {
+  return base + location.start;
+}
+
+static inline const uint8_t* herb_prism_location_end_pointer(const uint8_t* base, pm_location_t location) {
+  return base + location.start + location.length;
+}
+
+void herb_prism_options_set_ruby_version(pm_options_t* options, const parser_options_T* parser_options);
+
+pm_parser_t* herb_prism_parser_new(
+  pm_arena_t* arena,
+  const uint8_t* source,
+  size_t length,
+  const parser_options_T* parser_options
+);
 
 hb_string_T pm_error_level_to_string(pm_error_level_t level);
 

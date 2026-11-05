@@ -45,7 +45,7 @@ impl Analysis {
     let started = Instant::now();
 
     for (uri, source) in sources {
-      indexing::index_source(&mut graph, uri, source, &LanguageId::Ruby);
+      indexing::index_source(&mut graph, (*uri).into(), source, &LanguageId::Ruby);
     }
 
     Self {
@@ -303,7 +303,7 @@ impl Analysis {
 
   pub fn update_document(&mut self, uri: &str, source: &str) {
     self.graph.delete_document(uri);
-    indexing::index_source(&mut self.graph, uri, source, &LanguageId::Ruby);
+    indexing::index_source(&mut self.graph, uri.into(), source, &LanguageId::Ruby);
   }
 
   pub fn remove_document(&mut self, uri: &str) {

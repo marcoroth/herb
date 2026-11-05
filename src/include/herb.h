@@ -36,9 +36,10 @@ HERB_EXPORTED_FUNCTION const char* herb_version(void);
 HERB_EXPORTED_FUNCTION const char* herb_prism_version(void);
 
 typedef struct {
-  pm_parser_t parser;
+  pm_arena_t* arena;
+  pm_parser_t* parser;
   pm_node_t* root;
-  pm_options_t options;
+  pm_options_t* options;
 } herb_ruby_parse_result_T;
 
 HERB_EXPORTED_FUNCTION herb_ruby_parse_result_T* herb_parse_ruby(const char* source, size_t length);

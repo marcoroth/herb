@@ -1176,7 +1176,8 @@ module Herb
     end
 
     class ParserOptionField
-      attr_reader :name, :type, :default, :description, :c_name, :nullable, :null_sentinel, :ruby_unit, :default_ms, :count_name
+      attr_reader :name, :type, :default, :description, :c_name, :nullable, :null_sentinel, :ruby_unit, :default_ms, :count_name,
+                  :validator
 
       def initialize(config)
         @name = config.fetch("name")
@@ -1193,6 +1194,7 @@ module Herb
         @only = config["only"]
         @skip = config.fetch("skip", [])
         @lex = config.fetch("lex", false)
+        @validator = config["validator"]
       end
 
       def for?(language)
@@ -1215,6 +1217,10 @@ module Herb
 
       def string_array?
         @type == "string_array"
+      end
+
+      def string?
+        @type == "string"
       end
 
       def uint64?
@@ -1253,17 +1259,19 @@ module Herb
 
       def java_jni_signature
         return "()Z" if boolean?
+        return "()Ljava/lang/String;" if string?
         return "()Ljava/lang/Integer;" if nullable?
 
         "()I"
       end
 
       def ruby_constant?
-        !string_array?
+        !string_array? && !string?
       end
 
       def ruby_default
         return "[]" if string_array?
+        return "nil" if string?
         return "nil" if nullable? && @default.nil?
 
         if @ruby_unit == "seconds" && @default_ms
@@ -1290,12 +1298,14 @@ module Herb
 
       def js_default
         return "[]" if string_array?
+        return "null" if string?
         return "null" if nullable? && @default.nil?
 
         @default_ms || @default
       end
 
       def java_default
+        return "null" if string?
         return "null" if nullable? && @default.nil?
 
         @default_ms || @default
@@ -1303,6 +1313,7 @@ module Herb
 
       def rust_default
         return "None" if string_array?
+        return "None" if string?
         return "None" if nullable? && @default.nil?
 
         value = @default_ms || @default
@@ -1322,6 +1333,7 @@ module Herb
       def ruby_type
         return "bool" if boolean?
         return "Array[String]" if string_array?
+        return "String?" if string?
         return "Numeric" if @ruby_unit == "seconds"
 
         nullable? ? "Integer?" : "Integer"
@@ -1330,12 +1342,14 @@ module Herb
       def typescript_type
         return "boolean" if boolean?
         return "string[]" if string_array?
+        return "string | null" if string?
 
         nullable? ? "number | null" : "number"
       end
 
       def java_type
         return "boolean" if boolean?
+        return "String" if string?
 
         nullable? ? "Integer" : "int"
       end
@@ -1343,6 +1357,7 @@ module Herb
       def rust_type
         return "bool" if boolean?
         return "Option<Vec<String>>" if string_array?
+        return "Option<String>" if string?
 
         nullable? ? "Option<u32>" : "u32"
       end

@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "../test_helper"
-
+# TODO: Go back to `require_relative "../test_helper"` and drop the `test` alias below once https://github.com/rubocop/rubocop-ast/pull/420 is released.
+require "maxitest/autorun"
 require "rubocop"
 require_relative "../../rubocop/cop/herb/includes_assertion"
+
+Minitest::Spec::DSL.send(:alias_method, :test, :it)
 
 class IncludesAssertionCopTest < Minitest::Spec
   test "registers an offense for assert_includes" do
