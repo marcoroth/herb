@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 
-import { PartialIndex, declarationFromDocument } from "../src/partial-index"
+import { PartialIndex, declarationFromDocument, templateVariant } from "../src/partial-index"
 
 import type { PartialDeclaration } from "../src/partial-index"
 
@@ -12,6 +12,21 @@ function declaration(file: string, locals: PartialDeclaration["locals"]): Partia
 
 beforeAll(async () => {
   await Herb.load()
+})
+
+describe("templateVariant", () => {
+  test("reads the variant of a template", () => {
+    expect(templateVariant("app/views/things/show.html+phone.erb")).toBe("phone")
+    expect(templateVariant("app/views/things/_item.en.html+tablet.erb")).toBe("tablet")
+    expect(templateVariant("app\\views\\things\\show.html+phone.erb")).toBe("phone")
+  })
+
+  test("returns null without a variant", () => {
+    expect(templateVariant("app/views/things/show.html.erb")).toBeNull()
+    expect(templateVariant("app/views/things/show.html+.erb")).toBeNull()
+    expect(templateVariant("app/views/a+b/show.html.erb")).toBeNull()
+    expect(templateVariant(undefined)).toBeNull()
+  })
 })
 
 describe("PartialIndex", () => {
@@ -45,6 +60,17 @@ describe("PartialIndex", () => {
 
     expect(restored.viewRoot).toBe("app/views")
     expect(restored.size).toBe(2)
+    expect(restored.lookup("users/card", "app/views/posts/index.html.erb")?.locals).toEqual([{ name: "user", required: true }])
+  })
+
+  test("round trips its variants through its serialized form", () => {
+    const partials = new PartialIndex("app/views", new Map(index.entries()))
+
+    partials.update(declaration("app/views/users/_card.html+phone.erb", [{ name: "phone", required: true }]))
+
+    const restored = PartialIndex.from(structuredClone(partials.toJSON()))
+
+    expect(restored.lookup("users/card", "app/views/posts/index.html+phone.erb")?.locals).toEqual([{ name: "phone", required: true }])
     expect(restored.lookup("users/card", "app/views/posts/index.html.erb")?.locals).toEqual([{ name: "user", required: true }])
   })
 
@@ -114,9 +140,39 @@ describe("PartialIndex updates", () => {
   test("does not let a variant take over from the base template", () => {
     const partials = index()
 
-    expect(partials.update(declaration("app/views/users/_card.html+phone.erb", []))).toBeNull()
+    expect(partials.update(declaration("app/views/users/_card.html+phone.erb", []))).toBe("users/card")
     expect(partials.update(declaration("app/views/users/_card.en.html.erb", []))).toBeNull()
     expect(partials.lookup("users/card", "app/views/posts/index.html.erb")?.file).toBe("app/views/users/_card.html.erb")
+    expect(partials.size).toBe(1)
+  })
+
+  test("indexes a variant for callers of the same variant", () => {
+    const partials = index()
+
+    partials.update(declaration("app/views/users/_card.html+phone.erb", [{ name: "user", required: true }]))
+
+    expect(partials.lookup("users/card", "app/views/posts/index.html+phone.erb")?.file).toBe("app/views/users/_card.html+phone.erb")
+    expect(partials.lookup("users/card", "app/views/posts/index.html+tablet.erb")?.file).toBe("app/views/users/_card.html.erb")
+  })
+
+  test("prefers the html variant over the locale variant of the same variant", () => {
+    const partials = index()
+
+    partials.update(declaration("app/views/users/_card.en.html+phone.erb", []))
+    partials.update(declaration("app/views/users/_card.html+phone.erb", []))
+    partials.update(declaration("app/views/users/_card.en.html+phone.erb", []))
+
+    expect(partials.lookup("users/card", "app/views/posts/index.html+phone.erb")?.file).toBe("app/views/users/_card.html+phone.erb")
+  })
+
+  test("falls back to the base template once the variant is removed", () => {
+    const partials = index()
+
+    partials.update(declaration("app/views/users/_card.html+phone.erb", []))
+
+    expect(partials.remove("app/views/users/_card.html+phone.erb")).toBe("users/card")
+    expect(partials.lookup("users/card", "app/views/posts/index.html+phone.erb")?.file).toBe("app/views/users/_card.html.erb")
+    expect(partials.size).toBe(1)
   })
 
   test("lets the base template take over from a variant", () => {
@@ -129,15 +185,17 @@ describe("PartialIndex updates", () => {
     expect(partials.size).toBe(1)
   })
 
-  test("forgets the displaced variant when the base template takes over", () => {
+  test("keeps the displaced variant for its own callers when the base template takes over", () => {
     const partials = new PartialIndex("app/views", new Map([
       ["users/card", declaration("app/views/users/_card.html+phone.erb", [])],
     ]))
 
     partials.update(declaration("app/views/users/_card.html.erb", []))
 
-    expect(partials.remove("app/views/users/_card.html+phone.erb")).toBeNull()
     expect(partials.lookup("users/card", "app/views/posts/index.html.erb")?.file).toBe("app/views/users/_card.html.erb")
+    expect(partials.lookup("users/card", "app/views/posts/index.html+phone.erb")?.file).toBe("app/views/users/_card.html+phone.erb")
+    expect(partials.remove("app/views/users/_card.html+phone.erb")).toBe("users/card")
+    expect(partials.lookup("users/card", "app/views/posts/index.html+phone.erb")?.file).toBe("app/views/users/_card.html.erb")
   })
 
   test("removes an indexed partial", () => {

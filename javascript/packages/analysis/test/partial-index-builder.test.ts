@@ -52,6 +52,21 @@ describe("buildPartialIndex", () => {
     expect(index.lookup("users/card", "app/views/posts/index.html.erb")?.locals).toEqual([{ name: "user", required: true }])
   })
 
+  test("resolves a variant caller to the partial of the same variant", async () => {
+    const root = project({
+      "app/views/users/_card.html.erb": `<%# locals: (a:, b:) %>\n`,
+      "app/views/users/_card.html+phone.erb": `<%# locals: (a:) %>\n`,
+    })
+
+    const index = await buildPartialIndex(Herb, root)
+
+    expect(index.size).toBe(1)
+    expect(index.lookup("users/card", "app/views/users/show.html.erb")?.file).toBe("app/views/users/_card.html.erb")
+    expect(index.lookup("card", "app/views/users/show.html+phone.erb")?.file).toBe("app/views/users/_card.html+phone.erb")
+    expect(index.lookup("card", "app/views/users/show.html+phone.erb")?.locals).toEqual([{ name: "a", required: true }])
+    expect(index.lookup("card", "app/views/users/show.html+tablet.erb")?.file).toBe("app/views/users/_card.html.erb")
+  })
+
   test("falls back to a variant when there is no base template", async () => {
     const root = project({
       "app/views/users/_card.html+phone.erb": `<%# locals: (user:) %>\n`,

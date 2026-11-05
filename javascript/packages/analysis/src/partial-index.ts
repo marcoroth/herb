@@ -23,15 +23,53 @@ export interface PartialDeclaration {
   location?: CallSiteLocation
 }
 
+export type PartialVariants = Map<string, Map<string, PartialDeclaration>>
+
 export interface SerializedPartialIndex {
   viewRoot: string
   partials: Record<string, PartialDeclaration>
+  variants?: Record<string, Record<string, PartialDeclaration>>
+}
+
+const VARIANT_SEPARATOR = "+"
+
+function templateBasename(file: string): string {
+  const separated = file.replace(/\\/g, "/")
+  const separator = separated.lastIndexOf("/")
+
+  return separator === -1 ? separated : separated.slice(separator + 1)
+}
+
+export function templateVariant(file: string | undefined): string | null {
+  if (!file) return null
+
+  const base = templateBasename(file)
+  const start = base.indexOf(VARIANT_SEPARATOR)
+
+  if (start === -1) return null
+
+  const rest = base.slice(start + 1)
+  const end = rest.indexOf(".")
+  const variant = end === -1 ? rest : rest.slice(0, end)
+
+  return variant === "" ? null : variant
+}
+
+function withoutVariant(file: string, variant: string): string {
+  return templateBasename(file).replace(`${VARIANT_SEPARATOR}${variant}`, "")
+}
+
+function outranksVariant(candidate: string, incumbent: string, variant: string): boolean {
+  const candidateRank = templateRank(withoutVariant(candidate, variant))
+  const incumbentRank = templateRank(withoutVariant(incumbent, variant))
+
+  if (candidateRank !== incumbentRank) return candidateRank < incumbentRank
+
+  return candidate < incumbent
 }
 
 export function templateRank(file: string): number {
-  const separated = file.replace(/\\/g, "/")
-  const separator = separated.lastIndexOf("/")
-  const base = separator === -1 ? separated : separated.slice(separator + 1)
+  const base = templateBasename(file)
 
   const dot = base.indexOf(".")
   if (dot === -1) return VARIANT_RANK
@@ -98,22 +136,31 @@ export class PartialIndex {
   readonly viewRoot: string
 
   private readonly declarations: Map<string, PartialDeclaration>
+  private readonly variants: PartialVariants
   private readonly files: PartialPaths
   private readonly byFile: Map<string, PartialDeclaration>
 
   static from(data: SerializedPartialIndex): PartialIndex {
-    return new PartialIndex(data.viewRoot, new Map(Object.entries(data.partials)))
+    const variants: PartialVariants = new Map()
+
+    for (const [name, byVariant] of Object.entries(data.variants ?? {})) {
+      variants.set(name, new Map(Object.entries(byVariant)))
+    }
+
+    return new PartialIndex(data.viewRoot, new Map(Object.entries(data.partials)), variants)
   }
 
-  constructor(viewRoot: string, declarations: Map<string, PartialDeclaration>) {
+  constructor(viewRoot: string, declarations: Map<string, PartialDeclaration>, variants: PartialVariants = new Map()) {
     this.viewRoot = viewRoot
     this.declarations = declarations
+    this.variants = variants
     this.files = new Map()
     this.byFile = new Map()
 
     for (const [name, declaration] of declarations) {
       this.files.set(name, declaration.file)
       this.byFile.set(declaration.file, declaration)
+      this.updateVariant(name, declaration)
     }
   }
 
@@ -126,17 +173,26 @@ export class PartialIndex {
 
     if (file === null) return null
 
-    return this.byFile.get(file) ?? null
+    const declaration = this.byFile.get(file) ?? null
+    const variant = templateVariant(sourceFile)
+
+    if (variant === null) return declaration
+
+    const name = partialNameForFile(file, this.viewRoot)
+    const matching = name === null ? undefined : this.variants.get(name)?.get(variant)
+
+    return matching ?? declaration
   }
 
   update(declaration: PartialDeclaration): string | null {
     const name = partialNameForFile(declaration.file, this.viewRoot)
     if (name === null) return null
 
+    const variantChanged = this.updateVariant(name, declaration)
     const existing = this.declarations.get(name)
 
     if (existing && existing.file !== declaration.file) {
-      if (!outranksTemplate(declaration.file, existing.file)) return null
+      if (!outranksTemplate(declaration.file, existing.file)) return variantChanged ? name : null
 
       this.byFile.delete(existing.file)
     }
@@ -152,8 +208,10 @@ export class PartialIndex {
     const name = partialNameForFile(file, this.viewRoot)
     if (name === null) return null
 
+    const variantRemoved = this.removeVariant(name, file)
     const existing = this.declarations.get(name)
-    if (!existing || existing.file !== file) return null
+
+    if (!existing || existing.file !== file) return variantRemoved ? name : null
 
     this.declarations.delete(name)
     this.files.delete(name)
@@ -167,6 +225,41 @@ export class PartialIndex {
   }
 
   toJSON(): SerializedPartialIndex {
-    return { viewRoot: this.viewRoot, partials: Object.fromEntries(this.declarations) }
+    const variants: Record<string, Record<string, PartialDeclaration>> = {}
+
+    for (const [name, byVariant] of this.variants) {
+      variants[name] = Object.fromEntries(byVariant)
+    }
+
+    return { viewRoot: this.viewRoot, partials: Object.fromEntries(this.declarations), variants }
+  }
+
+  private updateVariant(name: string, declaration: PartialDeclaration): boolean {
+    const variant = templateVariant(declaration.file)
+    if (variant === null) return false
+
+    const byVariant = this.variants.get(name) ?? new Map<string, PartialDeclaration>()
+    const existing = byVariant.get(variant)
+
+    if (existing && existing.file !== declaration.file && !outranksVariant(declaration.file, existing.file, variant)) return false
+
+    byVariant.set(variant, declaration)
+    this.variants.set(name, byVariant)
+
+    return true
+  }
+
+  private removeVariant(name: string, file: string): boolean {
+    const variant = templateVariant(file)
+    if (variant === null) return false
+
+    const byVariant = this.variants.get(name)
+    if (byVariant?.get(variant)?.file !== file) return false
+
+    byVariant.delete(variant)
+
+    if (byVariant.size === 0) this.variants.delete(name)
+
+    return true
   }
 }

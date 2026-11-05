@@ -209,6 +209,43 @@ describe("actionview-no-strict-locals-error", () => {
     expectNoOffenses(`<%= render "users/card" %>`, { fileName: "app/views/posts/index.html.erb" })
   })
 
+  describe("template variants", () => {
+    const variantPartials = new PartialIndex("app/views", new Map([
+      ["things/item", declaration("app/views/things/_item.html.erb", [
+        { name: "a", required: true },
+        { name: "b", required: true },
+      ])],
+    ]))
+
+    variantPartials.update(declaration("app/views/things/_item.html+phone.erb", [
+      { name: "a", required: true },
+      { name: "c", required: false },
+    ]))
+
+    const phone = { fileName: "app/views/things/show.html+phone.erb", partials: variantPartials }
+    const base = { fileName: "app/views/things/show.html.erb", partials: variantPartials }
+
+    test("checks a variant caller against the partial of the same variant", () => {
+      expectNoOffenses(`<%= render(partial: "things/item", locals: { a: 1 }) %>`, phone)
+    })
+
+    test("accepts a local only the variant partial declares", () => {
+      expectNoOffenses(`<%= render "things/item", a: 1, c: 2 %>`, phone)
+    })
+
+    test("still checks a base caller against the base partial", () => {
+      expectError("The partial `things/item` requires the `b:` local to be passed. Rails raises an `ActionView::StrictLocalsError` when a required local is missing, so add it to this `render` call.")
+
+      assertOffenses(`<%= render(partial: "things/item", locals: { a: 1 }) %>`, base)
+    })
+
+    test("checks a caller of another variant against the base partial", () => {
+      expectError("The partial `things/item` requires the `b:` local to be passed. Rails raises an `ActionView::StrictLocalsError` when a required local is missing, so add it to this `render` call.")
+
+      assertOffenses(`<%= render(partial: "things/item", locals: { a: 1 }) %>`, { ...phone, fileName: "app/views/things/show.html+tablet.erb" })
+    })
+  })
+
   describe("absolute file names", () => {
     const absolute = {
       fileName: "/Users/dev/blog/app/views/users/index.html.erb",

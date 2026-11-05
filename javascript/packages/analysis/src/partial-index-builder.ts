@@ -1,7 +1,7 @@
 import { join } from "node:path"
 import { glob } from "tinyglobby"
 import { readFileSync } from "node:fs"
-import { PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, outranksTemplate } from "./partial-index"
+import { PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, outranksTemplate, templateVariant } from "./partial-index"
 import { PARTIAL_GLOB_PATTERN, TEMPLATE_GLOB_PATTERN, isPartialPath, partialNameForFile } from "./partial-resolution"
 
 import type { HerbBackend } from "@herb-tools/core"
@@ -45,20 +45,30 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
   const viewRoot = await findViewRoot(projectPath)
   const files = await partialsIn(projectPath, viewRoot)
   const declarations = new Map<string, PartialDeclaration>()
+  const variants: PartialDeclaration[] = []
 
   for (const file of files.sort()) {
     const name = partialNameForFile(file, viewRoot)
     if (name === null) continue
 
+    const isVariant = templateVariant(file) !== null
     const existing = declarations.get(name)
-    if (existing && !outranksTemplate(file, existing.file)) continue
+    const outranks = !existing || outranksTemplate(file, existing.file)
+
+    if (!outranks && !isVariant) continue
 
     const declaration = declarationFromFile(herb, projectPath, file)
+    if (!declaration) continue
 
-    if (declaration) declarations.set(name, declaration)
+    if (outranks) declarations.set(name, declaration)
+    if (isVariant) variants.push(declaration)
   }
 
-  return new PartialIndex(viewRoot, declarations)
+  const index = new PartialIndex(viewRoot, declarations)
+
+  for (const declaration of variants) index.update(declaration)
+
+  return index
 }
 
 export function partialIndexFrom(data: SerializedPartialIndex | undefined): PartialIndex | undefined {
