@@ -78,11 +78,11 @@ module Extractor
       assert_equal "   if true  ;                       end  ;", result
     end
 
-    test "extract_ruby_inline_comment_with_newline" do
+    test "extract_ruby_trailing_comment_before_newline" do
       source = "<% if true %><% # Comment here %>\n<% end %>"
       result = Herb.extract_ruby(source, semicolons: true)
 
-      expected = "   if true  ;                    \n   end  ;"
+      expected = "   if true  ;   # Comment here  ;\n   end  ;"
       assert_equal expected, result
     end
 
@@ -91,6 +91,103 @@ module Extractor
       result = Herb.extract_ruby(source, semicolons: true)
 
       assert_equal "                    code  ;", result
+    end
+
+    test "extract_ruby_trailing_comment_before_html" do
+      result = Herb.extract_ruby("<% # test %><p>text</p>")
+
+      assert_equal "   # test  ;           ", result
+    end
+
+    test "extract_ruby_comment_before_empty_tag" do
+      result = Herb.extract_ruby("<% # test %><%  %>")
+
+      assert_equal "   # test  ;     ;", result
+    end
+
+    test "extract_ruby_comment_before_skipped_tags" do
+      cases = [
+        ["<% # test %><%# ignored %>", "   # test  ;              "],
+        ["<% # test %><%% ignored %>", "   # test  ;             ;"],
+        ["<% # test %><%herb ignored %>", "   # test  ;                ;"],
+        ["<% # test %><%# ignored %><% code %>", "                             code  ;"],
+        ["<% # test %><%% ignored %><% code %>", "                         ;   code  ;"],
+        ["<% # test %><%herb ignored %><% code %>", "                            ;   code  ;"]
+      ]
+
+      cases.each do |source, expected|
+        assert_equal expected, Herb.extract_ruby(source, erb_openers: ["herb"]), source
+      end
+    end
+
+    test "extract_ruby_comment_before_included_custom_tag" do
+      result = Herb.extract_ruby("<% # test %><%herb code %>", erb_openers: ["herb"], custom_tags: true)
+
+      assert_equal "                   code  ;", result
+    end
+
+    test "extract_ruby_comment_before_newline_inside_next_tag" do
+      result = Herb.extract_ruby("<% # test %><% \ncode %>")
+
+      assert_equal "   # test  ;   \ncode  ;", result
+    end
+
+    test "extract_ruby_comment_before_code_then_newline_inside_next_tag" do
+      result = Herb.extract_ruby("<% # test %><% code\nmore %>")
+
+      assert_equal "               code\nmore  ;", result
+    end
+
+    test "extract_ruby_comment_before_multiline_erb_comment" do
+      result = Herb.extract_ruby("<% # test %><%# ignored\n %><% code %>")
+
+      assert_equal "   # test  ;           \n      code  ;", result
+    end
+
+    test "extract_ruby_comment_before_ruby_whitespace" do
+      ["\f", "\v", "\f \t\v"].each do |whitespace|
+        source = "<% # test %><% #{whitespace}\ncode %>"
+        assert_equal "   # test  ;   #{whitespace}\ncode  ;", Herb.extract_ruby(source)
+
+        source = "<% # test %><% #{whitespace}code %>"
+        assert_equal "               #{whitespace}code  ;", Herb.extract_ruby(source)
+      end
+    end
+
+    test "extract_ruby_comment_before_multiline_skipped_custom_tag" do
+      result = Herb.extract_ruby("<% # test %><%herb ignored\n %><% code %>", erb_openers: ["herb"])
+
+      assert_equal "                             ;   code  ;", result
+    end
+
+    test "extract_ruby_trailing_comment_without_semicolons" do
+      result = Herb.extract_ruby("<% code %><% # test %>\n<% more %>", semicolons: false)
+
+      assert_equal "   code      # test   \n   more   ", result
+    end
+
+    test "extract_ruby_comment_before_code_without_semicolons" do
+      result = Herb.extract_ruby("<% # test %><% code %>", semicolons: false)
+
+      assert_equal "               code   ", result
+    end
+
+    test "extract_ruby_comments_without_preserve_positions" do
+      assert_equal " # test ", Herb.extract_ruby("<% # test %>", preserve_positions: false)
+
+      result = Herb.extract_ruby("<% # test %><% code %>", preserve_positions: false)
+
+      assert_equal " # test \n code ", result
+    end
+
+    test "extract_ruby_comments_preserve_following_statements" do
+      ["", "\n"].each do |separator|
+        source = "<% if true %><% before %><% # test %>#{separator}<% after %><% end %>"
+        result = Prism.parse(Herb.extract_ruby(source))
+
+        assert result.success?, result.errors.map(&:message).join("\n")
+        assert_equal [:before, :after], result.value.statements.body.first.statements.body.map(&:name)
+      end
     end
 
     test "extract_ruby_inline_comment_multiline" do
@@ -135,6 +232,13 @@ module Extractor
       result = Herb.extract_ruby(source, comments: true)
 
       assert_equal "  # comment   ", result
+    end
+
+    test "extract_ruby_with_ruby_comment_and_code_same_line_with_comments_included" do
+      source = "<% # test %><% code %>"
+      result = Herb.extract_ruby(source, comments: true)
+
+      assert_equal "   # test  ;   code  ;", result
     end
 
     test "extract_ruby_with_comments_and_code_same_line" do
