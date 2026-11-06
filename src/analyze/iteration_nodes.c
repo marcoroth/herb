@@ -109,11 +109,19 @@ static const char* ITERATION_METHODS[] = {
   "cycle",
 };
 
-static bool is_iteration_method(const pm_constant_t* constant) {
-  size_t count = sizeof(ITERATION_METHODS) / sizeof(ITERATION_METHODS[0]);
+static const char* ARGUMENTLESS_ITERATION_METHODS[] = {
+  "times", "each_pair", "map", "flat_map", "select", "filter", "reject", "filter_map",
+};
 
+static const char* TAG_BUILDER_ELEMENTS[] = {
+  "map",
+  "select",
+  "filter",
+};
+
+static bool constant_matches_any(const pm_constant_t* constant, const char** names, size_t count) {
   for (size_t index = 0; index < count; index++) {
-    const char* name = ITERATION_METHODS[index];
+    const char* name = names[index];
     size_t length = strlen(name);
 
     if (pm_constant_length(constant) == length && memcmp(pm_constant_start(constant), name, length) == 0) {
@@ -122,6 +130,35 @@ static bool is_iteration_method(const pm_constant_t* constant) {
   }
 
   return false;
+}
+
+static bool is_iteration_method(const pm_constant_t* constant) {
+  return constant_matches_any(constant, ITERATION_METHODS, sizeof(ITERATION_METHODS) / sizeof(ITERATION_METHODS[0]));
+}
+
+static bool rejects_call_arguments(const pm_constant_t* constant) {
+  return constant_matches_any(
+    constant,
+    ARGUMENTLESS_ITERATION_METHODS,
+    sizeof(ARGUMENTLESS_ITERATION_METHODS) / sizeof(ARGUMENTLESS_ITERATION_METHODS[0])
+  );
+}
+
+static bool is_tag_builder_element(const pm_constant_t* constant) {
+  return constant_matches_any(
+    constant,
+    TAG_BUILDER_ELEMENTS,
+    sizeof(TAG_BUILDER_ELEMENTS) / sizeof(TAG_BUILDER_ELEMENTS[0])
+  );
+}
+
+static bool has_tag_builder_receiver(const pm_call_node_t* call, const pm_parser_t* parser) {
+  if (call->receiver->type != PM_CALL_NODE) { return false; }
+
+  const pm_call_node_t* receiver = (const pm_call_node_t*) call->receiver;
+  const pm_constant_t* constant = pm_parser_constant(parser, receiver->name);
+
+  return constant && pm_constant_length(constant) == 3 && memcmp(pm_constant_start(constant), "tag", 3) == 0;
 }
 
 static bool is_iteration_call(const pm_call_node_t* call, const pm_parser_t* parser) {
@@ -133,8 +170,11 @@ static bool is_iteration_call(const pm_call_node_t* call, const pm_parser_t* par
   const pm_constant_t* constant = pm_parser_constant(parser, name_id);
 
   if (!constant) { return false; }
+  if (!is_iteration_method(constant)) { return false; }
+  if (call->arguments != NULL && rejects_call_arguments(constant)) { return false; }
+  if (is_tag_builder_element(constant) && has_tag_builder_receiver(call, parser)) { return false; }
 
-  return is_iteration_method(constant);
+  return true;
 }
 
 static pm_call_node_t* find_iteration_call(pm_node_t* node, const pm_parser_t* parser) {
