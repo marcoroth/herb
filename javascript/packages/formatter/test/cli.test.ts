@@ -126,7 +126,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.11.1
+      version: 0.11.2
       formatter:
         enabled: false
     `)
@@ -144,7 +144,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.11.1
+      version: 0.11.2
       formatter:
         enabled: false
     `)
@@ -538,7 +538,7 @@ describe("CLI Binary", () => {
 
     await mkdir(directory, { recursive: true })
     await writeFile(join(directory, ".herb.yml"), dedent`
-      version: 0.11.1
+      version: 0.11.2
       formatter:
         enabled: true
       files:
@@ -567,7 +567,7 @@ describe("CLI Binary", () => {
 
     await mkdir(directory, { recursive: true })
     await writeFile(join(directory, ".herb.yml"), dedent`
-      version: 0.11.1
+      version: 0.11.2
       formatter:
         enabled: true
       files:
