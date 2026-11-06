@@ -32,8 +32,6 @@ static char* extract_turbo_frame_tag_ids(
   pm_parser_t* parser,
   hb_allocator_T* allocator
 ) {
-  (void) parser;
-
   hb_buffer_T buffer;
   hb_buffer_init(&buffer, 128, allocator);
 
@@ -60,7 +58,11 @@ static char* extract_turbo_frame_tag_ids(
       pm_node_t* node = arguments->arguments.nodes[index];
 
       if (index > 0) { hb_buffer_append(&buffer, ", "); }
-      hb_buffer_append_with_length(&buffer, (const char*) node->location.start, node->location.end - node->location.start);
+      hb_buffer_append_with_length(
+        &buffer,
+        (const char*) (pm_parser_start(parser) + node->location.start),
+        node->location.length
+      );
     }
 
     hb_buffer_append(&buffer, "].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class)");
