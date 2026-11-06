@@ -58,11 +58,13 @@ static char* extract_turbo_frame_tag_ids(
       pm_node_t* node = arguments->arguments.nodes[index];
 
       if (index > 0) { hb_buffer_append(&buffer, ", "); }
+      if (node->type != PM_SPLAT_NODE) { hb_buffer_append(&buffer, "("); }
       hb_buffer_append_with_length(
         &buffer,
         (const char*) (pm_parser_start(parser) + node->location.start),
         node->location.length
       );
+      if (node->type != PM_SPLAT_NODE) { hb_buffer_append(&buffer, ")"); }
     }
 
     hb_buffer_append(&buffer, "].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class)");
@@ -86,54 +88,32 @@ char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser,
   for (size_t index = 0; index < arguments->arguments.size; index++) {
     pm_node_type_t type = arguments->arguments.nodes[index]->type;
 
-    if (type == PM_KEYWORD_HASH_NODE || type == PM_SPLAT_NODE) { break; }
+    if (type == PM_KEYWORD_HASH_NODE) { break; }
 
     positional_count++;
   }
 
   if (positional_count == 0) { return NULL; }
 
-  if (positional_count > 1) { return extract_turbo_frame_tag_ids(arguments, positional_count, parser, allocator); }
-
   pm_node_t* first_argument = arguments->arguments.nodes[0];
 
-  if (first_argument->type == PM_STRING_NODE) {
-    pm_string_node_t* string_node = (pm_string_node_t*) first_argument;
-    size_t length = pm_string_length(&string_node->unescaped);
-
-    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
-  } else if (first_argument->type == PM_SYMBOL_NODE) {
-    pm_symbol_node_t* symbol_node = (pm_symbol_node_t*) first_argument;
-    size_t length = pm_string_length(&symbol_node->unescaped);
-
-    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&symbol_node->unescaped), length);
-  }
-
-  size_t source_length = first_argument->location.length;
-  const char* source = (const char*) (pm_parser_start(parser) + first_argument->location.start);
-
-  if (first_argument->type == PM_CALL_NODE) {
+  if (positional_count == 1 && first_argument->type == PM_CALL_NODE) {
     pm_call_node_t* call = (pm_call_node_t*) first_argument;
     const pm_constant_t* call_constant = pm_parser_constant(parser, call->name);
 
-    if (call_constant && pm_constant_length(call_constant) == 6
-        && strncmp((const char*) pm_constant_start(call_constant), "dom_id", 6) == 0) {
-      return hb_allocator_strndup(allocator, source, source_length);
+    if (
+      call_constant && pm_constant_length(call_constant) == 6
+      && strncmp((const char*) pm_constant_start(call_constant), "dom_id", 6) == 0
+    ) {
+      return hb_allocator_strndup(
+        allocator,
+        (const char*) (pm_parser_start(parser) + first_argument->location.start),
+        first_argument->location.length
+      );
     }
   }
 
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, source_length + 128, allocator);
-
-  hb_buffer_append(&buffer, "(");
-  hb_buffer_append_with_length(&buffer, source, source_length);
-  hb_buffer_append(&buffer, ").then { |value| value.respond_to?(:to_key) || value.is_a?(Class)");
-  hb_buffer_append(&buffer, " ? dom_id(value) : value.to_s }");
-
-  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
-  hb_buffer_free(&buffer);
-
-  return result;
+  return extract_turbo_frame_tag_ids(arguments, positional_count, parser, allocator);
 }
 
 bool turbo_frame_tag_id_is_static(pm_call_node_t* call_node) {
@@ -144,7 +124,7 @@ bool turbo_frame_tag_id_is_static(pm_call_node_t* call_node) {
   for (size_t index = 0; index < arguments->arguments.size; index++) {
     pm_node_t* node = arguments->arguments.nodes[index];
 
-    if (node->type == PM_KEYWORD_HASH_NODE || node->type == PM_SPLAT_NODE) { break; }
+    if (node->type == PM_KEYWORD_HASH_NODE) { break; }
     if (node->type != PM_STRING_NODE && node->type != PM_SYMBOL_NODE) { return false; }
   }
 

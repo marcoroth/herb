@@ -30,7 +30,7 @@ options: {action_view_helpers: true}
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ RubyLiteralNode (location: (1:20)-(1:24))
-    │   │                       │       └── content: "(post).then { |value| value.respond_to?(:to_key) || value.is_a?(Class) ? dom_id(value) : value.to_s }"
+    │   │                       │       └── content: "[(post)].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join(\"_\") }"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true

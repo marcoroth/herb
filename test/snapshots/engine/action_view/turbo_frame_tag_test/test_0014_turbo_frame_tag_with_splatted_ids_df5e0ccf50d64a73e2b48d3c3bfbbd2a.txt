@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0014_turbo_frame_tag with splatted ids"
+input: "{source: \"<%= turbo_frame_tag *ids %>\", locals: {ids: [\"post\", 7]}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="post_7"></turbo-frame>

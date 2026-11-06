@@ -507,6 +507,30 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("turbo_frame_tag with an array id", () => {
+      expect(transform('<%= turbo_frame_tag frame_id %>')).toBe(
+        '<turbo-frame id="<%= [(frame_id)].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join("_") } %>"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with splatted ids", () => {
+      expect(transform('<%= turbo_frame_tag *ids %>')).toBe(
+        '<turbo-frame id="<%= [*ids].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join("_") } %>"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with splatted ids and block", () => {
+      expect(transform('<%= turbo_frame_tag *ids do %>Content<% end %>')).toBe(
+        '<turbo-frame id="<%= [*ids].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join("_") } %>">Content</turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with ids around a splat", () => {
+      expect(transform('<%= turbo_frame_tag "post", *ids, "notes" %>')).toBe(
+        '<turbo-frame id="<%= [("post"), *ids, ("notes")].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join("_") } %>"></turbo-frame>'
+      )
+    })
+
     test("turbo_frame_tag with src attribute", () => {
       expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray) %>')).toBe(
         '<turbo-frame id="tray" src="<%= tray_path(tray) %>"></turbo-frame>'

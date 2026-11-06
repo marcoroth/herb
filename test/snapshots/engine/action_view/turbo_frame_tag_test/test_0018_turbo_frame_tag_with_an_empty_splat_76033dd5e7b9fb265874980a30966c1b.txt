@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0018_turbo_frame_tag with an empty splat"
+input: "{source: \"<%= turbo_frame_tag *ids %>\", locals: {ids: []}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id=""></turbo-frame>

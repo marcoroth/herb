@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0021_turbo_frame_tag with a record and prefix"
+input: "{source: \"<%= turbo_frame_tag record, \\\"notes\\\" %>\", locals: {record: #<data Engine::ActionView::TurboFrameTagTest::Post id=7>}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="notes_post_7"></turbo-frame>
