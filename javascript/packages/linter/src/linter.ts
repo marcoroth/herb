@@ -619,10 +619,11 @@ export class Linter {
 
     const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
     const regularRuleInstances = regularRules.map(ruleClass => ({ ruleClass, rule: new ruleClass() }))
+    const framework = context?.framework ?? this.config?.framework
 
     const [baseParserOptions, ...sharedParserOptions] = this.parseCache.share([
       {},
-      ...regularRuleInstances.map(({ ruleClass, rule }) => this.parserOptionsFor(ruleClass, rule, context?.framework)),
+      ...regularRuleInstances.map(({ ruleClass, rule }) => this.parserOptionsFor(ruleClass, rule, framework)),
     ])
 
     const parseResult = this.parseCache.get(source, baseParserOptions)
@@ -698,7 +699,7 @@ export class Linter {
       ignoreCounterComments: context?.ignoreCounterComments,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
-      framework: context?.framework ?? this.config?.framework,
+      framework,
       templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
