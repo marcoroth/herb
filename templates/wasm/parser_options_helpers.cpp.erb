@@ -30,8 +30,6 @@ void herb_extract_parser_options(emscripten::val options, parser_options_T* pars
 <%- end -%>
 
       memcpy(parser_options-><%= field.c_name %>, string.c_str(), string.length() + 1);
-    } else {
-      parser_options-><%= field.c_name %>[0] = '\0';
     }
   }
 

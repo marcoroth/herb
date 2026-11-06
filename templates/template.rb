@@ -1271,7 +1271,7 @@ module Herb
 
       def ruby_default
         return "[]" if string_array?
-        return "nil" if string?
+        return @default.nil? ? "nil" : @default.inspect if string?
         return "nil" if nullable? && @default.nil?
 
         if @ruby_unit == "seconds" && @default_ms
@@ -1298,14 +1298,14 @@ module Herb
 
       def js_default
         return "[]" if string_array?
-        return "null" if string?
+        return @default.nil? ? "null" : @default.inspect if string?
         return "null" if nullable? && @default.nil?
 
         @default_ms || @default
       end
 
       def java_default
-        return "null" if string?
+        return @default.nil? ? "null" : @default.inspect if string?
         return "null" if nullable? && @default.nil?
 
         @default_ms || @default
@@ -1313,7 +1313,7 @@ module Herb
 
       def rust_default
         return "None" if string_array?
-        return "None" if string?
+        return @default.nil? ? "None" : "Some(#{@default.inspect}.to_string())" if string?
         return "None" if nullable? && @default.nil?
 
         value = @default_ms || @default
