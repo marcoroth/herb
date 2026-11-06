@@ -48,8 +48,6 @@ bool herb_extract_parser_options(napi_env env, napi_value options, parser_option
 <%- end -%>
 
         memcpy(parser_options-><%= field.c_name %>, value.c_str(), value.length() + 1);
-      } else {
-        parser_options-><%= field.c_name %>[0] = '\0';
       }
 <%- elsif field.nullable? -%>
       napi_valuetype property_type;

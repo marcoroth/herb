@@ -6,9 +6,10 @@ module Parser
   class RubyVersionTest < Minitest::Spec
     include SnapshotUtils
 
-    test "ruby_version is unset by default" do
-      assert_nil Herb::ParserOptions.new.ruby_version
-      assert_nil Herb.parse("<%= user %>").options.ruby_version
+    test "ruby_version defaults to the latest released Ruby" do
+      assert_equal "4.0", Herb::ParserOptions.new.ruby_version
+      assert_equal "4.0", Herb.parse("<%= user %>").options.ruby_version
+      assert_equal "4.0", Herb.parse("<%= user %>", ruby_version: nil).options.ruby_version
     end
 
     test "ruby_version reaches the parse result" do
@@ -19,8 +20,14 @@ module Parser
       assert_equal "3.4.2", Herb.parse("<%= user %>", ruby_version: "3.4.2").options.ruby_version
     end
 
-    test "Ruby 4.1 syntax is valid by default" do
+    test "Ruby 4.1 syntax is invalid by default" do
       assert_parsed_snapshot(<<~HTML)
+        <% def greet(name,) = name %>
+      HTML
+    end
+
+    test "Ruby 4.1 syntax is valid for ruby_version 4.1" do
+      assert_parsed_snapshot(<<~HTML, ruby_version: "4.1")
         <% def greet(name,) = name %>
       HTML
     end

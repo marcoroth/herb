@@ -360,7 +360,7 @@ An opener ending in a letter, digit, or underscore matches only on a word bounda
 
 ### `ruby_version` <Badge type="tip" text="^0.11.2" />
 
-The Ruby version whose syntax the Ruby inside ERB tags is parsed with. By default Herb uses the newest version Prism supports, which can accept syntax that the Ruby your app runs on rejects. Set it to the version your app runs on to get the same syntax errors Ruby would report:
+The Ruby version whose syntax the Ruby inside ERB tags is parsed with. By default Herb uses the syntax of the latest released Ruby, which can differ from the Ruby your app runs on. Set it to the version your app runs on to get the same syntax errors Ruby would report:
 
 ```yaml [.herb.yml]
 parser:

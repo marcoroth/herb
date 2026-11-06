@@ -64,8 +64,9 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
 
 fn ruby_version_buffer(ruby_version: Option<&str>) -> Result<[std::ffi::c_char; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize], String> {
   let mut buffer = [0; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize];
+  let default_options = ParserOptions::default();
 
-  let Some(version) = ruby_version else {
+  let Some(version) = ruby_version.or(default_options.ruby_version.as_deref()) else {
     return Ok(buffer);
   };
 
@@ -408,7 +409,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       deadline_ms: 0,
       erb_openers: std::ptr::null(),
       erb_opener_count: 0,
-      ruby_version: [0; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize],
+      ruby_version: ruby_version_buffer(None).expect("the default ruby_version is supported"),
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);

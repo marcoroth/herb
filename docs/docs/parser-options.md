@@ -44,7 +44,7 @@ Any option you leave out falls back to its default. `Herb.parse_file`/`Herb.pars
 | `iteration_nodes`                       | `Boolean` | `false`                                   | Represent iteration blocks (`each`, `map`, …) as dedicated nodes                                       |
 | `dot_notation_tags`                     | `Boolean` | `false`                                   | Parse dot-notation component tags (like `<Dialog.Button>`) as HTML elements                            |
 | [`erb_openers`](#erb-openers)           | `Array`   | `[]`                                      | Extra ERB tag openers to recognize, written without the leading `<%`                                   |
-| [`ruby_version`](#ruby-version)         | `String`  | `nil`/`null`                              | Ruby syntax to parse ERB content with. Defaults to the latest version Prism supports                   |
+| [`ruby_version`](#ruby-version)         | `String`  | `"4.0"`                                   | Ruby syntax to parse ERB content with. Defaults to the latest released Ruby                            |
 | `prism_nodes`                           | `Boolean` | `false`                                   | Attach the Prism node for each ERB tag's Ruby code                                                     |
 | `prism_nodes_deep`                      | `Boolean` | `false`                                   | Attach Prism nodes including their full subtrees                                                       |
 | `prism_program`                         | `Boolean` | `false`                                   | Attach the full Prism `ProgramNode` to the `DocumentNode`                                              |
@@ -330,9 +330,9 @@ Every Herb tool reads this from the `parser` section of your [configuration file
 
 ## `ruby_version` <Badge type="tip" text="^0.11.2" />
 
-**Type:** `String` **Default:** `nil`/`null`
+**Type:** `String` **Default:** `"4.0"`
 
-Herb parses the Ruby inside ERB tags with Prism, and Prism follows the syntax of the newest Ruby release it knows about unless it is told otherwise. Newer Ruby versions accept code that older ones reject. Ruby 4.1 allows a trailing comma in a parameter list, for example, so a strict locals comment written as `<%# locals: (user:,) %>` is valid for Ruby 4.1 and a syntax error for every earlier version.
+Herb parses the Ruby inside ERB tags with Prism, and by default it applies the syntax of the latest released Ruby. Newer Ruby versions accept code that older ones reject. Ruby 4.1 allows a trailing comma in a parameter list, for example, so a strict locals comment written as `<%# locals: (user:,) %>` is valid for Ruby 4.1 and a syntax error for every earlier version.
 
 `ruby_version` names the version whose syntax applies. The accepted values are `"3.3"`, `"3.4"`, `"4.0"` and `"4.1"`, and a full version such as `"3.4.2"` selects the same syntax as its minor version:
 
@@ -341,18 +341,18 @@ Herb parses the Ruby inside ERB tags with Prism, and Prism follows the syntax of
 source = "<%# locals: (user:,) %>"
 
 Herb.parse(source, strict_locals: true).errors.size
-# => 0
-
-Herb.parse(source, strict_locals: true, ruby_version: "3.4").errors.size
 # => 1
+
+Herb.parse(source, strict_locals: true, ruby_version: "4.1").errors.size
+# => 0
 ```
 
 ```js [JavaScript]
 Herb.parse(source, { strict_locals: true }).errors.length
-// => 0
-
-Herb.parse(source, { strict_locals: true, ruby_version: "3.4" }).errors.length
 // => 1
+
+Herb.parse(source, { strict_locals: true, ruby_version: "4.1" }).errors.length
+// => 0
 ```
 :::
 
