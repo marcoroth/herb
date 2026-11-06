@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0070_restarts the position of a nested unkeyed collection for every outer item"
+input: "{source: \"<% @rows.each do |row| %><ul><% row.each do |cell| %><li><%= cell %></li><% end %></ul><% end %>\", locals: {\"@rows\" => [[\"a\"], [\"b\", \"c\"]]}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:f6cc5921:0--><!--herb-slot:0:collection--><!--herb-item:0:0--><ul><!--herb-slot:1:collection--><!--herb-item:1:0--><li data-herb-slot="2:child">a</li><!--/herb-item:1--><!--/herb-slot:1--></ul><!--/herb-item:0--><!--herb-item:0:1--><ul><!--herb-slot:1:collection--><!--herb-item:1:0--><li data-herb-slot="2:child">b</li><!--/herb-item:1--><!--herb-item:1:1--><li data-herb-slot="2:child">c</li><!--/herb-item:1--><!--/herb-slot:1--></ul><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

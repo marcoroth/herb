@@ -120,7 +120,7 @@ module Engine
         )
       end
 
-      test "parks no item template for an unkeyed collection, which has no addressable items" do
+      test "parks an item template for an unkeyed collection, which is addressed by position" do
         assert_evaluated_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", { "@items" => ["a", "b"] }, options)
       end
 

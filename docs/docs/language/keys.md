@@ -14,7 +14,7 @@ A collection is a loop in a template that compiles with [slots](/language/slots)
 ```
 :::
 
-A row without a key still renders. The engine warns, and inserting or reordering a row re-renders every row after it, which loses focus, scroll position and anything typed into those rows.
+A row without a key still renders and still follows the server, matched by its position in the loop. The engine warns, and inserting or reordering a row re-renders every row after it, which loses focus, scroll position and anything typed into those rows.
 
 ## `herb:key`
 

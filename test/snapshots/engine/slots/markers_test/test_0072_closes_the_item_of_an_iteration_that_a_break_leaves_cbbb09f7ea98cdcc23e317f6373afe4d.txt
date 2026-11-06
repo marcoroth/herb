@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0072_closes the item of an iteration that a break leaves"
+input: "{source: \"<% @users.each do |user| %><% break if user[:id] == 2 %><li><%= user[:name] %></li><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}, {id: 2, name: \"Joe\"}]}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:8553f695:0--><!--herb-slot:0:collection--><!--herb-item:0:0--><li data-herb-slot="1:child">Marco</li><!--/herb-item:0--><!--herb-item:0:1--><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

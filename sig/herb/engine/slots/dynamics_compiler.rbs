@@ -305,9 +305,6 @@ module Herb
         # : (Integer) -> void
         def scope_item_end: (Integer) -> void
 
-        # : (Integer) -> bool
-        def keyed?: (Integer) -> bool
-
         # : (Integer) -> String
         def item_seeds: (Integer) -> String
 

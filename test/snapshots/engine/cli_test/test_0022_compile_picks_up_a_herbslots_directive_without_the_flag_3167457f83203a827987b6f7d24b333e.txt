@@ -3,5 +3,5 @@ source: "Engine::CLITest#test_0022_compile picks up a herb:slots directive witho
 input: "test_0022_compile picks up a herb:slots directive without the flag"
 ---
 __herb = ::Herb::Engine; _buf = ::String.new; _herb_occurrence = ((@_herb_region_occurrences ||= ::Hash.new(0))["TEMPLATE"] += 1) - 1 ; _buf << '<!--herb-region:TEMPLATE:cd04a5a2:'.freeze; _buf << __herb.h((_herb_occurrence)); _buf << '-->
-<!--herb-slot:0:collection-->'.freeze; users.each do |user|; _buf << '<li data-herb-slot="1:child">'.freeze; _buf << __herb.h((user.name)); _buf << '</li>'.freeze; end; _buf << '<!--/herb-slot:0--><!--/herb-region:TEMPLATE-->'.freeze;
+'.freeze; __herb_position0 = -1 ; _buf << '<!--herb-slot:0:collection-->'.freeze; users.each do |user|; _buf << '<!--herb-item:0:'.freeze; _buf << ::Herb::Engine.raw((__herb_position0 += 1).to_s); _buf << '-->'.freeze; begin; _buf << '<li data-herb-slot="1:child">'.freeze; _buf << __herb.h((user.name)); _buf << '</li>'.freeze; ensure; _buf << '<!--/herb-item:0-->'.freeze; end; end; _buf << '<!--/herb-slot:0--><!--/herb-region:TEMPLATE-->'.freeze;
 _buf.to_s

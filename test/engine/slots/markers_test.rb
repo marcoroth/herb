@@ -308,10 +308,10 @@ module Engine
         )
       end
 
-      test "does not delimit items of an unkeyed collection" do
+      test "delimits items of an unkeyed collection by position" do
         assert_evaluated_snapshot(
           "<% @users.each do |user| %><li><%= user[:name] %></li><% end %>",
-          { "@users" => [{ id: 1, name: "Marco" }] },
+          { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Joe" }] },
           options
         )
       end
@@ -554,6 +554,30 @@ module Engine
 
         assert_evaluated_snapshot(template, { "@c" => true, "@value" => "v" }, options)
         assert_evaluated_snapshot(template, { "@c" => false, "@value" => "v" }, options)
+      end
+
+      test "restarts the position of a nested unkeyed collection for every outer item" do
+        assert_evaluated_snapshot(
+          "<% @rows.each do |row| %><ul><% row.each do |cell| %><li><%= cell %></li><% end %></ul><% end %>",
+          { "@rows" => [["a"], ["b", "c"]] },
+          options
+        )
+      end
+
+      test "closes the item of an iteration that a next skips" do
+        assert_evaluated_snapshot(
+          "<% @users.each do |user| %><%# herb:key user[:id] %><% next if user[:id] == 1 %><li><%= user[:name] %></li><% end %>",
+          { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Joe" }] },
+          options
+        )
+      end
+
+      test "closes the item of an iteration that a break leaves" do
+        assert_evaluated_snapshot(
+          "<% @users.each do |user| %><% break if user[:id] == 2 %><li><%= user[:name] %></li><% end %>",
+          { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Joe" }] },
+          options
+        )
       end
     end
   end

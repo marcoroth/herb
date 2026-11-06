@@ -224,15 +224,38 @@ module Engine
         assert_equal({ 0 => { items: { "Ada" => { 1 => "Ada", 2 => "L" }, "Grace" => { 1 => "Grace", 2 => "H" } }, order: ["Ada", "Grace"] } }, dynamics(source, users: users))
       end
 
-      test "reports an unkeyed collection as holding nothing addressable" do
+      test "keys the items of an unkeyed collection by position" do
         source = %(<% @users.each do |u| %><%= u.firstname %><% end %>)
         users = [View::User.new("Ada", "L"), View::User.new("Grace", "H")]
 
-        assert_equal({ 0 => { items: {}, order: [] } }, dynamics(source, users: users))
+        assert_equal({ 0 => { items: { "0" => { 1 => "Ada" }, "1" => { 1 => "Grace" } }, order: ["0", "1"] } }, dynamics(source, users: users))
+      end
+
+      test "restarts the position of a nested unkeyed collection for every outer item" do
+        source = %(<% @rows.each do |row| %><p><% row.each do |cell| %><b><%= cell %></b><% end %></p><% end %>)
+
+        assert_equal(
+          {
+            0 => {
+              items: {
+                "0" => { 1 => { items: { "0" => { 2 => "a" } }, order: ["0"] } },
+                "1" => { 1 => { items: { "0" => { 2 => "b" }, "1" => { 2 => "c" } }, order: ["0", "1"] } },
+              },
+              order: ["0", "1"],
+            },
+          },
+          dynamics(source, rows: [["a"], ["b", "c"]])
+        )
+      end
+
+      test "leaves a skipped iteration out of the positions it would have held" do
+        source = %(<% @xs.each do |x| %><% next if x == "b" %><%= x %><% end %>)
+
+        assert_equal({ 0 => { items: { "0" => { 1 => "a" }, "2" => { 1 => "c" } }, order: ["0", "2"] } }, dynamics(source, xs: ["a", "b", "c"]))
       end
 
       test "treats a for loop as a collection" do
-        assert_equal({ 0 => { items: {}, order: [] } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
+        assert_equal({ 0 => { items: { "0" => { 1 => "a" }, "1" => { 1 => "b" } }, order: ["0", "1"] } }, dynamics("<% for x in @xs %><%= x %><% end %>", xs: ["a", "b"]))
       end
     end
 

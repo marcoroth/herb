@@ -66,6 +66,7 @@ module Herb
         COVERED = "@_herb_covered" #: String
         OCCURRENCES = "@_herb_region_occurrences" #: String
         OCCURRENCE = "_herb_occurrence" #: String
+        POSITION = "__herb_position" #: String
         NAME_ATTRIBUTE = "data-herb-name" #: String
         KEY_ATTRIBUTE = "herb-key" #: String
 
@@ -109,6 +110,15 @@ module Herb
 
           #: () -> bool
           def interpolated? = Types.interpolated?(type)
+
+          #: () -> bool
+          def positional? = type == :collection && key_expression.nil?
+
+          #: () -> String
+          def position_variable = "#{POSITION}#{index}"
+
+          #: () -> String?
+          def item_key = positional? ? "#{position_variable} += 1" : key_expression
         end
 
         #: (String) -> bool
@@ -1886,6 +1896,11 @@ module Herb
               wrap_items(child, slot_index, namespace)
               mark_branches(child, slot_index, namespace)
 
+              if slot_index && @slots[slot_index].positional?
+                array.insert(index, erb_code_node("#{@slots[slot_index].position_variable} = -1"))
+                index += 1
+              end
+
               if slot_index && slot_index != anchored
                 if @slots[slot_index].type == :keyed
                   park_keyed(slot_index, child, namespace)
@@ -2077,7 +2092,7 @@ module Herb
           return unless slot_index
 
           slot = @slots[slot_index]
-          return unless slot.type == :collection && slot.key_expression
+          return unless slot.type == :collection
 
           BRANCH_BODY_PROPERTIES.each do |property|
             next unless node.respond_to?(property)
@@ -2090,13 +2105,18 @@ module Herb
 
             body.unshift(
               text_node(@markers.item_open_prefix(slot_index)),
-              erb_code_node("#{@bufvar} << ::Herb::Engine.raw((#{slot.key_expression}).to_s)"),
-              text_node(@markers.item_open_suffix)
+              erb_code_node("#{@bufvar} << ::Herb::Engine.raw((#{slot.item_key}).to_s)"),
+              text_node(@markers.item_open_suffix),
+              erb_code_node("begin")
             )
 
             body.insert(3, erb_code_node(%(#{COVERED}[#{covered_key(key).inspect}] = true))) if parked && client?
 
-            body.push(text_node(@markers.item_close(slot_index)))
+            body.push(
+              erb_code_node("ensure"),
+              text_node(@markers.item_close(slot_index)),
+              erb_code_node("end")
+            )
           end
         end
 
