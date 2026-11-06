@@ -370,6 +370,7 @@ module Herb
       def in_excluded_context?
         excluded_tags = ["script", "style", "head", "title", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
+        return true if ["table", "thead", "tbody", "tfoot", "tr", "colgroup"].include?(@element_stack.last)
 
         if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) || include_debug_disable_comment?(node.content.value.strip) }
           return true
@@ -422,11 +423,7 @@ module Herb
       end
 
       def include_debug_disable_comment?(code)
-        cleaned_code = code.strip.gsub(/\s+/, " ")
-
-        return true if cleaned_code.match?(/#\s*herb:debug\sdisable\s*$/)
-
-        false
+        code.match?(/#[ \t]*herb:debug[ \t]+disable[ \t]*$/)
       end
     end
   end

@@ -64,3 +64,32 @@ Herb::Engine.new(source, visitors: [
 Without it the markers say only where in a file something was written, so a partial rendered three times puts three identical ones in the page. With it each carries the render it belongs to, which is what tells them apart.
 
 The wrapper is a real cost. A `<span>` is not valid everywhere an ERB tag can appear, `<ul>` being the obvious case, so a strict linter reading the rendered page will have findings about Herb's own instrumentation.
+
+Inside a `<table>`, the parser moves a `<span>` out of the table when it sits directly in `table`, `thead`, `tbody`, `tfoot`, `tr` or `colgroup`. Output tags directly inside those elements are not wrapped. Output tags inside a cell are.
+
+## Opting out
+
+The visitor cannot see where a partial ends up. A partial sent in a Turbo Stream lands in a `<template>`, where a `<span>` around a `<td>` makes the parser drop the `<td>`. A partial rendered into `<head>` closes the `<head>` at the first `<span>`.
+
+A `# herb:debug disable` comment on an output tag leaves that tag unwrapped. The other output tags in the template keep their spans.
+
+```erb
+<%= tag.td "Ada", id: "cell_1" # herb:debug disable %>
+```
+
+On the opening tag of a block, the comment leaves everything inside the block unwrapped.
+
+```erb
+<%= content_for :head do # herb:debug disable %>
+  <%= stylesheet_link_tag "application" %>
+<% end %>
+```
+
+Only `Herb::Engine` removes a comment at the end of a tag. Other engines such as Erubi raise a `SyntaxError`, because the comment also swallows the code they append after the tag. The parser has the same limit when another ERB tag follows on the same line and closes an enclosing `if` or block. In both cases, moving the closing `%>` to its own line ends the comment.
+
+```erb
+<% if @name %><%= tag.td @name # herb:debug disable
+%><% end %>
+```
+
+The comment has to stay inside the tag. Moving it to a separate `<%# %>` tag turns it off, so the autofix of [`erb-no-trailing-comment`](/linter/rules/erb-no-trailing-comment.md) leaves it alone.

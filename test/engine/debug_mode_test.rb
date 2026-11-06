@@ -670,6 +670,68 @@ module Engine
       assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
+    test "raw output tag with debug disable comment does NOT get debug span" do
+      assert_compiled_snapshot(%(<%== tag.td "Ada" # herb:debug disable %>), visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "output tag with debug disable comment inside an element does NOT get debug span" do
+      assert_compiled_snapshot(%(<div><%= tag.td "Ada" # herb:debug disable %></div>), visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "output tag with debug disable comment inside a conditional does NOT get debug span" do
+      template = <<~ERB
+        <% if @name %>
+          <%= tag.td @name # herb:debug disable %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "debug disable comment followed by a closing tag on its own line" do
+      template = <<~ERB
+        <% if @name %><%= tag.td @name # herb:debug disable
+        %><% end %>
+      ERB
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "debug disable comment on an earlier line of a multi-line output tag" do
+      template = <<~ERB
+        <%= tag.td "Ada", # herb:debug disable
+              id: "cell_1" %>
+      ERB
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "debug disable text inside a string keeps the debug span" do
+      assert_compiled_snapshot(%(<%= foo("# herb:debug disable") %>), visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "output tag directly inside a table row does NOT get debug span" do
+      assert_compiled_snapshot(%(<table><tr><%= @cells %></tr></table>), visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "output tag in a loop directly inside a table body does NOT get debug span" do
+      template = <<~ERB
+        <table>
+          <tbody>
+            <% @rows.each do |row| %>
+              <%= tag.tr row %>
+            <% end %>
+          </tbody>
+        </table>
+      ERB
+
+      assert_compiled_snapshot(template, visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
+    test "output tag inside a table cell keeps the debug span" do
+      assert_compiled_snapshot(%(<table><tr><td><%= @name %></td></tr></table>), visitors: [Herb::Engine::DebugVisitor.new])
+    end
+
     describe "marking which render a tag came from" do
       def visitors_for(node:, instrument: true)
         visitors = [Herb::Engine::DebugVisitor.new(node: node)]
