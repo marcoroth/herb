@@ -1,0 +1,8 @@
+---
+source: "Engine::DebugModeTest#test_0078_debug disable comment followed by a closing tag on its own line"
+input: "{source: \"<% if @name %><%= tag.td @name # herb:debug disable\\n%><% end %>\\n\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; if @name ; _buf << (tag.td @name).to_s;
+ end; _buf << '
+'.freeze;
+_buf.to_s

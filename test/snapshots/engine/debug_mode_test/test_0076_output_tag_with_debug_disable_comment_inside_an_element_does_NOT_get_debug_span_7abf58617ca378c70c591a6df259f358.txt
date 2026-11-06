@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0076_output tag with debug disable comment inside an element does NOT get debug span"
+input: "{source: \"<div><%= tag.td \\\"Ada\\\" # herb:debug disable %></div>\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">'.freeze; _buf << (tag.td "Ada").to_s; _buf << '</div>'.freeze;
+_buf.to_s

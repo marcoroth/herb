@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0072_output tag with debug disable comment does NOT get debug span"
+input: "{source: \"<%= tag.td \\\"Ada\\\", id: \\\"cell_1\\\" # herb:debug disable %>\", options: {visitors: [#<Herb::Engine::DebugVisitor>], filename: \"app/views/people/_cell.html.erb\"}}"
+---
+_buf = ::String.new; _buf << (tag.td "Ada", id: "cell_1").to_s;
+_buf.to_s

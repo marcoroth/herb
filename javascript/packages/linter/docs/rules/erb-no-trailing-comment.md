@@ -54,6 +54,8 @@ The comment still breaks the template as soon as anything else is added to that 
 
 `Herb::Engine` handles trailing comments when it compiles a template. When `template_engine` is set to `herb` in `.herb.yml`, this rule reports every trailing comment as a warning, because none of them break rendering.
 
+The [`# herb:debug disable`](/projects/engine/visitors/debug.md#opting-out) comment is only read inside the tag it applies to. When `template_engine` is set to `herb`, this rule doesn't report it. Under any other engine the comment is reported like every other trailing comment, because it still breaks rendering there, and the closing `%>` has to move to its own line.
+
 ## Autofix
 
 This rule provides an autofix that moves the comment into a separate `<%# %>` tag right after the original tag.
@@ -68,7 +70,7 @@ This rule provides an autofix that moves the comment into a separate `<%# %>` ta
 
 The autofix is **unsafe** for a `<% %>` tag that is the only thing on its line. Erubi removes the indentation and trailing newline of such a line, but it doesn't do that for a line with two tags, so the rendered whitespace changes. For every other tag the line wasn't trimmed before the fix and isn't trimmed after it, so the autofix is safe.
 
-The autofix is not applied to templates that have parse errors, such as `<% if some_method # comment %><% end %>`, or to tags that contain only a comment.
+The autofix is not applied to templates that have parse errors, such as `<% if some_method # comment %><% end %>`, to tags that contain only a comment, or to a `# herb:debug disable` comment, which stops working in a separate tag.
 
 ## Examples
 
