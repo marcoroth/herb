@@ -1,5 +1,6 @@
 import { attributeValue } from "../markup/fragments"
 import { itemStaticsKey } from "../markup/markers"
+import { withinPermanent } from "../markup/permanent"
 import { report as reportDiagnostic } from "../shared/report"
 
 import type { Slots } from "./slots"
@@ -71,6 +72,10 @@ function applySlots(slots: Slots, payload: Payload, container: SlotMap, values: 
       if (!slot) {
         defer(report, payload, index, "no-slot")
 
+        continue
+      }
+
+      if (withinPermanent(slot.anchor)) {
         continue
       }
 
