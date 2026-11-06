@@ -573,6 +573,9 @@ module Herb
         # : (untyped) -> Array[Array[Herb::AST::Node]]
         def branch_bodies: (untyped) -> Array[Array[Herb::AST::Node]]
 
+        # : (Array[untyped], Integer, Integer?) -> Integer
+        def insert_position_counter: (Array[untyped], Integer, Integer?) -> Integer
+
         # : (Herb::AST::Node, Integer?, ?Symbol) -> void
         def wrap_items: (Herb::AST::Node, Integer?, ?Symbol) -> void
 

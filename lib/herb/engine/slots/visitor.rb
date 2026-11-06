@@ -1896,10 +1896,7 @@ module Herb
               wrap_items(child, slot_index, namespace)
               mark_branches(child, slot_index, namespace)
 
-              if slot_index && @slots[slot_index].positional?
-                array.insert(index, erb_code_node("#{@slots[slot_index].position_variable} = -1"))
-                index += 1
-              end
+              index += insert_position_counter(array, index, slot_index)
 
               if slot_index && slot_index != anchored
                 if @slots[slot_index].type == :keyed
@@ -2085,6 +2082,17 @@ module Herb
           end
 
           bodies
+        end
+
+        #: (Array[untyped], Integer, Integer?) -> Integer
+        def insert_position_counter(array, index, slot_index)
+          slot = slot_index ? @slots[slot_index] : nil
+
+          return 0 unless slot&.positional?
+
+          array.insert(index, erb_code_node("#{slot.position_variable} = -1"))
+
+          1
         end
 
         #: (Herb::AST::Node, Integer?, ?Symbol) -> void
