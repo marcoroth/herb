@@ -16,6 +16,7 @@ static VALUE mAST;
 static VALUE cNode;
 <%- nodes.each do |node| -%>
 static VALUE c<%= node.name %>;
+static VALUE <%= node.human %>_type;
 <%- end -%>
 
 void rb_init_node_classes(void) {
@@ -23,6 +24,11 @@ void rb_init_node_classes(void) {
   cNode = rb_define_class_under(mAST, "Node", rb_cObject);
   <%- nodes.each do |node| -%>
   c<%= node.name %> = rb_define_class_under(mAST, "<%= node.name %>", cNode);
+  <%- end -%>
+
+  <%- nodes.each do |node| -%>
+  <%= node.human %>_type = rb_interned_string_from_hb_string(hb_string("<%= node.type %>"));
+  rb_gc_register_mark_object(<%= node.human %>_type);
   <%- end -%>
 }
 
@@ -32,12 +38,8 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
 
   AST_NODE_T* node = &<%= node.human %>->base;
 
-  static VALUE type = 0;
+  VALUE type = <%= node.human %>_type;
 
-  if (type == 0) {
-    type = rb_interned_string_from_hb_string(ast_node_type_to_string(node));
-    rb_gc_register_mark_object(type);
-  }
   VALUE location = options->track_locations ? rb_location_from_c_struct(node->location) : Qnil;
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 

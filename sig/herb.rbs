@@ -39,7 +39,11 @@ module Herb
 
   def self.configuration: (?untyped project_path) -> untyped
 
+  def self.configuration=: (untyped configuration) -> untyped
+
   def self.configure: (?untyped project_path) -> untyped
 
   def self.reset_configuration!: () -> untyped
+
+  DEFAULT_ERB_OPENINGS: Array[String]
 end
