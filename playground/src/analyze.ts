@@ -7,6 +7,7 @@ import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
 import { MinifyPrinter } from "@herb-tools/minifier"
 import { rewrite, ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 
+import type { Config } from "@herb-tools/config"
 import type { LintResult, AutofixResult, Framework } from "@herb-tools/linter"
 import type { FormatOptions } from "@herb-tools/formatter"
 import type { PrintOptions } from "@herb-tools/printer"
@@ -207,16 +208,17 @@ export async function analyze(herb: HerbBackend, source: string, options: Partia
 
   if (parsed) {
     const lintContext = { framework: linterOptions.framework }
+    const linterConfig = { parserOptions: { ruby_version: options.ruby_version } } as unknown as Config
 
     if (wants("lint")) {
       lintResult = await safeExecute<LintResult>(
-        new Promise((resolve) => resolve(new Linter(herb).lint(source, lintContext))),
+        new Promise((resolve) => resolve(new Linter(herb, undefined, linterConfig).lint(source, lintContext))),
       )
     }
 
     if (wants("autofix")) {
       try {
-        autofixResult = new Linter(herb).autofix(source, lintContext, undefined, { includeUnsafe: autofixOptions.includeUnsafe === true })
+        autofixResult = new Linter(herb, undefined, linterConfig).autofix(source, lintContext, undefined, { includeUnsafe: autofixOptions.includeUnsafe === true })
       } catch (error) {
         console.error(error)
 
