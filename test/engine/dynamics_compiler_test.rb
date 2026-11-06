@@ -43,6 +43,7 @@ module Engine
 
     CONDITIONAL = "<% if @admin %><b><%= @secret %></b><% else %><%= @public %><% end %>"
     PARTIAL_VERSION = Herb::Engine::Slots::DynamicsCompiler.new("<b><%= @inner %></b>").slot_visitor.version
+    CARD_PAYLOAD = { template: "app/views/card.html.erb", version: PARTIAL_VERSION, occurrence: 0, slots: { 0 => "inner" } }.freeze
 
     def payload(source, **assigns)
       compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
@@ -64,6 +65,22 @@ module Engine
 
     def dynamics(source, **assigns)
       payload(source, **assigns)[:slots]
+    end
+
+    class RenderingView < View
+      def initialize(rendered)
+        super()
+
+        @rendered = rendered
+      end
+
+      def render(*) = @rendered
+    end
+
+    def rendering_dynamics(source, rendered)
+      compiled = Herb::Engine::Slots::DynamicsCompiler.new(source, filename: "app/views/test.html.erb").src
+
+      RenderingView.new(rendered).instance_eval(compiled)[:slots]
     end
 
     describe "seeded item states" do
@@ -325,6 +342,46 @@ module Engine
         source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><%= f.label %><% end %><%= @after %>)
 
         assert_equal({ 2 => "Name", 3 => "A" }, dynamics(source, after: "A").slice(2, 3))
+      end
+
+      test "leaves the partial's markup out of the block that renders it" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><% end %>)
+
+        assert_equal "<form></form>", dynamics(source)[0]
+      end
+
+      test "writes a render that comes back as markup into the block" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><% end %>)
+
+        assert_equal({ 1 => "<i>markup</i>", 0 => "<form><i>markup</i></form>" }, rendering_dynamics(source, "<i>markup</i>"))
+      end
+
+      test "adds nothing to the block when a render comes back empty, as an empty collection does" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render "card" %><% end %>)
+
+        assert_equal({ 1 => nil, 0 => "<form></form>" }, rendering_dynamics(source, nil))
+      end
+
+      test "keeps the partial's own values when it takes a block" do
+        assert_equal CARD_PAYLOAD, dynamics(%(<%= render("card") do %>x<% end %>))[0]
+      end
+
+      test "keeps the partial's own values when it takes a block and escaping is on" do
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(%(<%= render("card") do %>x<% end %>), filename: "app/views/test.html.erb", escape: true).src
+
+        assert_equal CARD_PAYLOAD, View.new.instance_eval(compiled)[:slots][0]
+      end
+
+      test "keeps the partial's own values when it takes a block inside a tag that takes a block" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render("card") do %>x<% end %><% end %>)
+
+        assert_equal({ 1 => CARD_PAYLOAD, 0 => "<form></form>" }, dynamics(source))
+      end
+
+      test "writes a render with a block that comes back as markup into the block" do
+        source = %(<%= form_with(model: 1) do |f| %><%= render("card") do %>x<% end %><% end %>)
+
+        assert_equal({ 1 => "<i>markup</i>", 0 => "<form><i>markup</i></form>" }, rendering_dynamics(source, "<i>markup</i>"))
       end
     end
 
