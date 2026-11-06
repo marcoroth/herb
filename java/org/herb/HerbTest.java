@@ -122,11 +122,15 @@ public class HerbTest {
   void testParserOptionsRubyVersion() {
     String source = "<% def greet(name,) = name %>";
 
-    ParseResult latest = Herb.parse(source);
+    ParseResult byDefault = Herb.parse(source);
+    ParseResult withNull = Herb.parse(source, ParserOptions.create().rubyVersion(null));
     ParseResult older = Herb.parse(source, ParserOptions.create().rubyVersion("3.4"));
+    ParseResult newer = Herb.parse(source, ParserOptions.create().rubyVersion("4.1"));
 
-    assertEquals(0, latest.recursiveErrors().size());
+    assertEquals(1, byDefault.recursiveErrors().size());
+    assertEquals(1, withNull.recursiveErrors().size());
     assertEquals(1, older.recursiveErrors().size());
+    assertEquals(0, newer.recursiveErrors().size());
   }
 
   @Test

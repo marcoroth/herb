@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0071_closes the item of an iteration that a next skips"
+input: "{source: \"<% @users.each do |user| %><%# herb:key user[:id] %><% next if user[:id] == 1 %><li><%= user[:name] %></li><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}, {id: 2, name: \"Joe\"}]}, options: {visitors: [#<Herb::Engine::Slots::Visitor server>], filename: \"app/views/test.html.erb\"}}"
+---
+<!--herb-region:app/views/test.html.erb:76a7e9f3:0--><!--herb-slot:0:collection--><!--herb-item:0:1--><!--/herb-item:0--><!--herb-item:0:2--><li data-herb-slot="1:child">Joe</li><!--/herb-item:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

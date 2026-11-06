@@ -1,8 +1,7 @@
 ---
-source: "Parser::RubyVersionTest#test_0005_Ruby 4.1 syntax is invalid for an older ruby_version"
+source: "Parser::RubyVersionTest#test_0004_Ruby 4.1 syntax is invalid by default"
 input: |2-
 <% def greet(name,) = name %>
-options: {ruby_version: "3.4"}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 ├── errors: (1 error)

@@ -171,8 +171,10 @@ describe("@herb-tools/node-wasm", () => {
   test("parse() uses the syntax of the given ruby_version", () => {
     const source = "<% def greet(name,) = name %>"
 
-    expect(Herb.parse(source).options.ruby_version).toBeNull()
-    expect(Herb.parse(source).recursiveErrors()).toHaveLength(0)
+    expect(Herb.parse(source).options.ruby_version).toBe("4.0")
+    expect(Herb.parse(source, { ruby_version: null }).options.ruby_version).toBe("4.0")
+    expect(Herb.parse(source).recursiveErrors()).toHaveLength(1)
+    expect(Herb.parse(source, { ruby_version: "4.1" }).recursiveErrors()).toHaveLength(0)
 
     const result = Herb.parse(source, { ruby_version: "3.4" })
 

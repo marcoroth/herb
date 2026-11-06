@@ -65,7 +65,19 @@ fn test_ruby_version_selects_the_ruby_syntax() {
 
   let source = "<% def greet(name,) = name %>";
 
-  assert!(parse(source).unwrap().success());
+  assert!(!parse(source).unwrap().success());
+
+  let unset = ParserOptions {
+    ruby_version: None,
+    ..ParserOptions::default()
+  };
+  assert!(!parse_with_options(source, &unset).unwrap().success());
+
+  let latest = ParserOptions {
+    ruby_version: Some("4.1".to_string()),
+    ..ParserOptions::default()
+  };
+  assert!(parse_with_options(source, &latest).unwrap().success());
 
   let options = ParserOptions {
     ruby_version: Some("3.4".to_string()),

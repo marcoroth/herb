@@ -71,7 +71,8 @@ module Herb
       # An item is keyed by the key its template declares, through `herb-key` or `id` or a
       # `<%# herb:key %>` directive, which is what makes it survive being reordered. `Visitor`
       # decides what that key is and this evaluates it, so an item arrives under the same key the
-      # marker around it carries. A collection that declares none falls back to position.
+      # marker around it carries. A collection that declares none falls back to position, counting
+      # from the first iteration, so a change re-renders every row from the first one that differs.
       #
       # ## A partial keeps its own values
       #
@@ -94,7 +95,7 @@ module Herb
       #
       # ## Blocks
       #
-      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding the markup
       # the block rendered, because the helper wraps that output in markup of its own that only the
       # helper can produce. What the template wrote inside the block keeps its own indices alongside:
       #
@@ -104,6 +105,20 @@ module Herb
       # So a caller that can address slot 1 sends a value, and one that cannot falls back to slot 0
       # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
       # for conditionals and collections.
+      #
+      # A partial inside a block is the exception to that fallback. It keeps its own values on its slot,
+      # and the block's entry is a String that cannot hold them, so the entry leaves the partial's
+      # markup out:
+      #
+      #     <%= form_with(model: @user) do |f| %><%= render "card" %><% end %>
+      #     #=> { 0 => "<form></form>", 1 => { template: "app/views/_card.html.erb", ... } }
+      #
+      # That entry cannot stand in for the block, so it must not be written over a block holding a
+      # partial. The client never writes a block's entry while the page marks slots inside that block.
+      # It reports the block as deferred instead, even when nothing in the block changed.
+      #
+      # A render that comes back as markup, because its template is not compiled for slots, is written
+      # into the entry as usual, and the entry stays whole.
       #
       # A block yielding more than once is the exception, since one index cannot stand for the several
       # values its interior took. `each` and the other iterations are compiled as collections for that
@@ -117,6 +132,7 @@ module Herb
         ITEMS_BUFFER = "__herb_items" #: String
         KEY_BUFFER = "__herb_key" #: String
         OCCURRENCE_BUFFER = "__herb_occurrence" #: String
+        RENDERED_BUFFER = "__herb_rendered" #: String
 
         BRANCHING_NODES = [
           "AST_ERB_IF_NODE",
@@ -297,14 +313,15 @@ module Herb
 
             return super if erb_escaped?(opening)
 
-            should_escape = should_escape_output?(opening)
+            rendering = node.is_a?(Herb::AST::ERBRenderNode)
+            should_escape = !rendering && should_escape_output?(opening)
             index = claim(node)
 
             @tokens << [
               should_escape ? :expr_block_escaped : :expr_block,
               node.content.value.strip,
               current_context,
-              index
+              [index, rendering]
             ]
 
             @last_trim_consumed_newline = false
@@ -335,7 +352,9 @@ module Herb
 
                 @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
               when :expr_block, :expr_block_escaped
-                @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
+                index, rendering = extra
+
+                @engine.send(:add_dynamic_block, value, index, type == :expr_block_escaped, rendering: rendering)
               when :expr_block_end
                 @engine.send(:add_expression_block_end, value, escaped: extra)
               end
@@ -461,7 +480,7 @@ module Herb
 
           #: (Integer) -> String?
           def item_key(index)
-            @slot_visitor.slots[index]&.key_expression
+            @slot_visitor.slots[index]&.item_key
           end
 
           #: (untyped, Symbol) -> void
@@ -541,6 +560,7 @@ module Herb
         #: (String, ?Hash[Symbol, untyped]) -> void
         def initialize(input, properties = {})
           @block_depth = 0
+          @nested_renders = [] #: Array[[Integer?]?]
           @scopes = [] #: Array[Integer]
           @withheld = {} #: Hash[Integer, bool]
           @input = input
@@ -599,6 +619,8 @@ module Herb
               return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
             end
 
+            return add_block_render(index ? assignment(index, value) : value) if nested
+
             return add_block_dynamic(index ? assignment(index, value) : value)
           end
           return if index.nil?
@@ -611,18 +633,23 @@ module Herb
           @slot_visitor.slots[index]&.type == :boolean_attribute
         end
 
-        #: (String, Integer?, bool) -> void
-        def add_dynamic_block(code, index, escaped)
+        #: (String, Integer?, bool, ?rendering: bool) -> void
+        def add_dynamic_block(code, index, escaped, rendering: false)
           @_in_expression_block = true
           @_expression_block_open_paren = true
 
           opening = escaped ? "#{@escapefunc}((" : "("
+          nested_render = rendering && !@block_depth.zero?
 
           @src << if @block_depth.zero?
                     "; #{current_scope}[#{index}] = #{opening}#{code}"
+                  elsif nested_render
+                    "; #{RENDERED_BUFFER} = #{opening}#{code}"
                   else
                     "; #{@bufvar} << #{opening}#{code}"
                   end
+
+          @nested_renders.push(nested_render ? [index] : nil)
 
           open_block
         end
@@ -634,6 +661,14 @@ module Herb
           close_block
 
           super
+
+          nested_render = @nested_renders.pop
+
+          return unless nested_render
+
+          index = nested_render.first
+
+          add_block_render(index ? assignment(index, RENDERED_BUFFER) : RENDERED_BUFFER)
         end
 
         #: () -> String
@@ -738,6 +773,10 @@ module Herb
         #: (Integer) -> void
         def scope_open_collection(index)
           @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new;"
+
+          slot = @slot_visitor.slots[index]
+
+          @src << "; #{slot.position_variable} = -1;" if slot&.positional?
         end
 
         #: (Integer, ?String?) -> void
@@ -752,15 +791,10 @@ module Herb
         def scope_item_end(index)
           leave_scope(index)
 
-          return unless keyed?(index)
+          return unless @slot_visitor.slots[index]&.item_key
 
           @src << item_seeds(index)
           @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
-        end
-
-        #: (Integer) -> bool
-        def keyed?(index)
-          !@slot_visitor.slots[index]&.key_expression.nil?
         end
 
         #: (Integer) -> String
@@ -824,6 +858,11 @@ module Herb
         #: (Integer) -> bool
         def interpolated?(index)
           @slot_visitor.slots[index]&.interpolated? || false
+        end
+
+        #: (String) -> void
+        def add_block_render(value)
+          add_block_dynamic("::Hash === (#{RENDERED_BUFFER} = (#{value})) ? \"\" : #{RENDERED_BUFFER}.to_s")
         end
 
         #: (String) -> void

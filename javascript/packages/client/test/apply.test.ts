@@ -273,6 +273,22 @@ describe("applying values to a block", () => {
     expect(document.querySelector("form")!.innerHTML).toBe("<!--herb-slot:1-->Other<!--/herb-slot:1-->")
   })
 
+  test("applies a partial inside a block and leaves its markup in place", () => {
+    const index = mounted(
+      `<!--herb-region:${FILE}:cccccccc:0--><!--herb-slot:0:block--><form><!--herb-slot:1-->` +
+      `<!--herb-region:${CARD}:dddddddd:0--><p><!--herb-slot:0-->old<!--/herb-slot:0--></p><!--/herb-region:${CARD}-->` +
+      `<!--/herb-slot:1--></form><!--/herb-slot:0--><!--/herb-region:${FILE}-->`
+    )
+    const paragraph = document.querySelector("p")
+
+    const report = index.apply(payload(FILE, { 0: "<form></form>", 1: payload(CARD, { 0: "new" }, "dddddddd") }, "cccccccc"))
+
+    expect(report.applied).toBe(1)
+    expect(report.deferred).toEqual([{ file: FILE, occurrence: 0, index: 0, reason: "block" }])
+    expect(document.querySelector("p")).toBe(paragraph)
+    expect(paragraph!.textContent).toBe("new")
+  })
+
   test("falls back to the whole block when its interior is not addressable", () => {
     const index = mounted(BARE_BLOCK)
 

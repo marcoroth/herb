@@ -139,7 +139,7 @@ module Engine
       end
 
       test "an iteration is a collection whether or not its value is output" do
-        items = { items: {}, order: [] }
+        items = { items: { "0" => { 1 => "1" }, "1" => { 1 => "2" } }, order: ["0", "1"] }
 
         %(<% @items.each do |r| %><%= r %><% end %>).then do |source|
           assert_equal({ 0 => items }, evaluate(compile(source), items: [1, 2]))

@@ -25,9 +25,7 @@ bool herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T*
     if (method != NULL) {
       jstring value = (jstring) (*env)->CallObjectMethod(env, options, method);
 
-      if (value == NULL) {
-        parser_options-><%= field.c_name %>[0] = '\0';
-      } else {
+      if (value != NULL) {
         const char* string = (*env)->GetStringUTFChars(env, value, NULL);
         size_t length = strlen(string);
 

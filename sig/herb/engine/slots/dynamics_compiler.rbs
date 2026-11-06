@@ -65,7 +65,8 @@ module Herb
       # An item is keyed by the key its template declares, through `herb-key` or `id` or a
       # `<%# herb:key %>` directive, which is what makes it survive being reordered. `Visitor`
       # decides what that key is and this evaluates it, so an item arrives under the same key the
-      # marker around it carries. A collection that declares none falls back to position.
+      # marker around it carries. A collection that declares none falls back to position, counting
+      # from the first iteration, so a change re-renders every row from the first one that differs.
       #
       # ## A partial keeps its own values
       #
@@ -88,7 +89,7 @@ module Herb
       #
       # ## Blocks
       #
-      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding the markup
       # the block rendered, because the helper wraps that output in markup of its own that only the
       # helper can produce. What the template wrote inside the block keeps its own indices alongside:
       #
@@ -98,6 +99,20 @@ module Herb
       # So a caller that can address slot 1 sends a value, and one that cannot falls back to slot 0
       # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
       # for conditionals and collections.
+      #
+      # A partial inside a block is the exception to that fallback. It keeps its own values on its slot,
+      # and the block's entry is a String that cannot hold them, so the entry leaves the partial's
+      # markup out:
+      #
+      #     <%= form_with(model: @user) do |f| %><%= render "card" %><% end %>
+      #     #=> { 0 => "<form></form>", 1 => { template: "app/views/_card.html.erb", ... } }
+      #
+      # That entry cannot stand in for the block, so it must not be written over a block holding a
+      # partial. The client never writes a block's entry while the page marks slots inside that block.
+      # It reports the block as deferred instead, even when nothing in the block changed.
+      #
+      # A render that comes back as markup, because its template is not compiled for slots, is written
+      # into the entry as usual, and the entry stays whole.
       #
       # A block yielding more than once is the exception, since one index cannot stand for the several
       # values its interior took. `each` and the other iterations are compiled as collections for that
@@ -116,6 +131,8 @@ module Herb
         KEY_BUFFER: String
 
         OCCURRENCE_BUFFER: String
+
+        RENDERED_BUFFER: String
 
         BRANCHING_NODES: Array[String]
 
@@ -249,8 +266,8 @@ module Herb
         # : (Integer) -> bool
         def boolean_presence?: (Integer) -> bool
 
-        # : (String, Integer?, bool) -> void
-        def add_dynamic_block: (String, Integer?, bool) -> void
+        # : (String, Integer?, bool, ?rendering: bool) -> void
+        def add_dynamic_block: (String, Integer?, bool, ?rendering: bool) -> void
 
         # : (String, ?escaped: bool) -> void
         def add_expression_block_end: (String, ?escaped: bool) -> void
@@ -305,9 +322,6 @@ module Herb
         # : (Integer) -> void
         def scope_item_end: (Integer) -> void
 
-        # : (Integer) -> bool
-        def keyed?: (Integer) -> bool
-
         # : (Integer) -> String
         def item_seeds: (Integer) -> String
 
@@ -331,6 +345,9 @@ module Herb
 
         # : (Integer) -> bool
         def interpolated?: (Integer) -> bool
+
+        # : (String) -> void
+        def add_block_render: (String) -> void
 
         # : (String) -> void
         def add_block_dynamic: (String) -> void

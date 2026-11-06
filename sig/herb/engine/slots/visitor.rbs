@@ -57,6 +57,8 @@ module Herb
 
         OCCURRENCE: String
 
+        POSITION: String
+
         NAME_ATTRIBUTE: String
 
         KEY_ATTRIBUTE: String
@@ -121,6 +123,15 @@ module Herb
 
           # : () -> bool
           def interpolated?: () -> bool
+
+          # : () -> bool
+          def positional?: () -> bool
+
+          # : () -> String
+          def position_variable: () -> String
+
+          # : () -> String?
+          def item_key: () -> String?
         end
 
         # : (String) -> bool
@@ -561,6 +572,9 @@ module Herb
 
         # : (untyped) -> Array[Array[Herb::AST::Node]]
         def branch_bodies: (untyped) -> Array[Array[Herb::AST::Node]]
+
+        # : (Array[untyped], Integer, Integer?) -> Integer
+        def insert_position_counter: (Array[untyped], Integer, Integer?) -> Integer
 
         # : (Herb::AST::Node, Integer?, ?Symbol) -> void
         def wrap_items: (Herb::AST::Node, Integer?, ?Symbol) -> void
