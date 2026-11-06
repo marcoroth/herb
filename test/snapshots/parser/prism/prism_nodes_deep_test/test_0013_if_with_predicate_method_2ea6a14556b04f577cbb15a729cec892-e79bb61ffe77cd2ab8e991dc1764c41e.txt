@@ -25,7 +25,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       │       ├── arguments: ∅
         │       │       │       ├── closing_loc: ∅
         │       │       │       ├── equal_loc: ∅
-        │       │       │       └── block: ∅
+        │       │       │       ├── block: ∅
+        │       │       │       ├── call_operator: ∅
+        │       │       │       ├── message: "user"
+        │       │       │       ├── opening: ∅
+        │       │       │       ├── closing: ∅
+        │       │       │       └── equal: ∅
         │       │       ├── call_operator_loc: (1:10)-(1:11)
         │       │       ├── name: :admin?
         │       │       ├── message_loc: (1:11)-(1:17)
@@ -33,7 +38,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: "."
+        │       │       ├── message: "admin?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── then_keyword_loc: ∅
         │       ├── statements:
         │       │   └── @ StatementsNode (location: (1:24)-(1:33))
@@ -49,7 +59,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               │       ├── arguments: ∅
         │       │               │       ├── closing_loc: ∅
         │       │               │       ├── equal_loc: ∅
-        │       │               │       └── block: ∅
+        │       │               │       ├── block: ∅
+        │       │               │       ├── call_operator: ∅
+        │       │               │       ├── message: "user"
+        │       │               │       ├── opening: ∅
+        │       │               │       ├── closing: ∅
+        │       │               │       └── equal: ∅
         │       │               ├── call_operator_loc: (1:28)-(1:29)
         │       │               ├── name: :name
         │       │               ├── message_loc: (1:29)-(1:33)
@@ -57,9 +72,17 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │       │               ├── arguments: ∅
         │       │               ├── closing_loc: ∅
         │       │               ├── equal_loc: ∅
-        │       │               └── block: ∅
+        │       │               ├── block: ∅
+        │       │               ├── call_operator: "."
+        │       │               ├── message: "name"
+        │       │               ├── opening: ∅
+        │       │               ├── closing: ∅
+        │       │               └── equal: ∅
         │       ├── subsequent: ∅
-        │       └── end_keyword_loc: (1:39)-(1:42)
+        │       ├── end_keyword_loc: (1:39)-(1:42)
+        │       ├── if_keyword: "if"
+        │       ├── then_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:20)-(1:36))
         │       ├── tag_opening: "<%=" (location: (1:20)-(1:23))
@@ -79,7 +102,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               │       ├── arguments: ∅
         │               │       ├── closing_loc: ∅
         │               │       ├── equal_loc: ∅
-        │               │       └── block: ∅
+        │               │       ├── block: ∅
+        │               │       ├── call_operator: ∅
+        │               │       ├── message: "user"
+        │               │       ├── opening: ∅
+        │               │       ├── closing: ∅
+        │               │       └── equal: ∅
         │               ├── call_operator_loc: (1:28)-(1:29)
         │               ├── name: :name
         │               ├── message_loc: (1:29)-(1:33)
@@ -87,7 +115,12 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: "."
+        │               ├── message: "name"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         ├── subsequent: ∅
         └── end_node:

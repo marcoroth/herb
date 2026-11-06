@@ -638,6 +638,20 @@
                     />
                   </label>
 
+                  <label class="flex items-center gap-2 text-gray-300 text-sm" title="Ruby version to check the syntax inside ERB tags against">
+                    <span class="select-none">Ruby version:</span>
+                    <select
+                      data-option="ruby_version"
+                      data-action="change->playground#onOptionChange"
+                      class="px-2 py-1 text-sm rounded border-gray-600 bg-gray-700 text-gray-200 focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="3.3">3.3</option>
+                      <option value="3.4">3.4</option>
+                      <option value="4.0" selected>4.0</option>
+                      <option value="4.1">4.1</option>
+                    </select>
+                  </label>
+
                   <span class="text-gray-600 mx-1">|</span>
 
                   <button

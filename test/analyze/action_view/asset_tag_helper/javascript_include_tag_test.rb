@@ -125,5 +125,23 @@ module Analyze::ActionView::AssetTagHelper
         <%= javascript_include_tag "application", skip_pipeline: true %>
       HTML
     end
+
+    test "javascript_include_tag with splat sources is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag *scripts %>
+      HTML
+    end
+
+    test "javascript_include_tag with array source is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag %w[application admin] %>
+      HTML
+    end
+
+    test "javascript_include_tag with integrity true is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", integrity: true %>
+      HTML
+    end
   end
 end

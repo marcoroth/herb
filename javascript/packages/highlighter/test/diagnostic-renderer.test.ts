@@ -34,6 +34,30 @@ describe("DiagnosticRenderer", () => {
   })
 
   describe("renderSingle", () => {
+    it("renders the diagnostic header by default without a syntax renderer", () => {
+      const diagnostic = createDiagnostic({ location: Location.from(2, 1, 2, 4) })
+      const result = stripAnsiColors(new DiagnosticRenderer().renderSingle("view.html.erb", diagnostic, "first\n<img>\nthird", {
+        wrapLines: false,
+        suffix: "Diagnostic suffix",
+      }))
+
+      expect(result).toMatchSnapshot()
+    })
+
+    it.each([true, false])("renders a source frame without a syntax renderer or diagnostic header (optimizeHighlighting: %s)", (optimizeHighlighting) => {
+      const diagnostic = createDiagnostic({ location: Location.from(4, 1, 4, 4) })
+      const content = "first\nsecond\nthird\n<img>\nfifth\nsixth"
+      const result = stripAnsiColors(new DiagnosticRenderer().renderSingle("view.html.erb", diagnostic, content, {
+        contextLines: 1,
+        optimizeHighlighting,
+        showDiagnostic: false,
+        wrapLines: false,
+        suffix: "Diagnostic suffix",
+      }))
+
+      expect(result).toMatchSnapshot()
+    })
+
     it("should render a single error diagnostic", () => {
       const diagnostic = createDiagnostic()
       const content = dedent`

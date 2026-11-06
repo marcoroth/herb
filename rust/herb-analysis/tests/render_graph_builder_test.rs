@@ -53,6 +53,19 @@ fn collect(project: &Project, file: &str, source: &str) -> (BTreeMap<String, Vec
 }
 
 #[test]
+fn records_a_call_site_of_a_variant_template_against_the_partial_of_the_same_variant() {
+  let project = Project::new("variant_call_site");
+  project.write("app/views/posts/_row.html.erb", "<tr></tr>");
+  let phone = project.write("app/views/posts/_row.html+phone.erb", "<tr></tr>");
+  let source = r#"<%= render "posts/row" %>"#;
+  let entry = project.write("app/views/posts/index.html+phone.erb", source);
+
+  let (sites, _) = collect(&project, &entry, source);
+
+  assert_eq!(sites.keys().collect::<Vec<_>>(), vec![&phone]);
+}
+
+#[test]
 fn records_the_ancestors_a_partial_is_rendered_under() {
   let project = Project::new("ancestors");
   project.write("app/views/posts/_row.html.erb", "<tr></tr>");

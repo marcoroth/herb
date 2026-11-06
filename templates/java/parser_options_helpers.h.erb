@@ -4,7 +4,8 @@
 #include "../src/include/parser/parser_options.h"
 
 #include <jni.h>
+#include <stdbool.h>
 
-void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options);
+bool herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options);
 
 #endif

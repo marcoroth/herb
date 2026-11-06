@@ -113,5 +113,47 @@ module Analyze::ActionView::AssetTagHelper
         <%= stylesheet_link_tag "application", "admin", media: "all" %>
       HTML
     end
+
+    test "stylesheet_link_tag with :app is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with :all is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag :all, media: "all" %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with symbol source" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag :application %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with splat sources is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag *stylesheets %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with array source is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag %w[application admin] %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with integrity true is not transformed" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", integrity: true %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with integrity string" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", integrity: "sha256-abc" %>
+      HTML
+    end
   end
 end

@@ -1,5 +1,7 @@
 #include "parser_options_helpers.h"
 
+#include <string.h>
+
 void herb_extract_parser_options(VALUE options, parser_options_T* parser_options) {
   if (NIL_P(options)) { return; }
 <%- parser_options.extractable_fields_for(:ruby).each do |field| -%>
@@ -9,6 +11,31 @@ void herb_extract_parser_options(VALUE options, parser_options_T* parser_options
     VALUE value = rb_hash_lookup(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"));
     if (NIL_P(value)) { value = rb_hash_lookup(options, ID2SYM(rb_intern("<%= field.snake_case %>"))); }
     if (!NIL_P(value)) { parser_options-><%= field.c_name %> = RTEST(value); }
+  }
+<%- elsif field.string? -%>
+  {
+    VALUE value = rb_hash_lookup(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"));
+    if (NIL_P(value)) { value = rb_hash_lookup(options, ID2SYM(rb_intern("<%= field.snake_case %>"))); }
+
+    if (!NIL_P(value)) {
+      Check_Type(value, T_STRING);
+
+      const char* data = RSTRING_PTR(value);
+      size_t length = (size_t) RSTRING_LEN(value);
+
+<%- if field.validator -%>
+      if (!<%= field.validator %>(data, length)) {
+        rb_raise(rb_eArgError, "<%= field.snake_case %> %+" PRIsVALUE " is not supported", value);
+      }
+<%- else -%>
+      if (length >= HERB_PARSER_OPTIONS_STRING_CAPACITY) {
+        rb_raise(rb_eArgError, "<%= field.snake_case %> must be shorter than %d bytes", HERB_PARSER_OPTIONS_STRING_CAPACITY);
+      }
+<%- end -%>
+
+      memcpy(parser_options-><%= field.c_name %>, data, length);
+      parser_options-><%= field.c_name %>[length] = '\0';
+    }
   }
 <%- elsif field.ruby_unit == "seconds" -%>
   {
@@ -52,6 +79,12 @@ VALUE herb_build_parser_options_hash(const parser_options_T* options) {
 
     rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), <%= field.snake_case %>);
   }
+<%- elsif field.string? -%>
+  rb_hash_aset(
+    kwargs,
+    ID2SYM(rb_intern("<%= field.snake_case %>")),
+    options-><%= field.c_name %>[0] == '\0' ? Qnil : rb_utf8_str_new_cstr(options-><%= field.c_name %>)
+  );
 <%- elsif field.ruby_unit == "seconds" -%>
   rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), DBL2NUM((double) options-><%= field.c_name %> / 1000.0));
 <%- elsif field.nullable? -%>

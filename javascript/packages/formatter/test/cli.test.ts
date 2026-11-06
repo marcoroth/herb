@@ -126,7 +126,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.11.0
+      version: 0.11.1
       formatter:
         enabled: false
     `)
@@ -136,6 +136,24 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stdout).toBe(input)
     expect(result.stderr).toContain("Formatter is disabled in .herb.yml configuration.")
+  })
+
+  it("should return large stdin unchanged to a pipe when formatting is disabled", async () => {
+    const configFile = "test-dir/.herb.yml"
+    const input = '<div class="test"><div><%= user.name %></div></div>\n'.repeat(4000)
+
+    await mkdir("test-dir", { recursive: true })
+    await writeFile(configFile, dedent`
+      version: 0.11.1
+      formatter:
+        enabled: false
+    `)
+
+    const result = await execBinary(["--config-file", configFile], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout.length).toBe(input.length)
+    expect(result.stdout).toBe(input)
   })
 
   it("should format HTML/ERB from file", async () => {
@@ -520,7 +538,7 @@ describe("CLI Binary", () => {
 
     await mkdir(directory, { recursive: true })
     await writeFile(join(directory, ".herb.yml"), dedent`
-      version: 0.11.0
+      version: 0.11.1
       formatter:
         enabled: true
       files:
@@ -549,7 +567,7 @@ describe("CLI Binary", () => {
 
     await mkdir(directory, { recursive: true })
     await writeFile(join(directory, ".herb.yml"), dedent`
-      version: 0.11.0
+      version: 0.11.1
       formatter:
         enabled: true
       files:

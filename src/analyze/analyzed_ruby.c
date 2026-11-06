@@ -1,18 +1,20 @@
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/lib/hb_string.h"
+#include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
 #include <string.h>
 
-analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
+analyzed_ruby_T* init_analyzed_ruby(hb_string_T source, const parser_options_T* options) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
 
   if (!analyzed) { return NULL; }
 
-  pm_parser_init(&analyzed->parser, (const uint8_t*) source.data, source.length, NULL);
+  analyzed->arena = pm_arena_new();
+  analyzed->parser = herb_prism_parser_new(analyzed->arena, (const uint8_t*) source.data, source.length, options);
 
-  analyzed->root = pm_parse(&analyzed->parser);
-  analyzed->valid = (analyzed->parser.error_list.size == 0);
+  analyzed->root = pm_parse(analyzed->parser);
+  analyzed->valid = (pm_parser_errors_size(analyzed->parser) == 0);
   analyzed->parsed = true;
   analyzed->if_node_count = 0;
   analyzed->elsif_node_count = 0;
@@ -43,9 +45,8 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
 void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
   if (!analyzed) { return; }
 
-  if (analyzed->parsed && analyzed->root != NULL) { pm_node_destroy(&analyzed->parser, analyzed->root); }
-
-  pm_parser_free(&analyzed->parser);
+  pm_parser_free(analyzed->parser);
+  pm_arena_free(analyzed->arena);
 
   free(analyzed);
 }

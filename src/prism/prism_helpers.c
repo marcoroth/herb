@@ -7,8 +7,46 @@
 #include "../include/location/position.h"
 
 #include <prism.h>
+#include <prism/internal/comments.h>
+#include <prism/internal/parser.h>
 #include <stdlib.h>
 #include <string.h>
+
+bool herb_ruby_version_supported(const char* value, size_t length) {
+  if (value == NULL || length == 0 || length >= HERB_PARSER_OPTIONS_STRING_CAPACITY) { return false; }
+
+  pm_options_t* options = pm_options_new();
+  bool supported = pm_options_version_set(options, value, length);
+  pm_options_free(options);
+
+  return supported;
+}
+
+void herb_prism_options_set_ruby_version(pm_options_t* options, const parser_options_T* parser_options) {
+  if (options == NULL || parser_options == NULL || parser_options->ruby_version[0] == '\0') { return; }
+
+  const char* version = parser_options->ruby_version;
+  pm_options_version_set(options, version, strnlen(version, HERB_PARSER_OPTIONS_STRING_CAPACITY));
+}
+
+pm_parser_t* herb_prism_parser_new(
+  pm_arena_t* arena,
+  const uint8_t* source,
+  size_t length,
+  const parser_options_T* parser_options
+) {
+  if (parser_options == NULL || parser_options->ruby_version[0] == '\0') {
+    return pm_parser_new(arena, source, length, NULL);
+  }
+
+  pm_options_t* options = pm_options_new();
+  herb_prism_options_set_ruby_version(options, parser_options);
+
+  pm_parser_t* parser = pm_parser_new(arena, source, length, options);
+  pm_options_free(options);
+
+  return parser;
+}
 
 hb_string_T pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
@@ -25,16 +63,17 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   pm_parser_t* parser,
   hb_allocator_T* allocator
 ) {
-  size_t start_offset = (size_t) (error->location.start - parser->start);
-  size_t end_offset = (size_t) (error->location.end - parser->start);
+  (void) parser;
 
-  position_T start = position_from_source_with_offset(source, start_offset);
-  position_T end = position_from_source_with_offset(source, end_offset);
+  pm_location_t location = pm_diagnostic_location(error);
+
+  position_T start = position_from_source_with_offset(source, location.start);
+  position_T end = position_from_source_with_offset(source, herb_prism_location_end(location));
 
   return ruby_parse_error_init(
-    hb_string(error->message),
-    hb_string(pm_diagnostic_id_human(error->diag_id)),
-    pm_error_level_to_string(error->level),
+    hb_string(pm_diagnostic_message(error)),
+    hb_string(pm_diagnostic_type(error)),
+    pm_error_level_to_string(pm_diagnostic_error_level(error)),
     start,
     end,
     allocator
@@ -48,9 +87,9 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
   hb_allocator_T* allocator
 ) {
   return ruby_parse_error_init(
-    hb_string(error->message),
-    hb_string(pm_diagnostic_id_human(error->diag_id)),
-    pm_error_level_to_string(error->level),
+    hb_string(pm_diagnostic_message(error)),
+    hb_string(pm_diagnostic_type(error)),
+    pm_error_level_to_string(pm_diagnostic_error_level(error)),
     start,
     end,
     allocator
@@ -62,55 +101,51 @@ typedef struct {
   bool found;
 } then_keyword_search_context_T;
 
-static bool has_pm_location(pm_location_t location) {
-  return location.start != NULL && location.end != NULL && (location.end - location.start) > 0;
-}
-
-static bool search_then_keyword_location(const pm_node_t* node, void* data) {
+static pm_visit_result_t search_then_keyword_location(const pm_node_t* node, void* data) {
   then_keyword_search_context_T* context = (then_keyword_search_context_T*) data;
 
-  if (context->found) { return false; }
+  if (context->found) { return PM_VISIT_SKIP; }
 
   switch (node->type) {
     case PM_IF_NODE: {
       const pm_if_node_t* if_node = (const pm_if_node_t*) node;
 
-      if (!has_pm_location(if_node->if_keyword_loc)) { break; }
+      if (!herb_prism_location_present(if_node->if_keyword_loc)) { break; }
 
-      if (has_pm_location(if_node->then_keyword_loc)) {
+      if (herb_prism_location_present(if_node->then_keyword_loc)) {
         context->then_keyword_loc = if_node->then_keyword_loc;
         context->found = true;
-        return false;
+        return PM_VISIT_SKIP;
       }
       break;
     }
 
     case PM_UNLESS_NODE: {
       const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
-      if (has_pm_location(unless_node->then_keyword_loc)) {
+      if (herb_prism_location_present(unless_node->then_keyword_loc)) {
         context->then_keyword_loc = unless_node->then_keyword_loc;
         context->found = true;
-        return false;
+        return PM_VISIT_SKIP;
       }
       break;
     }
 
     case PM_WHEN_NODE: {
       const pm_when_node_t* when_node = (const pm_when_node_t*) node;
-      if (has_pm_location(when_node->then_keyword_loc)) {
+      if (herb_prism_location_present(when_node->then_keyword_loc)) {
         context->then_keyword_loc = when_node->then_keyword_loc;
         context->found = true;
-        return false;
+        return PM_VISIT_SKIP;
       }
       break;
     }
 
     case PM_IN_NODE: {
       const pm_in_node_t* in_node = (const pm_in_node_t*) node;
-      if (has_pm_location(in_node->then_loc)) {
-        context->then_keyword_loc = in_node->then_loc;
+      if (herb_prism_location_present(in_node->then_keyword_loc)) {
+        context->then_keyword_loc = in_node->then_keyword_loc;
         context->found = true;
-        return false;
+        return PM_VISIT_SKIP;
       }
       break;
     }
@@ -120,23 +155,20 @@ static bool search_then_keyword_location(const pm_node_t* node, void* data) {
 
   pm_visit_child_nodes(node, search_then_keyword_location, context);
 
-  return false;
+  return PM_VISIT_SKIP;
 }
 
 location_T* get_then_keyword_location(analyzed_ruby_T* analyzed, const char* source, hb_allocator_T* allocator) {
   if (analyzed == NULL || analyzed->root == NULL || source == NULL) { return NULL; }
 
-  then_keyword_search_context_T context = { .then_keyword_loc = { .start = NULL, .end = NULL }, .found = false };
+  then_keyword_search_context_T context = { .then_keyword_loc = { .start = 0, .length = 0 }, .found = false };
 
   pm_visit_child_nodes(analyzed->root, search_then_keyword_location, &context);
 
   if (!context.found) { return NULL; }
 
-  size_t start_offset = (size_t) (context.then_keyword_loc.start - analyzed->parser.start);
-  size_t end_offset = (size_t) (context.then_keyword_loc.end - analyzed->parser.start);
-
-  position_T start_position = position_from_source_with_offset(source, start_offset);
-  position_T end_position = position_from_source_with_offset(source, end_offset);
+  position_T start_position = position_from_source_with_offset(source, context.then_keyword_loc.start);
+  position_T end_position = position_from_source_with_offset(source, herb_prism_location_end(context.then_keyword_loc));
 
   return location_create(start_position, end_position, allocator);
 }
@@ -150,25 +182,26 @@ static location_T* parse_wrapped_and_find_then_keyword(
   size_t adjustment_amount,
   hb_allocator_T* allocator
 ) {
-  pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) hb_buffer_value(buffer), hb_buffer_length(buffer), NULL);
-  pm_node_t* root = pm_parse(&parser);
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) hb_buffer_value(buffer), hb_buffer_length(buffer), NULL);
+  pm_node_t* root = pm_parse(parser);
 
   if (root == NULL) {
-    pm_parser_free(&parser);
+    pm_parser_free(parser);
+    pm_arena_free(arena);
 
     return NULL;
   }
 
-  then_keyword_search_context_T context = { .then_keyword_loc = { .start = NULL, .end = NULL }, .found = false };
+  then_keyword_search_context_T context = { .then_keyword_loc = { .start = 0, .length = 0 }, .found = false };
 
   pm_visit_child_nodes(root, search_then_keyword_location, &context);
 
   location_T* location = NULL;
 
   if (context.found) {
-    size_t start_offset = (size_t) (context.then_keyword_loc.start - parser.start);
-    size_t end_offset = (size_t) (context.then_keyword_loc.end - parser.start);
+    size_t start_offset = context.then_keyword_loc.start;
+    size_t end_offset = herb_prism_location_end(context.then_keyword_loc);
 
     if (start_offset >= prefix_length && end_offset >= prefix_length) {
       start_offset -= prefix_length;
@@ -188,8 +221,8 @@ static location_T* parse_wrapped_and_find_then_keyword(
     }
   }
 
-  pm_node_destroy(&parser, root);
-  pm_parser_free(&parser);
+  pm_parser_free(parser);
+  pm_arena_free(arena);
 
   return location;
 }
@@ -243,4 +276,96 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
   hb_buffer_free(&buffer);
 
   return location;
+}
+
+static size_t newline_index_for_offset(const pm_line_offset_list_t* newlines, size_t offset) {
+  size_t low = 0;
+  size_t high = newlines->size;
+
+  while (low < high) {
+    size_t middle = low + (high - low) / 2;
+
+    if (newlines->offsets[middle] <= offset) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+
+  return low > 0 ? low - 1 : 0;
+}
+
+void herb_prism_node_serialize(herb_prism_node_T prism_node, pm_buffer_t* buffer) {
+  if (!prism_node.node || !prism_node.parser) { return; }
+
+  pm_parser_t* parser = prism_node.parser;
+
+  if (prism_node.source_end == 0 || parser->line_offsets.size == 0) {
+    pm_serialize(parser, prism_node.node, buffer);
+    return;
+  }
+
+  const pm_line_offset_list_t* newlines = &parser->line_offsets;
+  size_t first_line = newline_index_for_offset(newlines, prism_node.source_start);
+  size_t last_line = newline_index_for_offset(newlines, prism_node.source_end);
+  size_t line_count = last_line - first_line + 1;
+
+  if (last_line + 1 < newlines->size) { line_count++; }
+
+  pm_parser_t view = *parser;
+
+  view.line_offsets.offsets = newlines->offsets + first_line;
+  view.line_offsets.size = line_count;
+  view.line_offsets.capacity = line_count;
+  view.start_line = parser->start_line + (int32_t) first_line;
+
+  memset(&view.magic_comment_list, 0, sizeof(pm_list_t));
+  memset(&view.error_list, 0, sizeof(pm_list_t));
+  memset(&view.warning_list, 0, sizeof(pm_list_t));
+  memset(&view.comment_list, 0, sizeof(pm_list_t));
+  memset(&view.comment_attachments, 0, sizeof(view.comment_attachments));
+
+  size_t comment_count = 0;
+
+  for (pm_list_node_t* entry = parser->comment_list.head; entry; entry = entry->next) {
+    pm_comment_t* comment = (pm_comment_t*) entry;
+    size_t start = comment->location.start;
+
+    if (start >= prism_node.source_start && start < prism_node.source_end) { comment_count++; }
+  }
+
+  pm_comment_t* comments = NULL;
+
+  if (comment_count > 0) {
+    comments = malloc(comment_count * sizeof(pm_comment_t));
+
+    if (!comments) {
+      pm_serialize(parser, prism_node.node, buffer);
+      return;
+    }
+
+    size_t index = 0;
+
+    for (pm_list_node_t* entry = parser->comment_list.head; entry; entry = entry->next) {
+      pm_comment_t* comment = (pm_comment_t*) entry;
+      size_t start = comment->location.start;
+
+      if (start < prism_node.source_start || start >= prism_node.source_end) { continue; }
+
+      comments[index] = *comment;
+      comments[index].node.next = NULL;
+
+      if (index > 0) { comments[index - 1].node.next = &comments[index].node; }
+
+      index++;
+    }
+
+    view.comment_list.size = comment_count;
+    view.comment_list.head = &comments[0].node;
+    view.comment_list.tail = &comments[comment_count - 1].node;
+  }
+
+  pm_serialize(&view, prism_node.node, buffer);
+
+  free(comments);
 }

@@ -28,6 +28,8 @@ module Herb
 
     attr_reader render_nodes: bool
 
+    attr_reader ruby_version: String?
+
     attr_reader strict: bool
 
     attr_reader strict_locals: bool
@@ -76,11 +78,11 @@ module Herb
 
     DEFAULT_TRANSFORM_CONDITIONALS: bool
 
-    # : (?action_view_helpers: bool, ?analyze: bool, ?arena_stats: bool, ?dot_notation_tags: bool, ?erb_openers: Array[String], ?herb_directives: bool, ?html: bool, ?iteration_nodes: bool, ?max_errors: Integer?, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?render_nodes: bool, ?strict: bool, ?strict_locals: bool, ?timeout: Numeric, ?track_locations: bool, ?track_whitespace: bool, ?transform_conditionals: bool) -> void
-    def initialize: (?action_view_helpers: bool, ?analyze: bool, ?arena_stats: bool, ?dot_notation_tags: bool, ?erb_openers: Array[String], ?herb_directives: bool, ?html: bool, ?iteration_nodes: bool, ?max_errors: Integer?, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?render_nodes: bool, ?strict: bool, ?strict_locals: bool, ?timeout: Numeric, ?track_locations: bool, ?track_whitespace: bool, ?transform_conditionals: bool) -> void
+    # : (?action_view_helpers: bool, ?analyze: bool, ?arena_stats: bool, ?dot_notation_tags: bool, ?erb_openers: Array[String], ?herb_directives: bool, ?html: bool, ?iteration_nodes: bool, ?max_errors: Integer?, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?render_nodes: bool, ?ruby_version: String?, ?strict: bool, ?strict_locals: bool, ?timeout: Numeric, ?track_locations: bool, ?track_whitespace: bool, ?transform_conditionals: bool) -> void
+    def initialize: (?action_view_helpers: bool, ?analyze: bool, ?arena_stats: bool, ?dot_notation_tags: bool, ?erb_openers: Array[String], ?herb_directives: bool, ?html: bool, ?iteration_nodes: bool, ?max_errors: Integer?, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?render_nodes: bool, ?ruby_version: String?, ?strict: bool, ?strict_locals: bool, ?timeout: Numeric, ?track_locations: bool, ?track_whitespace: bool, ?transform_conditionals: bool) -> void
 
-    # : () -> Hash[Symbol, (bool | Numeric | Array[String] | nil)]
-    def to_h: () -> Hash[Symbol, bool | Numeric | Array[String] | nil]
+    # : () -> Hash[Symbol, (bool | Numeric | String | Array[String] | nil)]
+    def to_h: () -> Hash[Symbol, bool | Numeric | String | Array[String] | nil]
 
     # : () -> String
     def inspect: () -> String

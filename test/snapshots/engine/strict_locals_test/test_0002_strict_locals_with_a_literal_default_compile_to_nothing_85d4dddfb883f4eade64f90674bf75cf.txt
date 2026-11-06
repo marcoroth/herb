@@ -1,0 +1,5 @@
+---
+source: "Engine::StrictLocalsTest#test_0002_strict locals with a literal default compile to nothing"
+input: "{source: \"<%# locals: (name:, greeting: \\\"hello\\\") %>\\n<p>hi</p>\\n\", locals: {}, options: {parser_options: {strict_locals: true}}}"
+---
+<p>hi</p>

@@ -11,9 +11,9 @@ options: {prism_nodes: true}
         ├── tag_closing: "%>" (location: (1:15)-(1:17))
         ├── prism_node:
         │   └── @ UntilNode (location: (1:3)-(1:38))
-        │       ├── keyword_loc: (1:3)-(1:8)
+        │       ├── until_keyword_loc: (1:3)-(1:8)
         │       ├── do_keyword_loc: ∅
-        │       ├── closing_loc: (1:35)-(1:38)
+        │       ├── end_keyword_loc: (1:35)-(1:38)
         │       ├── predicate:
         │       │   └── @ CallNode (location: (1:9)-(1:14))
         │       │       ├── receiver: ∅
@@ -24,8 +24,16 @@ options: {prism_nodes: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
-        │       └── statements: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "done?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
+        │       ├── statements: ∅
+        │       ├── until_keyword: "until"
+        │       ├── do_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:17)-(1:32))
         │       ├── tag_opening: "<%=" (location: (1:17)-(1:20))
@@ -43,7 +51,12 @@ options: {prism_nodes: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "progress"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         └── end_node:
             └── @ ERBEndNode (location: (1:32)-(1:41))

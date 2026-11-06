@@ -31,9 +31,9 @@ options: {prism_program: true}
             └── @ StatementsNode (location: (1:3)-(1:39))
                 └── body: (1 item)
                     └── @ WhileNode (location: (1:3)-(1:39))
-                        ├── keyword_loc: (1:3)-(1:8)
+                        ├── while_keyword_loc: (1:3)-(1:8)
                         ├── do_keyword_loc: ∅
-                        ├── closing_loc: (1:36)-(1:39)
+                        ├── end_keyword_loc: (1:36)-(1:39)
                         ├── predicate:
                         │   └── @ CallNode (location: (1:9)-(1:17))
                         │       ├── receiver: ∅
@@ -44,17 +44,30 @@ options: {prism_program: true}
                         │       ├── arguments: ∅
                         │       ├── closing_loc: ∅
                         │       ├── equal_loc: ∅
-                        │       └── block: ∅
-                        └── statements:
-                            └── @ StatementsNode (location: (1:24)-(1:30))
-                                └── body: (1 item)
-                                    └── @ CallNode (location: (1:24)-(1:30))
-                                        ├── receiver: ∅
-                                        ├── call_operator_loc: ∅
-                                        ├── name: :status
-                                        ├── message_loc: (1:24)-(1:30)
-                                        ├── opening_loc: ∅
-                                        ├── arguments: ∅
-                                        ├── closing_loc: ∅
-                                        ├── equal_loc: ∅
-                                        └── block: ∅
+                        │       ├── block: ∅
+                        │       ├── call_operator: ∅
+                        │       ├── message: "running?"
+                        │       ├── opening: ∅
+                        │       ├── closing: ∅
+                        │       └── equal: ∅
+                        ├── statements:
+                        │   └── @ StatementsNode (location: (1:24)-(1:30))
+                        │       └── body: (1 item)
+                        │           └── @ CallNode (location: (1:24)-(1:30))
+                        │               ├── receiver: ∅
+                        │               ├── call_operator_loc: ∅
+                        │               ├── name: :status
+                        │               ├── message_loc: (1:24)-(1:30)
+                        │               ├── opening_loc: ∅
+                        │               ├── arguments: ∅
+                        │               ├── closing_loc: ∅
+                        │               ├── equal_loc: ∅
+                        │               ├── block: ∅
+                        │               ├── call_operator: ∅
+                        │               ├── message: "status"
+                        │               ├── opening: ∅
+                        │               ├── closing: ∅
+                        │               └── equal: ∅
+                        ├── while_keyword: "while"
+                        ├── do_keyword: ∅
+                        └── end_keyword: "end"

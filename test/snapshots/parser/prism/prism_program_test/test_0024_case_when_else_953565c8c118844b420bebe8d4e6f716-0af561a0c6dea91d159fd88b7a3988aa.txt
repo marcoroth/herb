@@ -65,32 +65,51 @@ options: {prism_program: true}
                         │       ├── arguments: ∅
                         │       ├── closing_loc: ∅
                         │       ├── equal_loc: ∅
-                        │       └── block: ∅
+                        │       ├── block: ∅
+                        │       ├── call_operator: ∅
+                        │       ├── message: "status"
+                        │       ├── opening: ∅
+                        │       ├── closing: ∅
+                        │       └── equal: ∅
                         ├── conditions: (2 items)
                         │   ├── @ WhenNode (location: (1:20)-(1:32))
-                        │   │   ├── keyword_loc: (1:20)-(1:24)
+                        │   │   ├── when_keyword_loc: (1:20)-(1:24)
                         │   │   ├── conditions: (1 item)
                         │   │   │   └── @ SymbolNode (location: (1:25)-(1:32))
                         │   │   │       ├── opening_loc: (1:25)-(1:26)
-                        │   │   │       ├── value_loc: (1:26)-(1:32)
+                        │   │   │       ├── content_loc: (1:26)-(1:32)
                         │   │   │       ├── closing_loc: ∅
-                        │   │   │       └── unescaped: "active"
+                        │   │   │       ├── unescaped: "active"
+                        │   │   │       ├── opening: ":"
+                        │   │   │       ├── content: "active"
+                        │   │   │       └── closing: ∅
                         │   │   ├── then_keyword_loc: ∅
-                        │   │   └── statements: ∅
+                        │   │   ├── statements: ∅
+                        │   │   ├── when_keyword: "when"
+                        │   │   └── then_keyword: ∅
                         │   └── @ WhenNode (location: (1:44)-(1:58))
-                        │       ├── keyword_loc: (1:44)-(1:48)
+                        │       ├── when_keyword_loc: (1:44)-(1:48)
                         │       ├── conditions: (1 item)
                         │       │   └── @ SymbolNode (location: (1:49)-(1:58))
                         │       │       ├── opening_loc: (1:49)-(1:50)
-                        │       │       ├── value_loc: (1:50)-(1:58)
+                        │       │       ├── content_loc: (1:50)-(1:58)
                         │       │       ├── closing_loc: ∅
-                        │       │       └── unescaped: "inactive"
+                        │       │       ├── unescaped: "inactive"
+                        │       │       ├── opening: ":"
+                        │       │       ├── content: "inactive"
+                        │       │       └── closing: ∅
                         │       ├── then_keyword_loc: ∅
-                        │       └── statements: ∅
+                        │       ├── statements: ∅
+                        │       ├── when_keyword: "when"
+                        │       └── then_keyword: ∅
                         ├── else_clause:
                         │   └── @ ElseNode (location: (1:72)-(1:92))
                         │       ├── else_keyword_loc: (1:72)-(1:76)
                         │       ├── statements: ∅
-                        │       └── end_keyword_loc: (1:89)-(1:92)
+                        │       ├── end_keyword_loc: (1:89)-(1:92)
+                        │       ├── else_keyword: "else"
+                        │       └── end_keyword: "end"
                         ├── case_keyword_loc: (1:3)-(1:7)
-                        └── end_keyword_loc: (1:89)-(1:92)
+                        ├── end_keyword_loc: (1:89)-(1:92)
+                        ├── case_keyword: "case"
+                        └── end_keyword: "end"

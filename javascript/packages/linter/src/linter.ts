@@ -612,7 +612,20 @@ export class Linter {
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
-    const parseResult = this.parseCache.get(source)
+    const deferredRuleNames = new Set([
+      "herb-disable-comment-unnecessary",
+      "herb-disable-comment-out-of-date",
+    ])
+
+    const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
+    const regularRuleInstances = regularRules.map(ruleClass => ({ ruleClass, rule: new ruleClass() }))
+
+    const [baseParserOptions, ...sharedParserOptions] = this.parseCache.share([
+      {},
+      ...regularRuleInstances.map(({ ruleClass, rule }) => this.parserOptionsFor(ruleClass, rule, context?.framework)),
+    ])
+
+    const parseResult = this.parseCache.get(source, baseParserOptions)
 
     if (hasLinterIgnoreDirective(parseResult)) {
       return {
@@ -686,6 +699,7 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       environment: context?.environment ?? this.backendEnvironment,
       herb: context?.herb ?? this.herb
     }
@@ -711,17 +725,8 @@ export class Linter {
       })
     }
 
-    const deferredRuleNames = new Set([
-      "herb-disable-comment-unnecessary",
-      "herb-disable-comment-out-of-date",
-    ])
-
-    const regularRules = this.rules.filter(ruleClass => !deferredRuleNames.has(ruleClass.ruleName))
-
-    for (const ruleClass of regularRules) {
-      const rule = new ruleClass()
-      const parserOptions = this.parserOptionsFor(ruleClass, rule, context?.framework)
-      const parseResult = this.parseCache.get(source, parserOptions)
+    for (const [index, { ruleClass, rule }] of regularRuleInstances.entries()) {
+      const parseResult = this.parseCache.get(source, sharedParserOptions[index])
 
       if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
@@ -881,6 +886,7 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       environment: context?.environment ?? "browser",
       herb: context?.herb ?? this.herb
     }
@@ -962,6 +968,7 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
       indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework,
+      templateEngine: context?.templateEngine ?? this.config?.templateEngine,
       herb: context?.herb ?? this.herb
     }
 

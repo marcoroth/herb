@@ -23,7 +23,7 @@ describe("erb-strict-locals-required autofix", () => {
 
   test("adds empty strict locals declaration with --fix-unsafely", () => {
     const input = '<div>Content</div>'
-    const expected = '<%# locals: (**) %>\n\n<div>Content</div>'
+    const expected = '<%# locals: () %>\n\n<div>Content</div>'
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const result = linter.autofix(input, { fileName: '_partial.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
@@ -66,7 +66,7 @@ describe("erb-strict-locals-required autofix", () => {
       </div>
     `
 
-    const expected = `<%# locals: (**) %>\n\n${input}`
+    const expected = `<%# locals: () %>\n\n${input}`
 
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const result = linter.autofix(input, { fileName: '_card.html.erb', framework: "actionview" }, undefined, { includeUnsafe: true })
@@ -148,7 +148,7 @@ describe("erb-strict-locals-required autofix", () => {
     expect(result.source).toContain("<%# locals: (posts: nil) %>")
   })
 
-  test("keeps keyword rest when the partial reads local_assigns", () => {
+  test("does not add keyword rest when the partial reads local_assigns", () => {
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const partial = "app/views/posts/_card.html.erb"
 
@@ -157,10 +157,10 @@ describe("erb-strict-locals-required autofix", () => {
     const source = '<%= title %><%= local_assigns[:extra] %>'
     const result = linter.autofix(source, { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
-    expect(result.source).toContain("<%# locals: (title: nil, **) %>")
+    expect(result.source).toContain("<%# locals: (title: nil) %>")
   })
 
-  test("keeps keyword rest when the project has unresolved renders", () => {
+  test("does not add keyword rest when the project has unresolved renders", () => {
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const partial = "app/views/posts/_card.html.erb"
 
@@ -168,6 +168,6 @@ describe("erb-strict-locals-required autofix", () => {
 
     const result = linter.autofix("<h1><%= title %></h1>", { fileName: partial, framework: "actionview", partialCallers: callers }, undefined, { includeUnsafe: true })
 
-    expect(result.source).toContain("<%# locals: (title: nil, **) %>")
+    expect(result.source).toContain("<%# locals: (title: nil) %>")
   })
 })

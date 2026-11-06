@@ -100,6 +100,63 @@ class PartialIndexTest < Minitest::Spec
     assert_equal preferred, Herb::Analysis::PartialIndex.build(@project_path).files_for("posts/card").first
   end
 
+  test "keeps the base template first for a caller without a variant" do
+    write("app/views/things/_item.html+phone.erb", "<%# locals: (a:) %>\n")
+    base = write("app/views/things/_item.html.erb", "<%# locals: (a:, b:) %>\n")
+    caller_file = write("app/views/things/show.html.erb")
+
+    index = Herb::Analysis::PartialIndex.build(@project_path)
+
+    assert_equal base, index.lookup("item", caller_file).file
+    assert_equal 1, index.size
+  end
+
+  test "looks up the partial of the same variant as the caller" do
+    write("app/views/things/_item.html.erb", "<%# locals: (a:, b:) %>\n")
+    phone = write("app/views/things/_item.html+phone.erb", "<%# locals: (a:) %>\n")
+    caller_file = write("app/views/things/show.html+phone.erb")
+
+    declaration = Herb::Analysis::PartialIndex.build(@project_path).lookup("item", caller_file)
+
+    assert_equal phone, declaration.file
+    assert_equal ["a"], declaration.locals.map(&:name)
+  end
+
+  test "falls back to the base template when no partial has the variant of the caller" do
+    base = write("app/views/things/_item.html.erb")
+    write("app/views/things/_item.html+phone.erb")
+    caller_file = write("app/views/things/show.html+tablet.erb")
+
+    assert_equal base, Herb::Analysis::PartialIndex.build(@project_path).lookup("item", caller_file).file
+  end
+
+  test "prefers the html variant over the locale variant of the same variant" do
+    write("app/views/things/_item.en.html+phone.erb")
+    phone = write("app/views/things/_item.html+phone.erb")
+    caller_file = write("app/views/things/show.html+phone.erb")
+
+    assert_equal phone, Herb::Analysis::PartialIndex.build(@project_path).lookup("item", caller_file).file
+  end
+
+  test "falls back to the base template once the variant is removed" do
+    base = write("app/views/things/_item.html.erb")
+    phone = write("app/views/things/_item.html+phone.erb")
+    caller_file = write("app/views/things/show.html+phone.erb")
+    index = Herb::Analysis::PartialIndex.build(@project_path)
+
+    index.remove(phone)
+
+    assert_equal base, index.lookup("item", caller_file).file
+  end
+
+  test "resolve keeps every template of a partial for a variant caller" do
+    base = write("app/views/things/_item.html.erb")
+    phone = write("app/views/things/_item.html+phone.erb")
+    caller_file = write("app/views/things/show.html+phone.erb")
+
+    assert_equal [base, phone], Herb::Analysis::PartialIndex.build(@project_path).resolve("item", caller_file)
+  end
+
   test "resolves a partial named relative to the rendering template" do
     caller_file = write("app/views/posts/show.html.erb")
     sibling = write("app/views/posts/_header.html.erb")

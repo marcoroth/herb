@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::StatesTest#test_0139_a conditional boolean attribute in an open tag renders presence"
+input: "states_test-open-tag-conditional-off"
+---
+<!--herb-region:app/views/test.html.erb:1caf7501:0--><button  data-herb-slot="0:boolean_attribute:disabled">Go</button><!--/herb-region:app/views/test.html.erb-->

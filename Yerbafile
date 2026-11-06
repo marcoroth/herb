@@ -94,6 +94,7 @@ rules:
             - lex
             - only
             - skip
+            - validator
             - description
 
       - sort_keys:

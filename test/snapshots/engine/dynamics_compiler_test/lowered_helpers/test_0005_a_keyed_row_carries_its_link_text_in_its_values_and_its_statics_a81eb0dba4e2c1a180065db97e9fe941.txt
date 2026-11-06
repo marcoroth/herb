@@ -1,0 +1,5 @@
+---
+source: "Engine::DynamicsCompilerTest::lowered helpers#test_0005_a keyed row carries its link text in its values and its statics"
+input: "dynamics_compiler_test-lowered-link-statics"
+---
+<!--herb-branch:0:item--><!--herb-item:0:--><li><a class="link" href="" data-herb-slot="1:attribute:href 2:child"></a></li><!--/herb-item:0-->

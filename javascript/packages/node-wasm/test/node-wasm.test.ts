@@ -20,7 +20,7 @@ describe("@herb-tools/node-wasm", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node-wasm@0.11.0, @herb-tools/core@0.11.0, libprism@1.9.0, libherb@0.11.0 (WebAssembly)")
+    expect(version).toBe("@herb-tools/node-wasm@0.11.1, @herb-tools/core@0.11.1, libprism@2.1.0+4691667, libherb@0.11.1 (WebAssembly)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -166,6 +166,24 @@ describe("@herb-tools/node-wasm", () => {
   test("the error count respects max_errors", () => {
     expect(Herb.parse("<div>".repeat(1000)).errorCount).toBe(25)
     expect(Herb.parse("<div>".repeat(1000), { max_errors: 5 }).errorCount).toBe(5)
+  })
+
+  test("parse() uses the syntax of the given ruby_version", () => {
+    const source = "<% def greet(name,) = name %>"
+
+    expect(Herb.parse(source).options.ruby_version).toBe("4.0")
+    expect(Herb.parse(source, { ruby_version: null }).options.ruby_version).toBe("4.0")
+    expect(Herb.parse(source).recursiveErrors()).toHaveLength(1)
+    expect(Herb.parse(source, { ruby_version: "4.1" }).recursiveErrors()).toHaveLength(0)
+
+    const result = Herb.parse(source, { ruby_version: "3.4" })
+
+    expect(result.options.ruby_version).toBe("3.4")
+    expect(result.recursiveErrors().map(error => error.message)).toEqual(["parameter_wild_loose_comma: unexpected `,` in parameters"])
+  })
+
+  test("parse() throws for an unsupported ruby_version", () => {
+    expect(() => Herb.parse("<%= user %>", { ruby_version: "2.7" })).toThrow('ruby_version "2.7" is not supported')
   })
 
   test("parse() tracks locations by default", () => {

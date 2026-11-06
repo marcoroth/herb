@@ -61,7 +61,7 @@ module Herb
 
         return classification(:whitespace, operations: operations) if significant.empty?
 
-        kind = self.class.can_patch?(significant) && @parser_options.empty? ? :static : :dynamic
+        kind = self.class.can_patch?(significant) && @parser_options.except(:ruby_version).empty? ? :static : :dynamic
 
         classification(kind, operations: operations, node_path: covering_path(significant))
       end

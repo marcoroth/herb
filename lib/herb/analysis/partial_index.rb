@@ -83,7 +83,7 @@ module Herb
 
       #: (String?, String?) -> PartialDeclaration?
       def lookup(partial_name, source_file)
-        file = resolve(partial_name, source_file).first
+        file = PartialResolution.preferred_for(resolve(partial_name, source_file), source_file)
 
         return nil unless file
 

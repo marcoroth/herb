@@ -25,20 +25,28 @@ module Engine
       "a conditional" => "<% if true %>yes<% else %>no<% end %>",
       "a comment" => "<%# ignored %>ok",
       "markup around a tag" => "<p>before</p><%= 1 %><p>after</p>",
+      "raw output" => %(<%== "<b>raw</b>" %>),
+      "an escaped output" => %(<%= "<b>escaped</b>" %>),
+      "a trimmed output" => "<p>\n  <%= 1 -%>\n</p>\n",
+      "a trimmed statement" => "<p>\n  <%- total = 1 -%>\n  <%= total %>\n</p>\n",
+      "a raw output with a trimmed closing" => %(<p>\n  <%== "<b>raw</b>" -%>\n</p>\n),
+      "an output tag followed by a newline" => %(<%= "x" %>\n<p></p>\n),
+      "a literal tag" => %(<%% x %><%%= y %>\n),
+      "an output inside literal tags" => %(<%% if a %><%= "y" %><%% end %>),
     }.freeze
 
     def instrumented(source)
       assert_compiled_snapshot(source, filename: FILENAME, visitors: [Herb::Engine::InstrumentationVisitor.new])
     end
 
-    def compile(source, instrument: true)
+    def compile(source, instrument: true, **)
       visitors = instrument ? [Herb::Engine::InstrumentationVisitor.new] : []
 
-      Herb::Engine.new(source, filename: FILENAME, visitors: visitors).src
+      Herb::Engine.new(source, filename: FILENAME, visitors: visitors, **).src
     end
 
-    def render(source, instrument: true)
-      Object.new.instance_eval(compile(source, instrument: instrument))
+    def render(source, instrument: true, **)
+      Object.new.instance_eval(compile(source, instrument: instrument, **))
     end
 
     describe "what it emits" do
@@ -85,12 +93,46 @@ module Engine
 
         instrumented(source)
       end
+
+      test "leaves a custom erb opener alone" do
+        source = <<~ERB
+          <h1><%= title %></h1>
+          <%graphql
+            fragment User on User {
+              ...Avatar
+            }
+          %>
+        ERB
+
+        assert_compiled_snapshot(
+          source,
+          filename: FILENAME,
+          parser_options: { erb_openers: ["graphql"] },
+          visitors: [Herb::Engine::InstrumentationVisitor.new]
+        )
+      end
+
+      test "keeps a raw output tag raw" do
+        instrumented(%(<%== "<b>raw</b>" %>))
+      end
+
+      test "keeps the trim markers of a tag it rewraps" do
+        instrumented("<p>\n  <%- total = 1 -%>\n  <%= total -%>\n</p>\n")
+      end
+
+      test "leaves a literal tag alone" do
+        instrumented(%(<%% if admin? %><%= secret %><%% end %>))
+      end
     end
 
     describe "what it must not change" do
       SOURCES.each do |name, source|
         test "renders #{name} the same as an uninstrumented template" do
           assert_equal render(source, instrument: false), render(source)
+        end
+
+        test "renders #{name} the same as an uninstrumented escaping template" do
+          assert_equal render(source, instrument: false, escape: true), render(source, escape: true)
         end
       end
     end

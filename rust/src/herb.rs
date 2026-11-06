@@ -62,6 +62,27 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
   }
 }
 
+fn ruby_version_buffer(ruby_version: Option<&str>) -> Result<[std::ffi::c_char; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize], String> {
+  let mut buffer = [0; crate::bindings::HERB_PARSER_OPTIONS_STRING_CAPACITY as usize];
+  let default_options = ParserOptions::default();
+
+  let Some(version) = ruby_version.or(default_options.ruby_version.as_deref()) else {
+    return Ok(buffer);
+  };
+
+  let supported = unsafe { crate::ffi::herb_ruby_version_supported(version.as_ptr() as *const std::ffi::c_char, version.len()) };
+
+  if !supported {
+    return Err(format!("ruby_version \"{version}\" is not supported"));
+  }
+
+  for (index, byte) in version.bytes().enumerate() {
+    buffer[index] = byte as std::ffi::c_char;
+  }
+
+  Ok(buffer)
+}
+
 pub fn parse(source: &str) -> Result<ParseResult, String> {
   parse_with_options(source, &ParserOptions::default())
 }
@@ -76,6 +97,10 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
       return Err("Failed to initialize allocator".to_string());
     }
+
+    let ruby_version = ruby_version_buffer(options.ruby_version.as_deref()).inspect_err(|_| {
+      crate::ffi::hb_allocator_destroy(&mut allocator);
+    })?;
 
     let opener_strings: Vec<&str> = options
       .erb_openers
@@ -119,6 +144,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
         std::ptr::null()
       },
       erb_opener_count: opener_items.len(),
+      ruby_version,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -153,18 +179,21 @@ pub struct RubyParseResult {
 impl RubyParseResult {
   pub fn prettyprint(&self) -> String {
     unsafe {
-      let mut buffer: crate::ffi::pm_buffer_t = std::mem::zeroed();
+      let buffer = crate::ffi::pm_buffer_new();
 
-      crate::ffi::pm_prettyprint(&mut buffer, &(*self.pointer).parser, (*self.pointer).root);
+      crate::ffi::pm_prettyprint(buffer, (*self.pointer).parser, (*self.pointer).root);
 
-      let output = if !buffer.value.is_null() && buffer.length > 0 {
-        let slice = std::slice::from_raw_parts(buffer.value as *const u8, buffer.length);
+      let value = crate::ffi::pm_buffer_value(buffer);
+      let length = crate::ffi::pm_buffer_length(buffer);
+
+      let output = if !value.is_null() && length > 0 {
+        let slice = std::slice::from_raw_parts(value as *const u8, length);
         String::from_utf8_lossy(slice).into_owned()
       } else {
         String::new()
       };
 
-      crate::ffi::pm_buffer_free(&mut buffer);
+      crate::ffi::pm_buffer_free(buffer);
 
       crate::nodes::prettify_prism_tree(&output)
     }
@@ -380,6 +409,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       deadline_ms: 0,
       erb_openers: std::ptr::null(),
       erb_opener_count: 0,
+      ruby_version: ruby_version_buffer(None).expect("the default ruby_version is supported"),
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);

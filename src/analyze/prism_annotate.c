@@ -8,6 +8,7 @@
 #include "../include/parser/parser.h"
 #include "../include/prism/herb_prism_node.h"
 #include "../include/prism/prism_context.h"
+#include "../include/prism/prism_helpers.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -170,6 +171,7 @@ static token_T* get_content_token(const AST_NODE_T* node) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: return ((AST_ERB_CONTENT_NODE_T*) node)->content;
     case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->content;
+    case AST_ERB_YIELD_NODE: return ((AST_ERB_YIELD_NODE_T*) node)->content;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->content;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->content;
     case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->content;
@@ -188,6 +190,7 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
   switch (node->type) {
     case AST_ERB_CONTENT_NODE: ((AST_ERB_CONTENT_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_RENDER_NODE: ((AST_ERB_RENDER_NODE_T*) node)->prism_node = prism_ref; break;
+    case AST_ERB_YIELD_NODE: ((AST_ERB_YIELD_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_IF_NODE: ((AST_ERB_IF_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_BLOCK_NODE: ((AST_ERB_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_ITERATION_BLOCK_NODE: ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
@@ -200,6 +203,12 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
     case AST_ERB_UNLESS_NODE: ((AST_ERB_UNLESS_NODE_T*) node)->prism_node = prism_ref; break;
     default: break;
   }
+}
+
+static size_t prism_node_start(hb_narray_T* node_list, size_t index) {
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, index);
+
+  return prism_node->location.start;
 }
 
 static herb_prism_node_T find_prism_node_for_herb_node(
@@ -215,16 +224,28 @@ static herb_prism_node_T find_prism_node_for_herb_node(
   uint32_t content_from = content->range.from;
   uint32_t content_to = content->range.to;
 
-  for (size_t i = 0; i < hb_narray_size(node_list); i++) {
-    pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, i);
-    size_t prism_start = (size_t) (prism_node->location.start - parser->start);
+  size_t low = 0;
+  size_t high = hb_narray_size(node_list);
 
-    if (prism_start >= content_from && prism_start < content_to) {
-      result.node = prism_node;
-      result.parser = parser;
-      break;
+  while (low < high) {
+    size_t middle = low + (high - low) / 2;
+
+    if (prism_node_start(node_list, middle) < content_from) {
+      low = middle + 1;
+    } else {
+      high = middle;
     }
   }
+
+  if (low >= hb_narray_size(node_list) || prism_node_start(node_list, low) >= content_to) { return result; }
+
+  pm_node_t* prism_node = *(pm_node_t**) hb_narray_get(node_list, low);
+  size_t prism_end = (size_t) prism_node->location.start + prism_node->location.length;
+
+  result.node = prism_node;
+  result.parser = parser;
+  result.source_start = content_from;
+  result.source_end = prism_end > content_to ? (uint32_t) prism_end : content_to;
 
   return result;
 }
@@ -237,7 +258,8 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
   pm_parser_t* parser;
   hb_narray_T* node_list;
 
-  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || context->prism_nodes_deep) {
+  if (node->type == AST_ERB_CONTENT_NODE || node->type == AST_ERB_RENDER_NODE || node->type == AST_ERB_YIELD_NODE
+      || context->prism_nodes_deep) {
     parser = context->parser;
     node_list = context->node_list;
   } else {
@@ -253,7 +275,9 @@ static bool annotate_visitor(const AST_NODE_T* node, void* data) {
 }
 
 static bool collect_content_ranges_visitor(const AST_NODE_T* node, void* data) {
-  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE) { return true; }
+  if (node->type != AST_ERB_CONTENT_NODE && node->type != AST_ERB_RENDER_NODE && node->type != AST_ERB_YIELD_NODE) {
+    return true;
+  }
 
   hb_narray_T* ranges = (hb_narray_T*) data;
   token_T* content = get_content_token(node);
@@ -309,23 +333,21 @@ void herb_annotate_prism_nodes(
     return;
   }
 
-  memset(&context->pm_opts, 0, sizeof(pm_options_t));
-  pm_options_line_set(&context->pm_opts, 1);
-  pm_options_partial_script_set(&context->pm_opts, true);
-  pm_parser_init(
-    &context->parser,
-    (const uint8_t*) context->ruby_buf.value,
-    context->ruby_buf.length,
-    &context->pm_opts
-  );
-  context->root = pm_parse(&context->parser);
+  context->arena = pm_arena_new();
+  context->pm_opts = pm_options_new();
+  pm_options_line_set(context->pm_opts, 1);
+  pm_options_partial_script_set(context->pm_opts, true);
+  herb_prism_options_set_ruby_version(context->pm_opts, options);
+  context->parser =
+    pm_parser_new(context->arena, (const uint8_t*) context->ruby_buf.value, context->ruby_buf.length, context->pm_opts);
+  context->root = pm_parse(context->parser);
 
   if (!context->root || context->root->type != PM_PROGRAM_NODE) {
-    pm_node_destroy(&context->parser, context->root);
     context->root = NULL;
 
-    pm_parser_free(&context->parser);
-    pm_options_free(&context->pm_opts);
+    pm_parser_free(context->parser);
+    pm_arena_free(context->arena);
+    pm_options_free(context->pm_opts);
 
     hb_buffer_free(&context->ruby_buf);
     hb_allocator_dealloc(allocator, context);
@@ -338,7 +360,7 @@ void herb_annotate_prism_nodes(
   if (prism_program) {
     herb_prism_node_T program_ref = {
       .node = context->root,
-      .parser = &context->parser,
+      .parser = context->parser,
     };
 
     document->prism_node = program_ref;
@@ -370,18 +392,20 @@ void herb_annotate_prism_nodes(
           }
         }
 
-        memset(&context->structural_pm_opts, 0, sizeof(pm_options_t));
-        pm_options_line_set(&context->structural_pm_opts, 1);
-        pm_options_partial_script_set(&context->structural_pm_opts, true);
+        context->structural_arena = pm_arena_new();
+        context->structural_pm_opts = pm_options_new();
+        pm_options_line_set(context->structural_pm_opts, 1);
+        pm_options_partial_script_set(context->structural_pm_opts, true);
+        herb_prism_options_set_ruby_version(context->structural_pm_opts, options);
 
-        pm_parser_init(
-          &context->structural_parser,
+        context->structural_parser = pm_parser_new(
+          context->structural_arena,
           (const uint8_t*) context->structural_buf.value,
           context->structural_buf.length,
-          &context->structural_pm_opts
+          context->structural_pm_opts
         );
 
-        context->structural_root = pm_parse(&context->structural_parser);
+        context->structural_root = pm_parse(context->structural_parser);
         context->has_structural = true;
 
         if (context->structural_root && context->structural_root->type == PM_PROGRAM_NODE) {
@@ -393,8 +417,8 @@ void herb_annotate_prism_nodes(
     }
 
     prism_annotate_context_T annotate_context = {
-      .parser = &context->parser,
-      .structural_parser = prism_nodes_deep ? &context->parser : &context->structural_parser,
+      .parser = context->parser,
+      .structural_parser = prism_nodes_deep ? context->parser : context->structural_parser,
       .node_list = &node_list,
       .structural_node_list = prism_nodes_deep ? &node_list : &structural_node_list,
       .prism_nodes_deep = prism_nodes_deep,

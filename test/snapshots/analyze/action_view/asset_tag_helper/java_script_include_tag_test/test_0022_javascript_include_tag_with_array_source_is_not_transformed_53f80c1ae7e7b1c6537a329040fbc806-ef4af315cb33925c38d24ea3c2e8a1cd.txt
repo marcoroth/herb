@@ -1,0 +1,17 @@
+---
+source: "Analyze::ActionView::AssetTagHelper::JavaScriptIncludeTagTest#test_0022_javascript_include_tag with array source is not transformed"
+input: |2-
+<%= javascript_include_tag %w[application admin] %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:51))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " javascript_include_tag %w[application admin] " (location: (1:3)-(1:49))
+    │   ├── tag_closing: "%>" (location: (1:49)-(1:51))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:51)-(2:0))
+        └── content: "\n"

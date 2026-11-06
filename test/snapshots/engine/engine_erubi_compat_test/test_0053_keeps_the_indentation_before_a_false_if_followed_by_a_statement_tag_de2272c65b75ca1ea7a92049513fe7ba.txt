@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0053_keeps the indentation before a false if followed by a statement tag"
+input: "{source: \"<p></p>\\n  <% if false %><% x = 1 %>B<% end %>C\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p></p>
+  '.freeze;   if false ; x = 1 ; _buf << 'B'.freeze; end; _buf << 'C'.freeze;
+_buf.to_s

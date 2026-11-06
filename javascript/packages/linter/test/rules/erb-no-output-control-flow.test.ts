@@ -195,6 +195,50 @@ describe("erb-no-output-control-flow", () => {
     assertOffenses(html)
   })
 
+  it("should allow form builder select blocks with output tags", () => {
+    expectNoOffenses(dedent`
+      <%= form.select :status do %>
+        <option>One</option>
+      <% end %>
+    `)
+  })
+
+  it("should allow form builder select blocks with parenthesized arguments", () => {
+    expectNoOffenses(dedent`
+      <%= f.select(:status, class: "input") do %>
+        <option>One</option>
+      <% end %>
+    `)
+  })
+
+  it("should allow tag builder select blocks with output tags", () => {
+    expectNoOffenses(dedent`
+      <%= tag.select do %>
+        <option>One</option>
+      <% end %>
+    `)
+  })
+
+  it("should allow tag builder select blocks with attributes", () => {
+    expectNoOffenses(dedent`
+      <%= tag.select class: "input" do %>
+        <option>One</option>
+      <% end %>
+    `)
+  })
+
+  it("should not allow select blocks on a collection with output tags", () => {
+    const html = dedent`
+      <%= @users.select do |user| %>
+        <%= user %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `select` should not be used with output tags, they return the collection instead of the rendered output. Use `<% @users.select do |user| %>` instead.')
+
+    assertOffenses(html)
+  })
+
   it("names the iteration method in the message", () => {
     const html = dedent`
       <%= 3.times do |i| %>

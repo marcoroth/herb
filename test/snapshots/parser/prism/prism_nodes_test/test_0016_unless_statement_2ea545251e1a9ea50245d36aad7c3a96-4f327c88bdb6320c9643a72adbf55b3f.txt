@@ -12,7 +12,7 @@ options: {prism_nodes: true}
         ├── then_keyword: ∅
         ├── prism_node:
         │   └── @ UnlessNode (location: (1:3)-(1:40))
-        │       ├── keyword_loc: (1:3)-(1:9)
+        │       ├── unless_keyword_loc: (1:3)-(1:9)
         │       ├── predicate:
         │       │   └── @ CallNode (location: (1:10)-(1:17))
         │       │       ├── receiver: ∅
@@ -23,11 +23,19 @@ options: {prism_nodes: true}
         │       │       ├── arguments: ∅
         │       │       ├── closing_loc: ∅
         │       │       ├── equal_loc: ∅
-        │       │       └── block: ∅
+        │       │       ├── block: ∅
+        │       │       ├── call_operator: ∅
+        │       │       ├── message: "hidden?"
+        │       │       ├── opening: ∅
+        │       │       ├── closing: ∅
+        │       │       └── equal: ∅
         │       ├── then_keyword_loc: ∅
         │       ├── statements: ∅
         │       ├── else_clause: ∅
-        │       └── end_keyword_loc: (1:37)-(1:40)
+        │       ├── end_keyword_loc: (1:37)-(1:40)
+        │       ├── unless_keyword: "unless"
+        │       ├── then_keyword: ∅
+        │       └── end_keyword: "end"
         ├── statements: (1 item)
         │   └── @ ERBContentNode (location: (1:20)-(1:34))
         │       ├── tag_opening: "<%=" (location: (1:20)-(1:23))
@@ -45,7 +53,12 @@ options: {prism_nodes: true}
         │               ├── arguments: ∅
         │               ├── closing_loc: ∅
         │               ├── equal_loc: ∅
-        │               └── block: ∅
+        │               ├── block: ∅
+        │               ├── call_operator: ∅
+        │               ├── message: "content"
+        │               ├── opening: ∅
+        │               ├── closing: ∅
+        │               └── equal: ∅
         │
         ├── else_clause: ∅
         └── end_node:

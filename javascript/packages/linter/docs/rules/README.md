@@ -24,6 +24,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
 - [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
+- [`actionview-no-local-assigns`](./actionview-no-local-assigns.md) - Prefer a strict locals declaration over reading locals through `local_assigns`
 - [`actionview-no-mistyped-locals`](./actionview-no-mistyped-locals.md) - Disallow literal `render` arguments that contradict a strict local's declared default type
 - [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
 - [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
@@ -77,6 +78,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-sleep`](./erb-no-sleep.md) - Disallow `sleep` in ERB templates
 - [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
 - [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
+- [`erb-no-trailing-comment`](./erb-no-trailing-comment.md) - Disallow Ruby comments at the end of ERB tags
 - [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output

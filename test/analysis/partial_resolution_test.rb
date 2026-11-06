@@ -57,6 +57,18 @@ class PartialResolutionTest < Minitest::Spec
     assert Subject.outranks_template?("admin/_card.html.erb", "posts/_card.html.erb")
   end
 
+  test "reads the variant of a template" do
+    assert_equal "phone", Herb::Analysis::PartialResolution.template_variant("app/views/things/show.html+phone.erb")
+    assert_equal "tablet", Herb::Analysis::PartialResolution.template_variant("app/views/things/_item.en.html+tablet.erb")
+  end
+
+  test "reads no variant from a template without one" do
+    assert_nil Herb::Analysis::PartialResolution.template_variant("app/views/things/show.html.erb")
+    assert_nil Herb::Analysis::PartialResolution.template_variant("app/views/things/show.html+.erb")
+    assert_nil Herb::Analysis::PartialResolution.template_variant("app/views/a+b/show.html.erb")
+    assert_nil Herb::Analysis::PartialResolution.template_variant(nil)
+  end
+
   test "orders variants by precedence" do
     files = ["_card.turbo_stream.erb", "_card.erb", "_card.html.erb", "_card.herb"]
 

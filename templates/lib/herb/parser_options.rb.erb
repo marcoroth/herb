@@ -15,7 +15,7 @@ module Herb
     <%- end -%>
     end
 
-    #: () -> Hash[Symbol, (bool | Numeric | Array[String] | nil)]
+    #: () -> Hash[Symbol, (bool | Numeric | String | Array[String] | nil)]
     def to_h
       {
       <%- parser_options.fields_for(:ruby).each do |field| -%>

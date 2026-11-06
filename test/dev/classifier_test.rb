@@ -99,5 +99,13 @@ module Dev
 
       assert_equal :dynamic, classification.kind
     end
+
+    test "a configured ruby_version keeps the kind at :static" do
+      configuration = Struct.new(:parser_options).new({ ruby_version: "3.4" })
+
+      classification = classify("<div><p>Hi</p></div>", "<div><p>Hello</p></div>", configuration: configuration)
+
+      assert_equal :static, classification.kind
+    end
   end
 end

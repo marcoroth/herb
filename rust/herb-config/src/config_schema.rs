@@ -19,6 +19,9 @@ pub struct FilesConfig {
 pub struct ParserConfig {
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub erb_openers: Option<Vec<String>>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub ruby_version: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]

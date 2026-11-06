@@ -10,6 +10,10 @@ module Herb
         SEED_VALUE_TYPES = "[true, false, ::Integer, ::String, ::Symbol, nil]" #: String
         PREFIX = "herb-" #: String
         COMMENT = %r{\A<!--/?#{PREFIX}} #: Regexp
+        FOREIGN_ATTRIBUTE = "data-herb-foreign" #: String
+        FOREIGN_ROOTS = { svg: "svg", math: "math" }.freeze #: Hash[Symbol, String]
+        SVG_INTEGRATION_POINTS = ["foreignobject", "desc", "title"].freeze #: Array[String]
+        MATH_INTEGRATION_POINTS = ["mi", "mo", "mn", "ms", "mtext"].freeze #: Array[String]
 
         #: (String) -> bool
         def self.marker?(text)
@@ -21,11 +25,31 @@ module Herb
           "{ #{pairs} }.select { |_, v| #{SEED_VALUE_TYPES}.any? { |t| t === v } }.transform_values { |v| v.is_a?(::Symbol) ? v.to_s : v }"
         end
 
+        #: (Symbol, String) -> Symbol
+        def self.namespace_within(namespace, tag_name)
+          case namespace
+          when :svg
+            SVG_INTEGRATION_POINTS.include?(tag_name) ? :html : :svg
+          when :math
+            MATH_INTEGRATION_POINTS.include?(tag_name) ? :html : :math
+          else
+            FOREIGN_ROOTS.key(tag_name) || :html
+          end
+        end
+
         #: (Integer, Symbol) -> String
         def slot_open(index, type)
           return "<!--#{PREFIX}slot:#{index}-->" if type == DEFAULT_TYPE
 
           "<!--#{PREFIX}slot:#{index}:#{type}-->"
+        end
+
+        #: (String, Symbol) -> String
+        def foreign(markup, namespace)
+          root = FOREIGN_ROOTS[namespace]
+          return markup unless root
+
+          %(<#{root} #{FOREIGN_ATTRIBUTE}>#{markup}</#{root}>)
         end
 
         #: (Array[[Integer, Symbol, String?]]) -> String

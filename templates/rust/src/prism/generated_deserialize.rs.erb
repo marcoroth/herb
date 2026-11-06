@@ -1,55 +1,21 @@
-fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, node: &mut PrismNode) {
+fn read_node_body(
+  buffer: &mut SerializationBuffer,
+  type_id: u8,
+  pool: usize,
+  node: &mut PrismNode,
+  stack: &mut Vec<Option<PrismNode>>,
+) {
   match type_id {
   <%- prism_nodes.each do |prism_node| -%>
     <%= prism_node.type_id %> => {
-      <%- if prism_node.name == "DefNode" -%>
-      buffer.read_uint32();
-      <%- end -%>
-
       let flags = buffer.read_var_int() as u32;
       node.flags = flags;
 
     <%- prism_node.fields.each do |field| -%>
     <%- case field.type -%>
-    <%- when "node" -%>
-      {
-        let child = read_node(buffer, pool);
-        node.children.push(child);
-      }
-
-      <%- if field.name == "receiver" -%>
-        node.receiver_index = Some(node.children.len() - 1);
-      <%- elsif prism_node.name == "AssocNode" && field.name == "key" -%>
-        node.key = Some(Box::new(node.children[node.children.len() - 1].clone()));
-      <%- end -%>
-
-    <%- when "node?" -%>
-      if buffer.peek_byte() != 0 {
-        let child = read_node(buffer, pool);
-        node.children.push(child);
-      <%- if field.name == "block" -%>
-        node.has_block = true;
-      <%- end -%>
-
-      <%- if field.name == "receiver" -%>
-        node.receiver_index = Some(node.children.len() - 1);
-      <%- elsif prism_node.name == "AssocNode" && field.name == "key" -%>
-        node.key = Some(Box::new(node.children[node.children.len() - 1].clone()));
-      <%- end -%>
-
-      } else {
-        buffer.read_byte();
-      }
-  <%- when "node[]" -%>
-      {
-        let count = buffer.read_var_int();
-
-        for _ in 0..count {
-          let child = read_node(buffer, pool);
-          node.children.push(child);
-        }
-      }
-
+    <%- when "node", "node?" -%>
+    <%- when "node[]" -%>
+      let <%= field.name %>_count = buffer.read_var_int();
   <%- when "string" -%>
     <%- if field.name == "unescaped" -%>
       node.unescaped = Some(buffer.read_string_field(flags));
@@ -93,10 +59,90 @@ fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, no
       <%- raise "unhandled prism field type: #{field.type}" -%>
     <%- end -%>
   <%- end -%>
+
+    <%- prism_node.fields.reverse.each do |field| -%>
+    <%- case field.type -%>
+    <%- when "node", "node?" -%>
+      let <%= field.name %>_child = stack.pop().flatten();
+    <%- when "node[]" -%>
+      let <%= field.name %>_children = stack.split_off(stack.len().saturating_sub(<%= field.name %>_count));
+    <%- end -%>
+  <%- end -%>
+
+    <%- prism_node.fields.each do |field| -%>
+    <%- case field.type -%>
+    <%- when "node", "node?" -%>
+      if let Some(child) = <%= field.name %>_child {
+        node.children.push(child);
+      <%- if field.name == "block" && field.type == "node?" -%>
+        node.has_block = true;
+      <%- end -%>
+      <%- if field.name == "receiver" -%>
+        node.receiver_index = Some(node.children.len() - 1);
+      <%- elsif prism_node.name == "AssocNode" && field.name == "key" -%>
+        node.key = Some(Box::new(node.children[node.children.len() - 1].clone()));
+      <%- end -%>
+      }
+
+    <%- when "node[]" -%>
+      node.children.extend(<%= field.name %>_children.into_iter().flatten());
+
+    <%- end -%>
+  <%- end -%>
     }
 <%- end -%>
     _ => {}
   }
+}
+
+fn record_child_count(buffer: &mut SerializationBuffer, type_id: u8, pool: usize) -> usize {
+  #[allow(unused_mut)]
+  let mut count = 0;
+
+  match type_id {
+  <%- prism_nodes.each do |prism_node| -%>
+    <%= prism_node.type_id %> => {
+      buffer.read_var_int();
+
+    <%- prism_node.fields.each do |field| -%>
+    <%- case field.type -%>
+    <%- when "node", "node?" -%>
+      count += 1;
+    <%- when "node[]" -%>
+      count += buffer.read_var_int();
+    <%- when "string" -%>
+      buffer.read_string_field(0);
+    <%- when "constant" -%>
+      buffer.read_required_constant(pool);
+    <%- when "constant?" -%>
+      buffer.read_optional_constant(pool);
+    <%- when "constant[]" -%>
+      for _ in 0..buffer.read_var_int() {
+        buffer.read_required_constant(pool);
+      }
+    <%- when "location" -%>
+      buffer.read_location();
+    <%- when "location?" -%>
+      buffer.read_optional_location();
+    <%- when "uint8" -%>
+      buffer.read_byte();
+    <%- when "uint32" -%>
+      buffer.read_var_int();
+    <%- when "integer" -%>
+      buffer.read_integer();
+    <%- when "double" -%>
+      buffer.read_double();
+    <%- when "flags" -%>
+    <%- else -%>
+      <%- raise "unhandled prism field type: #{field.type}" -%>
+    <%- end -%>
+    <%- end -%>
+    }
+  <%- end -%>
+    _ => {}
+  }
+
+  count
 }
 
 fn node_type_name_for(type_id: u8) -> String {

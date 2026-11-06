@@ -51,7 +51,12 @@ options: {prism_program: true}
                         │       ├── arguments: ∅
                         │       ├── closing_loc: ∅
                         │       ├── equal_loc: ∅
-                        │       └── block: ∅
+                        │       ├── block: ∅
+                        │       ├── call_operator: ∅
+                        │       ├── message: "items"
+                        │       ├── opening: ∅
+                        │       ├── closing: ∅
+                        │       └── equal: ∅
                         ├── call_operator_loc: (1:8)-(1:9)
                         ├── name: :map
                         ├── message_loc: (1:9)-(1:12)
@@ -59,41 +64,55 @@ options: {prism_program: true}
                         ├── arguments: ∅
                         ├── closing_loc: ∅
                         ├── equal_loc: ∅
-                        └── block:
-                            └── @ BlockNode (location: (1:13)-(1:47))
-                                ├── locals: (1 item)
-                                │   └── :item
-                                ├── parameters:
-                                │   └── @ BlockParametersNode (location: (1:16)-(1:22))
-                                │       ├── parameters:
-                                │       │   └── @ ParametersNode (location: (1:17)-(1:21))
-                                │       │       ├── requireds: (1 item)
-                                │       │       │   └── @ RequiredParameterNode (location: (1:17)-(1:21))
-                                │       │       │       └── name: :item
-                                │       │       ├── optionals: []
-                                │       │       ├── rest: ∅
-                                │       │       ├── posts: []
-                                │       │       ├── keywords: []
-                                │       │       ├── keyword_rest: ∅
-                                │       │       └── block: ∅
-                                │       ├── locals: []
-                                │       ├── opening_loc: (1:16)-(1:17)
-                                │       └── closing_loc: (1:21)-(1:22)
-                                ├── body:
-                                │   └── @ StatementsNode (location: (1:29)-(1:38))
-                                │       └── body: (1 item)
-                                │           └── @ CallNode (location: (1:29)-(1:38))
-                                │               ├── receiver:
-                                │               │   └── @ LocalVariableReadNode (location: (1:29)-(1:33))
-                                │               │       ├── name: :item
-                                │               │       └── depth: 0
-                                │               ├── call_operator_loc: (1:33)-(1:34)
-                                │               ├── name: :name
-                                │               ├── message_loc: (1:34)-(1:38)
-                                │               ├── opening_loc: ∅
-                                │               ├── arguments: ∅
-                                │               ├── closing_loc: ∅
-                                │               ├── equal_loc: ∅
-                                │               └── block: ∅
-                                ├── opening_loc: (1:13)-(1:15)
-                                └── closing_loc: (1:44)-(1:47)
+                        ├── block:
+                        │   └── @ BlockNode (location: (1:13)-(1:47))
+                        │       ├── locals: (1 item)
+                        │       │   └── :item
+                        │       ├── parameters:
+                        │       │   └── @ BlockParametersNode (location: (1:16)-(1:22))
+                        │       │       ├── parameters:
+                        │       │       │   └── @ ParametersNode (location: (1:17)-(1:21))
+                        │       │       │       ├── requireds: (1 item)
+                        │       │       │       │   └── @ RequiredParameterNode (location: (1:17)-(1:21))
+                        │       │       │       │       └── name: :item
+                        │       │       │       ├── optionals: []
+                        │       │       │       ├── rest: ∅
+                        │       │       │       ├── posts: []
+                        │       │       │       ├── keywords: []
+                        │       │       │       ├── keyword_rest: ∅
+                        │       │       │       └── block: ∅
+                        │       │       ├── locals: []
+                        │       │       ├── opening_loc: (1:16)-(1:17)
+                        │       │       ├── closing_loc: (1:21)-(1:22)
+                        │       │       ├── opening: "|"
+                        │       │       └── closing: "|"
+                        │       ├── body:
+                        │       │   └── @ StatementsNode (location: (1:29)-(1:38))
+                        │       │       └── body: (1 item)
+                        │       │           └── @ CallNode (location: (1:29)-(1:38))
+                        │       │               ├── receiver:
+                        │       │               │   └── @ LocalVariableReadNode (location: (1:29)-(1:33))
+                        │       │               │       ├── name: :item
+                        │       │               │       └── depth: 0
+                        │       │               ├── call_operator_loc: (1:33)-(1:34)
+                        │       │               ├── name: :name
+                        │       │               ├── message_loc: (1:34)-(1:38)
+                        │       │               ├── opening_loc: ∅
+                        │       │               ├── arguments: ∅
+                        │       │               ├── closing_loc: ∅
+                        │       │               ├── equal_loc: ∅
+                        │       │               ├── block: ∅
+                        │       │               ├── call_operator: "."
+                        │       │               ├── message: "name"
+                        │       │               ├── opening: ∅
+                        │       │               ├── closing: ∅
+                        │       │               └── equal: ∅
+                        │       ├── opening_loc: (1:13)-(1:15)
+                        │       ├── closing_loc: (1:44)-(1:47)
+                        │       ├── opening: "do"
+                        │       └── closing: "end"
+                        ├── call_operator: "."
+                        ├── message: "map"
+                        ├── opening: ∅
+                        ├── closing: ∅
+                        └── equal: ∅

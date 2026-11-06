@@ -349,6 +349,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
       return
     }
 
+    if (this.reportExtraCommas(node, content)) return
     if (this.reportSyntaxErrors(node, content)) return
 
     this.reportArgumentErrors(node)
@@ -413,6 +414,21 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
     }
   }
 
+  private reportExtraCommas(node: ERBStrictLocalsNode, content: string): boolean {
+    const parameters = findParameters(content)
+    const extraCommas = parameters ? extraCommaRanges(content, parameters) : null
+
+    if (!extraCommas || extraCommas.length === 0) return false
+
+    this.addOffense(
+      "Remove the extra comma from the strict locals parameters.",
+      contentLocation(node, extraCommas[0].start),
+      this.contextFor(node, { type: "remove-extra-commas" }),
+    )
+
+    return true
+  }
+
   private reportSyntaxErrors(node: ERBStrictLocalsNode, content: string): boolean {
     const syntaxErrors = node.errors.filter(
       (error): error is RubyParseError => error.type === "RUBY_PARSE_ERROR",
@@ -426,18 +442,6 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
         "Unbalanced parentheses in the strict locals declaration. Add the missing closing `)`.",
         contentLocation(node, parameters.open),
         this.contextFor(node, { type: "close-parameters" }),
-      )
-
-      return true
-    }
-
-    const extraCommas = parameters ? extraCommaRanges(content, parameters) : null
-
-    if (extraCommas && extraCommas.length > 0) {
-      this.addOffense(
-        "Remove the extra comma from the strict locals parameters.",
-        contentLocation(node, extraCommas[0].start),
-        this.contextFor(node, { type: "remove-extra-commas" }),
       )
 
       return true

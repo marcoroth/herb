@@ -137,6 +137,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("prism_program", val(options->prism_program));
   options_object.set("dot_notation_tags", val(options->dot_notation_tags));
   options_object.set("html", val(options->html));
+  options_object.set("ruby_version", options->ruby_version[0] != '\0' ? val(std::string(options->ruby_version)) : val::null());
 
   result.set("options", options_object);
   result.set("error_count", options->error_count != nullptr ? val(*options->error_count) : val::null());

@@ -178,6 +178,7 @@ src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h
 src/include/parser/parser_options.h
+src/include/prism_version.h
 src/include/lib/hb_foreach.h
 src/parser/match_tags.c
 src/visitor.c

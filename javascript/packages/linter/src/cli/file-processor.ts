@@ -14,10 +14,11 @@ import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
 import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { buildRenderGraph } from "@herb-tools/analysis/node"
+import { isStructuredFormat } from "./output-format.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { AncestorChain } from "@herb-tools/analysis"
-import type { FormatOption } from "./argument-parser.js"
+import type { FormatOption } from "./output-format.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "../fixability.js"
@@ -88,6 +89,13 @@ export interface ProcessingResult {
 const PARALLEL_FILE_THRESHOLD = 10
 
 /**
+ * Upper bound for the default number of workers. Each worker loads its own
+ * WASM parser and config, so on machines with many cores the startup cost of
+ * one worker per core outweighs the extra parallelism.
+ */
+const MAX_DEFAULT_JOBS = 8
+
+/**
  * Maximum Levenshtein distance for suggesting a rule name for an unknown rule.
  * Keeps typo suggestions while staying silent for names that aren't close to any rule.
  */
@@ -111,12 +119,12 @@ export class FileProcessor {
     try {
       const result = await loadCustomRules({
         baseDir: context.projectPath,
-        silent: formatOption === 'json'
+        silent: isStructuredFormat(formatOption)
       })
 
       this.customRules = result.rules
 
-      if (result.rules.length > 0 && formatOption !== 'json') {
+      if (result.rules.length > 0 && !isStructuredFormat(formatOption)) {
         const ruleText = result.rules.length === 1 ? 'rule' : 'rules'
         console.log(colorize(`\nLoaded ${result.rules.length} custom ${ruleText}:`, "green"))
 
@@ -136,7 +144,7 @@ export class FileProcessor {
         console.log()
       }
     } catch (error) {
-      if (formatOption !== 'json') {
+      if (!isStructuredFormat(formatOption)) {
         console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
       }
     }
@@ -178,7 +186,7 @@ export class FileProcessor {
   }
 
   private async attachFixPreviews(allOffenses: ProcessedFile[], formatOption: FormatOption, context?: ProcessingContext): Promise<void> {
-    if (formatOption === "json") return
+    if (isStructuredFormat(formatOption)) return
 
     const correctable = allOffenses.filter(item => item.autocorrectable || item.unsafeAutocorrectable)
 
@@ -372,7 +380,7 @@ export class FileProcessor {
 
           filesFixed++
 
-          if (formatOption !== 'json') {
+          if (!isStructuredFormat(formatOption)) {
             console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} ${autofixResult.fixed.length === 1 ? "offense" : "offenses"}`, "green")}`)
           }
         }
@@ -399,7 +407,7 @@ export class FileProcessor {
           filesWithOffenses++
         }
       } else if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && formatOption !== 'json') {
+        if (files.length === 1 && !isStructuredFormat(formatOption)) {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
@@ -595,7 +603,7 @@ export class FileProcessor {
         ruleOffenses.set(rule, existing)
       }
 
-      if (formatOption !== 'json') {
+      if (!isStructuredFormat(formatOption)) {
         for (const fixMessage of result.fixMessages) {
           const [filename, countStr] = fixMessage.split("\t")
           const count = parseInt(countStr, 10)
@@ -633,12 +641,12 @@ export class FileProcessor {
   }
 
   /**
-   * Returns the default number of parallel jobs based on available CPU cores.
-   * Returns 1 if parallelism detection fails.
+   * Returns the default number of parallel jobs based on available CPU cores,
+   * capped at MAX_DEFAULT_JOBS. Returns 1 if parallelism detection fails.
    */
   static defaultJobs(): number {
     try {
-      return availableParallelism()
+      return Math.min(availableParallelism(), MAX_DEFAULT_JOBS)
     } catch {
       return 1
     }

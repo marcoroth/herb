@@ -319,6 +319,148 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
+  test("passes for an ID built from a local assigned inside the loop", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = group.primary_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for an ID built from a local assigned through another local", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = group.primary_record %>
+        <% identifier = record.id %>
+        <div id="row-<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for an ID built from a local that does not read the loop variable", () => {
+    expectError('Duplicate ID `<%= dom_id(fallback) %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% fallback = @default_record %>
+        <div id="<%= dom_id(fallback) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for a loop-derived assignment spanning multiple lines", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record =
+          group.primary_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for loop-derived assignments in the same ERB tag", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = group.primary_record; identifier = record.id %>
+        <div id="row-<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for a local derived through a variable declared outside the loop", () => {
+    expectNoOffenses(dedent`
+      <% record = nil %>
+      <% @groups.each do |group| %>
+        <% record = group.primary_record %>
+        <% identifier = record.id %>
+        <div id="row-<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for a loop reference after a semicolon inside a string", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% identifier = prefix("row;", group.id) %>
+        <div id="<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for a nested loop-derived assignment", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% identifier = (record = group.primary_record).id %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test.each(["it", "_1"])("passes for a local derived from the implicit %s parameter", parameter => {
+    expectNoOffenses(dedent`
+      <% @groups.each do %>
+        <% record = ${parameter}.primary_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test.each([
+    '"group"',
+    ':group',
+    '@group',
+    'group()',
+    '@default_record.group',
+    '@default_record # group',
+    '@records.map { |group| group.id }',
+  ])("fails when an assignment mentions the loop variable without reading it: %s", source => {
+    expectError('Duplicate ID `<%= dom_id(record) %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = ${source} %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for a loop variable captured by a nested Ruby block", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% identifier = @suffixes.map { |suffix| "#{group.id}-#{suffix}" }.join %>
+        <div id="<%= identifier %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("does not treat assignments to block-local variables as loop-derived locals", () => {
+    expectError('Duplicate ID `<%= dom_id(record) %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
+      <% @groups.each do |group| %>
+        <% record = @default_record %>
+        <% @records.each { |record| record = group.primary_record } %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("does not carry derived locals between blocks with implicit parameters", () => {
+    expectError('Duplicate ID `<%= dom_id(record) %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
+      <% @groups.each do %>
+        <% record = it.primary_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+      <% @groups.each do %>
+        <% record = @default_record %>
+        <div id="<%= dom_id(record) %>"></div>
+      <% end %>
+    `)
+  })
+
   test("passes for dynamic attribute in a ERBBlockNode each context", () => {
     expectNoOffenses(dedent`
       <% @users.each do |user| %>
@@ -1408,6 +1550,147 @@ describe("html-no-duplicate-ids", () => {
             <% group.items.each do |item| %>
               <div id="item-<%= group.id %>-<%= item.id %>"></div>
             <% end %>
+          <% end %>
+        `)
+      })
+    })
+
+    describe("local variables derived from the block argument", () => {
+      test("passes for an ID assigned from the block argument (issue #2740)", () => {
+        expectNoOffenses(dedent`
+          <% %w[a b].each do |letter| %>
+            <% id = "#{letter}" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for an ID derived through a chain of assignments", () => {
+        expectNoOffenses(dedent`
+          <% items.each do |item| %>
+            <% slug = item.slug; prefix = "item" %>
+            <% id = "#{prefix}-#{slug}" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for an ID built with an operator assignment", () => {
+        expectNoOffenses(dedent`
+          <% items.each do |item| %>
+            <% id = "item-" %>
+            <% id += item.id.to_s %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for an ID assigned from a value unrelated to the block argument", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <% id = unrelated.id %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for an ID assigned from a static string", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <% id = "always static" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for an ID assigned from the block argument after multibyte characters", () => {
+        expectNoOffenses(dedent`
+          <p>Grüße 🎉</p>
+          <% %w[a b].each do |letter| %>
+            <% id = "#{letter}" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for an ID assigned from a string that spells the block argument", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <% id = "item" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for an ID assigned through multiple assignment", () => {
+        expectNoOffenses(dedent`
+          <% items.each do |item| %>
+            <% id, label = item.id, "Item" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for an ID assigned across several lines of one tag", () => {
+        expectNoOffenses(dedent`
+          <% items.each do |item| %>
+            <%
+              prefix = "item"
+              id = [prefix, item.id].join("-")
+            %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for a block argument read inside a nested non-iteration block", () => {
+        expectNoOffenses(dedent`
+          <% items.each do |item| %>
+            <%= form_with model: item do |form| %>
+              <div id="<%= dom_id(item) %>"></div>
+            <% end %>
+          <% end %>
+        `)
+      })
+
+      test("fails once the derived variable is reassigned to an unrelated value", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <% id = item.id %>
+            <% id = "static" %>
+            <div id="<%= id %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for a variable derived from the outer block argument in the inner loop", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% groups.each do |group| %>
+            <% id = group.id %>
+            <% group.items.each do |item| %>
+              <div id="<%= id %>"></div>
+            <% end %>
+          <% end %>
+        `)
+      })
+
+      test("does not treat a comparison as an assignment", () => {
+        expectError('Duplicate ID `<%= id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <% id == item.id %>
+            <div id="<%= id %>"></div>
           <% end %>
         `)
       })

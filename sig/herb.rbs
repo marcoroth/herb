@@ -1,8 +1,8 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
-  # : (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?arena_stats: bool) -> ParseResult
-  def self.parse: (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?arena_stats: bool) -> ParseResult
+  # : (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?ruby_version: String?, ?arena_stats: bool) -> ParseResult
+  def self.parse: (String input, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?herb_directives: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?erb_openers: Array[String], ?ruby_version: String?, ?arena_stats: bool) -> ParseResult
 
   # : (String input, ?erb_openers: Array[String], ?arena_stats: bool) -> LexResult
   def self.lex: (String input, ?erb_openers: Array[String], ?arena_stats: bool) -> LexResult

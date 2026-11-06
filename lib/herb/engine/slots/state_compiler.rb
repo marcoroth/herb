@@ -1311,8 +1311,7 @@ module Herb
           return nil unless position
 
           condition = StateDirectives.condition_source(read)
-          spacing = open_tag.is_a?(Herb::AST::ERBOpenTagNode) ? " " : ""
-          replacement = @visitor.erb_output_node(%[("#{spacing}#{slot.attribute}" if #{condition})])
+          replacement = @visitor.erb_output_node(%[("#{@visitor.attribute_spacing(children, position)}#{slot.attribute}" if #{condition})])
 
           children[position] = replacement
 

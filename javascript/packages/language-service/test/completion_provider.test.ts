@@ -1506,6 +1506,20 @@ describe("herb attribute completions", () => {
     expect(other?.textEdit && "newText" in other.textEdit && other.textEdit.newText).toBe("draft=$0")
   })
 
+  it("set offers no states or values after a comma", () => {
+    const content = STATES + '<button data-herb-set="open=true,">x</button>'
+    const offered = labels(content, ...insideValue(content, 'data-herb-set="open=true,'))
+
+    expect(offered).not.toContain("attempts")
+    expect(offered).not.toContain("true")
+  })
+
+  it("toggle offers no states after a comma", () => {
+    const content = STATES + '<button data-herb-toggle="open,">x</button>'
+
+    expect(labels(content, ...insideValue(content, 'data-herb-toggle="open,'))).not.toContain("open")
+  })
+
   it("set offers no events after an event prefix", () => {
     const content = STATES + '<button data-herb-set="change->">x</button>'
     const offered = labels(content, ...insideValue(content, 'data-herb-set="change->'))

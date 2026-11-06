@@ -72,6 +72,8 @@ module Herb
       # : (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
       def replacing: (Herb::AST::Node, Herb::AST::Node) -> Herb::AST::Node
 
+      def literal?: (untyped node) -> untyped
+
       def framed?: (untyped node) -> untyped
 
       def assignment?: (untyped node) -> untyped
@@ -105,7 +107,9 @@ module Herb
 
       def code: (untyped node) -> untyped
 
-      def erb_node: (untyped node, untyped opening, untyped code) -> untyped
+      def rewrapped: (untyped node, untyped code) -> untyped
+
+      def erb_node: (untyped node, untyped opening, untyped code, ?closing: untyped) -> untyped
     end
   end
 end

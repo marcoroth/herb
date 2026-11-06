@@ -11,7 +11,7 @@ expression: result.inspect()
         ├── then_keyword: ∅
         ├── prism_node: 
         │   └── @ UnlessNode (location: (0,3)-(0,40))
-        │       ├── keyword_loc: (0,3)-(0,9) = "unless"
+        │       ├── unless_keyword_loc: (0,3)-(0,9) = "unless"
         │       ├── predicate:
         │       │   @ CallNode (location: (0,10)-(0,17))
         │       │   ├── CallNodeFlags: ignore_visibility
