@@ -94,7 +94,7 @@ module Herb
       #
       # ## Blocks
       #
-      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding everything
+      # A tag that takes a block, such as `<%= form_with do |f| %>`, owns an entry holding the markup
       # the block rendered, because the helper wraps that output in markup of its own that only the
       # helper can produce. What the template wrote inside the block keeps its own indices alongside:
       #
@@ -105,14 +105,19 @@ module Herb
       # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
       # for conditionals and collections.
       #
-      # A partial inside a block keeps its own values on its slot, and the block's entry is a String that
-      # cannot hold them, so the partial's markup is missing from that entry:
+      # A partial inside a block is the exception to that fallback. It keeps its own values on its slot,
+      # and the block's entry is a String that cannot hold them, so the entry leaves the partial's
+      # markup out:
       #
       #     <%= form_with(model: @user) do |f| %><%= render "card" %><% end %>
       #     #=> { 0 => "<form></form>", 1 => { template: "app/views/_card.html.erb", ... } }
       #
+      # That entry cannot stand in for the block, so it must not be written over a block holding a
+      # partial. The client never writes a block's entry while the page marks slots inside that block.
+      # It reports the block as deferred instead, even when nothing in the block changed.
+      #
       # A render that comes back as markup, because its template is not compiled for slots, is written
-      # into the entry as usual.
+      # into the entry as usual, and the entry stays whole.
       #
       # A block yielding more than once is the exception, since one index cannot stand for the several
       # values its interior took. `each` and the other iterations are compiled as collections for that
