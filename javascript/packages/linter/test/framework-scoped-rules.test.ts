@@ -104,4 +104,19 @@ describe("Action View helper parsing", () => {
   test("reads `tag.*` as an element for an Action View project", () => {
     expect(rulesFor({ framework: "actionview" })).toContain("html-no-unknown-tag")
   })
+
+  test("reads helpers using the framework from the config", () => {
+    const config = Config.fromObject({ framework: "actionview" })
+    const linter = new Linter(Herb, undefined, config)
+
+    expect(linter.lint(TAG_PROXY).offenses.map(offense => offense.rule)).toContain("html-no-unknown-tag")
+  })
+
+  test("an explicit context overrides the configured framework when parsing helpers", () => {
+    const actionViewConfig = Config.fromObject({ framework: "actionview" })
+    const rubyConfig = Config.fromObject({ framework: "ruby" })
+
+    expect(new Linter(Herb, undefined, actionViewConfig).lint(TAG_PROXY, { framework: "ruby" }).offenses).toEqual([])
+    expect(new Linter(Herb, undefined, rubyConfig).lint(TAG_PROXY, { framework: "actionview" }).offenses.map(offense => offense.rule)).toContain("html-no-unknown-tag")
+  })
 })
