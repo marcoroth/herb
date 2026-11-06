@@ -99,6 +99,15 @@ module Herb
       # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
       # for conditionals and collections.
       #
+      # A partial inside a block keeps its own values on its slot, and the block's entry is a String that
+      # cannot hold them, so the partial's markup is missing from that entry:
+      #
+      #     <%= form_with(model: @user) do |f| %><%= render "card" %><% end %>
+      #     #=> { 0 => "<form></form>", 1 => { template: "app/views/_card.html.erb", ... } }
+      #
+      # A render that comes back as markup, because its template is not compiled for slots, is written
+      # into the entry as usual.
+      #
       # A block yielding more than once is the exception, since one index cannot stand for the several
       # values its interior took. `each` and the other iterations are compiled as collections for that
       # reason, and a helper that yields repeatedly reports the last value its interior took.
@@ -116,6 +125,8 @@ module Herb
         KEY_BUFFER: String
 
         OCCURRENCE_BUFFER: String
+
+        RENDERED_BUFFER: String
 
         BRANCHING_NODES: Array[String]
 
@@ -249,8 +260,8 @@ module Herb
         # : (Integer) -> bool
         def boolean_presence?: (Integer) -> bool
 
-        # : (String, Integer?, bool) -> void
-        def add_dynamic_block: (String, Integer?, bool) -> void
+        # : (String, Integer?, bool, ?rendering: bool) -> void
+        def add_dynamic_block: (String, Integer?, bool, ?rendering: bool) -> void
 
         # : (String, ?escaped: bool) -> void
         def add_expression_block_end: (String, ?escaped: bool) -> void
@@ -331,6 +342,9 @@ module Herb
 
         # : (Integer) -> bool
         def interpolated?: (Integer) -> bool
+
+        # : (String) -> void
+        def add_block_render: (String) -> void
 
         # : (String) -> void
         def add_block_dynamic: (String) -> void

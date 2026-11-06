@@ -105,6 +105,15 @@ module Herb
       # and the whole block. Slot 1 is inside slot 0, which the client already has to reason about
       # for conditionals and collections.
       #
+      # A partial inside a block keeps its own values on its slot, and the block's entry is a String that
+      # cannot hold them, so the partial's markup is missing from that entry:
+      #
+      #     <%= form_with(model: @user) do |f| %><%= render "card" %><% end %>
+      #     #=> { 0 => "<form></form>", 1 => { template: "app/views/_card.html.erb", ... } }
+      #
+      # A render that comes back as markup, because its template is not compiled for slots, is written
+      # into the entry as usual.
+      #
       # A block yielding more than once is the exception, since one index cannot stand for the several
       # values its interior took. `each` and the other iterations are compiled as collections for that
       # reason, and a helper that yields repeatedly reports the last value its interior took.
@@ -117,6 +126,7 @@ module Herb
         ITEMS_BUFFER = "__herb_items" #: String
         KEY_BUFFER = "__herb_key" #: String
         OCCURRENCE_BUFFER = "__herb_occurrence" #: String
+        RENDERED_BUFFER = "__herb_rendered" #: String
 
         BRANCHING_NODES = [
           "AST_ERB_IF_NODE",
@@ -297,14 +307,15 @@ module Herb
 
             return super if erb_escaped?(opening)
 
-            should_escape = should_escape_output?(opening)
+            rendering = node.is_a?(Herb::AST::ERBRenderNode)
+            should_escape = !rendering && should_escape_output?(opening)
             index = claim(node)
 
             @tokens << [
               should_escape ? :expr_block_escaped : :expr_block,
               node.content.value.strip,
               current_context,
-              index
+              [index, rendering]
             ]
 
             @last_trim_consumed_newline = false
@@ -335,7 +346,9 @@ module Herb
 
                 @engine.send(:add_dynamic, value, context, index, escaped, nested: nested)
               when :expr_block, :expr_block_escaped
-                @engine.send(:add_dynamic_block, value, extra, type == :expr_block_escaped)
+                index, rendering = extra
+
+                @engine.send(:add_dynamic_block, value, index, type == :expr_block_escaped, rendering: rendering)
               when :expr_block_end
                 @engine.send(:add_expression_block_end, value, escaped: extra)
               end
@@ -541,6 +554,7 @@ module Herb
         #: (String, ?Hash[Symbol, untyped]) -> void
         def initialize(input, properties = {})
           @block_depth = 0
+          @nested_renders = [] #: Array[[Integer?]?]
           @scopes = [] #: Array[Integer]
           @withheld = {} #: Hash[Integer, bool]
           @input = input
@@ -599,6 +613,8 @@ module Herb
               return add_block_dynamic("(#{assignment(index, value)}).fetch(-1)")
             end
 
+            return add_block_render(index ? assignment(index, value) : value) if nested
+
             return add_block_dynamic(index ? assignment(index, value) : value)
           end
           return if index.nil?
@@ -611,18 +627,23 @@ module Herb
           @slot_visitor.slots[index]&.type == :boolean_attribute
         end
 
-        #: (String, Integer?, bool) -> void
-        def add_dynamic_block(code, index, escaped)
+        #: (String, Integer?, bool, ?rendering: bool) -> void
+        def add_dynamic_block(code, index, escaped, rendering: false)
           @_in_expression_block = true
           @_expression_block_open_paren = true
 
           opening = escaped ? "#{@escapefunc}((" : "("
+          nested_render = rendering && !@block_depth.zero?
 
           @src << if @block_depth.zero?
                     "; #{current_scope}[#{index}] = #{opening}#{code}"
+                  elsif nested_render
+                    "; #{RENDERED_BUFFER} = #{opening}#{code}"
                   else
                     "; #{@bufvar} << #{opening}#{code}"
                   end
+
+          @nested_renders.push(nested_render ? [index] : nil)
 
           open_block
         end
@@ -634,6 +655,14 @@ module Herb
           close_block
 
           super
+
+          nested_render = @nested_renders.pop
+
+          return unless nested_render
+
+          index = nested_render.first
+
+          add_block_render(index ? assignment(index, RENDERED_BUFFER) : RENDERED_BUFFER)
         end
 
         #: () -> String
@@ -824,6 +853,11 @@ module Herb
         #: (Integer) -> bool
         def interpolated?(index)
           @slot_visitor.slots[index]&.interpolated? || false
+        end
+
+        #: (String) -> void
+        def add_block_render(value)
+          add_block_dynamic("::Hash === (#{RENDERED_BUFFER} = (#{value})) ? \"\" : #{RENDERED_BUFFER}.to_s")
         end
 
         #: (String) -> void
