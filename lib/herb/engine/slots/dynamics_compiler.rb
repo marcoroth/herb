@@ -71,7 +71,8 @@ module Herb
       # An item is keyed by the key its template declares, through `herb-key` or `id` or a
       # `<%# herb:key %>` directive, which is what makes it survive being reordered. `Visitor`
       # decides what that key is and this evaluates it, so an item arrives under the same key the
-      # marker around it carries. A collection that declares none falls back to position.
+      # marker around it carries. A collection that declares none falls back to position, counting
+      # from the first iteration, so a change re-renders every row from the first one that differs.
       #
       # ## A partial keeps its own values
       #
@@ -479,7 +480,7 @@ module Herb
 
           #: (Integer) -> String?
           def item_key(index)
-            @slot_visitor.slots[index]&.key_expression
+            @slot_visitor.slots[index]&.item_key
           end
 
           #: (untyped, Symbol) -> void
@@ -772,6 +773,10 @@ module Herb
         #: (Integer) -> void
         def scope_open_collection(index)
           @src << "; #{ITEMS_BUFFER}#{index} = ::Hash.new;"
+
+          slot = @slot_visitor.slots[index]
+
+          @src << "; #{slot.position_variable} = -1;" if slot&.positional?
         end
 
         #: (Integer, ?String?) -> void
@@ -786,15 +791,10 @@ module Herb
         def scope_item_end(index)
           leave_scope(index)
 
-          return unless keyed?(index)
+          return unless @slot_visitor.slots[index]&.item_key
 
           @src << item_seeds(index)
           @src << "; #{ITEMS_BUFFER}#{index}[#{KEY_BUFFER}#{index}.to_s] = #{SCOPE_BUFFER}#{index};"
-        end
-
-        #: (Integer) -> bool
-        def keyed?(index)
-          !@slot_visitor.slots[index]&.key_expression.nil?
         end
 
         #: (Integer) -> String

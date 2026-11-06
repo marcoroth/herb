@@ -65,7 +65,8 @@ module Herb
       # An item is keyed by the key its template declares, through `herb-key` or `id` or a
       # `<%# herb:key %>` directive, which is what makes it survive being reordered. `Visitor`
       # decides what that key is and this evaluates it, so an item arrives under the same key the
-      # marker around it carries. A collection that declares none falls back to position.
+      # marker around it carries. A collection that declares none falls back to position, counting
+      # from the first iteration, so a change re-renders every row from the first one that differs.
       #
       # ## A partial keeps its own values
       #
@@ -320,9 +321,6 @@ module Herb
 
         # : (Integer) -> void
         def scope_item_end: (Integer) -> void
-
-        # : (Integer) -> bool
-        def keyed?: (Integer) -> bool
 
         # : (Integer) -> String
         def item_seeds: (Integer) -> String
