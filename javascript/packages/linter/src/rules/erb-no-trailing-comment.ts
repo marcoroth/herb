@@ -141,8 +141,8 @@ export class ERBNoTrailingCommentRule extends ParserRule<ERBNoTrailingCommentAut
   static autofixRequiresContext = true
   static consumesParserErrors = true
   static ruleName = "erb-no-trailing-comment"
-  static introducedIn = this.version("unreleased")
-  static defaultEnabledIn = this.version("unreleased")
+  static introducedIn = this.version("0.11.2")
+  static defaultEnabledIn = this.version("0.11.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

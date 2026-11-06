@@ -64,7 +64,7 @@ To try a branch before it is released, add both `prism` and `herb` to your `Gemf
 
 ::: code-group
 ```ruby [Gemfile]
-gem "prism", github: "ruby/prism", tag: "v1.9.0"
+gem "prism", github: "marcoroth/prism", ref: "4691667e2215831ae855add71d9925c0b871a709"
 gem "herb", github: "fork/herb", branch: "my-branch"
 ```
 :::

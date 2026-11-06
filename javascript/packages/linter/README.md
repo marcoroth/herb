@@ -382,7 +382,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.11.1::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.11.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -397,7 +397,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.11.1::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.11.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -480,7 +480,7 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
-#### JUnit XML Output Format <Badge type="info" text="v0.11.1+" />
+#### JUnit XML Output Format <Badge type="info" text="v0.11.2+" />
 
 The linter can report offenses as JUnit XML with `--format junit`, so CI systems that understand test reports (like Buildkite Test Engine, GitLab, or Jenkins) can show them as test failures.
 
@@ -528,7 +528,7 @@ https://herb-tools.dev/linter/rules/html-tag-name-lowercase</failure>
 
 </details>
 
-#### Multiple Outputs <Badge type="info" text="v0.11.1+" />
+#### Multiple Outputs <Badge type="info" text="v0.11.2+" />
 
 `--format` can be passed multiple times to produce several outputs from a single run. `--output-file <path>` (or `-o <path>`) writes the structured format (`json` or `junit`) right before it to a file instead of stdout.
 

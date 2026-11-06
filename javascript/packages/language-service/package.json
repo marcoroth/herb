@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/language-service",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "description": "HTML+ERB language service built on the Herb parser, providing a compatible API with vscode-html-languageservice",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -31,23 +31,23 @@
     }
   },
   "dependencies": {
-    "@herb-tools/analysis": "0.11.1",
-    "@herb-tools/client": "0.11.1",
-    "@herb-tools/config": "0.11.1",
-    "@herb-tools/core": "0.11.1",
-    "@herb-tools/printer": "0.11.1",
-    "@herb-tools/rewriter": "0.11.1",
+    "@herb-tools/analysis": "0.11.2",
+    "@herb-tools/client": "0.11.2",
+    "@herb-tools/config": "0.11.2",
+    "@herb-tools/core": "0.11.2",
+    "@herb-tools/printer": "0.11.2",
+    "@herb-tools/rewriter": "0.11.2",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.15",
     "vscode-languageserver-types": "^3.18.3"
   },
   "devDependencies": {
-    "@herb-tools/linter": "0.11.1",
-    "@herb-tools/node-wasm": "0.11.1",
+    "@herb-tools/linter": "0.11.2",
+    "@herb-tools/node-wasm": "0.11.2",
     "vscode-languageserver-textdocument": "^1.0.15"
   },
   "peerDependencies": {
-    "@herb-tools/core": "0.11.1",
+    "@herb-tools/core": "0.11.2",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.15"
   },
