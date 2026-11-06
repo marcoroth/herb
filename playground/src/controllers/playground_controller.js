@@ -1015,7 +1015,7 @@ export default class extends Controller {
   async autofixThroughWorker(source, includeUnsafe) {
     const result = await this.analyzeClient.analyze({
       source,
-      options: {},
+      options: { ruby_version: this.getParserOptions().ruby_version },
       printerOptions: {},
       formatterOptions: {},
       autofixOptions: { includeUnsafe },
@@ -1633,7 +1633,7 @@ export default class extends Controller {
   getParserOptions() {
     const options = {}
     if (!this.hasParserOptionsTarget) return options
-    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option], select[data-option]')
 
     optionInputs.forEach(input => {
       const optionName = input.dataset.option
@@ -1651,7 +1651,7 @@ export default class extends Controller {
 
   setParserOptions(options) {
     if (!this.hasParserOptionsTarget) return
-    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option], select[data-option]')
 
     optionInputs.forEach(input => {
       const optionName = input.dataset.option
@@ -1661,7 +1661,7 @@ export default class extends Controller {
         } else if (input.dataset.optionType === 'list') {
           const value = options[optionName]
           input.value = Array.isArray(value) ? value.join(', ') : value
-        } else {
+        } else if (input.tagName !== 'SELECT' || Array.from(input.options).some(option => option.value === options[optionName])) {
           input.value = options[optionName]
         }
       }
@@ -1832,6 +1832,7 @@ export default class extends Controller {
       dot_notation_tags: false,
       html: true,
       erb_openers: [],
+      ruby_version: "4.0",
     }
 
     const nonDefaultOptions = {}
