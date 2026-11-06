@@ -92,6 +92,19 @@ fn breaks_a_rank_tie_alphabetically() {
 }
 
 #[test]
+fn reads_the_variant_of_a_template() {
+  assert_eq!(template_variant("app/views/things/show.html+phone.erb").as_deref(), Some("phone"));
+  assert_eq!(template_variant("app/views/things/_item.en.html+tablet.erb").as_deref(), Some("tablet"));
+}
+
+#[test]
+fn reads_no_variant_from_a_template_without_one() {
+  assert_eq!(template_variant("app/views/things/show.html.erb"), None);
+  assert_eq!(template_variant("app/views/things/show.html+.erb"), None);
+  assert_eq!(template_variant("app/views/a+b/show.html.erb"), None);
+}
+
+#[test]
 fn orders_variants_by_precedence() {
   let mut files = vec![
     "_card.turbo_stream.erb".to_string(),

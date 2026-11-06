@@ -176,7 +176,7 @@ fn check(arguments: &[String]) -> i32 {
             eprintln!("{file}\t{name}");
           }
 
-          match index.resolve(&name, Some(file)).first() {
+          match index.resolve_for_caller(&name, Some(file)) {
             Some(target) => rendered.push(target.clone()),
             None => unresolved.push((relative(file, &root), name.clone())),
           }
@@ -223,7 +223,7 @@ fn check(arguments: &[String]) -> i32 {
         eprintln!("{file}\t{name}");
       }
 
-      match index.resolve(name, Some(file)).first() {
+      match index.resolve_for_caller(name, Some(file)) {
         Some(target) => rendered.push(target.clone()),
         None => unresolved.push((relative(file, &root), name.clone())),
       }
@@ -1254,7 +1254,7 @@ fn collect_passed_locals(templates: &[String], index: &mut PartialIndex, flow: &
         continue;
       };
 
-      let Some(target) = index.resolve(name, Some(file)).first().cloned() else {
+      let Some(target) = index.resolve_for_caller(name, Some(file)).cloned() else {
         continue;
       };
 
