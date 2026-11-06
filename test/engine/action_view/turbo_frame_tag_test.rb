@@ -78,28 +78,28 @@ module Engine
 
       test "turbo_frame_tag with an array id" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag frame_id %>',
+          "<%= turbo_frame_tag frame_id %>",
           { frame_id: ["post", [7, "notes"]] }
         )
       end
 
       test "turbo_frame_tag with an array id and block" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag frame_id do %>Content<% end %>',
+          "<%= turbo_frame_tag frame_id do %>Content<% end %>",
           { frame_id: ["post", [7, "notes"]] }
         )
       end
 
       test "turbo_frame_tag with splatted ids" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag *ids %>',
+          "<%= turbo_frame_tag *ids %>",
           { ids: ["post", 7] }
         )
       end
 
       test "turbo_frame_tag with splatted ids and block" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag *ids do %>Content<% end %>',
+          "<%= turbo_frame_tag *ids do %>Content<% end %>",
           { ids: ["post", 7] }
         )
       end
@@ -120,14 +120,14 @@ module Engine
 
       test "turbo_frame_tag with an empty splat" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag *ids %>',
+          "<%= turbo_frame_tag *ids %>",
           { ids: [] }
         )
       end
 
       test "turbo_frame_tag with an empty splat and block" do
         assert_optimized_snapshot(
-          '<%= turbo_frame_tag *ids do %>Content<% end %>',
+          "<%= turbo_frame_tag *ids do %>Content<% end %>",
           { ids: [] }
         )
       end
@@ -144,11 +144,11 @@ module Engine
       end
 
       test "turbo_frame_tag with a splatted record and prefix" do
-        assert_optimized_snapshot('<%= turbo_frame_tag *ids %>', { ids: [Post.new(7), "notes"] })
+        assert_optimized_snapshot("<%= turbo_frame_tag *ids %>", { ids: [Post.new(7), "notes"] })
       end
 
       test "turbo_frame_tag with a record class" do
-        assert_optimized_snapshot('<%= turbo_frame_tag record_class %>', { record_class: Post })
+        assert_optimized_snapshot("<%= turbo_frame_tag record_class %>", { record_class: Post })
       end
 
       test "turbo_frame_tag evaluates each id expression once in order" do
@@ -166,7 +166,7 @@ module Engine
           "notes"
         end
         engine = Herb::Engine.new(
-          '<%= turbo_frame_tag first.call, *rest.call, last.call %>',
+          "<%= turbo_frame_tag first.call, *rest.call, last.call %>",
           escape: false,
           visitors: [Herb::Engine::OptimizeVisitor.new]
         )
@@ -176,7 +176,6 @@ module Engine
         assert_equal action_view_context.turbo_frame_tag("post", 7, "notes"), result
         assert_equal [:first, :rest, :last], calls
       end
-
     end
   end
 end

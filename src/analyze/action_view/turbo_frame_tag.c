@@ -101,10 +101,8 @@ char* extract_turbo_frame_tag_id(pm_call_node_t* call_node, pm_parser_t* parser,
     pm_call_node_t* call = (pm_call_node_t*) first_argument;
     const pm_constant_t* call_constant = pm_parser_constant(parser, call->name);
 
-    if (
-      call_constant && pm_constant_length(call_constant) == 6
-      && strncmp((const char*) pm_constant_start(call_constant), "dom_id", 6) == 0
-    ) {
+    if (call_constant && pm_constant_length(call_constant) == 6
+        && strncmp((const char*) pm_constant_start(call_constant), "dom_id", 6) == 0) {
       return hb_allocator_strndup(
         allocator,
         (const char*) (pm_parser_start(parser) + first_argument->location.start),

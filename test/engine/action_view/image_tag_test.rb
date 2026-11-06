@@ -69,7 +69,7 @@ module Engine
       end
 
       test "image_tag with a symbol source held in a local" do
-        assert_optimized_snapshot('<%= image_tag source, skip_pipeline: true %>', { source: :photo })
+        assert_optimized_snapshot("<%= image_tag source, skip_pipeline: true %>", { source: :photo })
       end
 
       test "image_tag evaluates a string source once" do
@@ -79,7 +79,7 @@ module Engine
           "photo.png"
         end
         engine = Herb::Engine.new(
-          '<%= image_tag fetch_source.call, skip_pipeline: true %>',
+          "<%= image_tag fetch_source.call, skip_pipeline: true %>",
           escape: false,
           visitors: [Herb::Engine::OptimizeVisitor.new]
         )
