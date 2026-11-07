@@ -38,18 +38,18 @@
     "@herb-tools/printer": "0.11.2",
     "@herb-tools/rewriter": "0.11.2",
     "vscode-html-languageservice": "^5.1.0",
-    "vscode-languageserver-textdocument": "^1.0.15",
+    "vscode-languageserver-textdocument": "^1.0.16",
     "vscode-languageserver-types": "^3.18.3"
   },
   "devDependencies": {
     "@herb-tools/linter": "0.11.2",
     "@herb-tools/node-wasm": "0.11.2",
-    "vscode-languageserver-textdocument": "^1.0.15"
+    "vscode-languageserver-textdocument": "^1.0.16"
   },
   "peerDependencies": {
     "@herb-tools/core": "0.11.2",
     "vscode-html-languageservice": "^5.1.0",
-    "vscode-languageserver-textdocument": "^1.0.15"
+    "vscode-languageserver-textdocument": "^1.0.16"
   },
   "files": [
     "package.json",
