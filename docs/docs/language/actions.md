@@ -56,7 +56,7 @@ data-herb-set="event->name=value"
 
 The value is read as the state's [kind](/language/state#kinds), so `pending=true` sets a Boolean and `draft=true` sets the String `"true"`. Quote a String value that holds a comma or a space, as in `draft='hello, world'`. Outside quotes a space starts a new [clause](#events), and a comma is an error since a clause takes one assignment.
 
-`$value` stands for the value of the element the event fired on, and it is the only interpolation. A set with no value, such as `data-herb-set="open"`, is reported by the linter and by the client in debug mode.
+`$value` stands for the value of the element that carries the action, and it is the only interpolation. A click on an icon inside a button reads the button, and a `@window` or `@outside` clause reads its own element, not the one the event came from. A set with no value, such as `data-herb-set="open"`, is reported by the linter and by the client in debug mode.
 
 ::: code-group
 ```erb [app/views/messages/index.html.erb]
