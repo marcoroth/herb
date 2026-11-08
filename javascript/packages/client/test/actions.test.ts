@@ -28,6 +28,7 @@ const PAGE =
   `<input id="typer" data-herb-set="sort=$value">` +
   `<input id="bound" value="name" data-herb-slot="5:attribute:value">` +
   `<button id="setter" data-herb-set="sort=date">Date</button>` +
+  `<button id="page-reset" data-herb-set="page=1">First</button>` +
   `<select id="chooser" data-herb-set="sort=$value"><option value="date">date</option></select>` +
   `<div id="menu" data-herb-set="mouseenter->open=true mouseleave->open=false">hover</div>` +
   `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->closed<!--/herb-slot:0--></div>` +
@@ -55,6 +56,7 @@ const PAGE =
           { name: "failed", kind: "boolean", default: "false", scope: "region" },
           { name: "attempts", kind: "integer", default: "0", scope: "region" },
           { name: "sort", kind: "string", default: '"name"', scope: "region" },
+          { name: "page", kind: "seeded", default: "params.fetch(:page, 1).to_i", scope: "region" },
           { name: "starred", kind: "boolean", default: "false", scope: 2 },
         ],
         reads: { attempts: [1], sort: [5] },
@@ -100,6 +102,18 @@ describe("declarative actions", () => {
     click("#toggle")
 
     expect(state.getState("open")).toBe(false)
+  })
+
+  test("a literal assigned to a seeded state takes the type of the value it holds", () => {
+    state.setState({ page: 3 })
+    click("#page-reset")
+
+    expect(state.getState("page")).toBe(1)
+
+    state.setState({ page: "three" })
+    click("#page-reset")
+
+    expect(state.getState("page")).toBe("1")
   })
 
   test("two clauses on one attribute both write", () => {
