@@ -486,6 +486,28 @@ module Engine
         assert_equal 1, values[:slots][0][:branch]
       end
 
+      test "each occurrence of a template steers with the values sent for it" do
+        compiled = Herb::Engine::Slots::DynamicsCompiler.new(STEERABLE, filename: "app/views/test.html.erb").src
+        view = SteeredView.new
+        view.__herb_state_overrides = { "app/views/test.html.erb" => { "editing" => false, "@occurrences" => { "1" => { "editing" => true } } } }
+
+        payloads = Array.new(3) { view.instance_eval(compiled) }
+
+        steered = payloads.map { |values| [values[:occurrence], values[:slots][0][:branch]] }
+
+        assert_equal [[0, 1], [1, 0], [2, 1]], steered
+      end
+
+      test "each occurrence of a rendered page steers with the values sent for it" do
+        engine = Herb::Engine.new(STEERABLE, visitors: [Herb::Engine::Slots::Visitor.new(mode: :server, fatal: false)], filename: "app/views/test.html.erb")
+        view = SteeredView.new
+        view.__herb_state_overrides = { "app/views/test.html.erb" => { "editing" => false, "@occurrences" => { "1" => { "editing" => true } } } }
+
+        rendered = Array.new(3) { view.instance_eval(engine.src)[%r{<[bi]>\w+</[bi]>}] }
+
+        assert_equal ["<i>off</i>", "<b>on</b>", "<i>off</i>"], rendered
+      end
+
       test "a derived state re-derives from its overridden base" do
         template = %(<%# herb:state (count: 0, loud: count > 2) %><% if loud %>a<% else %>b<% end %>)
         values = steered(template, { "app/views/test.html.erb" => { "count" => 5 } })
