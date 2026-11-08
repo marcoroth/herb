@@ -20,11 +20,16 @@ module Herb
       # has written the state since it was seeded knows better. A binding sits over them, since
       # the client cannot tell two render sites of one partial apart.
       #
+      # A template rendered more than once on a page sends the first copy's values at the top level
+      # and every later copy that differs under `@occurrences`, keyed by its render occurrence. A
+      # copy's own values layer over the first copy's.
+      #
       module StateOverrides
         HOOK = "__herb_state_overrides" #: String
+        OCCURRENCES = "@occurrences" #: String
 
-        #: (untyped, String) -> Hash[String, untyped]?
-        def self.resolve(raw, identifier)
+        #: (untyped, String, ?Integer) -> Hash[String, untyped]?
+        def self.resolve(raw, identifier, occurrence = 0)
           frame = Bindings.current(identifier)
           sent = raw.is_a?(Hash) ? raw[identifier] : nil
 
@@ -33,10 +38,19 @@ module Herb
           layered = {} #: Hash[String, untyped]
 
           layered.merge!(frame.fetch(:seeded)) if frame
-          layered.merge!(sent) if sent.is_a?(Hash)
+          layered.merge!(sent_for(sent, occurrence)) if sent.is_a?(Hash)
           layered.merge!(frame.fetch(:bound)) if frame
 
           layered
+        end
+
+        #: (Hash[untyped, untyped], Integer) -> Hash[untyped, untyped]
+        def self.sent_for(sent, occurrence)
+          occurrences = sent[OCCURRENCES]
+          own = occurrences.is_a?(Hash) ? occurrences[occurrence.to_s] : nil
+          shared = sent.except(OCCURRENCES)
+
+          own.is_a?(Hash) ? shared.merge(own) : shared
         end
 
         #: (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped
