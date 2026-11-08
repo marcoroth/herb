@@ -42,6 +42,18 @@ module Extractor
       assert_equal expected, actual
     end
 
+    test "standalone ruby comment" do
+      actual = Herb.extract_ruby("<% # test %>")
+
+      assert_equal "   # test  ;", actual
+    end
+
+    test "standalone ruby comment after newline" do
+      actual = Herb.extract_ruby("<% \n# test %>")
+
+      assert_equal "   \n# test  ;", actual
+    end
+
     test "erb comment" do
       actual = Herb.extract_ruby(<<~HTML)
         <%# comment ' %>
