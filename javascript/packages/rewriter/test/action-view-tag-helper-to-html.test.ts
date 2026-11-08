@@ -229,7 +229,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div class="content" <%= tag.attributes(**attributes) %>>
+        <div class="content" <%= tag.attributes({**attributes}) %>>
           Content
         </div>
       `
@@ -381,7 +381,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div <%= tag.attributes(**attributes) %>>
+        <div <%= tag.attributes({**attributes}) %>>
           Content
         </div>
       `
@@ -581,7 +581,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame <%= tag.attributes(**attributes) %> id="tray">
+        <turbo-frame <%= tag.attributes({**attributes}) %> id="tray">
           Content
         </turbo-frame>
       `
@@ -873,7 +873,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with splat attributes", () => {
       expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
-        '<img <%= tag.attributes(**attributes) %> src="<%= image_path("icon.png") %>" />'
+        '<img <%= tag.attributes({**attributes}) %> src="<%= image_path("icon.png") %>" />'
       )
     })
 
@@ -1022,7 +1022,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("stylesheet_link_tag with splat attributes", () => {
       expect(transform('<%= stylesheet_link_tag "application", **attributes %>')).toBe(
-        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" <%= tag.attributes(**attributes) %> />'
+        '<link rel="stylesheet" href="<%= stylesheet_path("application") %>" <%= tag.attributes({**attributes}) %> />'
       )
     })
 

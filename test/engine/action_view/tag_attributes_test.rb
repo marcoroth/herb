@@ -52,6 +52,54 @@ module Engine
           { option: "one", current: "two" }
         )
       end
+
+      test "attribute splats survive helper lowering" do
+        attrs = { id: "root", class: "primary", role: "button", data: { controller: "hello" } }
+
+        [
+          "<%= tag.div(**attrs) do %>x<% end %>",
+          "<%= tag.div(**attrs) %>",
+          "<%= tag.input(**attrs) %>",
+          '<%= content_tag(:div, "x", **attrs) %>',
+          "<div <%= tag.attributes(**attrs) %>>x</div>"
+        ].each do |template|
+          assert_optimized_output_match(template, { attrs: attrs })
+        end
+      end
+
+      test "attribute splats preserve surrounding attributes and Rails escaping" do
+        assert_optimized_output_match(
+          '<%= tag.div(class: "primary", **attrs) do %>x<% end %>',
+          { attrs: { title: '"<&>', aria: { label: "Search" }, hidden: true } }
+        )
+        assert_optimized_output_match(
+          '<div id="root" <%= tag.attributes(**attrs) %> role="button">x</div>',
+          { attrs: { title: '"<&>', hidden: false } }
+        )
+      end
+
+      test "empty attribute splats do not add whitespace" do
+        assert_optimized_output_match("<%= tag.div(**attrs) %>", { attrs: {} })
+        assert_optimized_output_match('<%= tag.div(id: "root", **attrs) %>', { attrs: {} })
+      end
+
+      test "attribute splats compile without a visitor in both escape modes" do
+        template = "<%= tag.div(**attrs) %>"
+        locals = { attrs: { title: '"<&>', disabled: true } }
+
+        [false, true].each do |escape|
+          engine = Herb::Engine.new(template, escape: escape, parser_options: { action_view_helpers: true })
+
+          assert_equal render_with_action_view(template, locals), action_view_eval(engine.src, locals)
+        end
+      end
+
+      test "nested data and aria splats retain their prefixes" do
+        assert_optimized_output_match(
+          "<%= tag.div(data: { **data_attrs }, aria: { **aria_attrs }) %>",
+          { data_attrs: { controller: "hello" }, aria_attrs: { label: "Search" } }
+        )
+      end
     end
   end
 end
