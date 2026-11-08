@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0017_turbo_frame_tag with ids around a splat and keyword attributes and block"
+input: "{source: \"<%= turbo_frame_tag \\\"post\\\", *ids, \\\"notes\\\", class: \\\"frame\\\" do %>Content<% end %>\", locals: {ids: [7, \"comments\"]}, options: {action_view_helpers: true}}"
+---
+<turbo-frame class="frame" id="post_7_comments_notes">Content</turbo-frame>

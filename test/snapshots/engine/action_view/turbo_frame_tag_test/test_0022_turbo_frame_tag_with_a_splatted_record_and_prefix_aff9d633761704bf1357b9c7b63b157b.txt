@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0022_turbo_frame_tag with a splatted record and prefix"
+input: "{source: \"<%= turbo_frame_tag *ids %>\", locals: {ids: [#<data Engine::ActionView::TurboFrameTagTest::Post id=7>, \"notes\"]}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="notes_post_7"></turbo-frame>
