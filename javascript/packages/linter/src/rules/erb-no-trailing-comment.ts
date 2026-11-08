@@ -15,6 +15,7 @@ const INLINE_COMMENT = 0
 const OWN_LINE = /\n[ \t]*$/
 const BLANK_BEFORE_TAG = /^[ \t]*$/
 const BLANK_AFTER_TAG = /^[ \t]*\r?$/
+const DEBUG_DISABLE_DIRECTIVE = /#[ \t]*herb:debug[ \t]+disable[ \t]*$/
 
 const BREAKING_MESSAGE = "A Ruby comment at the end of an ERB tag also comments out the code that the template engine appends after the tag. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
 const FRAGILE_MESSAGE = "Avoid Ruby comments at the end of ERB tags. This tag still renders correctly, but the comment breaks the template as soon as anything else is added to this line or the template is rendered by an engine that doesn't trim it. Move the comment into a separate `<%# %>` tag, or put the closing `%>` on its own line."
@@ -82,6 +83,10 @@ class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAu
 
     if (!comment) return
 
+    const directive = DEBUG_DISABLE_DIRECTIVE.test(content.slice(comment.start, comment.end))
+
+    if (directive && this.templateEngine === "herb") return
+
     const trimmed = STATEMENT_OPENINGS.has(opening) && this.isOnTrimmedLine(node)
     const breaks = this.templateEngine !== "herb" && !trimmed
     const severity: LintSeverity | undefined = breaks ? undefined : "warning"
@@ -89,7 +94,7 @@ class ERBNoTrailingCommentVisitor extends BaseRuleVisitor<ERBNoTrailingCommentAu
     this.addOffense(
       breaks ? BREAKING_MESSAGE : FRAGILE_MESSAGE,
       this.commentLocation(contentToken.location.start, content, comment),
-      this.autofixContextFor(node as ERBContentNode, content, comment, trimmed),
+      directive ? undefined : this.autofixContextFor(node as ERBContentNode, content, comment, trimmed),
       severity,
     )
   }

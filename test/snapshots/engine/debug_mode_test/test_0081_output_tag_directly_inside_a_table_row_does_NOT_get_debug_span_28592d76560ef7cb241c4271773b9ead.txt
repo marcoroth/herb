@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0081_output tag directly inside a table row does NOT get debug span"
+input: "{source: \"<table><tr><%= @cells %></tr></table>\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<table data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown"><tr>'.freeze; _buf << (@cells).to_s; _buf << '</tr></table>'.freeze;
+_buf.to_s

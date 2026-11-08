@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0074_output tag with debug disable comment and extra whitespace"
+input: "{source: \"<%= tag.td \\\"Ada\\\" #   herb:debug   disable %>\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << (tag.td "Ada").to_s;
+_buf.to_s
