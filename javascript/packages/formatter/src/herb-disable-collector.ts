@@ -1,10 +1,10 @@
 import { IdentityPrinter } from "@herb-tools/printer"
-import { Visitor, Node, ERBCommentNode, ERBContentNode, HTMLOpenTagNode, HTMLElementNode, WhitespaceNode, isNode, isPureWhitespaceNode } from "@herb-tools/core"
+import { Visitor, Node, Token, ERBCommentNode, ERBContentNode, HTMLOpenTagNode, HTMLElementNode, WhitespaceNode, isNode, isPureWhitespaceNode } from "@herb-tools/core"
 import { isHerbDisableComment } from "./format-helpers.js"
 
 export interface CollectedHerbDisable {
   node: ERBContentNode | ERBCommentNode
-  anchor: Node | null
+  anchor: Node | Token | null
   parentNode: Node
   commentText: string
 }
@@ -52,7 +52,7 @@ export class HerbDisableCollector extends Visitor {
     }
   }
 
-  private findAnchor(array: Node[], herbDisableIndex: number, parentNode: Node): Node | null {
+  private findAnchor(array: Node[], herbDisableIndex: number, parentNode: Node): Node | Token | null {
     const herbDisableNode = array[herbDisableIndex]
 
     for (let index = herbDisableIndex - 1; index >= 0; index--) {
@@ -72,8 +72,10 @@ export class HerbDisableCollector extends Visitor {
       break
     }
 
+    // Anchored on the tag name rather than the open tag: once the attributes wrap,
+    // the open tag ends on a later line than `<tag <%# herb:disable ... %>`.
     if (isNode(parentNode, HTMLOpenTagNode)) {
-      return parentNode
+      return parentNode.tag_name ?? parentNode
     }
 
     if (isNode(parentNode, HTMLElementNode)) {
