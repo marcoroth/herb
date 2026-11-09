@@ -622,7 +622,7 @@ export class Linter {
 
     const [baseParserOptions, ...sharedParserOptions] = this.parseCache.share([
       {},
-      ...regularRuleInstances.map(({ ruleClass, rule }) => this.parserOptionsFor(ruleClass, rule, context?.framework)),
+      ...regularRuleInstances.map(({ ruleClass, rule }) => this.parserOptionsFor(ruleClass, rule, context?.framework ?? this.config?.framework)),
     ])
 
     const parseResult = this.parseCache.get(source, baseParserOptions)
