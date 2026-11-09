@@ -23,9 +23,10 @@ module Herb
       HIDE_CURSOR = "\e[?25l" #: String
       SHOW_CURSOR = "\e[?25h" #: String
 
-      #: (?path: String) -> void
-      def initialize(path: ".")
+      #: (?path: String, ?port: Integer?) -> void
+      def initialize(path: ".", port: nil)
         @path = path
+        @port = port
       end
 
       #: () -> void
@@ -214,6 +215,8 @@ module Herb
 
       #: () -> Integer
       def find_port
+        return @port if @port
+
         port = Herb::Dev::Server::DEFAULT_PORT
         port_owner = Herb::Dev::ServerEntry.find_by_port(port)
 
