@@ -79,16 +79,20 @@ describe("actionview-prefer-collection-render", () => {
     assertOffenses(html)
   })
 
-  it("flags the object shorthand and suggests the shorthand collection form", () => {
-    const html = dedent`
+  it("does not flag rendering the block argument as an object", () => {
+    expectNoOffenses(dedent`
       <% @users.each do |user| %>
         <%= render user %>
       <% end %>
-    `
+    `)
+  })
 
-    expectError('Prefer `<%= render @users %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
-
-    assertOffenses(html)
+  it("does not flag rendering a component instance per iteration", () => {
+    expectNoOffenses(dedent`
+      <% cards.each do |card| %>
+        <%= render(card) %>
+      <% end %>
+    `)
   })
 
   it("uses the full receiver expression in the suggestion", () => {
