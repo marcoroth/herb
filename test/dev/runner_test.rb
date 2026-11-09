@@ -422,5 +422,9 @@ module Dev
 
       assert_equal expected, output
     end
+
+    test "uses the port it was given" do
+      assert_equal 8711, Herb::Dev::Runner.new(port: 8711).send(:find_port)
+    end
   end
 end

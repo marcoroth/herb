@@ -16,8 +16,8 @@ module Herb
 
       SHOW_CURSOR: String
 
-      # : (?path: String) -> void
-      def initialize: (?path: String) -> void
+      # : (?path: String, ?port: Integer?) -> void
+      def initialize: (?path: String, ?port: Integer?) -> void
 
       # : () -> void
       def run: () -> void
