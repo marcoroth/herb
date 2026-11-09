@@ -371,11 +371,26 @@ module Herb
         excluded_tags = ["script", "style", "head", "title", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
+        return true if span_rejecting_parents.include?(@element_stack.last)
+
         if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) || include_debug_disable_comment?(node.content.value.strip) }
           return true
         end
 
         false
+      end
+
+      # None of these elements accept a `<span>` child. Inside a table the parser hoists the marker
+      # out in front of the table, empty and detached from the expression it annotates. In the
+      # others it stays put but still breaks `ul > li`, `select > option` and `:nth-child` styling,
+      # which `display: contents` does nothing about.
+      def span_rejecting_parents
+        [
+          "ul", "ol", "menu", "dl",
+          "table", "thead", "tbody", "tfoot", "tr", "colgroup",
+          "select", "datalist", "optgroup", "option",
+          "picture"
+        ]
       end
 
       # TODO: Rewrite using Prism Nodes once available
