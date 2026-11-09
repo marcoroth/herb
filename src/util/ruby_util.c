@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-static hb_string_T ruby_introspection_methods[] = HB_STRING_LIST(
+static const hb_string_T ruby_introspection_methods[] = HB_STRING_LIST(
   "send",
   "public_send",
   "__send__",

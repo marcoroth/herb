@@ -334,6 +334,58 @@ class ConfigurationTest < Minitest::Spec
     assert_equal ["**/*.herb", "**/*.html.erb", "**/*.html.herb", "**/*.html", "**/*.html+*.erb", "**/*.rhtml", "**/*.turbo_stream.erb", "**/*.custom.erb"], Herb.configuration.file_include_patterns
   end
 
+  test "a loaded configuration is frozen all the way down" do
+    write_config("linter:\n  include:\n    - custom.erb\n")
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_predicate config, :frozen?
+    assert_predicate config.config, :frozen?
+    assert_predicate config.user_config, :frozen?
+    assert_predicate config.linter["include"], :frozen?
+    assert_predicate config.linter["include"].first, :frozen?
+    assert_predicate config.project_root, :frozen?
+  end
+
+  test "merge returns a new frozen configuration and leaves the original alone" do
+    write_config("engine:\n  debug: false\n")
+
+    config = Herb::Configuration.load(@temp_dir)
+    merged = config.merge(engine: { debug: true })
+
+    assert_equal false, config.engine_option("debug")
+    assert_equal true, merged.engine_option("debug")
+    assert_equal true, merged.user_config.dig("engine", "debug")
+    assert_equal config.config_path, merged.config_path
+    assert_predicate merged, :frozen?
+    assert_predicate merged.config, :frozen?
+  end
+
+  test "merge appends to include and exclude lists like .herb.yml does" do
+    config = Herb::Configuration.load(@temp_dir)
+    merged = config.merge("files" => { "include" => ["**/*.custom"] })
+
+    assert_equal config.file_include_patterns + ["**/*.custom"], merged.file_include_patterns
+  end
+
+  test "merge does not freeze the overrides it is given" do
+    overrides = { "engine" => { "list" => ["value"] } }
+
+    Herb::Configuration.load(@temp_dir).merge(overrides)
+
+    refute_predicate overrides, :frozen?
+    refute_predicate overrides["engine"]["list"], :frozen?
+  end
+
+  test "configuration= replaces the configuration" do
+    Herb.configure(@temp_dir)
+
+    merged = Herb.configuration.merge("engine" => { "debug" => true })
+    Herb.configuration = merged
+
+    assert_same merged, Herb.configuration
+  end
+
   test "reset_configuration clears cached config" do
     Herb.configure(@temp_dir)
     first_config = Herb.configuration
