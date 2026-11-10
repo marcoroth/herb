@@ -1,0 +1,81 @@
+# Generated from lib/herb/ffi.rb with RBS::Inline
+
+module Herb
+  # Herb::Backend for Rubies that can't load the C extension, like JRuby.
+  module FFI
+    extend ::FFI::Library
+
+    class StaleLibraryError < LoadError
+    end
+
+    LIBRARY_NAME: untyped
+
+    LIBRARY_PATH: untyped
+
+    class HbString < ::FFI::Struct[::FFI::Pointer, untyped]
+    end
+
+    # Keeps the opener strings referenced, so they aren't collected while libherb uses them.
+    module ErbOpenersField
+      def erb_openers=: (untyped openers) -> untyped
+    end
+
+    class ExtractRubyOptions < ::FFI::Struct[::FFI::Pointer, untyped]
+      include ErbOpenersField
+    end
+
+    TOKEN_TYPES: untyped
+
+    def self?.check_string: (untyped source) -> untyped
+
+    def self?.read_and_free: (untyped pointer) -> untyped
+
+    def self?.read_buffer: (?nil_on_failure: untyped) -> untyped
+
+    def self?.call: (untyped function, untyped source, untyped options) -> untyped
+
+    def self?.parser_options_for: (untyped function, untyped options) -> untyped
+
+    def self?.string_pointer: (untyped source) -> untyped
+
+    module Options
+      # Same as HERB_MAX_ERB_OPENERS in ext/herb/extension.c
+      MAX_ERB_OPENERS: ::Integer
+
+      def self?.fetch: (untyped options, untyped name) -> untyped
+
+      def self?.given?: (untyped options, untyped name) -> untyped
+
+      # Same as NUM2UINT, including wrapping negative values down to -2**31.
+      def self?.uint: (untyped value) -> untyped
+
+      def self?.milliseconds: (untyped value) -> untyped
+
+      def self?.hb_strings: (untyped openers) -> untyped
+
+      def self?.check_openers: (untyped openers) -> untyped
+
+      def self?.read_hb_strings: (untyped pointer, untyped count) -> untyped
+    end
+
+    module Backend
+      def self?.parse: (untyped source, **untyped options) -> untyped
+
+      def self?.lex: (untyped source, **untyped options) -> untyped
+
+      def self?.diff: (untyped old_source, untyped new_source, **untyped options) -> untyped
+
+      def self?.extract_ruby: (untyped source, **untyped options) -> untyped
+
+      def self?.extract_html: (untyped source) -> untyped
+
+      def self?.default_erb_openings: () -> untyped
+
+      def self?.version: () -> untyped
+
+      def self?.arena_stats: (**untyped) -> untyped
+
+      def self?.leak_check: (untyped _source) -> untyped
+    end
+  end
+end
