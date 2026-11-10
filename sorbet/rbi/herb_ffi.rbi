@@ -4,5 +4,7 @@
 module Herb
   module FFI
     class StaleLibraryError < LoadError; end
+
+    def self.ruby_syntax_errors(source); end
   end
 end

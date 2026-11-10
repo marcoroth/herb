@@ -38,6 +38,9 @@ module Herb
 
     def self?.string_pointer: (untyped source) -> untyped
 
+    # : (String) -> Array[[Symbol, String, Integer]]
+    def self?.ruby_syntax_errors: (String) -> Array[[ Symbol, String, Integer ]]
+
     module Options
       # Same as HERB_MAX_ERB_OPENERS in ext/herb/extension.c
       MAX_ERB_OPENERS: ::Integer

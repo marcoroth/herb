@@ -149,5 +149,7 @@ jobs:
             abort "parse failed: #{result.errors.inspect}" unless result.success?
             abort "lex failed" if Herb.lex("<p><%= 1 %></p>").value.empty?
             abort "extract_ruby failed" unless Herb.extract_ruby("<p><%= user.name %></p>").include?("user.name")
+            require "herb/engine"
+            abort "Herb::Engine failed" unless Herb::Engine.new("<p><%= user.name %></p>").src.include?("user.name")
             puts "ok"
           '

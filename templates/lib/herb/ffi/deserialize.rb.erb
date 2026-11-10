@@ -45,6 +45,10 @@ module Herb
         LexResult.new(tokens, source, [], [])
       end
 
+      def ruby_syntax_errors
+        Array.new(read_u32) { [read_string.to_sym, read_string, read_u32] }
+      end
+
       def diff_result
         identical = read_bool
 

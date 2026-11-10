@@ -31,7 +31,7 @@ module Herb
 
         #: () -> Session?
         def self.stored
-          return nil unless Fiber[RACTOR_KEY].equal?(Ractor.current)
+          return nil unless Fiber[RACTOR_KEY].equal?(current_ractor)
           return nil unless Fiber[THREAD_KEY] == Thread.current.object_id
 
           Fiber[STATE_KEY]
@@ -40,10 +40,15 @@ module Herb
         #: (Session?) -> void
         def self.store(session)
           Fiber[STATE_KEY] = session
-          Fiber[RACTOR_KEY] = session && Ractor.current
+          Fiber[RACTOR_KEY] = session && current_ractor
           Fiber[THREAD_KEY] = session && Thread.current.object_id
 
           nil
+        end
+
+        #: () -> Ractor?
+        def self.current_ractor
+          Ractor.current if defined?(Ractor)
         end
 
         #: () -> Session

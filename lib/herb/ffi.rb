@@ -44,6 +44,7 @@ module Herb
     attach_function :herb_ffi_parse, [:pointer, :pointer, :pointer, :pointer], :bool, blocking: true
     attach_function :herb_ffi_lex, [:pointer, :pointer, :pointer, :pointer], :bool, blocking: true
     attach_function :herb_ffi_diff, [:pointer, :pointer, :bool, :pointer, :pointer], :bool, blocking: true
+    attach_function :herb_ffi_ruby_syntax_errors, [:pointer, :size_t, :pointer, :pointer], :bool
     attach_function :herb_ffi_extract_ruby, [:pointer, :pointer], :pointer
     attach_function :herb_ffi_extract_html, [:pointer], :pointer
     attach_function :herb_ffi_free, [:pointer], :void
@@ -133,6 +134,18 @@ module Herb
 
     def string_pointer(source)
       source && ::FFI::MemoryPointer.from_string(source)
+    end
+
+    #: (String) -> Array[[Symbol, String, Integer]]
+    def ruby_syntax_errors(source)
+      bytes = check_string(source).b
+      source_pointer = ::FFI::MemoryPointer.from_string(bytes)
+
+      data = read_buffer do |out, out_length|
+        herb_ffi_ruby_syntax_errors(source_pointer, bytes.bytesize, out, out_length)
+      end
+
+      Deserializer.new(data).ruby_syntax_errors
     end
 
     module Options

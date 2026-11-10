@@ -420,3 +420,42 @@ HERB_EXPORTED_FUNCTION bool herb_ffi_diff(
   output_finish(&output, out, out_length);
   return true;
 }
+
+HERB_EXPORTED_FUNCTION bool herb_ffi_ruby_syntax_errors(
+  const char* source,
+  size_t length,
+  uint8_t** out,
+  size_t* out_length
+) {
+  hb_allocator_T output_allocator;
+  hb_buffer_T output;
+
+  if (!output_init(&output, &output_allocator, 256)) { return false; }
+
+  pm_arena_t* arena = pm_arena_new();
+  pm_parser_t* parser = pm_parser_new(arena, (const uint8_t*) source, length, NULL);
+  pm_parse(parser);
+
+  const pm_line_offset_list_t* line_offsets = pm_parser_line_offsets(parser);
+  int32_t start_line = pm_parser_start_line(parser);
+
+  write_u32(&output, (uint32_t) pm_parser_errors_size(parser));
+
+  for (const pm_diagnostic_t* error = pm_parser_errors_first(parser); error != NULL;
+       error = pm_diagnostic_next(error)) {
+    const char* type = pm_diagnostic_type(error);
+    const char* message = pm_diagnostic_message(error);
+    pm_line_column_t position =
+      pm_line_offset_list_line_column(line_offsets, pm_diagnostic_location(error).start, start_line);
+
+    write_data(&output, type, strlen(type));
+    write_data(&output, message, strlen(message));
+    write_u32(&output, (uint32_t) position.line);
+  }
+
+  pm_parser_free(parser);
+  pm_arena_free(arena);
+
+  output_finish(&output, out, out_length);
+  return true;
+}

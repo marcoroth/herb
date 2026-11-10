@@ -121,5 +121,9 @@ module Herb
     def default_parser_options: () -> Hash[Symbol, untyped]
 
     def ensure_valid_ruby!: (untyped source) -> untyped
+
+    def ensure_valid_ruby_with_ruby_vm!: (untyped source) -> untyped
+
+    def ensure_valid_ruby_with_libherb!: (untyped source) -> untyped
   end
 end
