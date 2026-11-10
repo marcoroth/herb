@@ -57,6 +57,7 @@ module Herb
     attach_function :herb_version, [], :string
     attach_function :herb_prism_version, [], :string
     attach_function :herb_ffi_config_digest, [], :string
+    attach_function :herb_ffi_git_sha, [], :string
 
     TOKEN_TYPES = Array.new(herb_ffi_token_type_count) do |type|
       name = herb_ffi_token_type_name(type)
@@ -261,8 +262,13 @@ module Herb
       end
 
       def version
-        "herb gem v#{Herb::VERSION}, libprism v#{FFI.herb_prism_version}, " \
-          "libherb v#{FFI.herb_version} (Ruby FFI backend)"
+        sha = FFI.herb_ffi_git_sha
+        return "herb gem v#{Herb::VERSION}, libprism v#{FFI.herb_prism_version}, libherb v#{FFI.herb_version} (Ruby FFI backend)" if sha.nil?
+
+        herb = sha.empty? ? "v#{Herb::VERSION}" : sha
+        libherb = sha.empty? ? "v#{FFI.herb_version}" : sha
+
+        "herb gem #{herb}, libprism v#{FFI.herb_prism_version}, libherb #{libherb} (Ruby FFI backend, built from source)"
       end
 
       def arena_stats(**)
@@ -281,7 +287,8 @@ require_relative "ffi/deserialize"
 if Herb::FFI::ParserOptionsStruct.size != Herb::FFI.herb_ffi_parser_options_size ||
    Herb::FFI::ExtractRubyOptions.size != Herb::FFI.herb_ffi_extract_ruby_options_size ||
    Herb::FFI.herb_ffi_config_digest != Herb::FFI::Deserializer::CONFIG_DIGEST
-  raise Herb::FFI::StaleLibraryError, "#{Herb::FFI::LIBRARY_PATH} was built from a different Herb. Rebuild it with ffi/build.sh."
+  raise Herb::FFI::StaleLibraryError, "#{Herb::FFI::LIBRARY_PATH} was built from a different Herb. " \
+                                      "Reinstall the herb gem to rebuild it, or run ffi/build.sh in a source checkout."
 end
 
 Herb::Backend.singleton_class.prepend(Herb::FFI::Backend)

@@ -111,3 +111,43 @@ jobs:
 
       - name: Run valgrind on examples/ with the tracking allocator
         run: ./bin/valgrind_check_allocations
+
+  jruby:
+    name: JRuby gem install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Build source gem
+        run: |-
+          bundle exec rake templates prism:vendor
+          bundle exec rake build
+
+      - name: Set up JRuby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: jruby
+
+      - name: Install the gem on JRuby
+        run: gem install pkg/herb-*.gem --no-document
+
+      - name: Smoke test the FFI backend on JRuby
+        run: |-
+          ruby -e '
+            require "herb"
+            puts Herb.version
+            abort "FFI backend not loaded" unless Herb.version.include?("Ruby FFI backend")
+            result = Herb.parse(%(<div class="<%= klass %>"><%= user.name %></div>))
+            abort "parse failed: #{result.errors.inspect}" unless result.success?
+            abort "lex failed" if Herb.lex("<p><%= 1 %></p>").value.empty?
+            abort "extract_ruby failed" unless Herb.extract_ruby("<p><%= user.name %></p>").include?("user.name")
+            puts "ok"
+          '

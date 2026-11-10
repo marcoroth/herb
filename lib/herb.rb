@@ -44,7 +44,9 @@ if RUBY_ENGINE == "jruby" || ENV["HERB_BACKEND"] == "ffi"
       On JRuby, or with HERB_BACKEND=ffi, Herb calls libherb through the ffi gem.
       To fix:
         - add the ffi gem to your bundle
-        - build libherb_ffi with ffi/build.sh, or set HERB_FFI_LIBRARY to its path
+        - reinstall the herb gem, which builds libherb_ffi on JRuby (this needs a C compiler)
+        - in a source checkout, build it with ffi/build.sh
+        - or set HERB_FFI_LIBRARY to the path of a libherb_ffi you built
     MESSAGE
   end
 else

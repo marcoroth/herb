@@ -227,6 +227,18 @@ HERB_EXPORTED_FUNCTION const char* herb_ffi_config_digest(void) {
   return "<%= Digest::SHA256.hexdigest(%w[config.yml templates/ffi/serialize.c.erb templates/lib/herb/ffi/deserialize.rb.erb].map { |path| File.read(path) }.join)[0, 16] %>";
 }
 
+HERB_EXPORTED_FUNCTION const char* herb_ffi_git_sha(void) {
+#ifdef HERB_GIT_BUILD
+#  ifdef HERB_GIT_SHA
+  return HERB_GIT_SHA;
+#  else
+  return "";
+#  endif
+#else
+  return NULL;
+#endif
+}
+
 <%- parser_options.all_c_fields.select { |field| field.string? && field.validator }.map(&:validator).uniq.each do |validator| -%>
 HERB_EXPORTED_FUNCTION bool herb_ffi_<%= validator %>(const char* value, size_t length) {
   return <%= validator %>(value, length);
