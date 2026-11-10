@@ -21,6 +21,8 @@ module Herb
 
       def lex_result: (untyped source) -> untyped
 
+      def ruby_syntax_errors: () -> untyped
+
       def diff_result: () -> untyped
 
       private
