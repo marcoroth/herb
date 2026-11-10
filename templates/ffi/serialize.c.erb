@@ -1,0 +1,410 @@
+<%- require "digest" -%>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../src/include/diff/herb_diff.h"
+#include "../src/include/errors.h"
+#include "../src/include/extract.h"
+#include "../src/include/herb.h"
+#include "../src/include/lexer/erb_openers.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/lib/hb_allocator.h"
+#include "../src/include/lib/hb_buffer.h"
+#include "../src/include/lib/hb_string.h"
+#include "../src/include/location/location.h"
+#include "../src/include/prism/herb_prism_node.h"
+
+#include <prism.h>
+
+// Serializes results for lib/herb/ffi/deserialize.rb as little-endian uint32 words.
+// Strings are a length (UINT32_MAX for NULL) and bytes padded to a word; optional
+// values start with a presence word.
+
+#define HERB_FFI_NULL_LENGTH UINT32_MAX
+
+static void write_u32(hb_buffer_T* buffer, uint32_t value) {
+  uint8_t bytes[4] = {
+    (uint8_t) (value & 0xff),
+    (uint8_t) ((value >> 8) & 0xff),
+    (uint8_t) ((value >> 16) & 0xff),
+    (uint8_t) ((value >> 24) & 0xff)
+  };
+  hb_buffer_append_with_length(buffer, (const char*) bytes, 4);
+}
+
+static void write_data(hb_buffer_T* buffer, const void* data, size_t length) {
+  static const char padding[3] = { 0 };
+
+  if (data == NULL) {
+    write_u32(buffer, HERB_FFI_NULL_LENGTH);
+    return;
+  }
+
+  write_u32(buffer, (uint32_t) length);
+  hb_buffer_append_with_length(buffer, data, length);
+  hb_buffer_append_with_length(buffer, padding, (4 - length % 4) % 4);
+}
+
+static void write_string(hb_buffer_T* buffer, hb_string_T string) {
+  write_data(buffer, string.data, string.length);
+}
+
+static void write_location(hb_buffer_T* buffer, location_T location) {
+  write_u32(buffer, location.start.line);
+  write_u32(buffer, location.start.column);
+  write_u32(buffer, location.end.line);
+  write_u32(buffer, location.end.column);
+}
+
+static void write_token(hb_buffer_T* buffer, const token_T* token, bool track_locations) {
+  write_u32(buffer, token != NULL);
+  if (token == NULL) { return; }
+
+  write_string(buffer, token->value);
+  write_u32(buffer, track_locations);
+
+  if (track_locations) {
+    write_u32(buffer, token->range.from);
+    write_u32(buffer, token->range.to);
+    write_location(buffer, token->location);
+  }
+
+  write_u32(buffer, (uint32_t) token->type);
+}
+
+static void write_prism_node(hb_buffer_T* buffer, herb_prism_node_T prism_node) {
+  if (prism_node.node == NULL || prism_node.parser == NULL) {
+    write_u32(buffer, HERB_FFI_NULL_LENGTH);
+    return;
+  }
+
+  pm_buffer_t* pm_buffer = pm_buffer_new();
+  herb_prism_node_serialize(prism_node, pm_buffer);
+
+  if (pm_buffer_length(pm_buffer) > 0) {
+    write_data(buffer, pm_buffer_value(pm_buffer), pm_buffer_length(pm_buffer));
+  } else {
+    write_u32(buffer, HERB_FFI_NULL_LENGTH);
+  }
+
+  pm_buffer_free(pm_buffer);
+}
+
+static void write_error(hb_buffer_T* buffer, ERROR_T* error) {
+  write_u32(buffer, error != NULL);
+  if (error == NULL) { return; }
+
+  write_u32(buffer, (uint32_t) error->type);
+  write_location(buffer, error->location);
+  write_string(buffer, error->message);
+
+  switch (error->type) {
+  <%- errors.each do |error| -%>
+    case <%= error.type %>: {
+      <%- if error.fields.any? -%>
+      <%= error.struct_type %>* <%= error.human %> = (<%= error.struct_type %>*) error;
+      <%- end -%>
+      <%- error.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::PositionField -%>
+      write_u32(buffer, <%= error.human %>-><%= field.name %>.line);
+      write_u32(buffer, <%= error.human %>-><%= field.name %>.column);
+      <%- when Herb::Template::TokenField -%>
+      write_token(buffer, <%= error.human %>-><%= field.name %>, true);
+      <%- when Herb::Template::TokenTypeField -%>
+      write_u32(buffer, (uint32_t) <%= error.human %>-><%= field.name %>);
+      <%- when Herb::Template::StringField -%>
+      // Ruby gets "" here rather than nil, same as the C extension (rb_utf8_str_new)
+      write_string(buffer, hb_string_is_null(<%= error.human %>-><%= field.name %>) ? HB_STRING_EMPTY : <%= error.human %>-><%= field.name %>);
+      <%- when Herb::Template::SizeTField -%>
+      write_u32(buffer, (uint32_t) <%= error.human %>-><%= field.name %>);
+      <%- else -%>
+      #error "Unhandled error field type <%= field.class.name %>"
+      <%- end -%>
+      <%- end -%>
+      break;
+    }
+  <%- end -%>
+  }
+}
+
+static void write_errors(hb_buffer_T* buffer, hb_array_T* array) {
+  size_t size = array ? hb_array_size(array) : 0;
+  write_u32(buffer, (uint32_t) size);
+
+  for (size_t index = 0; index < size; index++) {
+    write_error(buffer, hb_array_get(array, index));
+  }
+}
+
+static void write_node(hb_buffer_T* buffer, AST_NODE_T* node, const parser_options_T* options);
+
+static void write_nodes(hb_buffer_T* buffer, hb_array_T* array, const parser_options_T* options) {
+  size_t size = array ? hb_array_size(array) : 0;
+  write_u32(buffer, (uint32_t) size);
+
+  for (size_t index = 0; index < size; index++) {
+    write_node(buffer, hb_array_get(array, index), options);
+  }
+}
+
+static void write_node(hb_buffer_T* buffer, AST_NODE_T* node, const parser_options_T* options) {
+  write_u32(buffer, node != NULL);
+  if (node == NULL) { return; }
+
+  write_u32(buffer, (uint32_t) node->type);
+  write_u32(buffer, options->track_locations);
+  if (options->track_locations) { write_location(buffer, node->location); }
+  write_errors(buffer, node->errors);
+
+  switch (node->type) {
+  <%- nodes.each do |node| -%>
+    case <%= node.type %>: {
+      <%- if node.fields.any? -%>
+      <%= node.struct_type %>* <%= node.human %> = (<%= node.struct_type %>*) node;
+      <%- end -%>
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      write_string(buffer, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+      write_node(buffer, (AST_NODE_T*) <%= node.human %>-><%= field.name %>, options);
+      <%- when Herb::Template::TokenField -%>
+      write_token(buffer, <%= node.human %>-><%= field.name %>, options->track_locations);
+      <%- when Herb::Template::BooleanField -%>
+      write_u32(buffer, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::ArrayField -%>
+      write_nodes(buffer, <%= node.human %>-><%= field.name %>, options);
+      <%- when Herb::Template::LocationField -%>
+      write_u32(buffer, options->track_locations && <%= node.human %>-><%= field.name %> != NULL);
+      if (options->track_locations && <%= node.human %>-><%= field.name %> != NULL) { write_location(buffer, *<%= node.human %>-><%= field.name %>); }
+      <%- when Herb::Template::PrismSerializedField -%>
+      write_data(buffer, <%= node.human %>-><%= field.name %>.length ? <%= node.human %>-><%= field.name %>.data : NULL, <%= node.human %>-><%= field.name %>.length);
+      <%- when Herb::Template::PrismNodeField -%>
+      write_prism_node(buffer, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
+      /* <%= field.name %> is internal parser state, not exposed to Ruby */
+      <%- else -%>
+      #error "Unhandled node field type <%= field.class.name %>"
+      <%- end -%>
+      <%- end -%>
+      break;
+    }
+  <%- end -%>
+  }
+}
+
+// Output uses malloc so Ruby can free it with herb_ffi_free.
+static bool output_init(hb_buffer_T* buffer, hb_allocator_T* allocator, size_t capacity) {
+  *allocator = hb_allocator_with_malloc();
+  return hb_buffer_init(buffer, capacity, allocator);
+}
+
+static void output_finish(hb_buffer_T* buffer, uint8_t** out, size_t* out_length) {
+  *out = (uint8_t*) buffer->value;
+  *out_length = buffer->length;
+}
+
+HERB_EXPORTED_FUNCTION void herb_ffi_free(void* data) {
+  free(data);
+}
+
+HERB_EXPORTED_FUNCTION size_t herb_ffi_parser_options_size(void) {
+  return sizeof(parser_options_T);
+}
+
+HERB_EXPORTED_FUNCTION size_t herb_ffi_extract_ruby_options_size(void) {
+  return sizeof(herb_extract_ruby_options_T);
+}
+
+HERB_EXPORTED_FUNCTION size_t herb_ffi_parser_options_string_capacity(void) {
+  return HERB_PARSER_OPTIONS_STRING_CAPACITY;
+}
+
+HERB_EXPORTED_FUNCTION const char* herb_ffi_config_digest(void) {
+  return "<%= Digest::SHA256.hexdigest(%w[config.yml templates/ffi/serialize.c.erb templates/lib/herb/ffi/deserialize.rb.erb].map { |path| File.read(path) }.join)[0, 16] %>";
+}
+
+<%- parser_options.all_c_fields.select { |field| field.string? && field.validator }.map(&:validator).uniq.each do |validator| -%>
+HERB_EXPORTED_FUNCTION bool herb_ffi_<%= validator %>(const char* value, size_t length) {
+  return <%= validator %>(value, length);
+}
+
+<%- end -%>
+HERB_EXPORTED_FUNCTION void herb_ffi_parser_options_init(parser_options_T* options) {
+  *options = HERB_DEFAULT_PARSER_OPTIONS;
+}
+
+HERB_EXPORTED_FUNCTION void herb_ffi_extract_ruby_options_init(herb_extract_ruby_options_T* options) {
+  *options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+}
+
+HERB_EXPORTED_FUNCTION uint32_t herb_ffi_token_type_count(void) {
+  return TOKEN_EOF + 1;
+}
+
+HERB_EXPORTED_FUNCTION hb_string_T herb_ffi_token_type_name(uint32_t type) {
+  return token_type_to_string((token_type_T) type);
+}
+
+HERB_EXPORTED_FUNCTION const hb_string_T* herb_ffi_default_erb_openings(size_t* count) {
+  *count = HERB_DEFAULT_ERB_OPENINGS_COUNT;
+  return HERB_DEFAULT_ERB_OPENINGS;
+}
+
+HERB_EXPORTED_FUNCTION bool herb_ffi_parse(
+  const char* source,
+  const parser_options_T* options,
+  uint8_t** out,
+  size_t* out_length
+) {
+  hb_allocator_T allocator;
+  hb_allocator_T output_allocator;
+  hb_buffer_T output;
+
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return false; }
+
+  if (!output_init(&output, &output_allocator, 4096)) {
+    hb_allocator_destroy(&allocator);
+    return false;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(source, options, &allocator);
+  write_node(&output, (AST_NODE_T*) root, options);
+
+  if (root != NULL) { ast_node_free((AST_NODE_T*) root, &allocator); }
+  hb_allocator_destroy(&allocator);
+
+  output_finish(&output, out, out_length);
+  return true;
+}
+
+HERB_EXPORTED_FUNCTION bool herb_ffi_lex(
+  const char* source,
+  const parser_options_T* options,
+  uint8_t** out,
+  size_t* out_length
+) {
+  hb_allocator_T allocator;
+  hb_allocator_T output_allocator;
+  hb_buffer_T output;
+
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return false; }
+
+  if (!output_init(&output, &output_allocator, 4096)) {
+    hb_allocator_destroy(&allocator);
+    return false;
+  }
+
+  hb_array_T* tokens = herb_lex_with_options(source, options, &allocator);
+  size_t size = tokens ? hb_array_size(tokens) : 0;
+  write_u32(&output, (uint32_t) size);
+
+  for (size_t index = 0; index < size; index++) {
+    write_token(&output, hb_array_get(tokens, index), true);
+  }
+
+  if (tokens != NULL) { herb_free_tokens(&tokens, &allocator); }
+  hb_allocator_destroy(&allocator);
+
+  output_finish(&output, out, out_length);
+  return true;
+}
+
+static char* extract(const char* source, const herb_extract_ruby_options_T* options) {
+  hb_allocator_T allocator;
+  hb_allocator_T output_allocator;
+  hb_buffer_T output;
+
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return NULL; }
+
+  if (!output_init(&output, &output_allocator, strlen(source))) {
+    hb_allocator_destroy(&allocator);
+    return NULL;
+  }
+
+  if (options != NULL) {
+    herb_extract_ruby_to_buffer_with_options(source, &output, options, &allocator);
+  } else {
+    herb_extract_html_to_buffer(source, &output, &allocator);
+  }
+
+  hb_allocator_destroy(&allocator);
+
+  return output.value;
+}
+
+HERB_EXPORTED_FUNCTION char* herb_ffi_extract_ruby(const char* source, const herb_extract_ruby_options_T* options) {
+  return extract(source, options);
+}
+
+HERB_EXPORTED_FUNCTION char* herb_ffi_extract_html(const char* source) {
+  return extract(source, NULL);
+}
+
+HERB_EXPORTED_FUNCTION bool herb_ffi_diff(
+  const char* old_source,
+  const char* new_source,
+  bool track_whitespace_changes,
+  uint8_t** out,
+  size_t* out_length
+) {
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+  diff_options.track_whitespace_changes = track_whitespace_changes;
+
+  hb_allocator_T allocator;
+  hb_allocator_T output_allocator;
+  hb_buffer_T output;
+
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return false; }
+
+  if (!output_init(&output, &output_allocator, 4096)) {
+    hb_allocator_destroy(&allocator);
+    return false;
+  }
+
+  AST_DOCUMENT_NODE_T* old_root = herb_parse(old_source, &HERB_DEFAULT_PARSER_OPTIONS, &allocator);
+  AST_DOCUMENT_NODE_T* new_root = herb_parse(new_source, &HERB_DEFAULT_PARSER_OPTIONS, &allocator);
+  bool parsed = old_root != NULL && new_root != NULL;
+
+  herb_diff_result_T* result = parsed ? herb_diff(old_root, new_root, &diff_options, &allocator) : NULL;
+  bool diffed = result != NULL;
+
+  if (diffed) {
+    size_t count = herb_diff_operation_count(result);
+
+    write_u32(&output, result->trees_identical);
+    write_u32(&output, (uint32_t) count);
+
+    for (size_t index = 0; index < count; index++) {
+      const herb_diff_operation_T* operation = herb_diff_operation_at(result, index);
+      const char* type = herb_diff_operation_type_to_string(operation->type);
+
+      write_data(&output, type, strlen(type));
+      write_u32(&output, operation->path.depth);
+
+      for (uint16_t depth = 0; depth < operation->path.depth; depth++) {
+        write_u32(&output, operation->path.indices[depth]);
+      }
+
+      write_node(&output, (AST_NODE_T*) operation->old_node, &HERB_DEFAULT_PARSER_OPTIONS);
+      write_node(&output, (AST_NODE_T*) operation->new_node, &HERB_DEFAULT_PARSER_OPTIONS);
+      write_u32(&output, operation->old_index);
+      write_u32(&output, operation->new_index);
+    }
+  }
+
+  if (old_root != NULL) { ast_node_free((AST_NODE_T*) old_root, &allocator); }
+  if (new_root != NULL) { ast_node_free((AST_NODE_T*) new_root, &allocator); }
+  hb_allocator_destroy(&allocator);
+
+  if (!diffed) {
+    free(output.value);
+    return false;
+  }
+
+  output_finish(&output, out, out_length);
+  return true;
+}

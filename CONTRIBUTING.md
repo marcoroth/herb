@@ -143,6 +143,13 @@ make test && ./run_herb_tests
 bundle exec rake test
 ```
 
+To run them against the FFI backend that JRuby uses, build `libherb_ffi` first:
+
+```bash
+ffi/build.sh
+HERB_BACKEND=ffi bundle exec rake test
+```
+
 ### Clean
 
 Removes the `herb`, `run_herb_tests`, `prism` installation, and all `.o` files.

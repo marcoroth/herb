@@ -92,6 +92,14 @@ jobs:
       - name: Run Ruby Tests
         run: bundle exec rake test:all
 
+      - name: Build FFI library
+        run: ffi/build.sh
+
+      - name: Run Ruby Tests with the FFI backend
+        run: bundle exec rake test
+        env:
+          HERB_BACKEND: ffi
+
       - name: Run C tests
         run: ./run_herb_tests
 
