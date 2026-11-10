@@ -1,0 +1,77 @@
+# Generated from lib/herb/ffi/deserialize.rb with RBS::Inline
+
+module Herb
+  module FFI
+    class Deserializer
+      NULL_LENGTH: ::Integer
+
+      CONFIG_DIGEST: ::String
+
+      NODE_CLASSES: untyped
+
+      NODE_TYPES: untyped
+
+      ERROR_CLASSES: untyped
+
+      ERROR_TYPES: untyped
+
+      def initialize: (untyped data) -> untyped
+
+      def parse_result: (untyped source, untyped options, untyped error_count) -> untyped
+
+      def lex_result: (untyped source) -> untyped
+
+      def ruby_syntax_errors: () -> untyped
+
+      def diff_result: () -> untyped
+
+      private
+
+      def read_u32: () -> untyped
+
+      def read_bool: () -> untyped
+
+      def read_string: () -> untyped
+
+      def read_token_type: () -> untyped
+
+      def read_prism_bytes: () -> untyped
+
+      def read_position: () -> untyped
+
+      def read_location: () -> untyped
+
+      def read_optional_location: () -> untyped
+
+      def read_token: () -> untyped
+
+      def read_errors: () -> untyped
+
+      def read_nodes: () -> untyped
+
+      def read_error: () -> untyped
+
+      def read_node: () -> untyped
+    end
+
+    class ParserOptionsStruct < ::FFI::Struct[::FFI::Pointer, untyped]
+      include ErbOpenersField
+
+      STRING_CAPACITY: untyped
+
+      # Same as herb_extract_parser_options in templates/ext/herb/parser_options_helpers.c.erb.
+      def apply: (untyped options) -> untyped
+
+      # Same as herb_build_parser_options_hash in templates/ext/herb/parser_options_helpers.c.erb.
+      def to_options: () -> untyped
+
+      private
+
+      def nullable: (untyped name, untyped sentinel) -> untyped
+
+      def write_string: (untyped name, untyped value, untyped option, untyped validator) -> untyped
+
+      def read_string: (untyped name) -> untyped
+    end
+  end
+end

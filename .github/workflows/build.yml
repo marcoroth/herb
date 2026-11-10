@@ -92,6 +92,14 @@ jobs:
       - name: Run Ruby Tests
         run: bundle exec rake test:all
 
+      - name: Build FFI library
+        run: ffi/build.sh
+
+      - name: Run Ruby Tests with the FFI backend
+        run: bundle exec rake test
+        env:
+          HERB_BACKEND: ffi
+
       - name: Run C tests
         run: ./run_herb_tests
 
@@ -103,3 +111,45 @@ jobs:
 
       - name: Run valgrind on examples/ with the tracking allocator
         run: ./bin/valgrind_check_allocations
+
+  jruby:
+    name: JRuby gem install
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Build source gem
+        run: |-
+          bundle exec rake templates prism:vendor
+          bundle exec rake build
+
+      - name: Set up JRuby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: jruby
+
+      - name: Install the gem on JRuby
+        run: gem install pkg/herb-*.gem --no-document
+
+      - name: Smoke test the FFI backend on JRuby
+        run: |-
+          ruby -e '
+            require "herb"
+            puts Herb.version
+            abort "FFI backend not loaded" unless Herb.version.include?("Ruby FFI backend")
+            result = Herb.parse(%(<div class="<%= klass %>"><%= user.name %></div>))
+            abort "parse failed: #{result.errors.inspect}" unless result.success?
+            abort "lex failed" if Herb.lex("<p><%= 1 %></p>").value.empty?
+            abort "extract_ruby failed" unless Herb.extract_ruby("<p><%= user.name %></p>").include?("user.name")
+            require "herb/engine"
+            abort "Herb::Engine failed" unless Herb::Engine.new("<p><%= user.name %></p>").src.include?("user.name")
+            puts "ok"
+          '

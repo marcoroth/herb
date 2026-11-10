@@ -329,6 +329,7 @@ DEPENDENCIES
   css_inline (~> 0.21)
   digest (~> 3.2)
   erubi
+  ffi (~> 1.17)
   herb!
   irb (~> 1.18)
   lightningcss (~> 1.33)

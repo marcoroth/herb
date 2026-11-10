@@ -14,10 +14,13 @@ target :lib do
   library "yaml"
   library "prism"
   library "lightningcss"
+  library "ffi"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"
   ignore "lib/herb/bootstrap.rb"
+  ignore "lib/herb/ffi.rb"
+  ignore "lib/herb/ffi/deserialize.rb"
   ignore "lib/herb/dev/server.rb"
   ignore "lib/herb/dev/server_entry.rb"
   ignore "lib/herb/dev/runner.rb"

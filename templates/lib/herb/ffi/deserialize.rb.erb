@@ -1,0 +1,316 @@
+<%- require "digest" -%>
+module Herb
+  module FFI
+    class Deserializer
+      NULL_LENGTH = 0xFFFF_FFFF
+      CONFIG_DIGEST = "<%= Digest::SHA256.hexdigest(%w[config.yml templates/ffi/serialize.c.erb templates/lib/herb/ffi/deserialize.rb.erb].map { |path| File.read(path) }.join)[0, 16] %>"
+
+      NODE_CLASSES = [
+        <%- nodes.each do |node| -%>
+        Herb::AST::<%= node.name %><%= "," unless node.equal?(nodes.last) %>
+        <%- end -%>
+      ].freeze
+
+      NODE_TYPES = [
+        <%- nodes.each do |node| -%>
+        "<%= node.type %>"<%= "," unless node.equal?(nodes.last) %>
+        <%- end -%>
+      ].freeze
+
+      ERROR_CLASSES = [
+        <%- errors.each do |error| -%>
+        Herb::Errors::<%= error.name %><%= "," unless error.equal?(errors.last) %>
+        <%- end -%>
+      ].freeze
+
+      ERROR_TYPES = [
+        <%- errors.each do |error| -%>
+        "<%= error.type %>"<%= "," unless error.equal?(errors.last) %>
+        <%- end -%>
+      ].freeze
+
+      def initialize(data)
+        @data = data.force_encoding(Encoding::UTF_8)
+        @words = data.unpack("V*")
+        @index = 0
+      end
+
+      def parse_result(source, options, error_count)
+        ParseResult.new(read_node, source, [], [], options, error_count)
+      end
+
+      def lex_result(source)
+        tokens = Array.new(read_u32) { read_token }.compact
+
+        LexResult.new(tokens, source, [], [])
+      end
+
+      def ruby_syntax_errors
+        Array.new(read_u32) { [read_string.to_sym, read_string, read_u32] }
+      end
+
+      def diff_result
+        identical = read_bool
+
+        operations = Array.new(read_u32) do
+          Diff::Operation.new(
+            type: read_string.to_sym,
+            path: Array.new(read_u32) { read_u32 },
+            old_node: read_node,
+            new_node: read_node,
+            old_index: read_u32,
+            new_index: read_u32
+          )
+        end
+
+        Diff::Result.new(identical, operations)
+      end
+
+      private
+
+      def read_u32
+        value = @words[@index]
+        @index += 1
+        value
+      end
+
+      def read_bool # rubocop:disable Naming/PredicateMethod
+        value = @words[@index]
+        @index += 1
+        value == 1
+      end
+
+      def read_string
+        length = read_u32
+        return nil if length == NULL_LENGTH
+
+        bytes = @data.byteslice(@index * 4, length)
+        @index += (length + 3) / 4
+        bytes
+      end
+
+      def read_token_type
+        TOKEN_TYPES.fetch(read_u32)
+      end
+
+      def read_prism_bytes
+        read_string&.force_encoding(Encoding::BINARY)&.freeze
+      end
+
+      def read_position
+        index = @index
+        @index = index + 2
+        Position.new(@words[index], @words[index + 1])
+      end
+
+      def read_location
+        words = @words
+        index = @index
+        @index = index + 4
+        Location.new(Position.new(words[index], words[index + 1]), Position.new(words[index + 2], words[index + 3]))
+      end
+
+      def read_optional_location
+        read_location if read_bool
+      end
+
+      def read_token
+        return nil unless read_bool
+
+        value = read_string
+
+        if read_bool
+          range = Herb::Range.new(read_u32, read_u32)
+          location = read_location
+        end
+
+        Token.new(value, range, location, read_token_type)
+      end
+
+      def read_errors
+        errors = Array.new(read_u32) { read_error }
+        errors.compact!
+        errors
+      end
+
+      def read_nodes
+        nodes = Array.new(read_u32) { read_node }
+        nodes.compact!
+        nodes
+      end
+
+      def read_error
+        return nil unless read_bool
+
+        index = read_u32
+        type = ERROR_TYPES.fetch(index).dup
+        location = read_location
+        message = read_string
+
+        case index
+        <%- errors.each_with_index do |error, index| -%>
+        when <%= index %> # <%= error.name %>
+          <%- error.fields.each do |field| -%>
+          <%- case field -%>
+          <%- when Herb::Template::PositionField -%>
+          <%= field.name %> = read_position
+          <%- when Herb::Template::TokenField -%>
+          <%= field.name %> = read_token
+          <%- when Herb::Template::TokenTypeField -%>
+          <%= field.name %> = read_token_type.dup
+          <%- when Herb::Template::StringField -%>
+          <%= field.name %> = read_string
+          <%- when Herb::Template::SizeTField -%>
+          <%= field.name %> = read_u32
+          <%- else -%>
+          <%- raise "Unhandled error field type #{field.class.name}" -%>
+          <%- end -%>
+          <%- end -%>
+
+          ERROR_CLASSES[<%= index %>].new(type, location, message<%= error.fields.map { |field| ", #{field.name}" }.join %>)
+        <%- end -%>
+        end
+      end
+
+      def read_node
+        return nil unless read_bool
+
+        index = read_u32
+        location = read_location if read_bool
+        errors = read_errors
+
+        case index
+        <%- nodes.each_with_index do |node, index| -%>
+        when <%= index %> # <%= node.name %>
+          <%- node.fields.each do |field| -%>
+          <%- case field -%>
+          <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+          <%= field.name %> = read_string
+          <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+          <%= field.name %> = read_node
+          <%- when Herb::Template::TokenField -%>
+          <%= field.name %> = read_token
+          <%- when Herb::Template::BooleanField -%>
+          <%= field.name %> = read_bool
+          <%- when Herb::Template::ArrayField -%>
+          <%= field.name %> = read_nodes
+          <%- when Herb::Template::LocationField -%>
+          <%= field.name %> = read_optional_location
+          <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+          <%= field.name %> = read_prism_bytes
+          <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
+          <%= field.name %> = nil
+          <%- else -%>
+          <%- raise "Unhandled node field type #{field.class.name}" -%>
+          <%- end -%>
+          <%- end -%>
+
+          NODE_CLASSES[<%= index %>].new(NODE_TYPES[<%= index %>], location, errors<%= node.fields.map { |field| ", #{field.name}" }.join %>)
+        <%- end -%>
+        end
+      end
+    end
+
+    attach_function :herb_ffi_parser_options_string_capacity, [], :size_t
+    <%- parser_options.all_c_fields.select { |field| field.string? && field.validator }.map(&:validator).uniq.each do |validator| -%>
+    attach_function :herb_ffi_<%= validator %>, [:pointer, :size_t], :bool
+    <%- end -%>
+
+    class ParserOptionsStruct < ::FFI::Struct #[::FFI::Pointer, untyped]
+      include ErbOpenersField
+
+      STRING_CAPACITY = FFI.herb_ffi_parser_options_string_capacity
+
+      <%- fields = parser_options.all_c_fields.flat_map do |field|
+            if field.boolean? then [[field.c_name, ":bool"]]
+            elsif field.string_array? then [[field.c_name, ":pointer"], [field.count_name, ":size_t"]]
+            elsif field.string? then [[field.c_name, "[:char, STRING_CAPACITY]"]]
+            elsif field.pointer? then [[field.c_name, ":pointer"]]
+            elsif field.uint64? then [[field.c_name, ":uint64"]]
+            else [[field.c_name, ":uint32"]]
+            end
+          end -%>
+      layout(
+        <%= fields.map { |name, type| ":#{name}, #{type}" }.join(",\n        ") %>
+      )
+
+      # Same as herb_extract_parser_options in templates/ext/herb/parser_options_helpers.c.erb.
+      def apply(options)
+        <%- parser_options.extractable_fields_for(:ruby).each do |field| -%>
+        <%- if field.boolean? -%>
+        value = Options.fetch(options, :<%= field.snake_case %>)
+        self[:<%= field.c_name %>] = value ? true : false unless value.nil?
+        <%- elsif field.string? -%>
+        value = Options.fetch(options, :<%= field.snake_case %>)
+        <%- if field.validator -%>
+        write_string(:<%= field.c_name %>, value, :<%= field.snake_case %>, :herb_ffi_<%= field.validator %>) unless value.nil?
+        <%- else -%>
+        write_string(:<%= field.c_name %>, value, :<%= field.snake_case %>, nil) unless value.nil?
+        <%- end -%>
+        <%- elsif field.ruby_unit == "seconds" -%>
+        value = Options.fetch(options, :<%= field.snake_case %>)
+        self[:<%= field.c_name %>] = Options.milliseconds(value) unless value.nil?
+        <%- elsif field.nullable? -%>
+        if Options.given?(options, :<%= field.snake_case %>)
+          value = Options.fetch(options, :<%= field.snake_case %>)
+          self[:<%= field.c_name %>] = value.nil? ? <%= field.null_sentinel %> : Options.uint(value)
+        end
+        <%- else -%>
+        value = Options.fetch(options, :<%= field.snake_case %>)
+        self[:<%= field.c_name %>] = Options.uint(value) unless value.nil?
+        <%- end -%>
+        <%- end -%>
+
+        openers = Options.fetch(options, :erb_openers)
+        self.erb_openers = openers unless openers.nil?
+      end
+
+      # Same as herb_build_parser_options_hash in templates/ext/herb/parser_options_helpers.c.erb.
+      def to_options
+        {
+          <%- parser_options.fields_for(:c).each do |field| -%>
+          <%- if field.boolean? -%>
+          <%= field.snake_case %>: self[:<%= field.c_name %>],
+          <%- elsif field.string? -%>
+          <%= field.snake_case %>: read_string(:<%= field.c_name %>),
+          <%- elsif field.string_array? -%>
+          <%= field.snake_case %>: Options.read_hb_strings(self[:<%= field.c_name %>], self[:<%= field.count_name %>]),
+          <%- elsif field.ruby_unit == "seconds" -%>
+          <%= field.snake_case %>: self[:<%= field.c_name %>] / 1000.0,
+          <%- elsif field.nullable? -%>
+          <%= field.snake_case %>: nullable(:<%= field.c_name %>, <%= field.null_sentinel %>),
+          <%- else -%>
+          <%= field.snake_case %>: self[:<%= field.c_name %>],
+          <%- end -%>
+          <%- end -%>
+        }
+      end
+
+      private
+
+      def nullable(name, sentinel)
+        value = self[name]
+        value == sentinel ? nil : value
+      end
+
+      def write_string(name, value, option, validator)
+        raise TypeError, "wrong argument type #{value.class} (expected String)" unless value.is_a?(String)
+
+        bytes = value.b
+
+        if validator
+          raise ArgumentError, "#{option} #{value.inspect} is not supported" unless FFI.public_send(validator, bytes, bytes.bytesize)
+        elsif bytes.bytesize >= STRING_CAPACITY
+          raise ArgumentError, "#{option} must be shorter than #{STRING_CAPACITY} bytes"
+        end
+
+        self[name].to_ptr.put_bytes(0, "#{bytes}\0")
+      end
+
+      def read_string(name)
+        value = self[name].to_s
+        value.empty? ? nil : value.force_encoding(Encoding::UTF_8)
+      end
+    end
+  end
+end

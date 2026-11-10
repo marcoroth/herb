@@ -56,6 +56,9 @@ module Herb
         # : (Session?) -> void
         def self.store: (Session?) -> void
 
+        # : () -> Ractor?
+        def self.current_ractor: () -> Ractor?
+
         # : () -> Session
         def self.current: () -> Session
 
