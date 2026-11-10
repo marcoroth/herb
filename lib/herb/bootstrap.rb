@@ -2,6 +2,8 @@
 # typed: ignore
 
 require "fileutils"
+require "rbconfig"
+require "shellwords"
 
 module Herb
   module Bootstrap
@@ -26,14 +28,13 @@ module Herb
     ].freeze
 
     def self.git_build_cflags
-      sha = `git -C #{ROOT_PATH} rev-parse --short HEAD 2>/dev/null`.strip
-
+      sha = IO.popen(["git", "-C", ROOT_PATH, "rev-parse", "--short", "HEAD"], err: File::NULL, &:read).strip
       sha.empty? ? ["-DHERB_GIT_BUILD"] : ["-DHERB_GIT_BUILD", "-DHERB_GIT_SHA=\"#{sha}\""]
+    rescue SystemCallError
+      ["-DHERB_GIT_BUILD"]
     end
 
     def self.build_ffi_library(cc: ENV.fetch("CC", "cc"), cflags: [])
-      require "shellwords"
-
       compiler = Shellwords.split(cc)
 
       Dir.chdir(ROOT_PATH) do
@@ -61,8 +62,6 @@ module Herb
     end
 
     def self.shared_library_extension
-      require "rbconfig"
-
       RbConfig::CONFIG["SOEXT"] || (RbConfig::CONFIG["host_os"].include?("darwin") ? "dylib" : "so")
     end
 
