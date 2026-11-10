@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
     "sig/manifest.yaml",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
+    "ffi/*.{c,sh}",
     "templates/**/*.{rb,erb}",
     "vendor/prism/**/*",
     "exe/*"
