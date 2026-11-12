@@ -1,6 +1,7 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
+import { beforeAll, describe, expect, test } from "vitest"
+
 import { Formatter } from "../src"
+import { Herb } from "@herb-tools/node-wasm"
 import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
@@ -782,5 +783,19 @@ describe("herb:disable comment formatting", () => {
         </p>
       </section>
     `)
+  })
+
+  test("keeps herb:disable on the html_safe line after a sibling element", () => {
+    const source = dedent`
+      <div>
+        <span></span>
+      </div>
+      <span><%= message.html_safe %></span> <%# herb:disable erb-no-unsafe-raw %>
+    `
+
+    const result = formatter.format(source)
+
+    const htmlSafeLine = result.split("\n").find(line => line.includes("message.html_safe"))
+    expect(htmlSafeLine).toContain("<%# herb:disable erb-no-unsafe-raw %>")
   })
 })
