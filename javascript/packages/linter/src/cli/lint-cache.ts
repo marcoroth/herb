@@ -42,7 +42,7 @@ export interface LintCacheInputs {
   projectPath: string
   linterVersion: string
   herbVersion: string
-  configOptions: unknown
+  config: unknown
   configVersion?: string
   only?: string[]
   allRules?: boolean
@@ -136,7 +136,7 @@ export class LintCache {
       format: CACHE_FORMAT,
       linterVersion: inputs.linterVersion,
       herbVersion: inputs.herbVersion,
-      configOptions: inputs.configOptions,
+      config: inputs.config,
       configVersion: inputs.configVersion,
       only: inputs.only,
       allRules: inputs.allRules ?? false,
