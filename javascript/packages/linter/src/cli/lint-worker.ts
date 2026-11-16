@@ -8,12 +8,14 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
+import { serializeOffense } from "./lint-cache.js"
 import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { renderGraphFrom } from "@herb-tools/analysis/node"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
+import type { CachedFileResult } from "./lint-cache.js"
 import type { AncestorChain, SerializedRenderGraph, SerializedPartialIndex } from "@herb-tools/analysis"
 
 export interface WorkerInput {
@@ -28,6 +30,7 @@ export interface WorkerInput {
   allRules: boolean
   partials?: SerializedPartialIndex
   partialCallers?: SerializedRenderGraph
+  collectFileResults: boolean
 }
 
 export interface WorkerOffense {
@@ -52,6 +55,8 @@ export interface WorkerResult {
   offenses: WorkerOffense[]
   ruleOffenses: [string, { count: number, files: string[] }][]
   fixMessages: string[]
+  /** Each linted file's own result, for files the fixer left unchanged. Only collected when the cache is on. */
+  fileResults: [string, CachedFileResult][]
   error?: string
 }
 
@@ -95,6 +100,7 @@ async function run() {
   const allOffenses: WorkerOffense[] = []
   const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
   const fixMessages: string[] = []
+  const fileResults: [string, CachedFileResult][] = []
 
   const fixabilityOf = (offense: LintOffense): Fixability => {
     const ruleClass = linter.rules.find(
@@ -107,6 +113,8 @@ async function run() {
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
     const content = readFileSync(filePath, "utf-8")
+    const offsetBefore = allOffenses.length
+    let fileFixed = false
 
     const lintResult = linter.lint(content, {
       fileName: filename,
@@ -129,6 +137,7 @@ async function run() {
         writeFileSync(filePath, autofixResult.source, "utf-8")
         refreshPartialAfterFix(Herb, partials, filename, content, autofixResult.source)
         filesFixed++
+        fileFixed = true
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
 
@@ -184,6 +193,20 @@ async function run() {
     if (lintResult.wouldBeIgnored) {
       totalWouldBeIgnored += lintResult.wouldBeIgnored
     }
+
+    if (data.collectFileResults && !fileFixed) {
+      fileResults.push([filename, {
+        offenses: allOffenses.slice(offsetBefore).map(({ offense, renderedFrom, autocorrectable, unsafeAutocorrectable }) => ({
+          offense: serializeOffense(offense as unknown as LintOffense),
+          renderedFrom,
+          autocorrectable,
+          unsafeAutocorrectable
+        })),
+        ignored: lintResult.ignored,
+        wouldBeIgnored: lintResult.wouldBeIgnored ?? 0,
+        counterSuppressed: lintResult.counterSuppressed ?? 0
+      }])
+    }
   }
 
   const serializedRuleOffenses: [string, { count: number, files: string[] }][] =
@@ -204,7 +227,8 @@ async function run() {
     ruleCount,
     offenses: allOffenses,
     ruleOffenses: serializedRuleOffenses,
-    fixMessages
+    fixMessages,
+    fileResults
   }
 
   parentPort!.postMessage(result)
@@ -225,6 +249,7 @@ run().catch(error => {
     offenses: [],
     ruleOffenses: [],
     fixMessages: [],
+    fileResults: [],
     error: error instanceof Error ? error.message : String(error)
   }
 

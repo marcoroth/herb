@@ -47,6 +47,8 @@ export interface ParsedArguments {
   jobs: number
   only?: string[]
   allRules: boolean
+  cache: boolean
+  cacheLocation?: string
 }
 
 export class ArgumentParser {
@@ -93,6 +95,9 @@ export class ArgumentParser {
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
+      --cache                       only lint files whose result can't be read from the cache
+                                    [default location: node_modules/.cache/herb-lint/, or tmp/cache/herb-lint/ without node_modules]
+      --cache-location <path>       path to the cache file, or to a directory to keep it in (implies --cache)
       -j, --jobs <n>                number of parallel workers for linting files [default: auto, CPU cores up to 8]
                                     use "auto" to detect based on available CPU cores
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
@@ -136,7 +141,9 @@ export class ArgumentParser {
         "truncate-lines": { type: "boolean" },
         "show-fix-diff": { type: "boolean" },
         "no-custom-rules": { type: "boolean" },
-        jobs: { type: "string", short: "j" }
+        jobs: { type: "string", short: "j" },
+        cache: { type: "boolean" },
+        "cache-location": { type: "string" }
       },
       allowPositionals: true
     })
@@ -202,6 +209,8 @@ export class ArgumentParser {
     const loadCustomRules = !values["no-custom-rules"]
 
     const allRules = values["all-rules"] || false
+    const cacheLocation = values["cache-location"]
+    const cache = values.cache === true || cacheLocation !== undefined
 
     let only: string[] | undefined
 
@@ -235,7 +244,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, outputs, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, outputs, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, updateCounters, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules, cache, cacheLocation }
   }
 
   private parseOutputs(tokens: NonNullable<ReturnType<typeof parseArgs>["tokens"]>): OutputTarget[] {

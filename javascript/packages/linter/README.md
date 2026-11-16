@@ -355,6 +355,24 @@ Each correctable offense is followed by a syntax-highlighted diff of the correct
 
 Offenses that need `--fix-unsafely` say so instead, so the heading always names the flag that applies. `--show-fix-diff` has no effect on `--json` output.
 
+**Caching:**
+
+Only lint the files whose result isn't already known from a previous run:
+```bash
+npx @herb-tools/linter --cache
+```
+
+The cache is written to `node_modules/.cache/herb-lint/lint-cache.json`, or to `tmp/cache/herb-lint/lint-cache.json` when the project has no `node_modules`. Use `--cache-location` to put it somewhere else, either a file path or a directory to keep `lint-cache.json` in (it implies `--cache`):
+```bash
+npx @herb-tools/linter --cache-location .herb-lint-cache.json
+```
+
+A cached result is reused only while everything that produced it is unchanged: the file's content, the Herb version, `.herb.yml`, `--only`, `--all-rules`, `--ignore-disable-comments`, and the files under `.herb/rules`. Rules that look across templates are covered too: changing a partial's strict `locals` relints every file, and moving a `render` call relints the partials it renders. Files are compared by content, not by modification time, so a cache restored in CI after a fresh checkout still applies.
+
+Code that a custom rule imports from outside `.herb/rules`, such as an npm package, isn't tracked. Delete the cache file after changing it.
+
+With `--fix`, cached files that have offenses are linted again so they can be fixed.
+
 **Help and Version:**
 ```bash
 # Show help
