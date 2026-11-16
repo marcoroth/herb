@@ -310,7 +310,7 @@ describe("--cache", () => {
     expect(lint(root, "--jobs", "2", "--cache").output).toEqual(serial)
   })
 
-  test("does not store a file the fixer rewrote in a worker", () => {
+  test("does not save the cache from a --fix run that fixed something", () => {
     const files: Record<string, string> = {}
 
     for (let index = 0; index < 12; index++) {
@@ -321,10 +321,39 @@ describe("--cache", () => {
 
     lint(root, "--jobs", "2", "--cache", "--fix")
 
-    const cached = JSON.parse(readFileSync(cachePath(root), "utf-8")).files
+    expect(existsSync(cachePath(root))).toBe(false)
 
-    expect(Object.keys(cached)).toHaveLength(11)
-    expect(cached).not.toHaveProperty(["app/views/pages/page_05.html.erb"])
+    lint(root, "--jobs", "2", "--cache", "--fix")
+
+    expect(Object.keys(JSON.parse(readFileSync(cachePath(root), "utf-8")).files)).toHaveLength(12)
+  })
+
+  test("reports a fresh result after a --fix run is undone", () => {
+    const original = `<% # locals: (title:) %>\n<h2><%= title %></h2>\n`
+    const root = project({
+      "app/views/application/_card.html.erb": original,
+      "app/views/pages/show.html.erb": `<%= render "application/card" %>\n`
+    })
+
+    lint(root, "app/views", "--cache", "--fix")
+    write(root, { "app/views/application/_card.html.erb": original })
+
+    expect(lint(root, "app/views", "--cache").output).toEqual(lint(root, "app/views").output)
+  })
+
+  test("lints every file again when the config comes from another directory", () => {
+    const config = `${CONFIG}\nlinter:\n  rules:\n    html-img-require-alt:\n      exclude:\n        - "show.html.erb"\n`
+    const root = project({
+      ".herb.yml": config,
+      "app/views/pages/.herb.yml": config,
+      "app/views/pages/show.html.erb": `<img src="a.png">\n`
+    })
+
+    const fromRoot = codesFor(lint(root, "--cache").offenses, "app/views/pages/show.html.erb")
+    const fromPages = codesFor(lint(root, "--cache", "--config-file", "app/views/pages/.herb.yml").offenses, "app/views/pages/show.html.erb")
+
+    expect(fromPages).toEqual(codesFor(lint(root, "--config-file", "app/views/pages/.herb.yml").offenses, "app/views/pages/show.html.erb"))
+    expect(fromRoot).toEqual(codesFor(lint(root).offenses, "app/views/pages/show.html.erb"))
   })
 
   test("lints cached callers again when --fix changes a partial's locals", () => {
