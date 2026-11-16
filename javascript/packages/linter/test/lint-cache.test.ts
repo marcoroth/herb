@@ -235,6 +235,34 @@ describe("--cache", () => {
     expect(run(root, "--simple", "--cache")).toContain("Found goodbye")
   })
 
+  test("lints every file again when a hidden file under .herb/rules changes", () => {
+    const root = project({
+      ".herb/rules/.word.json": `{ "word": "hello" }`,
+      ".herb/rules/no-word.mjs": dedent`
+        import { readFileSync } from "node:fs"
+
+        export default class NoWordRule {
+          static ruleName = "no-word"
+
+          check(document) {
+            const { word } = JSON.parse(readFileSync(new URL("./.word.json", import.meta.url), "utf-8"))
+
+            if (!(document.source || "").includes(word)) return []
+
+            return [{ message: \`Found \${word}\`, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 2 } } }]
+          }
+        }
+      `,
+      "app/views/pages/show.html.erb": `<div>goodbye</div>\n`
+    })
+
+    expect(run(root, "--simple", "--cache")).not.toContain("Found goodbye")
+
+    write(root, { ".herb/rules/.word.json": `{ "word": "goodbye" }` })
+
+    expect(run(root, "--simple", "--cache")).toContain("Found goodbye")
+  })
+
   test("still fixes a cached file under --fix", () => {
     const root = project({ "app/views/pages/show.html.erb": `<DIV>shout</DIV>\n` })
 

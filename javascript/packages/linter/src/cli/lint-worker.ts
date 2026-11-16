@@ -8,7 +8,7 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
-import { serializeOffense } from "./lint-cache.js"
+import { cachedFileResultFrom } from "./lint-cache.js"
 import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { renderGraphFrom } from "@herb-tools/analysis/node"
 
@@ -113,7 +113,6 @@ async function run() {
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
     const content = readFileSync(filePath, "utf-8")
-    const offsetBefore = allOffenses.length
     let fileFixed = false
 
     const lintResult = linter.lint(content, {
@@ -195,17 +194,7 @@ async function run() {
     }
 
     if (data.collectFileResults && !fileFixed) {
-      fileResults.push([filename, {
-        offenses: allOffenses.slice(offsetBefore).map(({ offense, renderedFrom, autocorrectable, unsafeAutocorrectable }) => ({
-          offense: serializeOffense(offense as unknown as LintOffense),
-          renderedFrom,
-          autocorrectable,
-          unsafeAutocorrectable
-        })),
-        ignored: lintResult.ignored,
-        wouldBeIgnored: lintResult.wouldBeIgnored ?? 0,
-        counterSuppressed: lintResult.counterSuppressed ?? 0
-      }])
+      fileResults.push([filename, cachedFileResultFrom(lintResult, fixabilityOf)])
     }
   }
 
