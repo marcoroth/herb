@@ -371,7 +371,7 @@ A cached result is reused only while everything that produced it is unchanged: t
 
 Code that a custom rule imports from outside `.herb/rules`, such as an npm package, isn't tracked. Delete the cache file after changing it.
 
-With `--fix`, cached files that have offenses are linted again so they can be fixed.
+With `--fix`, cached files that have offenses are linted again so they can be fixed. A fix can change what other files report, for example by changing a partial's `locals`, so a `--fix` run that fixed something lints the cached files again and leaves the cache as it was. The next run fills it in.
 
 **Help and Version:**
 ```bash

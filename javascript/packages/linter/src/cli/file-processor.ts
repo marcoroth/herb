@@ -6,7 +6,7 @@ import { Worker } from "node:worker_threads"
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
 import { readFileSync, writeFileSync } from "node:fs"
-import { resolve, dirname, join } from "node:path"
+import { resolve, dirname, join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
@@ -307,10 +307,11 @@ export class FileProcessor {
   /**
    * Lints only the files the cache has no result for, then merges in the cached results.
    *
-   * Under `--fix`, a cached file with offenses is linted again so the fixer gets to run,
-   * and a file the fixer rewrote is left out of the cache. A fix can also change a partial's
-   * `locals` or a `render` call, which changes other files' results, so once anything was fixed
-   * the cached files are linted again against a rebuilt partial index and render graph.
+   * Under `--fix`, a cached file with offenses is linted again so the fixer gets to run.
+   * A fix can also change a partial's `locals` or a `render` call, which changes other files'
+   * results mid-run, so once anything was fixed the cached files are linted again against a
+   * rebuilt partial index and render graph, and nothing from the run is saved: its results
+   * mix the snapshots before and after the fix, and none of them match the run key.
    */
   private async processFilesWithCache(files: string[], formatOption: FormatOption, context: ProcessingContext): Promise<ProcessingResult> {
     const cache = await this.openCache(formatOption, context)
@@ -335,17 +336,20 @@ export class FileProcessor {
 
     const result = await this.lintFiles(misses, formatOption, context, onFileLinted, files.length)
 
-    if (context.fix && result.filesFixed > 0 && hits.size > 0) {
+    if (!(context.fix && result.filesFixed > 0)) {
+      this.mergeCachedResults(result, hits, files.length, formatOption)
+      cache.save()
+
+      return result
+    }
+
+    if (hits.size > 0) {
       this.partials = undefined
       this.partialCallers = undefined
       await this.buildPartialIndexOnce(context)
 
       this.mergeProcessingResults(result, await this.lintFiles([...hits.keys()], formatOption, context, undefined, files.length))
-    } else {
-      this.mergeCachedResults(result, hits, files.length, formatOption)
     }
-
-    cache.save()
 
     return result
   }
@@ -382,6 +386,7 @@ export class FileProcessor {
       linterVersion: version,
       herbVersion: Herb.version,
       config: context.config?.config,
+      configDirectory: context.config ? relative(projectPath, context.config.projectPath) : undefined,
       configVersion: context.config?.configVersion,
       only: context.only,
       allRules: context.allRules,

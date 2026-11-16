@@ -44,6 +44,8 @@ export interface LintCacheInputs {
   herbVersion: string
   config: unknown
   configVersion?: string
+  /** Where the config sits relative to the project, since its `include` and `exclude` patterns resolve from there. */
+  configDirectory?: string
   only?: string[]
   allRules?: boolean
   ignoreDisableComments?: boolean
@@ -138,6 +140,7 @@ export class LintCache {
       herbVersion: inputs.herbVersion,
       config: inputs.config,
       configVersion: inputs.configVersion,
+      configDirectory: inputs.configDirectory,
       only: inputs.only,
       allRules: inputs.allRules ?? false,
       ignoreDisableComments: inputs.ignoreDisableComments ?? false,
