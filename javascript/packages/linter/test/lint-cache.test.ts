@@ -266,4 +266,79 @@ describe("--cache", () => {
 
     expect(Object.keys(JSON.parse(readFileSync(cachePath(root), "utf-8")).files)).toEqual(["app/views/pages/show.html.erb"])
   })
+
+  test("lints every file again when template_engine changes", () => {
+    const root = project({
+      ".herb.yml": `${CONFIG}\ntemplate_engine: herb\n`,
+      "app/views/pages/show.html.erb": `<%= foo # comment %>\n`
+    })
+
+    const severity = () => lint(root, "--cache").output.match(/"severity": "(\w+)"/)![1]
+
+    expect(severity()).toEqual("warning")
+
+    write(root, { ".herb.yml": `${CONFIG}\ntemplate_engine: erubi\n` })
+
+    expect(severity()).toEqual("error")
+  })
+
+  test("reads the cache restored into a checkout at another path", () => {
+    const files = { "app/views/pages/show.html.erb": `<img src="a.png">\n` }
+    const first = project(files)
+    const second = project(files)
+
+    lint(first, "--cache")
+    tamperWithCache(first, "app/views/pages/show.html.erb")
+    write(second, { "tmp/cache/herb-lint/lint-cache.json": readFileSync(cachePath(first), "utf-8") })
+
+    expect(messagesFor(lint(second, "--cache").offenses, "app/views/pages/show.html.erb")).toEqual(["from the cache"])
+  })
+
+  test("reports the same offenses in the same order with workers", () => {
+    const files: Record<string, string> = {}
+
+    for (let index = 0; index < 12; index++) {
+      files[`app/views/pages/page_${String(index).padStart(2, "0")}.html.erb`] = `<img src="${index}.png">\n<DIV>${index}</DIV>\n`
+    }
+
+    const root = project(files)
+    const serial = lint(root, "--jobs", "1").output
+
+    expect(lint(root, "--jobs", "2").output).toEqual(serial)
+    expect(lint(root, "--jobs", "2", "--cache").output).toEqual(serial)
+    expect(Object.keys(JSON.parse(readFileSync(cachePath(root), "utf-8")).files)).toHaveLength(12)
+    expect(lint(root, "--jobs", "2", "--cache").output).toEqual(serial)
+  })
+
+  test("does not store a file the fixer rewrote in a worker", () => {
+    const files: Record<string, string> = {}
+
+    for (let index = 0; index < 12; index++) {
+      files[`app/views/pages/page_${String(index).padStart(2, "0")}.html.erb`] = `<div>${index}</div>\n`
+    }
+
+    const root = project({ ...files, "app/views/pages/page_05.html.erb": `<DIV>shout</DIV>\n` })
+
+    lint(root, "--jobs", "2", "--cache", "--fix")
+
+    const cached = JSON.parse(readFileSync(cachePath(root), "utf-8")).files
+
+    expect(Object.keys(cached)).toHaveLength(11)
+    expect(cached).not.toHaveProperty(["app/views/pages/page_05.html.erb"])
+  })
+
+  test("lints cached callers again when --fix changes a partial's locals", () => {
+    const root = project({
+      "app/views/shared/_card.html.erb": `<% # locals: (title:) %>\n<h2><%= title %></h2>\n`,
+      "app/views/pages/show.html.erb": `<%= render "shared/card" %>\n`
+    })
+
+    expect(codesFor(lint(root, "--cache").offenses, "app/views/pages/show.html.erb")).toEqual([])
+
+    const fixed = lint(root, "--cache", "--fix")
+
+    expect(readFileSync(join(root, "app/views/shared/_card.html.erb"), "utf-8")).not.toContain("<% #")
+    expect(codesFor(fixed.offenses, "app/views/pages/show.html.erb")).toEqual(["actionview-no-strict-locals-error"])
+    expect(codesFor(lint(root, "--cache").offenses, "app/views/pages/show.html.erb")).toEqual(["actionview-no-strict-locals-error"])
+  })
 })

@@ -10,7 +10,7 @@ import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
-import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
+import { Location, deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
 import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { buildRenderGraph } from "@herb-tools/analysis/node"
@@ -266,10 +266,12 @@ export class FileProcessor {
 
     const cached = item.offense as LintOffense
 
+    const location = cached.location.toString()
+
     return offenses.find(offense =>
       offense.rule === cached.rule &&
       offense.message === cached.message &&
-      offense.location.toString() === cached.location.toString()
+      Location.from(offense.location).toString() === location
     )
   }
 
@@ -280,30 +282,37 @@ export class FileProcessor {
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
-    const jobs = context?.jobs ?? 1
-
     await this.buildPartialIndexOnce(context)
 
-    if (!context?.cache) {
-      const result = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
-        ? await this.processFilesInParallel(files, jobs, formatOption, context)
-        : await this.processFilesSequentially(files, formatOption, context)
+    const result = context?.cache
+      ? await this.processFilesWithCache(files, formatOption, context)
+      : await this.lintFiles(files, formatOption, context)
 
-      await this.attachFixPreviews(result.allOffenses, formatOption, context)
+    const order = new Map(files.map((filename, index) => [filename, index]))
+    result.allOffenses.sort((a, b) => order.get(a.filename)! - order.get(b.filename)!)
 
-      return this.collapseOncePerRunOffenses(result)
-    }
+    await this.attachFixPreviews(result.allOffenses, formatOption, context)
 
-    return this.processFilesWithCache(files, jobs, formatOption, context)
+    return this.collapseOncePerRunOffenses(result)
+  }
+
+  private lintFiles(files: string[], formatOption: FormatOption, context?: ProcessingContext, onFileLinted?: FileLintedCallback, totalFileCount: number = files.length): Promise<ProcessingResult> {
+    const jobs = context?.jobs ?? 1
+
+    return jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
+      ? this.processFilesInParallel(files, jobs, formatOption, context, onFileLinted)
+      : this.processFilesSequentially(files, formatOption, context, onFileLinted, totalFileCount)
   }
 
   /**
    * Lints only the files the cache has no result for, then merges in the cached results.
    *
    * Under `--fix`, a cached file with offenses is linted again so the fixer gets to run,
-   * and a file the fixer rewrote is left out of the cache.
+   * and a file the fixer rewrote is left out of the cache. A fix can also change a partial's
+   * `locals` or a `render` call, which changes other files' results, so once anything was fixed
+   * the cached files are linted again against a rebuilt partial index and render graph.
    */
-  private async processFilesWithCache(files: string[], jobs: number, formatOption: FormatOption, context: ProcessingContext): Promise<ProcessingResult> {
+  private async processFilesWithCache(files: string[], formatOption: FormatOption, context: ProcessingContext): Promise<ProcessingResult> {
     const cache = await this.openCache(formatOption, context)
     const keys = new Map<string, string>()
     const hits = new Map<string, CachedFileResult>()
@@ -324,20 +333,44 @@ export class FileProcessor {
 
     const onFileLinted: FileLintedCallback = (filename, result) => cache.set(filename, keys.get(filename)!, result)
 
-    const result = jobs > 1 && misses.length >= PARALLEL_FILE_THRESHOLD
-      ? await this.processFilesInParallel(misses, jobs, formatOption, context, onFileLinted)
-      : await this.processFilesSequentially(misses, formatOption, context, onFileLinted, files.length)
+    const result = await this.lintFiles(misses, formatOption, context, onFileLinted, files.length)
 
-    this.mergeCachedResults(result, hits, files.length, formatOption)
+    if (context.fix && result.filesFixed > 0 && hits.size > 0) {
+      this.partials = undefined
+      this.partialCallers = undefined
+      await this.buildPartialIndexOnce(context)
 
-    const order = new Map(files.map((filename, index) => [filename, index]))
-    result.allOffenses.sort((a, b) => order.get(a.filename)! - order.get(b.filename)!)
-
-    await this.attachFixPreviews(result.allOffenses, formatOption, context)
+      this.mergeProcessingResults(result, await this.lintFiles([...hits.keys()], formatOption, context, undefined, files.length))
+    } else {
+      this.mergeCachedResults(result, hits, files.length, formatOption)
+    }
 
     cache.save()
 
-    return this.collapseOncePerRunOffenses(result)
+    return result
+  }
+
+  private mergeProcessingResults(result: ProcessingResult, other: ProcessingResult): void {
+    result.totalErrors += other.totalErrors
+    result.totalWarnings += other.totalWarnings
+    result.totalInfo += other.totalInfo
+    result.totalHints += other.totalHints
+    result.totalIgnored += other.totalIgnored
+    result.filesWithOffenses += other.filesWithOffenses
+    result.filesFixed += other.filesFixed
+    result.allOffenses.push(...other.allOffenses)
+
+    if (other.totalWouldBeIgnored) result.totalWouldBeIgnored = (result.totalWouldBeIgnored ?? 0) + other.totalWouldBeIgnored
+    if (other.totalCounterSuppressed) result.totalCounterSuppressed = (result.totalCounterSuppressed ?? 0) + other.totalCounterSuppressed
+
+    for (const [rule, data] of other.ruleOffenses) {
+      const existing = result.ruleOffenses.get(rule) || { count: 0, files: new Set<string>() }
+      existing.count += data.count
+
+      for (const file of data.files) existing.files.add(file)
+
+      result.ruleOffenses.set(rule, existing)
+    }
   }
 
   private async openCache(formatOption: FormatOption, context: ProcessingContext): Promise<LintCache> {
@@ -348,7 +381,7 @@ export class FileProcessor {
       projectPath,
       linterVersion: version,
       herbVersion: Herb.version,
-      configOptions: context.config?.options,
+      config: context.config?.config,
       configVersion: context.config?.configVersion,
       only: context.only,
       allRules: context.allRules,
