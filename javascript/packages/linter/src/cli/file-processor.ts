@@ -15,7 +15,7 @@ import { fixabilityFor } from "../fixability.js"
 import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { buildRenderGraph } from "@herb-tools/analysis/node"
 import { isStructuredFormat } from "./output-format.js"
-import { LintCache, customRuleFiles, processedFilesFrom, resolveCacheLocation, serializeOffense } from "./lint-cache.js"
+import { LintCache, cachedFileResultFrom, customRuleFiles, processedFilesFrom, resolveCacheLocation } from "./lint-cache.js"
 import { version } from "../../package.json"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -627,17 +627,7 @@ export class FileProcessor {
       allOffenses.push(...fileOffenses)
 
       if (onFileLinted && !fileFixed) {
-        onFileLinted(filename, {
-          offenses: fileOffenses.map(item => ({
-            offense: serializeOffense(item.offense as LintOffense),
-            renderedFrom: item.renderedFrom,
-            autocorrectable: item.autocorrectable ?? false,
-            unsafeAutocorrectable: item.unsafeAutocorrectable ?? false
-          })),
-          ignored: lintResult.ignored,
-          wouldBeIgnored: lintResult.wouldBeIgnored ?? 0,
-          counterSuppressed: lintResult.counterSuppressed ?? 0
-        })
+        onFileLinted(filename, cachedFileResultFrom(lintResult, offense => this.fixabilityFor(offense)))
       }
     }
 

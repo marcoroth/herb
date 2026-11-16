@@ -8,7 +8,8 @@ import { projectRelativePath } from "@herb-tools/analysis"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { AncestorChain, PartialIndex, RenderGraph } from "@herb-tools/analysis"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintResult } from "../types.js"
+import type { Fixability } from "../fixability.js"
 import type { ProcessedFile } from "./file-processor.js"
 
 const CACHE_FORMAT = 1
@@ -82,15 +83,32 @@ export function resolveCacheLocation(projectPath: string, cacheLocation?: string
  * from there also invalidates the cache.
  */
 export async function customRuleFiles(projectPath: string): Promise<string[]> {
-  const files = await glob(".herb/rules/**/*", { cwd: projectPath, absolute: true, onlyFiles: true })
+  const files = await glob(".herb/rules/**/*", { cwd: projectPath, absolute: true, onlyFiles: true, dot: true })
 
   return files.sort()
 }
 
 /**
+ * Built from the plain lint result even under `--fix`, since the fixer's list of unfixed
+ * offenses leaves out what lexer rules report.
+ */
+export function cachedFileResultFrom(lintResult: LintResult, fixabilityOf: (offense: LintOffense) => Fixability): CachedFileResult {
+  return {
+    offenses: lintResult.offenses.map(offense => ({
+      offense: serializeOffense(offense),
+      renderedFrom: offense.renderedFrom,
+      ...fixabilityOf(offense)
+    })),
+    ignored: lintResult.ignored,
+    wouldBeIgnored: lintResult.wouldBeIgnored ?? 0,
+    counterSuppressed: lintResult.counterSuppressed ?? 0
+  }
+}
+
+/**
  * Custom rules may report a plain `{ start, end }` object instead of a `Location`.
  */
-export function serializeOffense(offense: LintOffense): CachedOffense["offense"] {
+function serializeOffense(offense: LintOffense): CachedOffense["offense"] {
   return {
     message: offense.message,
     location: Location.from(offense.location).toJSON(),
