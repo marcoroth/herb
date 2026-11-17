@@ -183,7 +183,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
       const offenseIsAtEndOfContent = this.isOffenseAtEndOfContent(offense, node)
 
       if (offenseIsAtEndOfContent) {
-        if (this.hasTrailingWhitespaceNotIndentation(fixedContent)) {
+        if (this.hasTrailingWhitespaceNotIndentation(fixedContent) || this.isNodeAtEndOfDocument(node, result)) {
           fixedContent = trimTrailingWhitespace(fixedContent)
         }
 
@@ -217,6 +217,12 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
 
   private isOffenseAtEndOfContent(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, node: Mutable<HTMLTextNode> | Mutable<LiteralNode> | Mutable<WhitespaceNode>): boolean {
     return offense.location.end.line === node.location.end.line && offense.location.end.column === node.location.end.column
+  }
+
+  private isNodeAtEndOfDocument(node: Mutable<HTMLTextNode> | Mutable<LiteralNode>, result: ParseResult): boolean {
+    const documentEnd = result.value.location.end
+
+    return node.location.end.line === documentEnd.line && node.location.end.column === documentEnd.column
   }
 
   private hasTrailingWhitespaceNotIndentation(content: string): boolean {

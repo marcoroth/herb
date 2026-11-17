@@ -328,6 +328,30 @@ describe("erb-no-trailing-whitespace autofix", () => {
     })
   })
 
+  describe("end of file", () => {
+    test("removes a whitespace-only last line without a trailing newline", () => {
+      const input = "<div>\n</div>\n  "
+      const expected = "<div>\n</div>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+      expect(linter.lint(result.source, { fileName: "test.html.erb" }).offenses).toHaveLength(0)
+    })
+
+    test("removes a whitespace-only file", () => {
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix("  ", { fileName: "test.html.erb" })
+
+      expect(result.source).toBe("")
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+  })
+
   describe("HTML comments", () => {
     test("removes trailing whitespace in multiline HTML comments", () => {
       const input = "<!-- comment with trailing space \n   and more content -->"
