@@ -1980,17 +1980,19 @@ module Herb
 
           return if entries.empty?
 
-          seen = entries.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }.join(" && ")
+          references = entries.map { |key, _| "#{COVERED}[#{covered_key(key).inspect}]" }
 
           nodes = [
-            erb_code_node("unless #{seen}"),
+            erb_code_node("unless #{references.join(" && ")}"),
             text_node(@markers.statics_open(identifier, version))
           ] #: Array[Herb::AST::Node]
 
-          entries.each do |key, parked|
-            reference = "#{COVERED}[#{covered_key(key).inspect}]"
+          # With a single entry the outer guard already checks its key, so a
+          # guard of its own could never be skipped: a dead branch for coverage.
+          guarded = entries.size > 1
 
-            nodes.push(erb_code_node("unless #{reference}"))
+          entries.zip(references).each do |(_, parked), reference|
+            nodes.push(erb_code_node("unless #{reference}")) if guarded
 
             if parked.is_a?(String)
               nodes.push(text_node(parked))
@@ -1998,7 +2000,8 @@ module Herb
               nodes.concat(parked)
             end
 
-            nodes.push(erb_code_node("#{reference} = true"), erb_code_node("end"))
+            nodes.push(erb_code_node("#{reference} = true"))
+            nodes.push(erb_code_node("end")) if guarded
           end
 
           nodes.push(text_node(@markers.statics_close), erb_code_node("end"))
