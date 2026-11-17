@@ -694,6 +694,7 @@ module Herb
 
           @static_markup = Statics.new(@standing, @element_anchored).markup(node.children) if @capture_static_markup
 
+          hold_trailing_newline(node) if client?
           wrap_region(node)
           append_statics(node)
           deliver_manifest(node)
@@ -1192,6 +1193,29 @@ module Herb
 
         def text_node(content)
           Herb::AST::HTMLTextNode.build(content: content.dup)
+        end
+
+        # Emits markup through code rather than a text literal, so its newlines
+        # are escaped and the generated code stays on the line it starts on.
+        def raw_text_node(text)
+          erb_code_node("#{@bufvar} << ::Herb::Engine.raw(#{text.inspect})")
+        end
+
+        # Code appended after the template would otherwise start on the line
+        # after a trailing newline, past the end of the source file. Emit that
+        # newline through code instead, keeping what renders byte for byte.
+        #: (Herb::AST::DocumentNode) -> void
+        def hold_trailing_newline(document_node)
+          last = document_node.children.last
+          return unless last.is_a?(Herb::AST::HTMLTextNode)
+
+          content = last.content.to_s
+          newline = content[/(?:\r?\n)+\z/]
+          return unless newline
+
+          document_node.children[-1] = text_node(content.delete_suffix(newline))
+          document_node.children.delete_at(-1) if document_node.children.last.content.empty?
+          document_node.children.push(raw_text_node(newline))
         end
 
         def erb_code_node(code)
@@ -1995,7 +2019,7 @@ module Herb
             nodes.push(erb_code_node("unless #{reference}")) if guarded
 
             if parked.is_a?(String)
-              nodes.push(text_node(parked))
+              nodes.push(raw_text_node(parked))
             else
               nodes.concat(parked)
             end
