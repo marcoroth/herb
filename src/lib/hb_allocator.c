@@ -15,6 +15,10 @@ static void malloc_dealloc(hb_allocator_T* _self, void* pointer) {
   free(pointer);
 }
 
+static void malloc_dealloc_sized(hb_allocator_T* _self, void* pointer, size_t _size) {
+  free(pointer);
+}
+
 static char* malloc_strdup(hb_allocator_T* _self, const char* string) {
   if (!string) { return NULL; }
 
@@ -51,6 +55,7 @@ hb_allocator_T hb_allocator_with_malloc(void) {
     .alloc = malloc_alloc,
     .realloc = malloc_realloc,
     .dealloc = malloc_dealloc,
+    .dealloc_sized = malloc_dealloc_sized,
     .strdup = malloc_strdup,
     .strndup = malloc_strndup,
     .destroy = malloc_destroy,
@@ -77,6 +82,10 @@ static void* arena_realloc(hb_allocator_T* self, void* pointer, size_t old_size,
 }
 
 static void arena_dealloc(hb_allocator_T* _self, void* _pointer) {
+}
+
+static void arena_dealloc_sized(hb_allocator_T* self, void* pointer, size_t size) {
+  hb_arena_release((hb_arena_T*) self->context, pointer, size);
 }
 
 static char* arena_strdup(hb_allocator_T* self, const char* string) {
@@ -115,6 +124,7 @@ hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena) {
     .alloc = arena_alloc,
     .realloc = arena_realloc,
     .dealloc = arena_dealloc,
+    .dealloc_sized = arena_dealloc_sized,
     .strdup = arena_strdup,
     .strndup = arena_strndup,
     .destroy = arena_destroy,
@@ -245,6 +255,10 @@ static void tracking_dealloc(hb_allocator_T* self, void* pointer) {
   free(pointer);
 }
 
+static void tracking_dealloc_sized(hb_allocator_T* self, void* pointer, size_t _size) {
+  tracking_dealloc(self, pointer);
+}
+
 static char* tracking_strdup(hb_allocator_T* self, const char* string) {
   if (!string) { return NULL; }
 
@@ -290,6 +304,7 @@ hb_allocator_T hb_allocator_with_tracking(void) {
     .alloc = tracking_alloc,
     .realloc = tracking_realloc,
     .dealloc = tracking_dealloc,
+    .dealloc_sized = tracking_dealloc_sized,
     .strdup = tracking_strdup,
     .strndup = tracking_strndup,
     .destroy = tracking_destroy,

@@ -390,6 +390,77 @@ TEST(test_arena_reset_to_with_page_gap)
   hb_arena_free(&allocator);
 END
 
+TEST(test_arena_release_reuses_block_of_same_size)
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, 1024);
+
+  char *first = hb_arena_alloc(&allocator, 48);
+  memset(first, 'A', 48);
+  size_t position = hb_arena_position(&allocator);
+
+  hb_arena_release(&allocator, first, 48);
+
+  char *second = hb_arena_alloc(&allocator, 48);
+  ck_assert_ptr_eq(second, first);
+  ck_assert_int_eq(hb_arena_position(&allocator), position);
+
+  for (size_t index = 0; index < 48; index++) {
+    ck_assert_int_eq(second[index], 0);
+  }
+
+  hb_arena_free(&allocator);
+END
+
+TEST(test_arena_release_does_not_reuse_block_of_other_size)
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, 1024);
+
+  char *first = hb_arena_alloc(&allocator, 48);
+  hb_arena_release(&allocator, first, 48);
+
+  char *second = hb_arena_alloc(&allocator, 32);
+  ck_assert_ptr_ne(second, first);
+
+  char *third = hb_arena_alloc(&allocator, 41);
+  ck_assert_ptr_eq(third, first);
+
+  hb_arena_free(&allocator);
+END
+
+TEST(test_arena_release_ignores_large_blocks)
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, 1024);
+
+  char *first = hb_arena_alloc(&allocator, HB_ARENA_FREE_LIST_MAX_SIZE + 8);
+  hb_arena_release(&allocator, first, HB_ARENA_FREE_LIST_MAX_SIZE + 8);
+
+  char *second = hb_arena_alloc(&allocator, HB_ARENA_FREE_LIST_MAX_SIZE + 8);
+  ck_assert_ptr_ne(second, first);
+
+  hb_arena_free(&allocator);
+END
+
+TEST(test_arena_reset_clears_released_blocks)
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, 1024);
+
+  hb_arena_alloc(&allocator, 16);
+  size_t position = hb_arena_position(&allocator);
+
+  char *released = hb_arena_alloc(&allocator, 48);
+  hb_arena_release(&allocator, released, 48);
+
+  hb_arena_reset_to(&allocator, position);
+
+  char *filler = hb_arena_alloc(&allocator, 48);
+  ck_assert_ptr_eq(filler, released);
+
+  char *next = hb_arena_alloc(&allocator, 48);
+  ck_assert_ptr_ne(next, released);
+
+  hb_arena_free(&allocator);
+END
+
 TCase *hb_arena_tests(void) {
   TCase *arena = tcase_create("arena");
 
@@ -410,6 +481,10 @@ TCase *hb_arena_tests(void) {
   tcase_add_test(arena, test_arena_page_reuse_after_reset);
   tcase_add_test(arena, test_arena_page_reuse_when_next_page_is_too_small);
   tcase_add_test(arena, test_arena_reset_to_with_page_gap);
+  tcase_add_test(arena, test_arena_release_reuses_block_of_same_size);
+  tcase_add_test(arena, test_arena_release_does_not_reuse_block_of_other_size);
+  tcase_add_test(arena, test_arena_release_ignores_large_blocks);
+  tcase_add_test(arena, test_arena_reset_clears_released_blocks);
 
   return arena;
 }

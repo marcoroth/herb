@@ -40,6 +40,7 @@ typedef struct hb_allocator {
   void* (*alloc)(struct hb_allocator* self, size_t size);
   void* (*realloc)(struct hb_allocator* self, void* pointer, size_t old_size, size_t new_size);
   void (*dealloc)(struct hb_allocator* self, void* pointer);
+  void (*dealloc_sized)(struct hb_allocator* self, void* pointer, size_t size);
   char* (*strdup)(struct hb_allocator* self, const char* string);
   char* (*strndup)(struct hb_allocator* self, const char* string, size_t length);
   void (*destroy)(struct hb_allocator* self);
@@ -66,6 +67,10 @@ static inline void* hb_allocator_realloc(hb_allocator_T* allocator, void* pointe
 
 static inline void hb_allocator_dealloc(hb_allocator_T* allocator, void* pointer) {
   allocator->dealloc(allocator, pointer);
+}
+
+static inline void hb_allocator_dealloc_sized(hb_allocator_T* allocator, void* pointer, size_t size) {
+  allocator->dealloc_sized(allocator, pointer, size);
 }
 
 static inline char* hb_allocator_strdup(hb_allocator_T* allocator, const char* string) {
