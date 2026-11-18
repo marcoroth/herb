@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto"
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { dirname, join, relative, resolve } from "node:path"
 import { glob } from "tinyglobby"
 
@@ -170,17 +170,24 @@ export class LintCache {
   }
 
   /**
-   * A cache file that doesn't parse, such as one edited by hand, is treated as empty and
-   * rewritten on save: losing the cache only costs a full lint, so it never fails the run.
+   * A cache file that doesn't parse or has no `files` object, such as one edited by hand, is
+   * treated as empty and rewritten on save: losing the cache only costs a full lint, so it
+   * never fails the run.
    */
   private static read(path: string): CacheFile | undefined {
     if (!existsSync(path)) return undefined
 
+    let stored: CacheFile
+
     try {
-      return JSON.parse(readFileSync(path, "utf-8"))
+      stored = JSON.parse(readFileSync(path, "utf-8"))
     } catch {
       return undefined
     }
+
+    const files = stored?.files
+
+    return typeof files === "object" && files !== null && !Array.isArray(files) ? stored : undefined
   }
 
   keyFor(filename: string, content: string): string {
@@ -233,9 +240,14 @@ export class LintCache {
     const contents: CacheFile = { format: CACHE_FORMAT, key: this.key, files }
     const temporaryPath = `${this.path}.${process.pid}.tmp`
 
-    mkdirSync(dirname(this.path), { recursive: true })
-    writeFileSync(temporaryPath, JSON.stringify(contents), "utf-8")
-    renameSync(temporaryPath, this.path)
+    try {
+      mkdirSync(dirname(this.path), { recursive: true })
+      writeFileSync(temporaryPath, JSON.stringify(contents), "utf-8")
+      renameSync(temporaryPath, this.path)
+    } catch (error) {
+      if (existsSync(temporaryPath)) rmSync(temporaryPath)
+      console.warn(`Warning: Could not write the lint cache to ${this.path}: ${error instanceof Error ? error.message : error}`)
+    }
   }
 }
 
