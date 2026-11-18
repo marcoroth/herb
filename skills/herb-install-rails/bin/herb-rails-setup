@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# herb-rails-setup — idempotently install and configure Herb in a Rails app.
+#
+# Usage:
+#   herb-rails-setup --profile=minimal|recommended|full
+#   herb-rails-setup --uninstall
+
+set -euo pipefail
+
+profile=""
+uninstall=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --profile=*)  profile="${arg#*=}";;
+    --uninstall)  uninstall=1;;
+    -h|--help)
+      sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *) echo "unknown argument: $arg" >&2; exit 2;;
+  esac
+done
+
+here="$(cd "$(dirname "$0")" && pwd)"
+root="$(pwd)"
+
+if [ ! -f "$root/Gemfile" ]; then
+  echo "no Gemfile in $root — refusing to run." >&2
+  exit 2
+fi
+
+# --- helpers ----------------------------------------------------------------
+add_gem_if_absent() {
+  local gem_name="$1"
+  if grep -E "^\s*gem\s+[\"']${gem_name}[\"']" "$root/Gemfile" >/dev/null 2>&1; then
+    echo "  · gem \"$gem_name\" already in Gemfile"
+    return 1
+  fi
+  printf '\n# Added by herb-rails-setup\ngem "%s"\n' "$gem_name" >> "$root/Gemfile"
+  echo "  + added gem \"$gem_name\" to Gemfile"
+  return 0
+}
+
+remove_gem_line() {
+  local gem_name="$1"
+  local gemfile="$root/Gemfile"
+  [ -f "$gemfile" ] || return 0
+  # Remove the marker comment + the gem line if both exist together.
+  ruby -i -ne '
+    @buf ||= []
+    if $_.start_with?("# Added by herb-rails-setup")
+      @marker = true
+      next
+    end
+    if @marker && $_ =~ /^gem\s+["'"'"'](herb|reactionview)["'"'"']/
+      @marker = false
+      next
+    end
+    @marker = false
+    print $_
+  ' "$gemfile"
+  echo "  - removed $gem_name from Gemfile (if present)"
+}
+
+write_ci_workflow() {
+  local dest="$root/.github/workflows/herb.yml"
+  if [ -f "$dest" ]; then
+    echo "  · $dest already exists"
+    return
+  fi
+  mkdir -p "$root/.github/workflows"
+  cat > "$dest" <<'YAML'
+name: Herb
+on: [push, pull_request]
+jobs:
+  herb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: bundle exec herb actionview check .
+      - run: npx --yes @herb-tools/linter
+YAML
+  echo "  + wrote $dest"
+}
+
+# --- uninstall --------------------------------------------------------------
+if [ "$uninstall" -eq 1 ]; then
+  echo "Uninstalling Herb scaffolding (files this skill created only)…"
+  remove_gem_line "herb"
+  remove_gem_line "reactionview"
+  rm -f "$root/.herb.yml"           && echo "  - removed .herb.yml"           || true
+  rm -f "$root/.github/workflows/herb.yml" && echo "  - removed .github/workflows/herb.yml" || true
+  rmdir "$root/.github/workflows" 2>/dev/null || true
+  rmdir "$root/.github"           2>/dev/null || true
+  # Only remove .herb/rules/ if untouched (just the .gitkeep we created)
+  if [ -d "$root/.herb/rules" ] && [ "$(ls -A "$root/.herb/rules")" = ".gitkeep" ]; then
+    rm -rf "$root/.herb"
+    echo "  - removed empty .herb/"
+  fi
+  echo "Done. Run: bundle install"
+  exit 0
+fi
+
+# --- install ----------------------------------------------------------------
+case "$profile" in
+  minimal|recommended|full) ;;
+  "")  echo "missing --profile=minimal|recommended|full" >&2; exit 2;;
+  *)   echo "invalid profile: $profile" >&2; exit 2;;
+esac
+
+echo "Installing Herb (profile: $profile) in $root"
+
+# 1. Gemfile
+echo "Step 1/4: Gemfile"
+gemfile_changed=0
+if add_gem_if_absent "herb"; then gemfile_changed=1; fi
+if [ "$profile" = "full" ]; then
+  if add_gem_if_absent "reactionview"; then gemfile_changed=1; fi
+fi
+
+# 2. bundle install
+echo "Step 2/4: bundle install"
+if [ "$gemfile_changed" -eq 1 ]; then
+  if command -v bundle >/dev/null 2>&1; then
+    if ! bundle install; then
+      echo "  ! bundle install failed — config will still be written; fix bundle and re-run." >&2
+    fi
+  else
+    echo "  ! bundle not on PATH — activate your Ruby version manager and run: bundle install" >&2
+  fi
+else
+  echo "  · Gemfile unchanged; skipping bundle install"
+fi
+
+# 3. .herb.yml
+echo "Step 3/4: .herb.yml"
+if command -v ruby >/dev/null 2>&1; then
+  ruby "$here/herb-rails-write-config.rb" --profile="$profile" --path="$root/.herb.yml" | sed 's/^/  /'
+else
+  echo "  ! ruby not on PATH — activate Ruby and re-run." >&2
+  exit 3
+fi
+mkdir -p "$root/.herb/rules"
+[ -e "$root/.herb/rules/.gitkeep" ] || { : > "$root/.herb/rules/.gitkeep"; echo "  + created .herb/rules/"; }
+
+# 4. CI workflow
+echo "Step 4/4: CI"
+if [ "$profile" = "minimal" ]; then
+  echo "  · skipped (minimal profile)"
+else
+  write_ci_workflow
+fi
+
+echo
+echo "Done."
+echo "Verify with: skills/herb-install-rails/bin/herb-rails-doctor"
+echo "Then run:    bundle exec herb config ."
+
+if [ "$profile" = "full" ]; then
+  cat <<'NOTE'
+
+Editor LSP install hints (full profile):
+  - VS Code / Cursor: install the "Herb LSP" extension
+  - Zed:              bundled in the official Ruby extension
+  - Neovim:           lspconfig.herb_ls.setup({})  (requires nvim-lspconfig)
+  - Sublime Text:     configure via Sublime LSP (see @herb-tools/language-server README)
+
+ReActionView is experimental — verify the in-browser overlay before relying on it.
+NOTE
+fi
