@@ -282,6 +282,31 @@ describe("--cache", () => {
     expect(JSON.parse(readFileSync(cachePath(root), "utf-8")).files).toHaveProperty(["app/views/pages/show.html.erb"])
   })
 
+  test("starts over from a cache file whose files are not an object", () => {
+    const root = project({ "app/views/pages/show.html.erb": `<img src="a.png">\n` })
+
+    lint(root, "--cache")
+
+    const cache = JSON.parse(readFileSync(cachePath(root), "utf-8"))
+    writeFileSync(cachePath(root), JSON.stringify({ ...cache, files: null }), "utf-8")
+
+    expect(codesFor(lint(root, "--cache").offenses, "app/views/pages/show.html.erb")).toEqual(["html-img-require-alt"])
+    expect(JSON.parse(readFileSync(cachePath(root), "utf-8")).files).toHaveProperty(["app/views/pages/show.html.erb"])
+  })
+
+  test("still reports offenses when the cache cannot be written", () => {
+    const root = project({ "app/views/pages/show.html.erb": `<img src="a.png">\n`, "blocked": "a file, not a directory" })
+
+    const result = spawnSync(BIN, ["--no-timing", "--jobs", "1", "--json", "--cache-location", "blocked/lint.json"], {
+      cwd: root,
+      encoding: "utf-8",
+      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+    })
+
+    expect(codesFor(JSON.parse(result.stdout).offenses, "app/views/pages/show.html.erb")).toEqual(["html-img-require-alt"])
+    expect(result.stderr).toContain("Could not write the lint cache")
+  })
+
   test("drops entries for files that no longer exist", () => {
     const root = project({
       "app/views/pages/show.html.erb": `<img src="a.png">\n`,

@@ -369,6 +369,8 @@ npx @herb-tools/linter --cache-location .herb-lint-cache.json
 
 A cached result is reused only while everything that produced it is unchanged: the file's content, the Herb version, `.herb.yml`, `--only`, `--all-rules`, `--ignore-disable-comments`, and the files under `.herb/rules`. Rules that look across templates are covered too: changing a partial's strict `locals` relints every file, and moving a `render` call relints the partials it renders. Files are compared by content, not by modification time, so a cache restored in CI after a fresh checkout still applies.
 
+A cache file that can't be read is ignored and rewritten. One that can't be written, such as in a read-only directory, prints a warning and the run still reports its results.
+
 Code that a custom rule imports from outside `.herb/rules`, such as an npm package, isn't tracked. Delete the cache file after changing it.
 
 With `--fix`, cached files that have offenses are linted again so they can be fixed. A fix can change what other files report, for example by changing a partial's `locals`, so a `--fix` run that fixed something lints the cached files again and leaves the cache as it was. The next run fills it in.
