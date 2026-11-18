@@ -59,10 +59,6 @@ function digest(value: string): string {
   return createHash("sha256").update(value).digest("hex")
 }
 
-/**
- * Resolves where the cache file lives. Without `--cache-location`, the cache goes next to other
- * tool caches in `node_modules/.cache`, or in Rails' `tmp/cache` when the project has no `node_modules`.
- */
 export function resolveCacheLocation(projectPath: string, cacheLocation?: string): string {
   if (cacheLocation) {
     const location = resolve(cacheLocation)
@@ -79,8 +75,8 @@ export function resolveCacheLocation(projectPath: string, cacheLocation?: string
 }
 
 /**
- * Every file under `.herb/rules`, not only the rule entry points, so a helper a rule imports
- * from there also invalidates the cache.
+ * Every file under `.herb/rules`, hidden ones included, not only the rule entry points, so a
+ * helper or settings file a rule reads from there also invalidates the cache.
  */
 export async function customRuleFiles(projectPath: string): Promise<string[]> {
   const files = await glob(".herb/rules/**/*", { cwd: projectPath, absolute: true, onlyFiles: true, dot: true })
@@ -174,8 +170,8 @@ export class LintCache {
   }
 
   /**
-   * An unreadable or truncated cache file is treated as empty and rewritten on save,
-   * so a run killed mid-write never blocks the next one.
+   * A cache file that doesn't parse, such as one edited by hand, is treated as empty and
+   * rewritten on save: losing the cache only costs a full lint, so it never fails the run.
    */
   private static read(path: string): CacheFile | undefined {
     if (!existsSync(path)) return undefined
@@ -225,8 +221,7 @@ export class LintCache {
   }
 
   /**
-   * Writes the cache, dropping entries for files that no longer exist. The rename keeps a
-   * concurrent reader from seeing a half-written file.
+   * The rename keeps a concurrent reader from seeing a half-written file.
    */
   save(): void {
     const files: Record<string, CacheEntry> = {}

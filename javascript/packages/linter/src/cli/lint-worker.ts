@@ -55,7 +55,7 @@ export interface WorkerResult {
   offenses: WorkerOffense[]
   ruleOffenses: [string, { count: number, files: string[] }][]
   fixMessages: string[]
-  /** Each linted file's own result, for files the fixer left unchanged. Only collected when the cache is on. */
+  /** Each linted file's own result, for files the fixer left unchanged. */
   fileResults: [string, CachedFileResult][]
   error?: string
 }

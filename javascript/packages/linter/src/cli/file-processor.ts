@@ -305,8 +305,6 @@ export class FileProcessor {
   }
 
   /**
-   * Lints only the files the cache has no result for, then merges in the cached results.
-   *
    * Under `--fix`, a cached file with offenses is linted again so the fixer gets to run.
    * A fix can also change a partial's `locals` or a `render` call, which changes other files'
    * results mid-run, so once anything was fixed the cached files are linted again against a
