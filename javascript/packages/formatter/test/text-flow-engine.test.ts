@@ -28,6 +28,8 @@ function createMockDelegate(options: { indent?: string, maxLineLength?: number }
       lines.push(indentPrefix + line)
     },
 
+    markOutputEnd() {},
+
     renderInlineElementAsString(element: HTMLElementNode): string {
       const tagName = getTagName(element)
       const bodyText = element.body
@@ -398,6 +400,7 @@ describe("TextFlowEngine", () => {
       const delegate: TextFlowDelegate & { lines: string[], visitedNodes: Node[] } = {
         lines: [],
         visitedNodes: [],
+        markOutputEnd() {},
         get indent() { return "  " },
         get maxLineLength() { return 80 },
         push(line: string) { pushCalls.push(line); this.lines.push(line) },
