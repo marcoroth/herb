@@ -8,6 +8,18 @@ module Herb
 
     PRISM_ENTRIES: untyped
 
+    CFLAGS: untyped
+
+    FFI_CFLAGS: untyped
+
+    def self.git_build_cflags: () -> untyped
+
+    def self.build_ffi_library: (?cc: untyped, ?cflags: untyped) -> untyped
+
+    def self.compile_ffi_objects: (untyped compiler, untyped cflags, untyped object_dir) -> untyped
+
+    def self.shared_library_extension: () -> untyped
+
     def self.generate_templates: () -> untyped
 
     def self.git_source?: () -> untyped

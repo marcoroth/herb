@@ -57,6 +57,8 @@ ruby:
       - 'ext/**/*.rb'
       - 'templates/lib/**/*'
       - 'templates/ext/**/*'
+      - 'ffi/**/*'
+      - 'templates/ffi/**/*'
 
 c-extension:
   - changed-files:

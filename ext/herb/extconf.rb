@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "mkmf"
 require_relative "../../lib/herb/bootstrap"
 
 extension_name = "herb"
@@ -31,13 +30,19 @@ if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
   end
 
   Herb::Bootstrap.generate_templates
-
-  root_path = Herb::Bootstrap::ROOT_PATH
-  sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
-
-  $CFLAGS << " -DHERB_GIT_BUILD"
-  $CFLAGS << " -DHERB_GIT_SHA=\\\"#{sha}\\\"" unless sha.empty?
+  git_build = true
 end
+
+git_cflags = git_build ? Herb::Bootstrap.git_build_cflags : []
+
+if RUBY_ENGINE == "jruby"
+  puts "Built #{Herb::Bootstrap.build_ffi_library(cflags: git_cflags)}"
+  File.write("Makefile", "all install clean:\n\t@:\n")
+  return
+end
+
+require "mkmf"
+require "shellwords"
 
 include_path = File.expand_path("../../src/include", __dir__)
 prism_path = File.expand_path("../../vendor/prism", __dir__)
@@ -61,11 +66,7 @@ $INCFLAGS << " -I#{prism_include_path}"
 $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 
-$CFLAGS << " -fvisibility=hidden"
-$CFLAGS << " -DHERB_EXCLUDE_PRETTYPRINT"
-$CFLAGS << " -DPRISM_EXCLUDE_PRETTYPRINT"
-$CFLAGS << " -DPRISM_EXCLUDE_JSON"
-$CFLAGS << " -DPRISM_EXCLUDE_PACK"
+$CFLAGS << " #{Shellwords.join(Herb::Bootstrap::CFLAGS + git_cflags)}"
 
 herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 
