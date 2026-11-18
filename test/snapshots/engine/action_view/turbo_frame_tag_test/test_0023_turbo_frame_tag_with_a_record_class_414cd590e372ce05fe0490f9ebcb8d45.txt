@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0023_turbo_frame_tag with a record class"
+input: "{source: \"<%= turbo_frame_tag record_class %>\", locals: {record_class: Engine::ActionView::TurboFrameTagTest::Post}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="new_post"></turbo-frame>

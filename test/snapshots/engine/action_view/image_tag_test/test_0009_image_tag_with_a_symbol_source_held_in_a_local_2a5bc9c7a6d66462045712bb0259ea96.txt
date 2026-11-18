@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0009_image_tag with a symbol source held in a local"
+input: "{source: \"<%= image_tag source, skip_pipeline: true %>\", locals: {source: :photo}, options: {action_view_helpers: true}}"
+---
+<img src="/images/photo" />
