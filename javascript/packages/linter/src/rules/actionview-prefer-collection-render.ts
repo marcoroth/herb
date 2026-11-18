@@ -65,7 +65,6 @@ class PreferCollectionRenderVisitor extends BaseRuleVisitor {
     const keywords = render.keywords
 
     if (!keywords) return null
-    if (keywords.object?.value === blockArgument) return `<%= render ${receiver} %>`
 
     const partial = keywords.partial?.value
     if (!partial) return null
