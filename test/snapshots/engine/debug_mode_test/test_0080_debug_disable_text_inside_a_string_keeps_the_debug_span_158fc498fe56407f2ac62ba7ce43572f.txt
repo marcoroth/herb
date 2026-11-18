@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0080_debug disable text inside a string keeps the debug span"
+input: "{source: \"<%= foo(\\\"# herb:debug disable\\\") %>\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<span data-herb-debug-outline-type="erb-output view" data-herb-debug-erb="&lt;%= foo(&quot;# herb:debug disable&quot;) %&gt;" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="1" style="display: contents;">'.freeze; _buf << (foo("# herb:debug disable")).to_s; _buf << '</span>'.freeze;
+_buf.to_s

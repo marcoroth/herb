@@ -255,6 +255,31 @@ describe("erb-no-trailing-comment", () => {
     assertOffenses(`<%= foo # comment %>`, { templateEngine: "erubi" })
   })
 
+  test("passes for a herb:debug disable comment when the template engine is herb", () => {
+    expectNoOffenses(`<%= tag.td "Ada" # herb:debug disable %>`, { templateEngine: "herb" })
+    expectNoOffenses(`<%= tag.td "Ada" #   herb:debug   disable %>`, { templateEngine: "herb" })
+  })
+
+  test("passes for a herb:debug disable comment on a block opening when the template engine is herb", () => {
+    expectNoOffenses(dedent`
+      <%= content_for :head do # herb:debug disable %>
+        <%= stylesheet_link_tag "application" %>
+      <% end %>
+    `, { templateEngine: "herb" })
+  })
+
+  test("fails for a herb:debug disable comment under other template engines", () => {
+    expectError(MESSAGE)
+
+    assertOffenses(`<%= tag.td "Ada" # herb:debug disable %>`, { templateEngine: "erubi" })
+  })
+
+  test("warns for a comment that only mentions herb:debug disable", () => {
+    expectWarning(FRAGILE_MESSAGE)
+
+    assertOffenses(`<%= foo # herb:debug disable later %>`, { templateEngine: "herb" })
+  })
+
   test("reads the template engine from the config", async () => {
     await Herb.load()
 
