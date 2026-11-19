@@ -10,7 +10,7 @@ module Herb
   #     Herb::Fingerprint.template(source) #=> "d242d277…"
   #
   module Fingerprint
-    BOM = "\xEF\xBB\xBF".b #: String
+    BOM = "\xEF\xBB\xBF".b.freeze #: String
     SHORT_LENGTH = 8 #: Integer
 
     #: (String?) -> String?

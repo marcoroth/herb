@@ -30,12 +30,12 @@ module Herb
       module ClassMethods
         #: (**untyped) -> void
         def required_parser_option(**options)
-          declared_parser_options(:required).merge!(options.transform_keys(&:to_sym))
+          declare_parser_options(:required, options)
         end
 
         #: (**untyped) -> void
         def recommended_parser_option(**options)
-          declared_parser_options(:recommended).merge!(options.transform_keys(&:to_sym))
+          declare_parser_options(:recommended, options)
         end
 
         #: () -> Hash[Symbol, untyped]
@@ -103,9 +103,15 @@ module Herb
 
         #: (Symbol) -> Hash[Symbol, untyped]
         def declared_parser_options(kind)
-          store = @declared_parser_options ||= {} #: Hash[Symbol, Hash[Symbol, untyped]]
+          @declared_parser_options&.[](kind) || {}
+        end
 
-          store[kind] ||= {}
+        #: (Symbol, Hash[untyped, untyped]) -> void
+        def declare_parser_options(kind, options)
+          store = @declared_parser_options || {} #: Hash[Symbol, Hash[Symbol, untyped]]
+          declared = declared_parser_options(kind).merge(options.transform_keys(&:to_sym)).freeze
+
+          @declared_parser_options = store.merge(kind => declared).freeze
         end
 
         #: (Array[untyped], Symbol) { (untyped, Symbol, untyped) -> void } -> void

@@ -51,6 +51,9 @@ module Herb
         # : (Symbol) -> Hash[Symbol, untyped]
         def declared_parser_options: (Symbol) -> Hash[Symbol, untyped]
 
+        # : (Symbol, Hash[untyped, untyped]) -> void
+        def declare_parser_options: (Symbol, Hash[untyped, untyped]) -> void
+
         # : (Array[untyped], Symbol) { (untyped, Symbol, untyped) -> void } -> void
         def each_declared_parser_option: (Array[untyped], Symbol) { (untyped, Symbol, untyped) -> void } -> void
 

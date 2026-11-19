@@ -580,6 +580,10 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
 }
 
 __attribute__((__visibility__("default"))) void Init_herb(void) {
+#ifdef HAVE_RB_EXT_RACTOR_SAFE
+  rb_ext_ractor_safe(true);
+#endif
+
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
   cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
@@ -590,6 +594,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
   cParserOptions = rb_define_class_under(mHerb, "ParserOptions", rb_cObject);
 
+  rb_init_extension_helpers();
   rb_init_node_classes();
   rb_init_error_classes();
 

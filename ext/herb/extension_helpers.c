@@ -26,11 +26,10 @@ const char* check_string(VALUE value) {
 }
 
 static ID id_line, id_column, id_start, id_end, id_from, id_to, id_value, id_range, id_location, id_type;
-static bool ast_value_ivar_ids_initialized = false;
 
-static void init_ast_value_ivar_ids(void) {
-  if (ast_value_ivar_ids_initialized) { return; }
+static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
 
+void rb_init_extension_helpers(void) {
   id_line = rb_intern("@line");
   id_column = rb_intern("@column");
   id_start = rb_intern("@start");
@@ -42,12 +41,13 @@ static void init_ast_value_ivar_ids(void) {
   id_location = rb_intern("@location");
   id_type = rb_intern("@type");
 
-  ast_value_ivar_ids_initialized = true;
+  for (unsigned int type = 0; type <= (unsigned int) TOKEN_EOF; type++) {
+    token_type_value_cache[type] = rb_interned_string_from_hb_string(token_type_to_string((token_type_T) type));
+    rb_gc_register_mark_object(token_type_value_cache[type]);
+  }
 }
 
 VALUE rb_position_from_c_struct(position_T position) {
-  init_ast_value_ivar_ids();
-
   VALUE object = rb_obj_alloc(cPosition);
   rb_ivar_set(object, id_line, UINT2NUM(position.line));
   rb_ivar_set(object, id_column, UINT2NUM(position.column));
@@ -56,8 +56,6 @@ VALUE rb_position_from_c_struct(position_T position) {
 }
 
 VALUE rb_location_from_c_struct(location_T location) {
-  init_ast_value_ivar_ids();
-
   VALUE object = rb_obj_alloc(cLocation);
   rb_ivar_set(object, id_start, rb_position_from_c_struct(location.start));
   rb_ivar_set(object, id_end, rb_position_from_c_struct(location.end));
@@ -66,8 +64,6 @@ VALUE rb_location_from_c_struct(location_T location) {
 }
 
 VALUE rb_range_from_c_struct(range_T range) {
-  init_ast_value_ivar_ids();
-
   VALUE object = rb_obj_alloc(cRange);
   rb_ivar_set(object, id_from, UINT2NUM(range.from));
   rb_ivar_set(object, id_to, UINT2NUM(range.to));
@@ -87,28 +83,16 @@ VALUE rb_interned_string_from_hb_string(hb_string_T string) {
   return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
 }
 
-static VALUE token_type_value_cache[TOKEN_EOF + 1] = { 0 };
-
 static VALUE rb_token_type_value(token_type_T type) {
   if ((unsigned int) type > (unsigned int) TOKEN_EOF) {
     return rb_interned_string_from_hb_string(token_type_to_string(type));
   }
 
-  VALUE cached = token_type_value_cache[type];
-
-  if (cached == 0) {
-    cached = rb_interned_string_from_hb_string(token_type_to_string(type));
-    rb_gc_register_mark_object(cached);
-    token_type_value_cache[type] = cached;
-  }
-
-  return cached;
+  return token_type_value_cache[type];
 }
 
 VALUE rb_token_from_c_struct(token_T* token, const parser_options_T* options) {
   if (!token) { return Qnil; }
-
-  init_ast_value_ivar_ids();
 
   VALUE object = rb_obj_alloc(cToken);
   rb_ivar_set(object, id_value, rb_string_from_hb_string(token->value));

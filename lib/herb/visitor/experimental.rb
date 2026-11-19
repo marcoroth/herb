@@ -21,12 +21,23 @@ module Herb
 
       #: (*untyped, **untyped) ?{ (?) -> untyped } -> untyped
       def new(*, **, &)
-        notice = @notice
-        @notice = nil
-
-        warn "[Herb] #{notice}" if notice
+        announce_experimental if @notice
 
         super
+      end
+
+      private
+
+      #: () -> void
+      def announce_experimental
+        fresh = {} #: Hash[Module, bool]
+        announced = Thread.main.thread_variable_get(:herb_experimental_notices) || Thread.main.thread_variable_set(:herb_experimental_notices, fresh)
+
+        return if announced[self]
+
+        announced[self] = true
+
+        warn "[Herb] #{@notice}"
       end
     end
   end

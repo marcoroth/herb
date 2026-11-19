@@ -6,10 +6,10 @@ require "pathname"
 module Herb
   class Configuration
     OPTIONS_PATH = File.expand_path("../../config/options.yml", __dir__ || __FILE__).freeze #: String
-    OPTIONS = YAML.safe_load_file(OPTIONS_PATH).freeze #: Hash[String, untyped]
+    OPTIONS = YAML.safe_load_file(OPTIONS_PATH, freeze: true) #: Hash[String, untyped]
 
-    VALID_FRAMEWORKS = OPTIONS["framework"]["values"].freeze #: Array[String]
-    VALID_TEMPLATE_ENGINES = OPTIONS["template_engine"]["values"].freeze #: Array[String]
+    VALID_FRAMEWORKS = OPTIONS["framework"]["values"] #: Array[String]
+    VALID_TEMPLATE_ENGINES = OPTIONS["template_engine"]["values"] #: Array[String]
 
     CONFIG_FILENAMES = [".herb.yml"].freeze #: Array[String]
     MISNAMED_CONFIG_FILENAMES = [".herb.yaml", "herb.yml", "herb.yaml"].freeze #: Array[String]
@@ -27,20 +27,33 @@ module Herb
     ].freeze #: Array[String]
 
     DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__ || __FILE__).freeze
-    DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH).freeze
+    DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH, freeze: true)
 
     GLOB_CHARACTERS = /[*?\[\]{}]/ #: Regexp
 
     attr_reader :config, :user_config, :config_path, :project_root, :misnamed_config_paths
 
     def initialize(project_path = nil)
-      @start_path = project_path ? Pathname.new(project_path) : Pathname.pwd
-      @config_path, @project_root = find_config_file
-      @misnamed_config_paths = find_misnamed_config_paths
+      @start_path = (project_path ? Pathname.new(project_path) : Pathname.pwd).freeze
+      @config_path, @project_root = find_config_file.map(&:freeze)
+      @misnamed_config_paths = find_misnamed_config_paths.map(&:freeze).freeze
       @user_config = load_user_config
       @config = deep_merge(DEFAULTS, @user_config)
 
       warn_about_misnamed_config_files
+      freeze
+    end
+
+    # Returns a new frozen configuration with the overrides applied, the same way `.herb.yml` is
+    # applied over the defaults, so `include` and `exclude` lists are appended to.
+    #
+    #     Herb.configuration = Herb.configuration.merge("engine" => { "debug" => true })
+    #
+    #: (Hash[untyped, untyped]) -> Configuration
+    def merge(overrides)
+      overrides = frozen_copy(overrides)
+
+      dup.with_config(deep_merge(@user_config, overrides), deep_merge(@config, overrides))
     end
 
     def [](key)
@@ -259,6 +272,16 @@ module Herb
       end
     end
 
+    protected
+
+    #: (Hash[String, untyped], Hash[String, untyped]) -> Configuration
+    def with_config(user_config, config)
+      @user_config = user_config
+      @config = config
+
+      freeze
+    end
+
     private
 
     def find_config_file
@@ -304,14 +327,17 @@ module Herb
     end
 
     def load_user_config
-      return {} unless @config_path&.exist?
+      empty = {} #: Hash[String, untyped]
+      empty.freeze
+
+      return empty unless @config_path&.exist?
 
       begin
-        YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}
+        YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true, freeze: true) || empty
       rescue Psych::SyntaxError => e
         warn "Warning: Invalid YAML in #{@config_path}: #{e.message}"
 
-        {}
+        empty
       end
     end
 
@@ -320,10 +346,20 @@ module Herb
         if old_value.is_a?(Hash) && new_value.is_a?(Hash)
           deep_merge(old_value, new_value, additive_keys: additive_keys)
         elsif old_value.is_a?(Array) && new_value.is_a?(Array) && additive_keys.include?(key)
-          old_value + new_value
+          (old_value + new_value).freeze
         else
           new_value
         end
+      end.freeze
+    end
+
+    #: (untyped) -> untyped
+    def frozen_copy(value)
+      case value
+      when Hash then value.to_h { |key, item| [key.to_s, frozen_copy(item)] }.freeze
+      when Array then value.map { |item| frozen_copy(item) }.freeze
+      when String then value.dup.freeze
+      else value
       end
     end
   end

@@ -11,7 +11,7 @@
 #include <string.h>
 
 // https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
-static hb_string_T optional_end_tags[] = HB_STRING_LIST(
+static const hb_string_T optional_end_tags[] = HB_STRING_LIST(
   "li",
   "dt",
   "dd",
@@ -29,7 +29,7 @@ static hb_string_T optional_end_tags[] = HB_STRING_LIST(
   "colgroup"
 );
 
-static hb_string_T p_closers[] = HB_STRING_LIST(
+static const hb_string_T p_closers[] = HB_STRING_LIST(
   "address",
   "article",
   "aside",
@@ -62,7 +62,7 @@ static hb_string_T p_closers[] = HB_STRING_LIST(
   "ul"
 );
 
-static hb_string_T p_parent_closers[] = HB_STRING_LIST(
+static const hb_string_T p_parent_closers[] = HB_STRING_LIST(
   "article",
   "aside",
   "blockquote",
@@ -125,7 +125,7 @@ bool has_optional_end_tag(hb_string_T tag_name) {
   return false;
 }
 
-static bool tag_in_list(hb_string_T tag_name, hb_string_T* list, size_t count) {
+static bool tag_in_list(hb_string_T tag_name, const hb_string_T* list, size_t count) {
   for (size_t i = 0; i < count; i++) {
     if (hb_string_equals_case_insensitive(tag_name, list[i])) { return true; }
   }
