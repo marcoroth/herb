@@ -78,6 +78,10 @@ describe("actionview-no-render-option-shadowing", () => {
     expectNoOffenses(`<%= render "card", title: "Hi", user: @user %>`)
   })
 
+  test("does not flag mutually exclusive render target names", () => {
+    expectNoOffenses(`<%= render "card", template: "page", file: "page", inline: "page", body: "page", plain: "page", html: "page", renderable: page %>`)
+  })
+
   test("does not flag a render without locals", () => {
     expectNoOffenses(`<%= render "card" %>`)
   })
