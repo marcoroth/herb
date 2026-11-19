@@ -28,7 +28,7 @@ class BundleTest < Minitest::Spec
         output, status = Open3.capture2e(environment, Gem.ruby, "-S", "bundle", "lock", "--local", chdir: directory)
         assert status.success?, output
 
-        output, status = Open3.capture2e(environment, Gem.ruby, "-S", "bundle", "exec", "herb", "analyze", ".", chdir: directory)
+        output, status = Open3.capture2e(environment, Gem.ruby, "-S", "bundle", "exec", Gem.ruby, File.join(root, "exe/herb"), "analyze", ".", chdir: directory)
         assert status.success?, output
         assert_match "1 parsed", output
         assert_match "1 compiled", output
