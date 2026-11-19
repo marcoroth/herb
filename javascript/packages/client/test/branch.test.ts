@@ -215,6 +215,25 @@ describe("a page where the server chose a different format per template", () => 
     expect(index.materialize(OTHER, "0:1")).toBeNull()
   })
 
+  test("keeps reporting a server-rendered template once the client captured a branch of it", () => {
+    const index = new Slots()
+
+    document.body.innerHTML = `
+      <!--herb-region:${OTHER}:bbbbbbbb:0-->
+      <div><!--herb-slot:0:conditional--><!--herb-branch:0:1--><b>Shown</b><!--/herb-slot:0--></div>
+      <!--/herb-region:${OTHER}-->
+    `
+
+    index.scan(document.body)
+
+    const slot = index.regionsFor(OTHER)[0].slots.get(0)!
+
+    expect(index.capture(slot)).toBe(true)
+    expect(index.parkedKeys(OTHER)).toEqual(["0:1"])
+    expect(index.renderModeFor(OTHER)).toBe("server")
+    expect(index.renderModeFor(OTHER, 0)).toBe("server")
+  })
+
   test("reports a template the index has never seen as server-rendered", () => {
     const index = new Slots()
 
