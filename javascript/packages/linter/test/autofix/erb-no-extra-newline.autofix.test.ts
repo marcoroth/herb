@@ -6,6 +6,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
 
 import { ERBNoExtraNewLineRule } from "../../src/rules/erb-no-extra-newline.js"
+import { ERBNoTrailingWhitespaceRule } from "../../src/rules/erb-no-trailing-whitespace.js"
 
 describe("erb-no-extra-newline autofix", () => {
   beforeAll(async () => {
@@ -278,6 +279,18 @@ describe("erb-no-extra-newline autofix", () => {
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("removes extra blank lines after another rule's autofix changed the source", () => {
+    const input = '<div>    \n</div>\n\n\n\n<h3 class="title">Title</h3>\n'
+    const expected = '<div>\n</div>\n\n\n<h3 class="title">Title</h3>\n'
+
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule, ERBNoTrailingWhitespaceRule])
+    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
     expect(result.unfixed).toHaveLength(0)
   })
 })

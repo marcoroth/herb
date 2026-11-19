@@ -976,7 +976,7 @@ export class Linter {
 
     const parserOffenses: LintOffense[] = []
     const lexerOffenses: LintOffense[] = []
-    const sourceOffenses: LintOffense[] = []
+    let sourceOffenses: LintOffense[] = []
 
     for (const offense of lintResult.offenses) {
       const ruleClass = this.findRuleClass(offense.rule)
@@ -1063,6 +1063,12 @@ export class Linter {
           currentSource = new IdentityPrinter().print(parseResult.value)
         }
       }
+    }
+
+    if (sourceOffenses.length > 0 && currentSource !== source) {
+      const sourceRuleNames = new Set(sourceOffenses.map(offense => offense.rule))
+
+      sourceOffenses = this.lint(currentSource, context).offenses.filter(offense => sourceRuleNames.has(offense.rule))
     }
 
     if (sourceOffenses.length > 0) {
