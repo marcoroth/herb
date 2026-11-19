@@ -732,7 +732,15 @@ module Herb
 
         #: () -> String
         def overrides_prelude
-          "#{OVERRIDES_LOCAL} = ::Herb::Engine::Slots::StateOverrides.resolve((#{StateOverrides::HOOK} if defined?(#{StateOverrides::HOOK})), #{@visitor.identifier.inspect})"
+          "#{OVERRIDES_LOCAL} = ::Herb::Engine::Slots::StateOverrides.resolve((#{StateOverrides::HOOK} if defined?(#{StateOverrides::HOOK})), #{@visitor.identifier.inspect}, #{occurrence_reference})"
+        end
+
+        #: () -> String
+        def occurrence_reference
+          rendered = Visitor::OCCURRENCE
+          values = Visitor::VALUES_OCCURRENCE
+
+          "(defined?(#{rendered}) ? #{rendered} : defined?(#{values}) ? #{values} : 0)"
         end
 
         #: () -> void

@@ -166,6 +166,9 @@ module Herb
         # : () -> String
         def overrides_prelude: () -> String
 
+        # : () -> String
+        def occurrence_reference: () -> String
+
         # : () -> void
         def classify_state_conditionals: () -> void
 

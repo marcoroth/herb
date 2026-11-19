@@ -19,6 +19,28 @@ module Engine
         assert_nil Overrides.resolve({ "app/views/a.html.erb" => "junk" }, "app/views/a.html.erb")
       end
 
+      test "a later occurrence layers the values it sent over the first copy's" do
+        raw = { "app/views/a.html.erb" => { "open" => false, "tab" => "inbox", "@occurrences" => { "1" => { "open" => true } } } }
+
+        assert_equal({ "open" => false, "tab" => "inbox" }, Overrides.resolve(raw, "app/views/a.html.erb"))
+        assert_equal({ "open" => false, "tab" => "inbox" }, Overrides.resolve(raw, "app/views/a.html.erb", 0))
+        assert_equal({ "open" => true, "tab" => "inbox" }, Overrides.resolve(raw, "app/views/a.html.erb", 1))
+        assert_equal({ "open" => false, "tab" => "inbox" }, Overrides.resolve(raw, "app/views/a.html.erb", 2))
+      end
+
+      test "a malformed occurrence table falls back to the first copy's values" do
+        assert_equal({ "open" => false }, Overrides.resolve({ "app/views/a.html.erb" => { "open" => false, "@occurrences" => "junk" } }, "app/views/a.html.erb", 1))
+        assert_equal({ "open" => false }, Overrides.resolve({ "app/views/a.html.erb" => { "open" => false, "@occurrences" => { "1" => "junk" } } }, "app/views/a.html.erb", 1))
+      end
+
+      test "a binding still sits over the values an occurrence sent" do
+        raw = { "app/views/a.html.erb" => { "open" => false, "@occurrences" => { "1" => { "open" => true, "page" => 2 } } } }
+
+        Bindings.with("app/views/a.html.erb", bound: { "open" => "bound" }) do
+          assert_equal({ "open" => "bound", "page" => 2 }, Overrides.resolve(raw, "app/views/a.html.erb", 1))
+        end
+      end
+
       test "fetch yields the default when there is nothing to say" do
         assert_equal :fallback, Overrides.fetch(nil, "open", :boolean) { :fallback }
         assert_equal :fallback, Overrides.fetch({}, "open", :boolean) { :fallback }

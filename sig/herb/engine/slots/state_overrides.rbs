@@ -16,11 +16,20 @@ module Herb
       # the frame layers with the client's values. A seed sits under them, since a client that
       # has written the state since it was seeded knows better. A binding sits over them, since
       # the client cannot tell two render sites of one partial apart.
+      #
+      # A template rendered more than once on a page sends the first copy's values at the top level
+      # and every later copy that differs under `@occurrences`, keyed by its render occurrence. A
+      # copy's own values layer over the first copy's.
       module StateOverrides
         HOOK: String
 
-        # : (untyped, String) -> Hash[String, untyped]?
-        def self.resolve: (untyped, String) -> Hash[String, untyped]?
+        OCCURRENCES: String
+
+        # : (untyped, String, ?Integer) -> Hash[String, untyped]?
+        def self.resolve: (untyped, String, ?Integer) -> Hash[String, untyped]?
+
+        # : (Hash[untyped, untyped], Integer) -> Hash[untyped, untyped]
+        def self.sent_for: (Hash[untyped, untyped], Integer) -> Hash[untyped, untyped]
 
         # : (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped
         def self.fetch: (Hash[String, untyped]?, String, Symbol) { () -> untyped } -> untyped

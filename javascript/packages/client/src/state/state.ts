@@ -14,7 +14,7 @@ import { printValue } from "./values"
 import { connected, elementOf, hostOf } from "../markup/anchors"
 import { armMutationRefresh } from "../shared/mutation-refresh"
 import { armOf, evaluate, matches, mentions } from "./conditions"
-import { steeringNames } from "./refresh"
+import { steeringFor, steeringNames } from "./refresh"
 import { slotsRequest } from "../shared/slots-request"
 import { TRANSITION_SELECTOR, transitionMutation } from "../shared/transitions"
 import { collectionIn, scopeOf, scoped } from "./scopes"
@@ -22,7 +22,7 @@ import { declarationSpot, declared, declaredValue } from "./declarations"
 
 import type { Slots } from "../slots/slots"
 import type { Conditional } from "./types"
-import type { RefreshReport } from "./refresh"
+import type { RefreshDelegate, RefreshReport } from "./refresh"
 import type { StateKind, StateValue } from "./values"
 import type { Built, Item, Payload, Region, Slot } from "../types"
 import type { CountOptions, DeclaredState, DependencyMap, PlacedSlot, ResolvedState, ResolvedStateOptions, ScopeStore, ScopedSetOptions, SerializedState, StateChange, StateChangeDetail, StateListener, StateManifest, StateOptions, StateReport, StateScope, StateSlot, StateSnapshot, StateValues } from "./types"
@@ -53,6 +53,11 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   private unsubscribe: (() => void) | null = null
   private disarmMutationRefresh: (() => void) | null = null
 
+  private readonly steering: RefreshDelegate = {
+    manifestFor: (region) => this.manifestFor(region),
+    steeringValue: (region, name) => this.valueAt(name, scopeOf(region)),
+  }
+
   constructor(slots: Slots, options: StateOptions = {}) {
     this.options = {
       transport: options.transport ?? ((request, signal) => this.server.fetch(request, signal)),
@@ -67,10 +72,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     this.seeds = new Seeds(this, slots)
     this.counts = new Counts(this, slots)
     this.server = new ServerState(slots, this.options)
-    this.refetch = new Refresh(slots, {
-      manifestFor: (region) => this.manifestFor(region),
-      steeringValue: (region, name) => this.valueAt(name, scopeOf(region)),
-    }, { transport: this.options.refetchTransport, format: this.options.format })
+    this.refetch = new Refresh(slots, this.steering, { transport: this.options.refetchTransport, format: this.options.format })
     this.fragments = new Fragments(slots, {
       manifestFor: (region) => this.manifestFor(region),
       placedSlots: (scope, index) => this.placedSlots(scope, index),
@@ -789,23 +791,7 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
   }
 
   private blockSteering(region: Region): Record<string, Record<string, unknown>> {
-    const manifest = this.manifestFor(region)
-
-    if (!manifest) {
-      return {}
-    }
-
-    const values: Record<string, unknown> = {}
-
-    for (const name of steeringNames(manifest)) {
-      const value = this.valueAt(name, scopeOf(region))
-
-      if (value !== undefined) {
-        values[name] = value
-      }
-    }
-
-    return Object.keys(values).length > 0 ? { [region.file]: values } : {}
+    return steeringFor(this.slots.regionsFor(region.file), this.steering)
   }
 
   private invalidateStaleReads(manifest: StateManifest, scope: StateScope, names: string[]): void {

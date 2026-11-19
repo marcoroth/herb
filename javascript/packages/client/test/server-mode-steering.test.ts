@@ -43,6 +43,36 @@ function messagesPayload(order: unknown): Payload {
   } as unknown as Payload
 }
 
+const CARD = "app/views/items/_card.html.erb"
+
+const CARD_STATES = {
+  version: "bbbbbbbb",
+  declarations: [{ name: "open", kind: "boolean", default: "false", value: false, scope: "region" }],
+  reads: {},
+  conditionals: { 0: { arms: [{ branch: 0, condition: ["open", null] }], else: null } },
+  presence: {},
+  computed: {},
+}
+
+function card(occurrence: number): string {
+  return (
+    `<!--herb-region:${CARD}:bbbbbbbb:${occurrence}-->` +
+    `<article id="card-${occurrence}"><button>Open</button><!--herb-slot:0:conditional--><!--/herb-slot:0--></article>` +
+    `<!--/herb-region:${CARD}-->`
+  )
+}
+
+const CARDS_PAGE = card(0) + card(1) + card(2) + `<template data-herb-dependencies>${JSON.stringify({ state: {}, states: { [CARD]: CARD_STATES } })}</template>`
+
+function cardPayload(occurrence: number, open: boolean): Payload {
+  return {
+    template: CARD,
+    version: "bbbbbbbb",
+    occurrence,
+    slots: { 0: open ? { branch: 0, statics: "<!--herb-branch:0:0--><form>edit</form>", slots: {} } : { branch: null } },
+  } as unknown as Payload
+}
+
 let runtime: Runtime | null = null
 
 afterEach(() => {
@@ -89,5 +119,44 @@ describe("server mode steering", () => {
       { [MESSAGES]: { order: "oldest" } },
       { [MESSAGES]: { order: "newest" } },
     ])
+  })
+
+  test("a later copy of a partial sends its own state, layered over the first copy's", async () => {
+    document.body.innerHTML = CARDS_PAGE
+
+    const calls: Steering[] = []
+    const transport = vi.fn(async (state: Steering) => {
+      calls.push(state)
+
+      return cardPayload(1, true)
+    })
+
+    runtime = Runtime.start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    runtime.state.setState({ open: true }, { scope: document.querySelector("#card-1 button")! })
+    await settled()
+
+    expect(calls).toEqual([{ [CARD]: { open: false, "@occurrences": { 1: { open: true } } } }])
+    expect(document.querySelector("#card-0")?.textContent).toBe("Open")
+    expect(document.querySelector("#card-1")?.textContent).toBe("Openedit")
+    expect(document.querySelector("#card-2")?.textContent).toBe("Open")
+  })
+
+  test("each copy that differs from the first one sends its own values", async () => {
+    document.body.innerHTML = CARDS_PAGE
+
+    const calls: Steering[] = []
+    const transport = vi.fn(async (state: Steering) => {
+      calls.push(state)
+
+      return cardPayload(0, true)
+    })
+
+    runtime = Runtime.start({ state: { refetchTransport: transport, refetchDebounce: 0 } })
+
+    runtime.state.setState({ open: true }, { scope: document.querySelector("#card-0 button")! })
+    await settled()
+
+    expect(calls).toEqual([{ [CARD]: { open: true, "@occurrences": { 1: { open: false }, 2: { open: false } } } }])
   })
 })

@@ -131,7 +131,7 @@ module Herb
         SCOPE_BUFFER = "__herb_scope" #: String
         ITEMS_BUFFER = "__herb_items" #: String
         KEY_BUFFER = "__herb_key" #: String
-        OCCURRENCE_BUFFER = "__herb_occurrence" #: String
+        OCCURRENCE_BUFFER = Visitor::VALUES_OCCURRENCE #: String
         RENDERED_BUFFER = "__herb_rendered" #: String
 
         BRANCHING_NODES = [
