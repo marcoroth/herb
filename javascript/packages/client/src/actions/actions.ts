@@ -226,7 +226,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
 
     try {
       for (const entry of pending) {
-        this.schedule(element, entry, event)
+        this.schedule(element, entry)
       }
     } finally {
       this.pinned = null
@@ -235,7 +235,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     return handled
   }
 
-  private schedule(element: Element, entry: Instruction, event: Event): void {
+  private schedule(element: Element, entry: Instruction): void {
     const key = `${entry.action}:${entry.event}:${entry.rest}`
     const timing = this.timings.get(element) ?? new Map<string, Timing>()
     const held = timing.get(key) ?? {}
@@ -253,7 +253,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       }
 
       held.last = now
-      this.execute(element, entry.action, entry.rest, event)
+      this.execute(element, entry.action, entry.rest)
 
       return
     }
@@ -273,7 +273,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
         this.pinned = pinned
 
         try {
-          this.execute(element, entry.action, entry.rest, event)
+          this.execute(element, entry.action, entry.rest)
         } finally {
           this.pinned = null
         }
@@ -282,7 +282,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       return
     }
 
-    this.execute(element, entry.action, entry.rest, event)
+    this.execute(element, entry.action, entry.rest)
   }
 
   private timingOf(element: Element, attribute: string): number | null {
@@ -297,12 +297,12 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
   }
 
-  private execute(element: Element, action: ActionName, rest: string, event: Event): void {
+  private execute(element: Element, action: ActionName, rest: string): void {
     const schema: ActionSchema = ACTION_SCHEMA[action]
 
     try {
       if (schema.operation === "set") {
-        this.set(element, rest, event)
+        this.set(element, rest)
       } else if (schema.operation === "toggle") {
         this.toggle(element, rest)
       } else if (schema.operation === "reset") {
@@ -394,7 +394,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     groups.set(scope, { [name]: value })
   }
 
-  private set(element: Element, rest: string, event: Event): void {
+  private set(element: Element, rest: string): void {
     if (splitOutsideQuotes(rest, ",").length > 1) {
       return
     }
@@ -412,7 +412,7 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
       return
     }
 
-    const assigned = this.assignedValue(element, pair.name, resolved, pair.raw, event)
+    const assigned = this.assignedValue(element, pair.name, resolved, pair.raw)
 
     if (!assigned) {
       return
@@ -443,14 +443,12 @@ export class Actions implements ElementObserverDelegate, InstructionsDelegate {
     }
   }
 
-  private assignedValue(element: Element, name: string, resolved: ResolvedDeclaration, raw: string, event: Event): { value: StateValue } | null {
+  private assignedValue(element: Element, name: string, resolved: ResolvedDeclaration, raw: string): { value: StateValue } | null {
     const { scope, declaration } = resolved
     const kind = declaration.kind
 
     if (raw === "$value") {
-      const target = event.target
-
-      return { value: target instanceof Element ? boundValue(target, kind) : null }
+      return { value: boundValue(element, kind) }
     }
 
     if ((kind === "boolean" && raw !== "true" && raw !== "false") || (kind === "integer" && !/^-?\d+$/.test(raw))) {

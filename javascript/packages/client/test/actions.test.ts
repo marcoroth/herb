@@ -29,6 +29,7 @@ const PAGE =
   `<input id="bound" value="name" data-herb-slot="5:attribute:value">` +
   `<button id="setter" data-herb-set="sort=date">Date</button>` +
   `<select id="chooser" data-herb-set="sort=$value"><option value="date">date</option></select>` +
+  `<button id="by-date" value="date" data-herb-set="sort=$value"><span id="by-date-label">By date</span></button>` +
   `<div id="menu" data-herb-set="mouseenter->open=true mouseleave->open=false">hover</div>` +
   `<div><!--herb-slot:0:conditional--><!--herb-branch:0:1-->closed<!--/herb-slot:0--></div>` +
   `<p><!--herb-slot:1-->0<!--/herb-slot:1--></p>` +
@@ -482,13 +483,56 @@ describe("declarative actions", () => {
     expect(state.getState("pending")).toBe(true)
   })
 
-  test("a select defaults to change and $value reads the target", () => {
+  test("a select defaults to change and $value reads the select", () => {
     const select = document.querySelector<HTMLSelectElement>("#chooser")!
 
     select.value = "date"
     select.dispatchEvent(new Event("change", { bubbles: true }))
 
     expect(state.getState("sort")).toBe("date")
+  })
+
+  test("$value on a click inside a button reads the button", () => {
+    click("#by-date-label")
+
+    expect(state.getState("sort")).toBe("date")
+  })
+
+  test("$value on a click on the button itself reads the button", () => {
+    click("#by-date")
+
+    expect(state.getState("sort")).toBe("date")
+  })
+
+  test("$value on a window event reads the element that carries the action", async () => {
+    const holder = document.createElement("input")
+
+    holder.value = "held"
+    holder.setAttribute("data-herb-set", "keydown.enter@window->sort=$value")
+    document.querySelector("section")!.appendChild(holder)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const typer = document.querySelector<HTMLInputElement>("#typer")!
+
+    typer.value = "typed"
+    typer.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }))
+
+    expect(state.getState("sort")).toBe("held")
+  })
+
+  test("$value on an outside click reads the element that carries the action", async () => {
+    const holder = document.createElement("input")
+
+    holder.value = "held"
+    holder.setAttribute("data-herb-set", "click@outside->sort=$value")
+    document.querySelector("section")!.appendChild(holder)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    document.querySelector<HTMLElement>("p")!.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+
+    expect(state.getState("sort")).toBe("held")
   })
 
   test("an input defaults to input", () => {
