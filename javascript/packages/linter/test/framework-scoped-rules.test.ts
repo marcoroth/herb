@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
@@ -103,5 +104,20 @@ describe("Action View helper parsing", () => {
 
   test("reads `tag.*` as an element for an Action View project", () => {
     expect(rulesFor({ framework: "actionview" })).toContain("html-no-unknown-tag")
+  })
+
+  test("reads framework from the global config", () => {
+    const config = Config.fromObject({ framework: "actionview" })
+    const linter = Linter.from(Herb, config)
+
+    const source = dedent`
+      <style scoped>
+        .logo { color: red; }
+      </style>
+
+      <%= link_to "Home", "/", class: "logo" %>
+    `
+
+    expect(linter.lint(source).offenses).toEqual([])
   })
 })
