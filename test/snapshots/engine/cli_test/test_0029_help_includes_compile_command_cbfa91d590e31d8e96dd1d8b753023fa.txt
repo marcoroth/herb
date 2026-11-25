@@ -49,6 +49,7 @@ Options:
       --timeout SECONDS            Per-file timeout for parse + compile (for analyze command) (default: 1)
       --log-file                   Enable log file generation
       --no-timing                  Disable timing output
+      --port PORT                  Port for the dev server (for dev command)
       --local                      Use localhost for playground command instead of herb-tools.dev
       --escape                     Enable HTML escaping by default (for compile command)
       --no-escape                  Disable HTML escaping by default (for compile command)
