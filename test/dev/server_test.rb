@@ -36,6 +36,19 @@ module Dev
       server.instance_variable_get(:@clients) << client
     end
 
+    test "a server that cannot register itself releases its port" do
+      port = Herb::Dev::Server.find_available_port(65_000)
+      blocked_entry = File.join(Herb::Dev::ServerEntry::SERVERS_DIR, "#{Process.pid}.json")
+      FileUtils.mkdir_p(blocked_entry)
+
+      begin
+        assert_raises(Errno::EISDIR) { Herb::Dev::Server.new(port: port).start }
+        assert Herb::Dev::Server.port_available?(port)
+      ensure
+        Dir.rmdir(blocked_entry)
+      end
+    end
+
     test "the welcome payload reports what the server was told is broken" do
       server = build_server
       server.on_welcome { [{ file: "a.html.erb" }] }

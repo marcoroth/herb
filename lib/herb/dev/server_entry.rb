@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "socket"
 
 module Herb
   module Dev
@@ -46,7 +47,7 @@ module Herb
 
       #: () -> bool
       def alive?
-        self.class.process_alive?(pid)
+        self.class.process_alive?(pid) && self.class.port_listening?(port)
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -124,6 +125,16 @@ module Herb
           Process.kill(0, pid)
           true
         rescue Errno::ESRCH, Errno::EPERM
+          false
+        end
+
+        #: (Integer?) -> bool
+        def port_listening?(port)
+          return false unless port
+
+          Socket.tcp("127.0.0.1", port, connect_timeout: 1).close
+          true
+        rescue SystemCallError, IOError
           false
         end
 
