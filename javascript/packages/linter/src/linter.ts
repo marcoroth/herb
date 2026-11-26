@@ -954,6 +954,8 @@ export class Linter {
    * @param source - The source code to fix
    * @param context - Optional context for linting (e.g., fileName)
    * @param offensesToFix - Optional array of specific offenses to fix. If not provided, all fixable offenses will be fixed.
+   *   When a parser rule fix changes the source, the changed source is linted again for the source rules in this array,
+   *   and every offense those rules report on it is fixed, including offenses that weren't passed in.
    * @param options - Options for autofix behavior
    * @param options.includeUnsafe - If true, also apply unsafe fixes (rules with unsafeAutocorrectable = true)
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
