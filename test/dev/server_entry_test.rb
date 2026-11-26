@@ -43,5 +43,29 @@ module Dev
         end
       end
     end
+
+    test "a stale entry replaced while it is probed keeps the replacement" do
+      Dir.mktmpdir do |root|
+        stale_port = free_port
+        replacement = Herb::Dev::ServerEntry.new(pid: Process.pid, port: free_port, project: root)
+        registry = Class.new(Herb::Dev::ServerEntry) do
+          define_singleton_method(:port_listening?) do |port|
+            next super(port) unless port == stale_port
+
+            replacement.save
+            false
+          end
+        end
+        Herb::Dev::ServerEntry.new(pid: Process.pid, port: stale_port, project: root).save
+
+        begin
+          registry.all
+
+          assert_equal replacement.to_json, File.read(File.join(Herb::Dev::ServerEntry::SERVERS_DIR, "#{Process.pid}.json"))
+        ensure
+          replacement.remove
+        end
+      end
+    end
   end
 end

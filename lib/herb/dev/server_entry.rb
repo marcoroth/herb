@@ -86,11 +86,7 @@ module Herb
             if entry&.alive?
               entry
             else
-              begin
-                File.delete(path)
-              rescue StandardError
-                nil
-              end
+              delete_stale(path, entry)
               nil
             end
           end
@@ -139,6 +135,15 @@ module Herb
         end
 
         private
+
+        #: (String, ServerEntry?) -> void
+        def delete_stale(path, entry)
+          return if entry && load_file(path)&.to_hash != entry.to_hash
+
+          File.delete(path)
+        rescue StandardError
+          nil
+        end
 
         #: (String) -> ServerEntry?
         def load_file(path)
