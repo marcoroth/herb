@@ -13,7 +13,7 @@ require_relative "engine/slots/visitor"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :no_trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :track_locations, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :no_trim, :optimize, :slots, :scoped_styles, :inline_css, :file_timeout, :port
 
   def initialize(args)
     @args = args
@@ -281,6 +281,10 @@ class Herb::CLI
 
       parser.on("--no-timing", "Disable timing output") do
         self.no_timing = true
+      end
+
+      parser.on("--port PORT", Integer, "Port for the dev server (for dev command)") do |port|
+        self.port = port
       end
 
       parser.on("--local", "Use localhost for playground command instead of herb-tools.dev") do
@@ -1061,7 +1065,7 @@ class Herb::CLI
 
   def dev_restart
     require_relative "dev/runner"
-    Herb::Dev::Runner.new(path: @file || ".").restart
+    Herb::Dev::Runner.new(path: @file || ".", port: port).restart
   end
 
   def dev_status
@@ -1071,7 +1075,7 @@ class Herb::CLI
 
   def run_dev_server
     require_relative "dev/runner"
-    Herb::Dev::Runner.new(path: @file || ".").run
+    Herb::Dev::Runner.new(path: @file || ".", port: port).run
   end
 
   def diff_files
