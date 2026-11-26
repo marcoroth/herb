@@ -6,21 +6,24 @@ import { Worker } from "node:worker_threads"
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
 import { readFileSync, writeFileSync } from "node:fs"
-import { resolve, dirname, join } from "node:path"
+import { resolve, dirname, join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
-import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
+import { Location, deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
 import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
 import { buildRenderGraph } from "@herb-tools/analysis/node"
 import { isStructuredFormat } from "./output-format.js"
+import { LintCache, cachedFileResultFrom, customRuleFiles, processedFilesFrom, resolveCacheLocation } from "./lint-cache.js"
+import { version } from "../../package.json"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { AncestorChain } from "@herb-tools/analysis"
 import type { FormatOption } from "./output-format.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
+import type { CachedFileResult } from "./lint-cache.js"
 import type { Fixability } from "../fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
@@ -55,7 +58,11 @@ export interface ProcessingContext {
   jobs?: number
   only?: string[]
   allRules?: boolean
+  cache?: boolean
+  cacheLocation?: string
 }
+
+type FileLintedCallback = (filename: string, result: CachedFileResult) => void
 
 export interface UnknownRule {
   name: string
@@ -108,6 +115,8 @@ export class FileProcessor {
   private partials: PartialIndex | undefined = undefined
   private partialCallers: RenderGraph | undefined = undefined
   private projectPath: string | undefined = undefined
+  private cachedItems = new WeakSet<ProcessedFile>()
+  private relintedOffenses = new Map<string, LintOffense[]>()
 
   /**
    * Loads the project's custom rules once and caches them for subsequent calls.
@@ -216,12 +225,16 @@ export class FileProcessor {
 
       if (content === undefined) continue
 
+      const offense = this.cachedItems.has(item) ? this.relintedOffense(item, content, context) : item.offense as LintOffense
+
+      if (!offense) continue
+
       try {
         const result = this.linter.autofix(content, {
           fileName: item.filename,
           ignoreDisableComments: context?.ignoreDisableComments,
           
-        }, [item.offense as LintOffense], { includeUnsafe: true })
+        }, [offense], { includeUnsafe: true })
 
         if (result.fixed.length > 0 && result.source !== content) {
           item.fixedContent = result.source
@@ -232,6 +245,36 @@ export class FileProcessor {
     }
   }
 
+  /**
+   * A cached offense has no `autofixContext`, since that holds AST nodes, so the fix preview
+   * needs the same offense from a fresh lint of the file.
+   */
+  private relintedOffense(item: ProcessedFile, content: string, context?: ProcessingContext): LintOffense | undefined {
+    let offenses = this.relintedOffenses.get(item.filename)
+
+    if (!offenses) {
+      offenses = this.linter!.lint(content, {
+        fileName: item.filename,
+        ignoreDisableComments: context?.ignoreDisableComments,
+        partials: this.partials,
+        partialCallers: this.partialCallers,
+        projectPath: this.projectPath
+      }).offenses
+
+      this.relintedOffenses.set(item.filename, offenses)
+    }
+
+    const cached = item.offense as LintOffense
+
+    const location = cached.location.toString()
+
+    return offenses.find(offense =>
+      offense.rule === cached.rule &&
+      offense.message === cached.message &&
+      Location.from(offense.location).toString() === location
+    )
+  }
+
   private fixabilityFor(offense: LintOffense): Fixability {
     const ruleClass = this.linter?.rules.find(rule => rule.ruleName === offense.rule)
 
@@ -239,16 +282,155 @@ export class FileProcessor {
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
-    const jobs = context?.jobs ?? 1
-    const shouldParallelize = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
-
     await this.buildPartialIndexOnce(context)
 
-    if (shouldParallelize) {
-      return this.collapseOncePerRunOffenses(await this.processFilesInParallel(files, jobs, formatOption, context))
+    const result = context?.cache
+      ? await this.processFilesWithCache(files, formatOption, context)
+      : await this.lintFiles(files, formatOption, context)
+
+    const order = new Map(files.map((filename, index) => [filename, index]))
+    result.allOffenses.sort((a, b) => order.get(a.filename)! - order.get(b.filename)!)
+
+    await this.attachFixPreviews(result.allOffenses, formatOption, context)
+
+    return this.collapseOncePerRunOffenses(result)
+  }
+
+  private lintFiles(files: string[], formatOption: FormatOption, context?: ProcessingContext, onFileLinted?: FileLintedCallback, totalFileCount: number = files.length): Promise<ProcessingResult> {
+    const jobs = context?.jobs ?? 1
+
+    return jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
+      ? this.processFilesInParallel(files, jobs, formatOption, context, onFileLinted)
+      : this.processFilesSequentially(files, formatOption, context, onFileLinted, totalFileCount)
+  }
+
+  /**
+   * Under `--fix`, a cached file with offenses is linted again so the fixer gets to run.
+   * A fix can also change a partial's `locals` or a `render` call, which changes other files'
+   * results mid-run, so once anything was fixed the cached files are linted again against a
+   * rebuilt partial index and render graph, and nothing from the run is saved: its results
+   * mix the snapshots before and after the fix, and none of them match the run key.
+   */
+  private async processFilesWithCache(files: string[], formatOption: FormatOption, context: ProcessingContext): Promise<ProcessingResult> {
+    const cache = await this.openCache(formatOption, context)
+    const keys = new Map<string, string>()
+    const hits = new Map<string, CachedFileResult>()
+    const misses: string[] = []
+
+    for (const filename of files) {
+      const key = cache.keyFor(filename, readFileSync(this.filePathFor(filename, context), "utf-8"))
+      const hit = cache.get(filename, key)
+
+      keys.set(filename, key)
+
+      if (hit && !(context.fix && hit.offenses.length > 0)) {
+        hits.set(filename, hit)
+      } else {
+        misses.push(filename)
+      }
     }
 
-    return this.collapseOncePerRunOffenses(await this.processFilesSequentially(files, formatOption, context))
+    const onFileLinted: FileLintedCallback = (filename, result) => cache.set(filename, keys.get(filename)!, result)
+
+    const result = await this.lintFiles(misses, formatOption, context, onFileLinted, files.length)
+
+    if (!(context.fix && result.filesFixed > 0)) {
+      this.mergeCachedResults(result, hits, files.length, formatOption)
+      cache.save()
+
+      return result
+    }
+
+    if (hits.size > 0) {
+      this.partials = undefined
+      this.partialCallers = undefined
+      await this.buildPartialIndexOnce(context)
+
+      this.mergeProcessingResults(result, await this.lintFiles([...hits.keys()], formatOption, context, undefined, files.length))
+    }
+
+    return result
+  }
+
+  private mergeProcessingResults(result: ProcessingResult, other: ProcessingResult): void {
+    result.totalErrors += other.totalErrors
+    result.totalWarnings += other.totalWarnings
+    result.totalInfo += other.totalInfo
+    result.totalHints += other.totalHints
+    result.totalIgnored += other.totalIgnored
+    result.filesWithOffenses += other.filesWithOffenses
+    result.filesFixed += other.filesFixed
+    result.allOffenses.push(...other.allOffenses)
+
+    if (other.totalWouldBeIgnored) result.totalWouldBeIgnored = (result.totalWouldBeIgnored ?? 0) + other.totalWouldBeIgnored
+    if (other.totalCounterSuppressed) result.totalCounterSuppressed = (result.totalCounterSuppressed ?? 0) + other.totalCounterSuppressed
+
+    for (const [rule, data] of other.ruleOffenses) {
+      const existing = result.ruleOffenses.get(rule) || { count: 0, files: new Set<string>() }
+      existing.count += data.count
+
+      for (const file of data.files) existing.files.add(file)
+
+      result.ruleOffenses.set(rule, existing)
+    }
+  }
+
+  private async openCache(formatOption: FormatOption, context: ProcessingContext): Promise<LintCache> {
+    const projectPath = this.projectPath!
+    const customRules = await this.loadCustomRulesOnce(context, formatOption)
+
+    return LintCache.open(resolveCacheLocation(projectPath, context.cacheLocation), {
+      projectPath,
+      linterVersion: version,
+      herbVersion: Herb.version,
+      config: context.config?.config,
+      configDirectory: context.config ? relative(projectPath, context.config.projectPath) : undefined,
+      configVersion: context.config?.configVersion,
+      only: context.only,
+      allRules: context.allRules,
+      ignoreDisableComments: context.ignoreDisableComments,
+      customRuleFiles: customRules && customRules.length > 0 ? await customRuleFiles(projectPath) : [],
+      partials: this.partials,
+      partialCallers: this.partialCallers
+    })
+  }
+
+  private mergeCachedResults(result: ProcessingResult, hits: Map<string, CachedFileResult>, fileCount: number, formatOption: FormatOption): void {
+    for (const [filename, hit] of hits) {
+      const offenses = processedFilesFrom(filename, hit)
+
+      if (offenses.length === 0 && fileCount === 1 && !isStructuredFormat(formatOption)) {
+        console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
+      }
+
+      for (const item of offenses) {
+        const offense = item.offense as LintOffense
+
+        if (offense.severity === "error") result.totalErrors++
+        if (offense.severity === "warning") result.totalWarnings++
+        if (offense.severity === "info") result.totalInfo++
+        if (offense.severity === "hint") result.totalHints++
+
+        const ruleData = result.ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
+        ruleData.count++
+        ruleData.files.add(filename)
+        result.ruleOffenses.set(offense.rule, ruleData)
+      }
+
+      if (offenses.length > 0) result.filesWithOffenses++
+
+      for (const item of offenses) this.cachedItems.add(item)
+
+      result.allOffenses.push(...offenses)
+      result.totalIgnored += hit.ignored
+
+      if (hit.wouldBeIgnored > 0) result.totalWouldBeIgnored = (result.totalWouldBeIgnored ?? 0) + hit.wouldBeIgnored
+      if (hit.counterSuppressed > 0) result.totalCounterSuppressed = (result.totalCounterSuppressed ?? 0) + hit.counterSuppressed
+    }
+  }
+
+  private filePathFor(filename: string, context?: ProcessingContext): string {
+    return context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
   }
 
   private collapseOncePerRunOffenses(result: ProcessingResult): ProcessingResult {
@@ -325,7 +507,7 @@ export class FileProcessor {
     }
   }
 
-  private async processFilesSequentially(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
+  private async processFilesSequentially(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext, onFileLinted?: FileLintedCallback, totalFileCount: number = files.length): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
     let totalInfo = 0
@@ -346,9 +528,13 @@ export class FileProcessor {
       this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only, all: context?.allRules })
     }
 
+    ruleCount = this.linter.getRuleCount()
+
     for (const filename of files) {
-      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
+      const filePath = this.filePathFor(filename, context)
       const content = readFileSync(filePath, "utf-8")
+      const fileOffenses: ProcessedFile[] = []
+      let fileFixed = false
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
@@ -358,10 +544,6 @@ export class FileProcessor {
         partialCallers: this.partialCallers,
         projectPath: this.projectPath
       })
-
-      if (ruleCount === 0) {
-        ruleCount = this.linter.getRuleCount()
-      }
 
       if (context?.fix && lintResult.offenses.length > 0) {
         const autofixResult = this.linter.autofix(content, {
@@ -379,6 +561,7 @@ export class FileProcessor {
           refreshPartialAfterFix(Herb, this.partials, filename, content, autofixResult.source)
 
           filesFixed++
+          fileFixed = true
 
           if (!isStructuredFormat(formatOption)) {
             console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} ${autofixResult.fixed.length === 1 ? "offense" : "offenses"}`, "green")}`)
@@ -386,7 +569,7 @@ export class FileProcessor {
         }
 
         for (const offense of autofixResult.unfixed) {
-          allOffenses.push({
+          fileOffenses.push({
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
@@ -407,12 +590,12 @@ export class FileProcessor {
           filesWithOffenses++
         }
       } else if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && !isStructuredFormat(formatOption)) {
+        if (totalFileCount === 1 && !isStructuredFormat(formatOption)) {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
         for (const offense of lintResult.offenses) {
-          allOffenses.push({
+          fileOffenses.push({
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
@@ -437,6 +620,12 @@ export class FileProcessor {
       }
       if (lintResult.counterSuppressed) {
         totalCounterSuppressed += lintResult.counterSuppressed
+      }
+
+      allOffenses.push(...fileOffenses)
+
+      if (onFileLinted && !fileFixed) {
+        onFileLinted(filename, cachedFileResultFrom(lintResult, offense => this.fixabilityFor(offense)))
       }
     }
 
@@ -465,12 +654,10 @@ export class FileProcessor {
       result.totalCounterSuppressed = totalCounterSuppressed
     }
 
-    await this.attachFixPreviews(allOffenses, formatOption, context)
-
     return result
   }
 
-  private async processFilesInParallel(files: string[], jobs: number, formatOption: FormatOption, context?: ProcessingContext): Promise<ProcessingResult> {
+  private async processFilesInParallel(files: string[], jobs: number, formatOption: FormatOption, context?: ProcessingContext, onFileLinted?: FileLintedCallback): Promise<ProcessingResult> {
     const workerCount = Math.min(jobs, files.length)
     const chunks = this.splitIntoChunks(files, workerCount)
     const workerPath = this.resolveWorkerPath()
@@ -478,7 +665,7 @@ export class FileProcessor {
     const configVersion = context?.config?.configVersion
     const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion, { only: context?.only, all: context?.allRules })
 
-    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
+    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context, onFileLinted !== undefined))
     const workerResults = await Promise.all(workerPromises)
 
     for (const result of workerResults) {
@@ -492,7 +679,13 @@ export class FileProcessor {
     aggregated.rulesDisabledByConfig = filterResult.disabledByConfig
     aggregated.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
 
-    await this.attachFixPreviews(aggregated.allOffenses, formatOption, context)
+    if (onFileLinted) {
+      for (const result of workerResults) {
+        for (const [filename, fileResult] of result.fileResults) {
+          onFileLinted(filename, fileResult)
+        }
+      }
+    }
 
     return aggregated
   }
@@ -517,7 +710,7 @@ export class FileProcessor {
     return chunks.filter(chunk => chunk.length > 0)
   }
 
-  private runWorker(workerPath: string, files: string[], context?: ProcessingContext): Promise<WorkerResult> {
+  private runWorker(workerPath: string, files: string[], context?: ProcessingContext, collectFileResults: boolean = false): Promise<WorkerResult> {
     return new Promise((resolve, reject) => {
       const workerData: WorkerInput = {
         files,
@@ -532,6 +725,7 @@ export class FileProcessor {
         allRules: context?.allRules || false,
         partials: this.partials?.toJSON(),
         partialCallers: this.partialCallers?.toJSON(),
+        collectFileResults,
       }
 
       const worker = new Worker(workerPath, { workerData })
