@@ -954,6 +954,8 @@ export class Linter {
    * @param source - The source code to fix
    * @param context - Optional context for linting (e.g., fileName)
    * @param offensesToFix - Optional array of specific offenses to fix. If not provided, all fixable offenses will be fixed.
+   *   When a parser rule fix changes the source, the changed source is linted again for the source rules in this array,
+   *   and every offense those rules report on it is fixed, including offenses that weren't passed in.
    * @param options - Options for autofix behavior
    * @param options.includeUnsafe - If true, also apply unsafe fixes (rules with unsafeAutocorrectable = true)
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
@@ -976,7 +978,7 @@ export class Linter {
 
     const parserOffenses: LintOffense[] = []
     const lexerOffenses: LintOffense[] = []
-    const sourceOffenses: LintOffense[] = []
+    let sourceOffenses: LintOffense[] = []
 
     for (const offense of lintResult.offenses) {
       const ruleClass = this.findRuleClass(offense.rule)
@@ -1063,6 +1065,12 @@ export class Linter {
           currentSource = new IdentityPrinter().print(parseResult.value)
         }
       }
+    }
+
+    if (sourceOffenses.length > 0 && currentSource !== source) {
+      const sourceRuleNames = new Set(sourceOffenses.map(offense => offense.rule))
+
+      sourceOffenses = this.lint(currentSource, context).offenses.filter(offense => sourceRuleNames.has(offense.rule))
     }
 
     if (sourceOffenses.length > 0) {
