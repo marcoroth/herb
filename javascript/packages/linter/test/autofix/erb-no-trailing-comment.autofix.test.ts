@@ -73,6 +73,14 @@ describe("erb-no-trailing-comment autofix", () => {
     expect(result.fixed).toHaveLength(1)
   })
 
+  test("does not fix a herb:debug disable comment", () => {
+    const input = `<%= tag.td "Ada" # herb:debug disable %>`
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+  })
+
   test("does not fix a template with parse errors", () => {
     const input = `<% if some_method # comment %><% end %>`
     const result = autofix(input)

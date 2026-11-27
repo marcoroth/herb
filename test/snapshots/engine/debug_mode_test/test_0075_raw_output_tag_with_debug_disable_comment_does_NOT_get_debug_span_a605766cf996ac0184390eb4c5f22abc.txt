@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0075_raw output tag with debug disable comment does NOT get debug span"
+input: "{source: \"<%== tag.td \\\"Ada\\\" # herb:debug disable %>\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << ::Herb::Engine.h((tag.td "Ada"));
+_buf.to_s

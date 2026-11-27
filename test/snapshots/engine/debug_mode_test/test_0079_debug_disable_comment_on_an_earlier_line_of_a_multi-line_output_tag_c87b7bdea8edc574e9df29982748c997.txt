@@ -1,0 +1,8 @@
+---
+source: "Engine::DebugModeTest#test_0079_debug disable comment on an earlier line of a multi-line output tag"
+input: "{source: \"<%= tag.td \\\"Ada\\\", # herb:debug disable\\n      id: \\\"cell_1\\\" %>\\n\", options: {visitors: [#<Herb::Engine::DebugVisitor>]}}"
+---
+_buf = ::String.new; _buf << (tag.td "Ada", # herb:debug disable
+      id: "cell_1").to_s; _buf << '
+'.freeze;
+_buf.to_s
