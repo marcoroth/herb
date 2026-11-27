@@ -2,6 +2,7 @@
 
 require "json"
 require "fileutils"
+require "socket"
 
 module Herb
   module Dev
@@ -46,7 +47,7 @@ module Herb
 
       #: () -> bool
       def alive?
-        self.class.process_alive?(pid)
+        self.class.process_alive?(pid) && self.class.port_listening?(port)
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -85,11 +86,7 @@ module Herb
             if entry&.alive?
               entry
             else
-              begin
-                File.delete(path)
-              rescue StandardError
-                nil
-              end
+              delete_stale(path, entry)
               nil
             end
           end
@@ -127,7 +124,26 @@ module Herb
           false
         end
 
+        #: (Integer?) -> bool
+        def port_listening?(port)
+          return false unless port
+
+          Socket.tcp("127.0.0.1", port, connect_timeout: 1).close
+          true
+        rescue SystemCallError, IOError
+          false
+        end
+
         private
+
+        #: (String, ServerEntry?) -> void
+        def delete_stale(path, entry)
+          return if entry && load_file(path)&.to_hash != entry.to_hash
+
+          File.delete(path)
+        rescue StandardError
+          nil
+        end
 
         #: (String) -> ServerEntry?
         def load_file(path)

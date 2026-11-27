@@ -39,9 +39,15 @@ module Herb
 
       #: () -> void
       def start
-        @entry = ServerEntry.new(pid: Process.pid, port: @port, project: @project_path, kind: @kind)
-        @entry.save
         @server = TCPServer.new("0.0.0.0", @port)
+        @entry = ServerEntry.new(pid: Process.pid, port: @port, project: @project_path, kind: @kind)
+
+        begin
+          @entry.save
+        rescue StandardError
+          safely_close(@server)
+          raise
+        end
 
         @accept_thread = Thread.new do
           loop do

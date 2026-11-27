@@ -32,7 +32,8 @@ module Dev
     test "boots nothing when a standalone server owns the project" do
       Dir.mktmpdir do |root|
         expanded = File.realpath(root)
-        entry = Herb::Dev::ServerEntry.new(pid: Process.pid, port: 65_001, project: expanded)
+        listener = TCPServer.new("127.0.0.1", 0)
+        entry = Herb::Dev::ServerEntry.new(pid: Process.pid, port: listener.addr[1], project: expanded)
         entry.save
 
         begin
@@ -40,6 +41,34 @@ module Dev
           assert(logged.any? { |message| message.include?("already running") })
         ensure
           entry.remove
+          listener.close
+        end
+      end
+    end
+
+    test "a stale entry whose PID now belongs to another process is cleared before booting on its port" do
+      Dir.mktmpdir do |root|
+        Dir.mktmpdir do |other|
+          other_project = File.realpath(other)
+          unrelated = Process.spawn(RbConfig.ruby, "-e", "sleep")
+          port = Herb::Dev::Server.find_available_port
+          entry = Herb::Dev::ServerEntry.new(pid: unrelated, port: port, project: other_project)
+          entry.save
+
+          begin
+            embedded = Herb::Dev.boot(root, environment: "development", logger: quiet)
+
+            skip "cruise unavailable" if embedded.nil? && logged.any? { |message| message.include?("cruise") }
+
+            assert_equal port, embedded.server.port
+            assert_nil Herb::Dev::ServerEntry.find_by_project(other_project)
+            refute File.exist?(File.join(Herb::Dev::ServerEntry::SERVERS_DIR, "#{unrelated}.json"))
+          ensure
+            Herb::Dev.shutdown
+            entry.remove
+            Process.kill("KILL", unrelated)
+            Process.wait(unrelated)
+          end
         end
       end
     end

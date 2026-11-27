@@ -64,6 +64,12 @@ module Herb
       # : (Integer?) -> bool
       def self.process_alive?: (Integer?) -> bool
 
+      # : (Integer?) -> bool
+      def self.port_listening?: (Integer?) -> bool
+
+      # : (String, ServerEntry?) -> void
+      private def self.delete_stale: (String, ServerEntry?) -> void
+
       # : (String) -> ServerEntry?
       private def self.load_file: (String) -> ServerEntry?
 
