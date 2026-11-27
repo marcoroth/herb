@@ -34,7 +34,15 @@ module Herb
       #: () -> void
       def save
         FileUtils.mkdir_p(SERVERS_DIR)
-        File.write(file_path, to_json)
+        temp_path = "#{file_path}.#{Process.pid}.#{Thread.current.object_id}.tmp"
+
+        begin
+          File.write(temp_path, to_json)
+          File.rename(temp_path, file_path)
+        rescue StandardError
+          FileUtils.rm_f(temp_path)
+          raise
+        end
       end
 
       #: () -> void
