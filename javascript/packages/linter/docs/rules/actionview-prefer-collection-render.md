@@ -22,14 +22,6 @@ Collection rendering names the local after the partial, so when the loop passes 
 <% end %>
 ```
 
-Rendering an object directly reports the shorthand collection form instead:
-
-```erb
-<% @users.each do |user| %>
-  <%= render user %>
-<% end %>
-```
-
 ## Rationale
 
 When a partial is rendered inside a loop, Action View looks the template up and sets up a fresh local scope on every iteration. Collection rendering does that work once and then reuses it for every element, so it is meaningfully faster for anything but the shortest collections.
@@ -74,6 +66,14 @@ Loops that do more than render a single partial are not flagged, because collect
 <% end %>
 ```
 
+Rendering the element itself is not flagged either. `render(object)` calls `render_in` on a component instance, while `render(collection)` needs `to_partial_path` on every element, and the template does not show which one the loop holds:
+
+```erb
+<% @users.each do |user| %>
+  <%= render user %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -85,12 +85,6 @@ Loops that do more than render a single partial are not flagged, because collect
 ```erb
 <% @users.each do |user| %>
   <%= render partial: "user", locals: { user: user } %>
-<% end %>
-```
-
-```erb
-<% @users.each do |user| %>
-  <%= render user %>
 <% end %>
 ```
 
