@@ -11,6 +11,8 @@
 #include "../../src/include/location/position.h"
 #include "../../src/include/location/range.h"
 
+void rb_init_extension_helpers(void);
+
 const char* check_string(VALUE value);
 VALUE rb_string_from_hb_string(hb_string_T string);
 VALUE rb_interned_string_from_hb_string(hb_string_T string);

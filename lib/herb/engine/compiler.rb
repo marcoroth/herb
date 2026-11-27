@@ -7,8 +7,8 @@ module Herb
     class Compiler < ::Herb::Visitor
       PADDING_NEWLINES = Array.new(17) { |count| ("\n" * count).freeze }.freeze #: Array[String]
       EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze #: Array[Symbol]
-      HORIZONTAL_SPACE = [" ", "\t"].freeze #: Array[String]
-      RAW_TEXT_ELEMENTS = ["script", "style"].freeze #: Array[String]
+      HORIZONTAL_SPACE = [" ".freeze, "\t".freeze].freeze #: Array[String]
+      RAW_TEXT_ELEMENTS = ["script".freeze, "style".freeze].freeze #: Array[String]
 
       attr_reader :tokens
 

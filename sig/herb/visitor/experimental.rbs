@@ -18,6 +18,11 @@ module Herb
 
       # : (*untyped, **untyped) ?{ (?) -> untyped } -> untyped
       def new: (*untyped, **untyped) ?{ (?) -> untyped } -> untyped
+
+      private
+
+      # : () -> void
+      def announce_experimental: () -> void
     end
   end
 end

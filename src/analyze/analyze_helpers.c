@@ -122,8 +122,9 @@ static pm_visit_result_t search_inline_condition_offset(const pm_node_t* node, v
   return PM_VISIT_SKIP;
 }
 
-static hb_string_T control_continuation_keywords[] = HB_STRING_LIST("else", "elsif", "when", "in", "rescue", "ensure");
-static hb_string_T control_terminator_keywords[] = HB_STRING_LIST("end", "}");
+static const hb_string_T control_continuation_keywords[] =
+  HB_STRING_LIST("else", "elsif", "when", "in", "rescue", "ensure");
+static const hb_string_T control_terminator_keywords[] = HB_STRING_LIST("end", "}");
 
 static bool matches_keyword(hb_string_T keyword, const hb_string_T* keywords, size_t count) {
   for (size_t index = 0; index < count; index++) {
