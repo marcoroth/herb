@@ -342,6 +342,16 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       }
     }
 
+    if (isNode(entry.anchor, HTMLElementNode)) {
+      const anchorText = IdentityPrinter.print(entry.anchor).trim()
+
+      if (anchorText && !anchorText.includes("\n")) {
+        for (let index = 0; index < this.lines.length; index++) {
+          if (this.lines[index].includes(anchorText)) return index
+        }
+      }
+    }
+
     const searchContent = this.getSearchableContentForNode(entry.anchor) ?? this.getSearchableContentForNode(entry.parentNode)
 
     if (searchContent) {
