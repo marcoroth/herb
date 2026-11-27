@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0014_turbo_frame_tag with splatted ids"
+input: "{source: \"<%= turbo_frame_tag *ids %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>], locals: {ids: [\"post\", 7]}}}"
+---
+_buf = ::String.new; _buf << '<turbo-frame id="'.freeze; _buf << ::Herb::Engine.attr(([*ids].then { |ids| ids.first.respond_to?(:to_key) || ids.first.is_a?(Class) ? dom_id(*ids) : ids.join("_") })); _buf << '"></turbo-frame>'.freeze;
+_buf.to_s

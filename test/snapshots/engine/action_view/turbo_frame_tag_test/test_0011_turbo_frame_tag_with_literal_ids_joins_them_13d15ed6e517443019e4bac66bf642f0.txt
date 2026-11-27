@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0011_turbo_frame_tag with literal ids joins them"
+input: "{source: \"<%= turbo_frame_tag \\\"notes\\\", :list %>\", options: {visitors: [#<Herb::Engine::OptimizeVisitor>]}}"
+---
+'<turbo-frame id="notes_list"></turbo-frame>'.freeze

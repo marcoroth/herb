@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0013_turbo_frame_tag with an array id and block"
+input: "{source: \"<%= turbo_frame_tag frame_id do %>Content<% end %>\", locals: {frame_id: [\"post\", [7, \"notes\"]]}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="post_7_notes">Content</turbo-frame>
