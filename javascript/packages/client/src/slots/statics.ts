@@ -4,7 +4,9 @@
  * A template compiled in client mode ships the branches a conditional did not take and the shape
  * of a row a collection has none of, keyed by the slot they belong to. The store holds one set per
  * template, replaced whenever a newer version of that template arrives, and hands back a copy
- * filled with whatever values it is given.
+ * filled with whatever values it is given. The render mode it reports comes only from what the
+ * template itself shipped, so a branch the client captured or a payload sent along never makes a
+ * server-rendered template look client-rendered.
  */
 
 import { HERB_ATTRIBUTES } from "../grammar/attributes"
@@ -19,6 +21,7 @@ import type { FragmentMap, PartsResolver, RenderMode, SlotValues, StaticsIdentit
 interface Parked {
   version: string
   fragments: FragmentMap
+  sent: Set<string>
 }
 
 export class Statics {
@@ -28,7 +31,7 @@ export class Statics {
     const { file, version } = identity
     const held = this.held.get(file)
 
-    let parked: Parked = { version, fragments: new Map() }
+    let parked: Parked = { version, fragments: new Map(), sent: new Set() }
 
     if (held && held.version === version) {
       parked = held
@@ -49,7 +52,7 @@ export class Statics {
     const { file, version } = identity
     const held = this.held.get(file)
 
-    let parked: Parked = { version, fragments: new Map() }
+    let parked: Parked = { version, fragments: new Map(), sent: new Set() }
 
     if (held && held.version === version) {
       parked = held
@@ -69,6 +72,7 @@ export class Statics {
 
       for (const [key, fragment] of parkedBranches(element)) {
         this.park(identity, key, fragment)
+        this.held.get(identity.file)?.sent.add(key)
       }
 
       element.remove()
@@ -96,11 +100,19 @@ export class Statics {
   }
 
   mode(file: string, slot?: number): RenderMode {
+    const sent = [...(this.held.get(file)?.sent ?? [])]
+
     if (slot === undefined) {
-      return this.keys(file).length > 0 ? "client" : "server"
+      return sent.length > 0 ? "client" : "server"
     }
 
-    return this.branches(file, slot).length > 0 ? "client" : "server"
+    const parked = sent.some((key) => {
+      const parsed = parseStaticsKey(key)
+
+      return parsed?.kind === "branch" && parsed.index === slot
+    })
+
+    return parked ? "client" : "server"
   }
 
   materialize(file: string, key: string, dynamics: SlotValues = {}, parts?: PartsResolver): DocumentFragment | null {

@@ -846,12 +846,32 @@ export class State implements ElementObserverDelegate, SlotsDelegate, SeedsDeleg
     }
 
     if (stale.size === 0) {
+      if (this.steersServer(manifest, scope, names)) {
+        void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+      }
+
       return
     }
 
     this.fragments.showFallbacks(manifest, scope, stale, names)
 
     void this.refetch.request(this.options.refetchDebounce).then((outcome) => this.fragments.settle(outcome))
+  }
+
+  private steersServer(manifest: StateManifest, scope: StateScope, names: string[]): boolean {
+    if (scope.item !== null || this.slots.renderModeFor(scope.region.file) !== "server") {
+      return false
+    }
+
+    const steering = steeringNames(manifest)
+    const internal = new Set(Object.values(manifest.fragments ?? {}).map((fragment) => fragment.state))
+    const steered = names.filter((name) => steering.has(name) && !internal.has(name))
+
+    if (steered.length === 0) {
+      return false
+    }
+
+    return Object.values(manifest.conditionals).some((conditional) => conditional.arms.some((arm) => mentions(armOf(arm).condition, steered)))
   }
 
   toggle(name: string, options: ScopedSetOptions = {}): boolean {
