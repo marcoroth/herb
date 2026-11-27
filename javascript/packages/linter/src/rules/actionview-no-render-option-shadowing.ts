@@ -16,7 +16,6 @@ const RENDER_OPTIONS = new Set([
   "layout",
   "object",
   "spacer_template",
-  "template",
   "variants",
 ])
 
