@@ -56,6 +56,7 @@ module CLI
         .gsub(File.realpath(@project_path), "<project>")
         .gsub(@project_path, "<project>")
         .gsub(/v\d+\.\d+\.\d+(\+\h+)?/, "vVERSION")
+        .gsub("(Ruby FFI backend)", "(Ruby C native extension)")
         .gsub(/\d+(\.\d+)?\s*(ms|s)\b/, "<duration>")
     end
 

@@ -15,6 +15,8 @@ module Parser
     end
 
     test "parse releases the GVL and leaves its input mutable" do
+      skip "JRuby has no GVL" if RUBY_ENGINE == "jruby"
+
       source = "<div><%= value %></div>\n" * 10_000
       parser = Thread.new { Herb.parse(source, track_locations: false) }
       observed_without_gvl = false
@@ -42,11 +44,13 @@ module Parser
     end
 
     test "parse is unaffected by mutating the source from another thread" do
+      skip "JRuby has no GVL" if RUBY_ENGINE == "jruby"
+
       source = "<div><%= value %></div>\n" * 10_000
       expected = Herb.parse(source, track_locations: false).value.children.size
 
       parser = Thread.new { Herb.parse(source, track_locations: false) }
-      Thread.pass while parser.status != "sleep"
+      Thread.pass while parser.alive? && parser.status != "sleep"
       source << "<p>appended mid-parse</p>"
 
       assert_equal expected, parser.value.value.children.size

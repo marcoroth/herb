@@ -2,3 +2,4 @@
 --dir=sorbet/rbi
 --ignore=/tmp/
 --ignore=/vendor/bundle
+--ignore=/herb/ffi/

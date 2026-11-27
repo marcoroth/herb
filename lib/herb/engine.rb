@@ -486,6 +486,14 @@ module Herb
     end
 
     def ensure_valid_ruby!(source)
+      if defined?(Herb::FFI::Backend)
+        ensure_valid_ruby_with_libherb!(source)
+      else
+        ensure_valid_ruby_with_ruby_vm!(source)
+      end
+    end
+
+    def ensure_valid_ruby_with_ruby_vm!(source)
       RubyVM::InstructionSequence.compile(source)
     rescue SyntaxError => e
       return if e.message.include?("Invalid yield")
@@ -505,6 +513,14 @@ module Herb
         details = syntax_errors.map { |error| "  - #{error.message} (line #{error.location.start_line})" }.join("\n")
         raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
       end
+    end
+
+    def ensure_valid_ruby_with_libherb!(source)
+      syntax_errors = Herb::FFI.ruby_syntax_errors(source).reject { |type, _message, _line| type == :invalid_yield }
+      return if syntax_errors.empty?
+
+      details = syntax_errors.map { |_type, message, line| "  - #{message} (line #{line})" }.join("\n")
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
     end
   end
 end

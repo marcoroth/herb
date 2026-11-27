@@ -99,6 +99,7 @@ ext/herb/parser_options_helpers.h
 ext/herb/error_helpers.h
 ext/herb/nodes.c
 ext/herb/nodes.h
+ffi/serialize.c
 src/include/parser/foreign_content_elements.h
 src/include/util/html_elements.h
 java/error_helpers.c
@@ -144,6 +145,7 @@ lib/herb/engine/slots/state_predicates.rb
 lib/herb/engine/slots/state_transforms.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
+lib/herb/ffi/deserialize.rb
 lib/herb/html/elements.rb
 lib/herb/parser_options.rb
 lib/herb/visitor.rb

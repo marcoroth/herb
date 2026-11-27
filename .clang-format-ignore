@@ -1,5 +1,6 @@
 ext/herb/error_helpers.c
 ext/herb/nodes.c
+ffi/serialize.c
 src/analyze/action_view/generated_handlers.c
 src/analyze/action_view/generated_handlers.h
 src/analyze/action_view/helper_registry.c

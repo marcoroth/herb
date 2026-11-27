@@ -38,6 +38,12 @@ spec.add_dependency "herb", "~> 0.1"
 ```
 :::
 
+### JRuby
+
+JRuby can't load C extensions, so on JRuby Herb calls libherb through the [`ffi`](https://github.com/ffi/ffi) gem instead, which JRuby ships with. Installing the gem builds that library, so it needs a C compiler, as Prism does on JRuby. Everything else works the same, except `Herb.arena_stats`, `Herb.leak_check` and the `arena_stats:` option, which raise `NotImplementedError`. `Herb.version` mentions the `Ruby FFI backend`.
+
+In a source checkout, `ffi/build.sh` builds `libherb_ffi`, and `HERB_BACKEND=ffi` then uses the FFI backend on CRuby too. `HERB_FFI_LIBRARY` points it at a `libherb_ffi` built elsewhere.
+
 ## Getting Started
 
 In your project `require` the gem:
