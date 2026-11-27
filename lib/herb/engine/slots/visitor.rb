@@ -66,6 +66,7 @@ module Herb
         COVERED = "@_herb_covered" #: String
         OCCURRENCES = "@_herb_region_occurrences" #: String
         OCCURRENCE = "_herb_occurrence" #: String
+        VALUES_OCCURRENCE = "__herb_occurrence" #: String
         POSITION = "__herb_position" #: String
         NAME_ATTRIBUTE = "data-herb-name" #: String
         KEY_ATTRIBUTE = "herb-key" #: String

@@ -27,6 +27,8 @@ type RefreshWaiter = (report: RefreshReport) => void
 
 const HEADER_BUDGET = 4096
 
+const OCCURRENCES_KEY = "@occurrences"
+
 export class Refresh {
   private slots: Slots
   private delegate: RefreshDelegate
@@ -129,43 +131,84 @@ export class Refresh {
   }
 
   private steering(): Record<string, Record<string, unknown>> {
-    const steering: Record<string, Record<string, unknown>> = {}
+    return steeringFor(this.slots.regions(), this.delegate)
+  }
+}
 
-    let budget = HEADER_BUDGET
+export function steeringFor(regions: Region[], delegate: RefreshDelegate): Record<string, Record<string, unknown>> {
+  const steering: Record<string, Record<string, unknown>> = {}
+  const budget = { left: HEADER_BUDGET }
 
-    for (const region of this.slots.regions()) {
-      const manifest = this.delegate.manifestFor(region)
+  for (const region of regions) {
+    const manifest = delegate.manifestFor(region)
 
-      if (!manifest || steering[region.file]) {
-        continue
-      }
+    if (!manifest) {
+      continue
+    }
 
-      const values: Record<string, unknown> = {}
+    const values: Record<string, unknown> = {}
 
-      for (const name of steeringNames(manifest)) {
-        const value = this.delegate.steeringValue(region, name)
+    for (const name of steeringNames(manifest)) {
+      const value = delegate.steeringValue(region, name)
 
-        if (value === undefined) {
-          continue
-        }
-
-        const cost = name.length + JSON.stringify(value ?? null).length + 8
-
-        if (cost > budget) {
-          continue
-        }
-
-        budget -= cost
+      if (value !== undefined) {
         values[name] = value
-      }
-
-      if (Object.keys(values).length > 0) {
-        steering[region.file] = values
       }
     }
 
-    return steering
+    const base = steering[region.file]
+
+    if (!base) {
+      const taken = withinBudget(values, budget)
+
+      if (Object.keys(taken).length > 0) {
+        steering[region.file] = taken
+      }
+
+      continue
+    }
+
+    const differences = withinBudget(differencesFrom(base, values), budget)
+
+    if (Object.keys(differences).length === 0) {
+      continue
+    }
+
+    const occurrences = (base[OCCURRENCES_KEY] ??= {}) as Record<string, Record<string, unknown>>
+
+    occurrences[region.occurrence] = differences
   }
+
+  return steering
+}
+
+function differencesFrom(base: Record<string, unknown>, values: Record<string, unknown>): Record<string, unknown> {
+  const differences: Record<string, unknown> = {}
+
+  for (const [name, value] of Object.entries(values)) {
+    if (!(name in base) || base[name] !== value) {
+      differences[name] = value
+    }
+  }
+
+  return differences
+}
+
+function withinBudget(values: Record<string, unknown>, budget: { left: number }): Record<string, unknown> {
+  const taken: Record<string, unknown> = {}
+
+  for (const [name, value] of Object.entries(values)) {
+    const cost = name.length + JSON.stringify(value ?? null).length + 8
+
+    if (cost > budget.left) {
+      continue
+    }
+
+    budget.left -= cost
+    taken[name] = value
+  }
+
+  return taken
 }
 
 export function steeringNames(manifest: StateManifest): Set<string> {
