@@ -78,11 +78,11 @@ module Extractor
       assert_equal "   if true  ;                       end  ;", result
     end
 
-    test "extract_ruby_inline_comment_with_newline" do
+    test "extract_ruby_trailing_comment_before_newline" do
       source = "<% if true %><% # Comment here %>\n<% end %>"
       result = Herb.extract_ruby(source, semicolons: true)
 
-      expected = "   if true  ;                    \n   end  ;"
+      expected = "   if true  ;   # Comment here   \n   end  ;"
       assert_equal expected, result
     end
 
@@ -91,6 +91,89 @@ module Extractor
       result = Herb.extract_ruby(source, semicolons: true)
 
       assert_equal "                    code  ;", result
+    end
+
+    test "extract_ruby_comment_before_whitespace_and_line_end" do
+      suffixes = ["", " \t", "\n", " \t\n", "\r\n", " \t\r\n"]
+      semicolon_options = [true, false]
+
+      ["%>", "-%>"].each do |closing|
+        suffixes.each do |suffix|
+          semicolon_options.each do |semicolons|
+            source = "<% # test #{closing}#{suffix}"
+            ending = " " * closing.length
+            expected = "   # test #{ending}#{suffix.gsub(/[^\r\n]/, " ")}"
+
+            assert_equal expected, Herb.extract_ruby(source, semicolons: semicolons), source.inspect
+          end
+        end
+      end
+    end
+
+    test "extract_ruby_retained_rubocop_directive_has_no_trailing_semicolon" do
+      source = "<% # rubocop:disable Layout/LineLength %>\n"
+
+      assert_equal "   # rubocop:disable Layout/LineLength   \n", Herb.extract_ruby(source)
+    end
+
+    test "extract_ruby_comment_before_same_line_content" do
+      cases = [
+        ["<p>text</p>", "           "],
+        ["text", "    "],
+        ["<% code %>", "   code  ;"],
+        ["<%  %>", "     ;"],
+        ["<%# ignored %>", "              "],
+        ["<%% ignored %>", "             ;"],
+        ["<%herb ignored %>", "                ;"],
+        ["<% \ncode %>", "   \ncode  ;"],
+        ["<%# ignored\n %><% code %>", "           \n      code  ;"],
+        ["<%herb ignored\n %><% code %>", "                 ;   code  ;"]
+      ]
+
+      semicolon_options = [true, false]
+
+      cases.each do |suffix, expected_suffix|
+        semicolon_options.each do |semicolons|
+          source = "<% # test %> \t#{suffix}"
+          expected = (" " * 14) + (semicolons ? expected_suffix : expected_suffix.tr(";", " "))
+
+          assert_equal expected, Herb.extract_ruby(source, semicolons: semicolons, erb_openers: ["herb"]), source.inspect
+        end
+      end
+    end
+
+    test "extract_ruby_trailing_comment_without_semicolons" do
+      result = Herb.extract_ruby("<% code %><% # test %>\n<% more %>", semicolons: false)
+
+      assert_equal "   code      # test   \n   more   ", result
+    end
+
+    test "extract_ruby_comment_without_closing_tag" do
+      assert_equal "         ", Herb.extract_ruby("<% # test")
+    end
+
+    test "extract_ruby_comment_before_code_without_semicolons" do
+      result = Herb.extract_ruby("<% # test %><% code %>", semicolons: false)
+
+      assert_equal "               code   ", result
+    end
+
+    test "extract_ruby_comments_without_preserve_positions" do
+      assert_equal " # test ", Herb.extract_ruby("<% # test %>", preserve_positions: false)
+
+      result = Herb.extract_ruby("<% # test %><% code %>", preserve_positions: false)
+
+      assert_equal " # test \n code ", result
+    end
+
+    test "extract_ruby_comments_preserve_following_statements" do
+      ["", "\n"].each do |separator|
+        source = "<% if true %><% before %><% # test %>#{separator}<% after %><% end %>"
+        result = Prism.parse(Herb.extract_ruby(source))
+
+        assert result.success?, result.errors.map(&:message).join("\n")
+        assert_equal [:before, :after], result.value.statements.body.first.statements.body.map(&:name)
+      end
     end
 
     test "extract_ruby_inline_comment_multiline" do
@@ -135,6 +218,13 @@ module Extractor
       result = Herb.extract_ruby(source, comments: true)
 
       assert_equal "  # comment   ", result
+    end
+
+    test "extract_ruby_with_ruby_comment_and_code_same_line_with_comments_included" do
+      source = "<% # test %><% code %>"
+      result = Herb.extract_ruby(source, comments: true)
+
+      assert_equal "   # test  ;   code  ;", result
     end
 
     test "extract_ruby_with_comments_and_code_same_line" do

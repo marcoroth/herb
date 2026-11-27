@@ -9,6 +9,7 @@
 #include "include/util/util.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,6 +19,24 @@ const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicol
                                                                         .custom_tags = false,
                                                                         .erb_openers = NULL,
                                                                         .erb_opener_count = 0 };
+
+static bool ruby_comment_ends_line(const lexer_T* lexer) {
+  lexer_T lookahead = *lexer;
+  token_T* closing = lexer_next_token(&lookahead);
+  bool has_closing = closing->type == TOKEN_ERB_END;
+  token_free(closing, lookahead.allocator);
+
+  if (!has_closing) { return false; }
+
+  for (size_t position = lookahead.current_position; position < lookahead.source.length; position++) {
+    unsigned char character = (unsigned char) lookahead.source.data[position];
+
+    if (is_newline(character)) { return true; }
+    if (!isspace(character)) { return false; }
+  }
+
+  return true;
+}
 
 typedef struct {
   herb_extract_ruby_options_T options;
@@ -44,7 +63,12 @@ static void extract_ruby_data(extract_ruby_state_T* state, const char* data, uin
   if (state->options.preserve_positions) { hb_buffer_append_whitespace(state->output, to - run_start); }
 }
 
-static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token, const token_T* next) {
+static void extract_ruby_token(
+  extract_ruby_state_T* state,
+  const token_T* token,
+  const token_T* next,
+  const lexer_T* lexer
+) {
   switch (token->type) {
     case TOKEN_NEWLINE: {
       hb_buffer_append_string(state->output, token->value);
@@ -113,20 +137,19 @@ static void extract_ruby_token(extract_ruby_state_T* state, const token_T* token
       if (state->skip_erb_content == false) {
         bool is_inline_comment = false;
 
-        if (!state->options.comments && !state->is_comment_tag && !hb_string_is_empty(token->value)) {
+        if (!state->options.comments && state->options.preserve_positions && !state->is_comment_tag
+            && !hb_string_is_empty(token->value)) {
           hb_string_T trimmed = hb_string_trim_start(token->value);
 
           if (!hb_string_is_empty(trimmed) && trimmed.data[0] == '#'
               && token->location.start.line == token->location.end.line) {
             state->is_comment_tag = true;
-            is_inline_comment = true;
+            is_inline_comment = !ruby_comment_ends_line(lexer);
           }
         }
 
         if (is_inline_comment) {
-          if (state->options.preserve_positions) {
-            hb_buffer_append_whitespace(state->output, range_length(token->range));
-          }
+          hb_buffer_append_whitespace(state->output, range_length(token->range));
         } else if (state->is_erb_comment_tag && !hb_string_is_null(token->value)) {
           const char* content = token->value.data;
           size_t content_remaining = token->value.length;
@@ -260,7 +283,7 @@ void herb_extract_ruby_to_buffer_with_options(
 
     if (token->type == TOKEN_ERB_START) { pending = lexer_next_token(&lexer); }
 
-    extract_ruby_token(&state, token, pending);
+    extract_ruby_token(&state, token, pending, &lexer);
     token_free(token, allocator);
   }
 }
