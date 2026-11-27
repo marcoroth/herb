@@ -2,7 +2,7 @@ import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 import { createLiteral } from "@herb-tools/core"
 
-import { isERBStrictLocalsNode, isHTMLTextNode } from "@herb-tools/core"
+import { isERBStrictLocalsNode, isHTMLTextNode, isPositionEqual } from "@herb-tools/core"
 
 import type { ParseResult, DocumentNode, ERBStrictLocalsNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -75,10 +75,7 @@ export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
   autofix(offense: LintOffense, result: ParseResult): ParseResult | null {
     const children = result.value.children
 
-    const index = children.findIndex(child =>
-      child.location.start.line === offense.location.start.line &&
-      child.location.start.column === offense.location.start.column
-    )
+    const index = children.findIndex(child => isPositionEqual(child.location.start, offense.location.start))
 
     if (index === -1) return null
 

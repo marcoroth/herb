@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, cloneNode } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode, isERBCommentNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, isERBCommentNode, isERBContentNode, getNamedCharacterReference, getTagLocalName, hasAttribute, getAttribute, isPositionEqual, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize, hasSourceLocation, nodeToRange } from "./range_utils"
 import { RubyLocalsIndex } from "./ruby_locals_index"
@@ -668,10 +668,7 @@ export class HoverProvider {
 
     collector.visit(parseResult.value)
 
-    const match = collector.elements.find(element =>
-      element.node.location.start.line === node.location.start.line &&
-      element.node.location.start.column === node.location.start.column
-    )
+    const match = collector.elements.find(element => isPositionEqual(element.node.location.start, node.location.start))
 
     if (!match) return ""
 

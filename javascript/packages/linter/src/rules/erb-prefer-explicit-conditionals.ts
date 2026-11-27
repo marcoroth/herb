@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext } from "../types.js"
 import { BaseRuleVisitor } from "../utils/rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import { findParentArray, isERBContentNode, isERBIfNode, isHTMLTextNode, isLiteralNode } from "@herb-tools/core"
+import { findParentArray, isERBContentNode, isERBIfNode, isHTMLTextNode, isLiteralNode, isPositionEqual } from "@herb-tools/core"
 
 import type { Mutable } from "@herb-tools/rewriter"
 import type { ERBContentNode, ERBIfNode, ERBUnlessNode, Node, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -20,7 +20,7 @@ function isSynthesizedConditional(node: ERBIfNode | ERBUnlessNode): boolean {
 
   const { start, end } = opening.location
 
-  return start.line === end.line && start.column === end.column
+  return isPositionEqual(start, end)
 }
 
 function isInlineConditional(node: ERBIfNode | ERBUnlessNode): boolean {
