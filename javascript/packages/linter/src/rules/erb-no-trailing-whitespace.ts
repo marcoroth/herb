@@ -1,4 +1,4 @@
-import { Location, Visitor } from "@herb-tools/core"
+import { Location, Visitor, isPositionEqual } from "@herb-tools/core"
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 
 import { isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, isWhitespaceNode, getTagLocalName } from "@herb-tools/core"
@@ -216,13 +216,11 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
   }
 
   private isOffenseAtEndOfContent(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, node: Mutable<HTMLTextNode> | Mutable<LiteralNode> | Mutable<WhitespaceNode>): boolean {
-    return offense.location.end.line === node.location.end.line && offense.location.end.column === node.location.end.column
+    return isPositionEqual(offense.location.end, node.location.end)
   }
 
   private isNodeAtEndOfDocument(node: Mutable<HTMLTextNode> | Mutable<LiteralNode>, result: ParseResult): boolean {
-    const documentEnd = result.value.location.end
-
-    return node.location.end.line === documentEnd.line && node.location.end.column === documentEnd.column
+    return isPositionEqual(node.location.end, result.value.location.end)
   }
 
   private hasTrailingWhitespaceNotIndentation(content: string): boolean {

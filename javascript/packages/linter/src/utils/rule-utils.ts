@@ -1,4 +1,4 @@
-import { Visitor, Location, hasDynamicOutput, getValidatableStaticContent, getAttributeName, getStaticAttributeValue, hasDynamicAttributeName, getCombinedAttributeNameString, getAttributeValueNodes, getAttributeValue, getTagLocalName, forEachAttribute, getAttribute, findAttributeByName, hasAttribute, isERBOpenTagNode, isRubyLiteralNode } from "@herb-tools/core"
+import { Visitor, Location, isPositionEqual, hasDynamicOutput, getValidatableStaticContent, getAttributeName, getStaticAttributeValue, hasDynamicAttributeName, getCombinedAttributeNameString, getAttributeValueNodes, getAttributeValue, getTagLocalName, forEachAttribute, getAttribute, findAttributeByName, hasAttribute, isERBOpenTagNode, isRubyLiteralNode } from "@herb-tools/core"
 import { ancestorVerdict, closestAncestor, EMPTY_CHAIN, projectRelativePath } from "@herb-tools/analysis"
 
 import type { ERBOpenTagNode, HTMLAttributeNameNode, HTMLAttributeNode, HTMLElementNode, HTMLOpenTagNode, LexResult, Token, Node } from "@herb-tools/core"
@@ -928,10 +928,7 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
  * @returns true if locations are equal
  */
 export function locationsEqual(a: Location, b: Location): boolean {
-  return a.start.line === b.start.line &&
-         a.start.column === b.start.column &&
-         a.end.line === b.end.line &&
-         a.end.column === b.end.column
+  return isPositionEqual(a.start, b.start) && isPositionEqual(a.end, b.end)
 }
 
 /**

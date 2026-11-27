@@ -48,7 +48,7 @@ import {
 import { Location } from "./location.js"
 import { Token } from "./token.js"
 
-import type { Position } from "./position.js"
+import type { Position, SerializedPosition } from "./position.js"
 
 /**
  * Any node that can hold HTML attributes: an element, its open tag, or the
@@ -695,7 +695,7 @@ function isPositionBefore(position1: Position, position2: Position, inclusive = 
  * Compares two positions to determine if they are equal
  * Returns true if pos1 and pos2 are at the same location
  */
-export function isPositionEqual(position1: Position, position2: Position): boolean {
+export function isPositionEqual(position1: SerializedPosition, position2: SerializedPosition): boolean {
   return position1.line === position2.line && position1.column === position2.column
 }
 
