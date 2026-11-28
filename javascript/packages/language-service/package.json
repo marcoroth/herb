@@ -39,7 +39,7 @@
     "@herb-tools/rewriter": "0.11.2",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.15",
-    "vscode-languageserver-types": "^3.18.3"
+    "vscode-languageserver-types": "^3.18.6"
   },
   "devDependencies": {
     "@herb-tools/linter": "0.11.2",
