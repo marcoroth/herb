@@ -13,6 +13,21 @@ herb dev [directory] [--port 8592]
 
 The server starts watching all template files in the directory, diffs changes using the Herb diff engine, and broadcasts updates to connected clients.
 
+## Allowed Origins
+
+The server accepts a WebSocket connection only from a page it trusts, so a page from another site open in the same browser cannot read your templates and their errors. By default it trusts:
+
+- connections without an `Origin` header, such as a client outside the browser
+- pages served from `localhost`, any `*.localhost` host, `127.0.0.1` or `[::1]`, on any port
+
+When your application runs on another host, list its origins in `HERB_DEV_ALLOWED_ORIGINS`, separated by commas:
+
+```bash
+HERB_DEV_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com herb dev
+```
+
+The variable applies to both `herb dev` and a server started inside your application. The server refuses any other origin with `403 Forbidden` and logs it once.
+
 ## How It Works
 
 1. **File watching**: monitors all `.html.erb`, `.html.herb`, and other template files for changes

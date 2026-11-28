@@ -32,6 +32,30 @@ module Dev
       Herb::Dev::Server::Client.new(socket: FakeSocket.new, version: 13, mutex: Mutex.new, role: role)
     end
 
+    def handshake_response(server, origin: nil)
+      listener = TCPServer.new("127.0.0.1", 0)
+      client = TCPSocket.new("127.0.0.1", listener.addr[1])
+      handler = Thread.new(listener.accept) { |socket| server.send(:handle_connection, socket) }
+
+      request = [
+        "GET / HTTP/1.1",
+        "Host: localhost:#{Herb::Dev::Server::DEFAULT_PORT}",
+        "Upgrade: websocket",
+        "Connection: Upgrade",
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+        "Sec-WebSocket-Version: 13"
+      ]
+      request << "Origin: #{origin}" if origin
+
+      client.write("#{request.join("\r\n")}\r\n\r\n")
+      client.wait_readable(5)
+      client.readpartial(4096)
+    ensure
+      client&.close
+      handler&.join(5)
+      listener&.close
+    end
+
     def register(server, client)
       server.instance_variable_get(:@clients) << client
     end
@@ -136,6 +160,46 @@ module Dev
 
       refute_empty browser.socket.written
       assert_empty app.socket.written
+    end
+
+    test "a handshake without an origin is accepted" do
+      assert_match(%r{\AHTTP/1\.1 101}, handshake_response(build_server))
+    end
+
+    test "a handshake from a loopback page is accepted" do
+      server = build_server
+
+      ["http://localhost:3000", "https://app.localhost", "http://127.0.0.1:3000", "http://[::1]:3000"].each do |origin|
+        assert_match(%r{\AHTTP/1\.1 101}, handshake_response(server, origin: origin), origin)
+      end
+    end
+
+    test "a handshake from an allowed origin is accepted" do
+      server = Herb::Dev::Server.new(port: 0, project_path: "/tmp/project", allowed_origins: ["https://app.example.com/"])
+
+      assert_match(%r{\AHTTP/1\.1 101}, handshake_response(server, origin: "https://app.example.com"))
+    end
+
+    test "a handshake from any other page is refused without a welcome" do
+      server = build_server
+
+      ["https://evil.example.com", "null", "http://localhost.example.com", "http://127.0.0.1.example.com"].each do |origin|
+        response = nil
+
+        assert_output("", /refused/) { response = handshake_response(server, origin: origin) }
+        assert_equal "HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 0\r\n\r\n", response, origin
+      end
+    end
+
+    test "a refused origin is logged once" do
+      server = build_server
+
+      _, logged = capture_io do
+        handshake_response(server, origin: "https://evil.example.com")
+        handshake_response(server, origin: "https://evil.example.com")
+      end
+
+      assert_equal 1, logged.scan("https://evil.example.com").size
     end
   end
 end
