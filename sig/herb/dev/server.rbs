@@ -9,6 +9,10 @@ module Herb
 
       ROLES: Array[Symbol]
 
+      LOOPBACK_HOSTS: Array[String]
+
+      ALLOWED_ORIGINS_VARIABLE: String
+
       class Client < Struct[untyped]
         attr_accessor socket(): untyped
 
@@ -26,8 +30,11 @@ module Herb
 
       attr_reader project_path: String?
 
-      # : (?port: Integer, ?project_path: String?, ?kind: String) -> void
-      def initialize: (?port: Integer, ?project_path: String?, ?kind: String) -> void
+      # : (String) -> [String, String, Integer]?
+      def self.origin_key: (String) -> [ String, String, Integer ]?
+
+      # : (?port: Integer, ?project_path: String?, ?kind: String, ?allowed_origins: Array[String]) -> void
+      def initialize: (?port: Integer, ?project_path: String?, ?kind: String, ?allowed_origins: Array[String]) -> void
 
       # : () -> void
       def start: () -> void
@@ -62,7 +69,13 @@ module Herb
       # : (Client, String) -> void
       def handle_text_frame: (Client, String) -> void
 
+      # : (String?) -> bool
+      def allowed_origin?: (String?) -> bool
+
       private
+
+      # : (untyped, String) -> void
+      def refuse: (untyped, String) -> void
 
       # : () -> Array[Hash[Symbol, untyped]]
       def broken_entries: () -> Array[Hash[Symbol, untyped]]

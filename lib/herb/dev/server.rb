@@ -3,6 +3,7 @@
 require "fileutils"
 require "socket"
 require "json"
+require "uri"
 
 require_relative "../../herb"
 
@@ -17,17 +18,34 @@ module Herb
       DEFAULT_PORT = 8592 #: Integer # "HERB".bytes.map { (it - 64).digits.sum }.join
       HANDSHAKE_TIMEOUT = 5 #: Integer
       ROLES = [:browser, :app].freeze #: Array[Symbol]
+      LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "::1"].freeze #: Array[String]
+      ALLOWED_ORIGINS_VARIABLE = "HERB_DEV_ALLOWED_ORIGINS" #: String
 
       Client = Struct.new(:socket, :version, :mutex, :role, keyword_init: true)
 
       attr_reader :port #: Integer
       attr_reader :project_path #: String?
 
-      #: (?port: Integer, ?project_path: String?, ?kind: String) -> void
-      def initialize(port: DEFAULT_PORT, project_path: nil, kind: "standalone")
+      #: (String) -> [String, String, Integer]?
+      def self.origin_key(origin)
+        uri = URI.parse(origin.strip)
+        scheme = uri.scheme&.downcase
+        hostname = uri.hostname&.downcase
+
+        return nil unless ["http", "https"].include?(scheme) && hostname && !hostname.empty?
+
+        [scheme, hostname, uri.port]
+      rescue URI::InvalidURIError
+        nil
+      end
+
+      #: (?port: Integer, ?project_path: String?, ?kind: String, ?allowed_origins: Array[String]) -> void
+      def initialize(port: DEFAULT_PORT, project_path: nil, kind: "standalone", allowed_origins: ENV.fetch(ALLOWED_ORIGINS_VARIABLE, "").split(","))
         @port = port
         @project_path = project_path
         @kind = kind
+        @allowed_origins = allowed_origins.filter_map { |origin| self.class.origin_key(origin) }
+        @refused_origins = Set.new #: Set[String]
         @clients = [] #: Array[Client]
         @mutex = Mutex.new
         @server = nil
@@ -171,7 +189,30 @@ module Herb
         nil
       end
 
+      #: (String?) -> bool
+      def allowed_origin?(origin)
+        return true if origin.nil?
+
+        key = self.class.origin_key(origin)
+
+        return false unless key
+
+        hostname = key[1]
+
+        LOOPBACK_HOSTS.include?(hostname) || hostname.end_with?(".localhost") || @allowed_origins.include?(key)
+      end
+
       private
+
+      #: (untyped, String) -> void
+      def refuse(socket, origin)
+        socket.write("HTTP/1.1 403 Forbidden\r\nConnection: close\r\nContent-Length: 0\r\n\r\n")
+        socket.flush
+
+        return unless @mutex.synchronize { @refused_origins.add?(origin) }
+
+        warn "[Herb Dev Server] refused a connection from #{origin}. Add it to #{ALLOWED_ORIGINS_VARIABLE} to allow it."
+      end
 
       #: () -> Array[Hash[Symbol, untyped]]
       def broken_entries
@@ -209,6 +250,13 @@ module Herb
 
         unless handshake.valid?
           socket.close
+          return
+        end
+
+        origin = handshake.headers["origin"]
+
+        unless allowed_origin?(origin)
+          refuse(socket, origin)
           return
         end
 
